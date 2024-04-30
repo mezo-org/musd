@@ -1,0 +1,39 @@
+{
+  "name": "contracts",
+  "version": "0.1.0",
+  "license": "GPL-3.0",
+  "scripts": {
+    "clean": "hardhat clean && rm -rf cache/ artifacts/ typechain/",
+    "build": "hardhat compile",
+    "format": "npm run lint:ts && npm run lint:sol && npm run lint:config",
+    "format:fix": "npm run lint:ts:fix && npm run lint:sol:fix && npm run lint:config:fix",
+    "lint:ts": "eslint .",
+    "lint:ts:fix": "eslint . --fix",
+    "lint:sol": "solhint 'contracts/**/*.sol' && prettier --plugin=prettier-plugin-solidity --check 'contracts/**/*.sol'",
+    "lint:sol:fix": "solhint 'contracts/**/*.sol' --fix && prettier --plugin=prettier-plugin-solidity --write 'contracts/**/*.sol'",
+    "lint:config": "prettier --check '**/*.@(json|md)'",
+    "lint:config:fix": "prettier --write '**/*.@(json|md)'",
+    "prepare:env": "cp -n .env.example .env || true",
+    "test": "npm run prepare:env && hardhat test",
+    "node": "hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.3",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@thesis-co/eslint-config": "^0.6.1",
+    "@openzeppelin/hardhat-upgrades": "^3.0.1",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "chai": "^4.3.4",
+    "dotenv-safer": "^1.0.0",
+    "eslint": "^8.56.0",
+    "hardhat": "^2.19.4",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-deploy": "^0.11.45",
+    "hardhat-gas-reporter": "^1.0.10",
+    "prettier": "^3.1.1",
+    "prettier-plugin-solidity": "^1.3.1",
+    "solhint": "^4.0.0",
+    "solhint-config-thesis": "^0.1.0"
+  }
+}

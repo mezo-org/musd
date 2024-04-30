@@ -1,0 +1,18 @@
+{
+  "root": true,
+  "extends": ["@thesis-co"],
+  "rules": {
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": [
+          "hardhat.config.ts",
+          "deploy/**",
+          "scripts/**",
+          "helpers/**",
+          "test/**"
+        ]
+      }
+    ]
+  }
+}

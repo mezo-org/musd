@@ -1,0 +1,220 @@
+name: Solidity
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "solidity/**"
+      - ".github/workflows/solidity.yml"
+  pull_request:
+    paths:
+      - "solidity/**"
+      - ".github/workflows/solidity.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Testnet to deploy contracts to"
+        required: true
+        type: choice
+        options:
+          - "sepolia"
+        default: "sepolia"
+
+defaults:
+  run:
+    working-directory: ./solidity
+
+jobs:
+  solidity-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: solidity-build
+          path: |
+            solidity/artifacts
+            solidity/cache
+            solidity/typechain
+          if-no-files-found: error
+          retention-days: 1
+
+  solidity-format:
+    needs: [solidity-build]
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: ./solidity
+
+      - name: Check code formatting
+        run: pnpm run format
+
+  solidity-test:
+    needs: [solidity-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: ./solidity
+
+      - name: Run tests
+        run: pnpm run test --no-compile
+
+  solidity-slither:
+    needs: [solidity-build]
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install Slither
+        env:
+          SLITHER_VERSION: 0.9.6
+        run: pip3 install slither-analyzer==$SLITHER_VERSION
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: ./solidity
+
+      - name: Run Slither
+        run: slither --hardhat-ignore-compile .
+
+  solidity-deploy-dry-run:
+    needs: [solidity-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: solidity/
+
+      - name: Deploy contracts
+        run: pnpm run deploy --no-compile
+
+  solidity-deploy-testnet:
+    needs: [solidity-deploy-dry-run]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: solidity/
+
+      - name: Deploy contracts
+        env:
+          SEPOLIA_PRIVATE_KEY: ${{ secrets.SEPOLIA_PRIVATE_KEY }}
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+        run: |
+          pnpm run deploy --network ${{ github.event.inputs.environment }} | tee output.log
+
+      - name: Extract contract addresses from the output
+        run: |
+          echo "TBTC_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/TBTC.json | jq -r '.address')" >> $GITHUB_ENV
+          echo "WBTC_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/WBTC.json | jq -r '.address')" >> $GITHUB_ENV
+          echo "PORTAL_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/Portal.json | jq -r '.address')" >> $GITHUB_ENV
+
+      - name: Export extracted addresses to Netlify environment variables
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          netlify env:set SEPOLIA_TBTC_CONTRACT $TBTC_CONTRACT_ADDRESS
+          netlify env:set SEPOLIA_WBTC_CONTRACT $WBTC_CONTRACT_ADDRESS
+          netlify env:set SEPOLIA_PORTAL_CONTRACT $PORTAL_CONTRACT_ADDRESS

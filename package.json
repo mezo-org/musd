@@ -1,0 +1,21 @@
+{
+  "name": "musd",
+  "version": "0.1.0",
+  "private": true,
+  "repository": "git@github.com:thesis/musd.git",
+  "packageManager": "pnpm@8.13.1",
+  "license": "GPL-3.0",
+  "scripts": {
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "syncpack:list": "syncpack list",
+    "syncpack:update": "syncpack update"
+  },
+  "devDependencies": {
+    "@thesis/prettier-config": "github:thesis/prettier-config",
+    "@types/node": "^20.12.7",
+    "netlify-cli": "^17.23.1",
+    "prettier": "^3.2.5",
+    "syncpack": "^12.3.2"
+  }
+}

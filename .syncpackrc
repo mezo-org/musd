@@ -1,0 +1,6 @@
+{
+  "dependencyTypes": [
+    "dev",
+    "prod"
+  ]
+}

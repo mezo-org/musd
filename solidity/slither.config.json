@@ -1,0 +1,4 @@
+{
+  "detectors_to_exclude": "assembly,naming-convention,timestamp,pragma,solc-version,incorrect-equality",
+  "filter_paths": "node_modules/.*"
+}

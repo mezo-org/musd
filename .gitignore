@@ -1,0 +1,21 @@
+# Node
+node_modules/
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+.vimrc
+
+# Temporary directory
+tmp/
+
+# Environment configuration files
+.env
+.envrc
+
+# Local Netlify folder
+.netlify
