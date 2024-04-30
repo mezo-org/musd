@@ -207,8 +207,7 @@ jobs:
       - name: Extract contract addresses from the output
         run: |
           echo "TBTC_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/TBTC.json | jq -r '.address')" >> $GITHUB_ENV
-          echo "WBTC_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/WBTC.json | jq -r '.address')" >> $GITHUB_ENV
-          echo "PORTAL_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/Portal.json | jq -r '.address')" >> $GITHUB_ENV
+          echo "DUMMY_CONTRACT_ADDRESS=$(cat deployments/${{ github.event.inputs.environment }}/Dummy.json | jq -r '.address')" >> $GITHUB_ENV
 
       - name: Export extracted addresses to Netlify environment variables
         env:
@@ -216,5 +215,4 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           netlify env:set SEPOLIA_TBTC_CONTRACT $TBTC_CONTRACT_ADDRESS
-          netlify env:set SEPOLIA_WBTC_CONTRACT $WBTC_CONTRACT_ADDRESS
           netlify env:set SEPOLIA_PORTAL_CONTRACT $PORTAL_CONTRACT_ADDRESS
