@@ -215,4 +215,3 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           netlify env:set SEPOLIA_TBTC_CONTRACT $TBTC_CONTRACT_ADDRESS
-          netlify env:set SEPOLIA_PORTAL_CONTRACT $PORTAL_CONTRACT_ADDRESS

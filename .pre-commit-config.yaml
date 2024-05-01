@@ -30,3 +30,18 @@ repos:
         types_or: [json, yaml]
         language: script
         description: "Checks JSON/YAML code according to the package's linter configuration"
+      # dApp
+      - id: dapp-lint-eslint
+        name: "lint dapp ts/js"
+        entry: /usr/bin/env bash -c "npm --prefix ./dapp/ run lint:eslint"
+        files: ^dapp/
+        types_or: [ts, tsx, javascript, jsx]
+        language: script
+        description: "Checks TS/JS code according to the package's linter configuration"
+      - id: dapp-lint-config
+        name: "lint dapp json/yaml"
+        entry: /usr/bin/env bash -c "npm --prefix ./dapp/ run lint:config"
+        files: ^dapp/
+        types_or: [json, yaml]
+        language: script
+        description: "Checks JSON/YAML code according to the package's linter configuration"

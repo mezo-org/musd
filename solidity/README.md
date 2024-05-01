@@ -68,6 +68,5 @@ $ pnpm run deploy --network sepolia
 Or, alternatively, manually trigger the [`Solidity`
 workflow](https://github.com/thesis/mezo-portal/actions/workflows/solidity.yml)
 (this will not only deploy the contracts, but also update the values of
-`TBTC_CONTRACT_ADDRESS`, `WBTC_CONTRACT_ADDRESS` and `PORTAL_CONTRACT_ADDRESS`
-environment variables in the settings of Netlify builds deploying dApp and its
+`TBTC_CONTRACT_ADDRESS` environment variables in the settings of Netlify builds deploying dApp and its
 previews).
