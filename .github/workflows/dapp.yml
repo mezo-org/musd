@@ -1,0 +1,75 @@
+name: Dapp
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dapp/**"
+      - ".github/workflows/dapp.yml"
+  pull_request:
+    paths:
+      - "dapp/**"
+      - ".github/workflows/dapp.yml"
+
+defaults:
+  run:
+    working-directory: ./dapp
+
+jobs:
+  dapp-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Check code formatting
+        run: pnpm run format
+
+  dapp-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm run test
+
+  dapp-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
