@@ -1,5 +1,17 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 
+export function waitConfirmationsNumber(
+  hre: HardhatRuntimeEnvironment,
+): number {
+  switch (hre.network.name) {
+    case "mainnet":
+    case "sepolia":
+      return 6
+    default:
+      return 1
+  }
+}
+
 export default async function waitForTransaction(
   hre: HardhatRuntimeEnvironment,
   txHash: string,

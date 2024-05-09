@@ -21,6 +21,7 @@
   "devDependencies": {
     "@keep-network/hardhat-helpers": "^0.7.1",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.3",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@thesis-co/eslint-config": "^0.6.1",
     "@openzeppelin/hardhat-upgrades": "^3.0.1",
@@ -29,6 +30,7 @@
     "chai": "^4.3.4",
     "dotenv-safer": "^1.0.0",
     "eslint": "^8.56.0",
+    "ethers": "^6.8.1",
     "hardhat": "^2.19.4",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-deploy": "^0.11.45",
@@ -39,8 +41,6 @@
     "solhint-config-thesis": "^0.1.0"
   },
   "dependencies": {
-    "@keep-network/bitcoin-spv-sol": "3.4.0-solc-0.8",
-    "@keep-network/tbtc-v2": "1.6.0-dev.26",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2"
   }

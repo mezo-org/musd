@@ -179,32 +179,6 @@ describe("MUSD", () => {
           .callInternalApprove(ZERO_ADDRESS, alice, to1e18(1000)),
       ).to.be.reverted
     })
-
-    it("increaseAllowance(): increases an account's allowance by the correct amount", async () => {
-      const allowanceABefore = await musdTester.allowance(bob, alice)
-      expect(allowanceABefore).to.be.eq(to1e18("0"))
-
-      await musdTester.connect(bob).increaseAllowance(alice, to1e18(100))
-
-      const allowanceAAfter = await musdTester.allowance(bob, alice)
-      expect(allowanceAAfter).to.be.eq(to1e18(100))
-    })
-
-    it("decreaseAllowance(): decreases allowance by the expected amount", async () => {
-      await musdTester.approve(bob, to1e18(3))
-      expect(await musdTester.allowance(alice, bob)).to.be.eq(to1e18(3))
-      await musdTester.decreaseAllowance(bob, to1e18(1), { from: alice })
-      expect(await musdTester.allowance(alice, bob)).to.be.eq(to1e18(2))
-    })
-
-    it("decreaseAllowance(): fails trying to decrease more than previously allowed", async () => {
-      await musdTester.approve(bob, to1e18(3))
-      expect(await musdTester.allowance(alice, bob)).to.be.eq(to1e18(3))
-      await expect(
-        musdTester.decreaseAllowance(bob, to1e18(4), { from: alice }),
-      ).to.be.reverted
-      expect(await musdTester.allowance(alice, bob)).to.be.eq(to1e18(3))
-    })
   })
 
   describe("Transferring MUSD", () => {
@@ -296,7 +270,10 @@ describe("MUSD", () => {
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
             ),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("startAddContracts(): reverts when provided addresses are not contracts", async () => {
@@ -398,7 +375,10 @@ describe("MUSD", () => {
       it("cancelAddContracts(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).cancelAddContracts(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("cancelAddContracts(): reverts when change is not initiated", async () => {
@@ -442,7 +422,10 @@ describe("MUSD", () => {
       it("finalizeAddContracts(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).finalizeAddContracts(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("finalizeAddContracts(): reverts when change is not initiated", async () => {
@@ -521,7 +504,10 @@ describe("MUSD", () => {
           musdTester
             .connect(alice)
             .startRevokeMintList(await borrowerOperations.getAddress()),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("startRevokeMintList(): reverts when account has no minting role", async () => {
@@ -548,7 +534,10 @@ describe("MUSD", () => {
       it("cancelRevokeMintList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).cancelRevokeMintList(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("cancelRevokeMintList(): reverts when change is not initiated", async () => {
@@ -575,7 +564,10 @@ describe("MUSD", () => {
       it("finalizeRevokeMintList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).finalizeRevokeMintList(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("finalizeRevokeMintList(): reverts when change is not initiated", async () => {
@@ -615,7 +607,10 @@ describe("MUSD", () => {
       it("startAddMintList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).startAddMintList(alice),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("startAddMintList(): reverts when account already has minting role", async () => {
@@ -638,7 +633,10 @@ describe("MUSD", () => {
       it("cancelAddMintList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).cancelAddMintList(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("cancelAddMintList(): reverts when change is not initiated", async () => {
@@ -661,7 +659,10 @@ describe("MUSD", () => {
       it("finalizeAddMintList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).finalizeAddMintList(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("finalizeAddMintList(): reverts when change is not initiated", async () => {
@@ -697,7 +698,10 @@ describe("MUSD", () => {
           musdTester
             .connect(alice)
             .startRevokeBurnList(await borrowerOperations.getAddress()),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("startRevokeBurnList(): reverts when account has no burning role", async () => {
@@ -725,7 +729,10 @@ describe("MUSD", () => {
       it("cancelRevokeBurnList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).cancelRevokeBurnList(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("cancelRevokeBurnList(): reverts when change is not initiated", async () => {
@@ -753,7 +760,10 @@ describe("MUSD", () => {
       it("finalizeRevokeBurnList(): reverts when caller is not owner", async () => {
         await expect(
           musdTester.connect(alice).finalizeRevokeBurnList(),
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWithCustomError(
+          musdTester,
+          "OwnableUnauthorizedAccount",
+        )
       })
 
       it("finalizeRevokeBurnList(): reverts when change is not initiated", async () => {

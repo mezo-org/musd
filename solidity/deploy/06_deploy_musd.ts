@@ -21,6 +21,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await deployments.deploy("MUSD", {
       contract: "MUSD",
       args: [
+        "Mezo USD",
+        "MUSD",
         troveManager.address,
         stabilityPool.address,
         borrowerOperations.address,
