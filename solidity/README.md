@@ -14,10 +14,20 @@ To install dependencies run:
 pnpm install
 ```
 
+Install slither locally
+
+```bash
+brew install slither
+```
+
 ### Testing
 
 ```
 $ pnpm test
+```
+
+```
+slither .
 ```
 
 ### Environment Setup

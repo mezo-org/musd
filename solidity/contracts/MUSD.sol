@@ -42,8 +42,11 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     constructor(
         string memory name,
         string memory symbol,
+        // slither-disable-next-line similar-names
         address _troveManagerAddress1,
+        // slither-disable-next-line similar-names
         address _stabilityPoolAddress1,
+        // slither-disable-next-line similar-names
         address _borrowerOperationsAddress1,
         address _troveManagerAddress2,
         address _stabilityPoolAddress2,
@@ -65,27 +68,6 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         }
         governanceTimeDelay = _governanceTimeDelay;
         require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
-    }
-
-    function _addSystemContracts(
-        address _troveManagerAddress,
-        address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
-    ) internal {
-        checkContract(_troveManagerAddress);
-        checkContract(_stabilityPoolAddress);
-        checkContract(_borrowerOperationsAddress);
-
-        burnList[_troveManagerAddress] = true;
-        emit TroveManagerAddressAdded(_troveManagerAddress);
-
-        burnList[_stabilityPoolAddress] = true;
-        emit StabilityPoolAddressAdded(_stabilityPoolAddress);
-
-        burnList[_borrowerOperationsAddress] = true;
-        emit BorrowerOperationsAddressAdded(_borrowerOperationsAddress);
-
-        mintList[_borrowerOperationsAddress] = true;
     }
 
     // --- Governance ---
@@ -156,8 +138,11 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         checkContract(_borrowerOperationsAddress);
 
         // save as provisional contracts to add
+        // slither-disable-next-line missing-zero-check
         pendingTroveManager = _troveManagerAddress;
+        // slither-disable-next-line missing-zero-check
         pendingStabilityPool = _stabilityPoolAddress;
+        // slither-disable-next-line missing-zero-check
         pendingBorrowerOperations = _borrowerOperationsAddress;
 
         // save block number
@@ -260,5 +245,26 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         returns (uint256)
     {
         return super.nonces(owner);
+    }
+
+    function _addSystemContracts(
+        address _troveManagerAddress,
+        address _stabilityPoolAddress,
+        address _borrowerOperationsAddress
+    ) internal {
+        checkContract(_troveManagerAddress);
+        checkContract(_stabilityPoolAddress);
+        checkContract(_borrowerOperationsAddress);
+
+        burnList[_troveManagerAddress] = true;
+        emit TroveManagerAddressAdded(_troveManagerAddress);
+
+        burnList[_stabilityPoolAddress] = true;
+        emit StabilityPoolAddressAdded(_stabilityPoolAddress);
+
+        burnList[_borrowerOperationsAddress] = true;
+        emit BorrowerOperationsAddressAdded(_borrowerOperationsAddress);
+
+        mintList[_borrowerOperationsAddress] = true;
     }
 }
