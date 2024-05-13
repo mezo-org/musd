@@ -18,12 +18,11 @@ contract SendCollateral {
     ) internal {
         if (address(_collateralERC20) == address(0)) {
             // ETH
-            // require(_amount <= address(this).balance, "Not enough ETH");
+            // slither-disable-next-line low-level-calls
             (bool success, ) = _recipient.call{value: _amount}(""); // re-entry is fine here
             require(success, "Sending ETH failed");
         } else {
             // ERC20
-            // require(_amount <= _collateralERC20.balanceOf(address(this)), "Not enough collateral");
             _collateralERC20.safeTransfer(_recipient, _amount);
         }
     }
@@ -39,12 +38,12 @@ contract SendCollateral {
     ) internal {
         if (address(_collateralERC20) == address(0)) {
             // ETH
-            // require(_amount <= address(this).balance, "Not enough ETH");
+            // slither-disable-next-line low-level-calls
             (bool success, ) = _recipient.call{value: _amount}(""); // re-entry is fine here
             require(success, "Sending ETH failed");
         } else {
             // ERC20
-            // require(_amount <= _collateralERC20.balanceOf(address(this)), "Not enough collateral");
+            // slither-disable-next-line arbitrary-send-erc20
             _collateralERC20.safeTransferFrom(_from, _recipient, _amount);
         }
     }

@@ -13,7 +13,7 @@ import "../interfaces/ILiquityBase.sol";
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-contract LiquityBase is BaseMath, ILiquityBase {
+abstract contract LiquityBase is BaseMath, ILiquityBase {
     uint256 public constant _100pct = 1e18; // 1e18 == 100%
 
     // Minimum collateral ratio for individual troves
@@ -31,8 +31,8 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
-    uint256 public constant BORROWING_FEE_FLOOR =
-        (DECIMAL_PRECISION / 1000) * 5; // 0.5%
+    uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /
+        1000); // 0.5%
 
     IActivePool public activePool;
 

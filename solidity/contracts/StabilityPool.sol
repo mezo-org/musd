@@ -4,16 +4,36 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
+import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
+import "./interfaces/IBorrowerOperations.sol";
+import "./interfaces/IMUSD.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
+import "./interfaces/ITroveManager.sol";
 
 contract StabilityPool is
+    LiquityBase,
     Ownable,
     CheckContract,
     SendCollateral,
     IStabilityPool
 {
     address public collateralAddress;
+
+    IBorrowerOperations public borrowerOperations;
+
+    ITroveManager public troveManager;
+
+    IMUSD public musd;
+
+    // Needed to check if there are pending liquidations
+    ISortedTroves public sortedTroves;
+
+    uint256 internal collateral; // deposited collateral tracker
+
+    // Tracker for MUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
+    uint256 internal totalMUSDDeposits;
 
     constructor() Ownable(msg.sender) {}
 
@@ -25,7 +45,43 @@ contract StabilityPool is
         address _sortedTrovesAddress,
         address _priceFeedAddress,
         address _collateralAddress
-    ) external override onlyOwner {}
+    ) external override onlyOwner {
+        checkContract(_borrowerOperationsAddress);
+        checkContract(_troveManagerAddress);
+        checkContract(_activePoolAddress);
+        checkContract(_musdTokenAddress);
+        checkContract(_sortedTrovesAddress);
+        checkContract(_priceFeedAddress);
+        if (_collateralAddress != address(0)) {
+            checkContract(_collateralAddress);
+        }
+
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
+        troveManager = ITroveManager(_troveManagerAddress);
+        activePool = IActivePool(_activePoolAddress);
+        musd = IMUSD(_musdTokenAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
+        collateralAddress = _collateralAddress;
+
+        require(
+            (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
+                borrowerOperations.collateralAddress() == _collateralAddress) &&
+                (Ownable(_activePoolAddress).owner() != address(0) ||
+                    activePool.collateralAddress() == _collateralAddress),
+            "The same collateral address must be used for the entire set of contracts"
+        );
+
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        emit TroveManagerAddressChanged(_troveManagerAddress);
+        emit ActivePoolAddressChanged(_activePoolAddress);
+        emit MUSDTokenAddressChanged(_musdTokenAddress);
+        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
+        emit PriceFeedAddressChanged(_priceFeedAddress);
+        emit CollateralAddressChanged(_collateralAddress);
+
+        renounceOwnership();
+    }
 
     // --- External Depositor Functions ---
 

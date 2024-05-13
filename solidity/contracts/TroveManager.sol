@@ -4,11 +4,32 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
+import "./dependencies/LiquityBase.sol";
+import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IMUSD.sol";
+import "./interfaces/IStabilityPool.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
-contract TroveManager is Ownable, CheckContract, ITroveManager {
+contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
+    // --- Connected contract declarations ---
+
+    address public borrowerOperationsAddress;
+
+    IStabilityPool public override stabilityPool;
+
+    address public gasPoolAddress;
+
+    ICollSurplusPool public collSurplusPool;
+
+    IMUSD public musdToken;
+
+    IPCV public override pcv;
+
+    // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
+    ISortedTroves public sortedTroves;
+
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
@@ -22,7 +43,44 @@ contract TroveManager is Ownable, CheckContract, ITroveManager {
         address _musdTokenAddress,
         address _sortedTrovesAddress,
         address _pcvAddress
-    ) external override {}
+    ) external override onlyOwner {
+        checkContract(_borrowerOperationsAddress);
+        checkContract(_activePoolAddress);
+        checkContract(_defaultPoolAddress);
+        checkContract(_stabilityPoolAddress);
+        checkContract(_gasPoolAddress);
+        checkContract(_collSurplusPoolAddress);
+        checkContract(_priceFeedAddress);
+        checkContract(_musdTokenAddress);
+        checkContract(_sortedTrovesAddress);
+        checkContract(_pcvAddress);
+
+        // slither-disable-next-line missing-zero-check
+        borrowerOperationsAddress = _borrowerOperationsAddress;
+        activePool = IActivePool(_activePoolAddress);
+        defaultPool = IDefaultPool(_defaultPoolAddress);
+        stabilityPool = IStabilityPool(_stabilityPoolAddress);
+        // slither-disable-next-line missing-zero-check
+        gasPoolAddress = _gasPoolAddress;
+        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
+        musdToken = IMUSD(_musdTokenAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        pcv = IPCV(_pcvAddress);
+
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        emit ActivePoolAddressChanged(_activePoolAddress);
+        emit DefaultPoolAddressChanged(_defaultPoolAddress);
+        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
+        emit GasPoolAddressChanged(_gasPoolAddress);
+        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
+        emit PriceFeedAddressChanged(_priceFeedAddress);
+        emit MUSDTokenAddressChanged(_musdTokenAddress);
+        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
+        emit PCVAddressChanged(_pcvAddress);
+
+        renounceOwnership();
+    }
 
     function liquidate(address _borrower) external override {}
 
@@ -85,11 +143,7 @@ contract TroveManager is Ownable, CheckContract, ITroveManager {
         uint256 _collDecrease
     ) external override returns (uint) {}
 
-    function stabilityPool() external view override returns (IStabilityPool) {}
-
     function musd() external view override returns (IMUSD) {}
-
-    function pcv() external view override returns (IPCV) {}
 
     function getTroveOwnersCount() external view override returns (uint) {}
 

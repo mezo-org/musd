@@ -61,8 +61,8 @@ library LiquityMath {
         uint256 _base,
         uint256 _minutes
     ) internal pure returns (uint) {
-        if (_minutes > 525600000) {
-            _minutes = 525600000;
+        if (_minutes > 5.256e8) {
+            _minutes = 5.256e8;
         } // cap to avoid overflow
 
         if (_minutes == 0) {
