@@ -20,6 +20,34 @@ contract BorrowerOperations is
     SendCollateral,
     IBorrowerOperations
 {
+    /* --- Variable container structs  ---
+
+    Used to hold, return and assign variables inside a function, in order to avoid the error:
+    "CompilerError: Stack too deep". */
+
+    struct LocalVariables_openTrove {
+        uint256 price;
+        uint256 MUSDFee;
+        uint256 netDebt;
+        uint256 compositeDebt;
+        uint256 ICR;
+        uint256 NICR;
+        uint256 stake;
+        uint256 arrayIndex;
+    }
+
+    struct ContractsCache {
+        ITroveManager troveManager;
+        IActivePool activePool;
+        IMUSD thusdToken;
+    }
+
+    enum BorrowerOperation {
+        openTrove,
+        closeTrove,
+        adjustTrove
+    }
+
     string public constant name = "BorrowerOperations";
 
     // --- Connected contract declarations ---
@@ -47,7 +75,117 @@ contract BorrowerOperations is
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) external payable override {}
+    ) external payable override {
+        ContractsCache memory contractsCache = ContractsCache(
+            troveManager,
+            activePool,
+            musd
+        );
+        LocalVariables_openTrove memory vars;
+
+        vars.price = priceFeed.fetchPrice();
+        bool isRecoveryMode = _checkRecoveryMode(vars.price);
+
+        _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
+        _requireTroveisNotActive(contractsCache.troveManager, msg.sender);
+
+        vars.MUSDFee;
+        vars.netDebt = _debtAmount;
+
+        if (!isRecoveryMode) {
+            vars.MUSDFee = _triggerBorrowingFee(
+                contractsCache.troveManager,
+                contractsCache.thusdToken,
+                _debtAmount,
+                _maxFeePercentage
+            );
+            vars.netDebt += vars.MUSDFee;
+        }
+
+        _requireAtLeastMinNetDebt(vars.netDebt);
+
+        // ICR is based on the composite debt, i.e. the requested MUSD amount + MUSD borrowing fee + MUSD gas comp.
+        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
+        assert(vars.compositeDebt > 0);
+
+        // if ETH overwrite the asset value
+        _assetAmount = getAssetAmount(_assetAmount);
+        vars.ICR = LiquityMath._computeCR(
+            _assetAmount,
+            vars.compositeDebt,
+            vars.price
+        );
+        vars.NICR = LiquityMath._computeNominalCR(
+            _assetAmount,
+            vars.compositeDebt
+        );
+
+        if (isRecoveryMode) {
+            _requireICRisAboveCCR(vars.ICR);
+        } else {
+            _requireICRisAboveMCR(vars.ICR);
+            uint256 newTCR = _getNewTCRFromTroveChange(
+                _assetAmount,
+                true,
+                vars.compositeDebt,
+                true,
+                vars.price
+            ); // bools: coll increase, debt increase
+            _requireNewTCRisAboveCCR(newTCR);
+        }
+
+        // Set the trove struct's properties
+        contractsCache.troveManager.setTroveStatus(
+            msg.sender,
+            ITroveManager.Status.active
+        );
+        contractsCache.troveManager.increaseTroveColl(msg.sender, _assetAmount);
+        contractsCache.troveManager.increaseTroveDebt(
+            msg.sender,
+            vars.compositeDebt
+        );
+
+        contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
+        vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
+            msg.sender
+        );
+
+        sortedTroves.insert(msg.sender, vars.NICR, _upperHint, _lowerHint);
+        vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
+            msg.sender
+        );
+        emit TroveCreated(msg.sender, vars.arrayIndex);
+
+        /*
+         * Move the collateral to the Active Pool, and mint the MUSDAmount to the borrower
+         * If the user has insuffient tokens to do the transfer to the Active Pool an error will cause the transaction to revert.
+         */
+        _activePoolAddColl(contractsCache.activePool, _assetAmount);
+        _withdrawMUSD(
+            contractsCache.activePool,
+            contractsCache.thusdToken,
+            msg.sender,
+            _debtAmount,
+            vars.netDebt
+        );
+        // Move the MUSD gas compensation to the Gas Pool
+        _withdrawMUSD(
+            contractsCache.activePool,
+            contractsCache.thusdToken,
+            gasPoolAddress,
+            MUSD_GAS_COMPENSATION,
+            MUSD_GAS_COMPENSATION
+        );
+
+        emit TroveUpdated(
+            msg.sender,
+            vars.compositeDebt,
+            _assetAmount,
+            vars.stake,
+            uint8(BorrowerOperation.openTrove)
+        );
+        emit MUSDBorrowingFeePaid(msg.sender, vars.MUSDFee);
+    }
 
     // Send collateral to a trove
     function addColl(
@@ -182,6 +320,146 @@ contract BorrowerOperations is
     function getCompositeDebt(
         uint256 _debt
     ) external pure override returns (uint) {
-        return _debt;
+        return _getCompositeDebt(_debt);
+    }
+
+    // Issue the specified amount of THUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a THUSDFee)
+    function _withdrawMUSD(
+        IActivePool _activePool,
+        IMUSD _musd,
+        address _account,
+        uint256 _debtAmount,
+        uint256 _netDebtIncrease
+    ) internal {
+        _activePool.increaseMUSDDebt(_netDebtIncrease);
+        _musd.mint(_account, _debtAmount);
+    }
+
+    // Send collateral to Active Pool and increase its recorded collateral balance
+    function _activePoolAddColl(
+        IActivePool _activePool,
+        uint256 _amount
+    ) internal {
+        sendCollateralFrom(
+            IERC20(collateralAddress),
+            msg.sender,
+            address(_activePool),
+            _amount
+        );
+
+        if (collateralAddress == address(0)) {
+            return;
+        }
+        _activePool.updateCollateralBalance(_amount);
+    }
+
+    // --- Helper functions ---
+
+    function _triggerBorrowingFee(
+        ITroveManager _troveManager,
+        IMUSD _thusdToken,
+        uint256 _THUSDAmount,
+        uint256 _maxFeePercentage
+    ) internal returns (uint) {
+        _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
+        uint256 THUSDFee = _troveManager.getBorrowingFee(_THUSDAmount);
+
+        _requireUserAcceptsFee(THUSDFee, _THUSDAmount, _maxFeePercentage);
+
+        // Send fee to PCV contract
+        _thusdToken.mint(pcvAddress, THUSDFee);
+        return THUSDFee;
+    }
+
+    function getAssetAmount(
+        uint256 _assetAmount
+    ) internal view returns (uint256) {
+        if (collateralAddress == address(0)) {
+            return msg.value;
+        }
+
+        require(
+            msg.value == 0,
+            "BorrowerOperations: ERC20 collateral needed, not ETH"
+        );
+        return _assetAmount;
+    }
+
+    function _requireTroveisNotActive(
+        ITroveManager _troveManager,
+        address _borrower
+    ) internal view {
+        ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
+        require(
+            status != ITroveManager.Status.active,
+            "BorrowerOps: Trove is active"
+        );
+    }
+
+    function _getNewTCRFromTroveChange(
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _debtChange,
+        bool _isDebtIncrease,
+        uint256 _price
+    ) internal view returns (uint) {
+        uint256 totalColl = getEntireSystemColl();
+        uint256 totalDebt = getEntireSystemDebt();
+
+        totalColl = _isCollIncrease
+            ? totalColl + _collChange
+            : totalColl - _collChange;
+        totalDebt = _isDebtIncrease
+            ? totalDebt + _debtChange
+            : totalDebt - _debtChange;
+
+        uint256 newTCR = LiquityMath._computeCR(totalColl, totalDebt, _price);
+        return newTCR;
+    }
+
+    function _requireValidMaxFeePercentage(
+        uint256 _maxFeePercentage,
+        bool _isRecoveryMode
+    ) internal pure {
+        if (_isRecoveryMode) {
+            require(
+                _maxFeePercentage <= DECIMAL_PRECISION,
+                "Max fee percentage must less than or equal to 100%"
+            );
+        } else {
+            require(
+                _maxFeePercentage >= BORROWING_FEE_FLOOR &&
+                    _maxFeePercentage <= DECIMAL_PRECISION,
+                "Max fee percentage must be between 0.5% and 100%"
+            );
+        }
+    }
+
+    function _requireAtLeastMinNetDebt(uint256 _netDebt) internal pure {
+        require(
+            _netDebt >= MIN_NET_DEBT,
+            "BorrowerOps: Trove's net debt must be greater than minimum"
+        );
+    }
+
+    function _requireICRisAboveMCR(uint256 _newICR) internal pure {
+        require(
+            _newICR >= MCR,
+            "BorrowerOps: An operation that would result in ICR < MCR is not permitted"
+        );
+    }
+
+    function _requireICRisAboveCCR(uint256 _newICR) internal pure {
+        require(
+            _newICR >= CCR,
+            "BorrowerOps: Operation must leave trove with ICR >= CCR"
+        );
+    }
+
+    function _requireNewTCRisAboveCCR(uint256 _newTCR) internal pure {
+        require(
+            _newTCR >= CCR,
+            "BorrowerOps: An operation that would result in TCR < CCR is not permitted"
+        );
     }
 }

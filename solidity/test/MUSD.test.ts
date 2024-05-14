@@ -1,8 +1,7 @@
 import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
-import { deployment } from "./helpers"
+import { fixture, getLatestBlockTimestamp, fastForwardTime } from "./helpers"
 import {
   BorrowerOperations,
   MUSD,
@@ -12,67 +11,19 @@ import {
 } from "../typechain"
 import { to1e18 } from "./utils"
 
-async function getLatestBlockTimestamp() {
-  const { provider } = ethers
-  const latestBlock = await provider.getBlock("latest")
-
-  if (latestBlock) {
-    return latestBlock.timestamp
-  }
-  // console.error("Failed to fetch latest block")
-  return null
-}
-
-async function fastForwardTime(seconds: number): Promise<void> {
-  const { provider } = ethers
-  await provider.send("evm_increaseTime", [seconds])
-  await provider.send("evm_mine", [])
-}
-
-async function fixture() {
-  const {
-    musd,
-    musdTester,
-    troveManager,
-    borrowerOperations,
-    stabilityPool,
-    newTroveManager,
-    newBorrowerOperations,
-    newStabilityPool,
-  } = await deployment()
-  const { deployer } = await helpers.signers.getNamedSigners()
-  const [alice, bob, carol, dennis] = await helpers.signers.getUnnamedSigners()
-
-  return {
-    alice,
-    bob,
-    carol,
-    dennis,
-    deployer,
-    musd,
-    musdTester,
-    troveManager,
-    borrowerOperations,
-    stabilityPool,
-    newTroveManager,
-    newBorrowerOperations,
-    newStabilityPool,
-  }
-}
-
 describe("MUSD", () => {
   const GOVERNANCE_TIME_DELAY = 90 * 24 * 60 * 60 // 90 days in seconds
   const ZERO_ADDRESS = `0x${"0".repeat(40)}`
 
   // contracts
+  let borrowerOperations: BorrowerOperations
   let musd: MUSD
   let musdTester: MUSDTester
-  let troveManager: TroveManager
-  let borrowerOperations: BorrowerOperations
-  let stabilityPool: StabilityPool
-  let newTroveManager: TroveManager
   let newBorrowerOperations: BorrowerOperations
   let newStabilityPool: StabilityPool
+  let newTroveManager: TroveManager
+  let stabilityPool: StabilityPool
+  let troveManager: TroveManager
 
   // users
   let alice: HardhatEthersSigner
@@ -85,17 +36,17 @@ describe("MUSD", () => {
     ;({
       alice,
       bob,
+      borrowerOperations,
       carol,
       dennis,
       deployer,
-      musd,
-      musdTester,
-      troveManager,
-      borrowerOperations,
-      stabilityPool,
       newTroveManager,
       newBorrowerOperations,
       newStabilityPool,
+      musd,
+      musdTester,
+      stabilityPool,
+      troveManager,
     } = await loadFixture(fixture))
 
     await musdTester.unprotectedMint(alice, to1e18(150))

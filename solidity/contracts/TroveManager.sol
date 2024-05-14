@@ -13,6 +13,15 @@ import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
+    // Store the necessary data for a trove
+    struct Trove {
+        uint256 debt;
+        uint256 coll;
+        uint256 stake;
+        Status status;
+        uint128 arrayIndex;
+    }
+
     // --- Connected contract declarations ---
 
     address public borrowerOperationsAddress;
@@ -29,6 +38,22 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTroves public sortedTroves;
+
+    // --- Data structures ---
+
+    /*
+     * Half-life of 12h. 12h = 720 min
+     * (1/2) = d^720 => d = (1/2)^(1/720)
+     */
+    uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
+    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION / 100) * 5; // 5%
+
+    uint256 public baseRate;
+
+    // The timestamp of the latest fee operation (redemption or new THUSD issuance)
+    uint256 public lastFeeOperationTime;
+
+    mapping(address => Trove) public Troves;
 
     constructor() Ownable(msg.sender) {}
 
@@ -118,15 +143,25 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function decayBaseRateFromBorrowing() external override {}
 
+    // --- Trove property setters, called by BorrowerOperations ---
+
     function setTroveStatus(
         address _borrower,
         Status _status
-    ) external override {}
+    ) external override {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].status = _status;
+    }
 
     function increaseTroveColl(
         address _borrower,
         uint256 _collIncrease
-    ) external override returns (uint) {}
+    ) external override returns (uint) {
+        _requireCallerIsBorrowerOperations();
+        uint256 newColl = Troves[_borrower].coll + _collIncrease;
+        Troves[_borrower].coll = newColl;
+        return newColl;
+    }
 
     function decreaseTroveColl(
         address _borrower,
@@ -136,7 +171,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function increaseTroveDebt(
         address _borrower,
         uint256 _debtIncrease
-    ) external override returns (uint) {}
+    ) external override returns (uint) {
+        _requireCallerIsBorrowerOperations();
+        uint256 newDebt = Troves[_borrower].debt + _debtIncrease;
+        Troves[_borrower].debt = newDebt;
+        return newDebt;
+    }
 
     function decreaseTroveDebt(
         address _borrower,
@@ -199,14 +239,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _collateralDrawn
     ) external view override returns (uint) {}
 
+    // --- Borrowing fee functions ---
+
     function getBorrowingRate() external view override returns (uint) {}
 
-    function getBorrowingRateWithDecay()
-        external
-        view
-        override
-        returns (uint)
-    {}
+    function getBorrowingRateWithDecay() external view override returns (uint) {
+        return _calcBorrowingRate(_calcDecayedBaseRate());
+    }
 
     function getBorrowingFee(
         uint256 MUSDDebt
@@ -237,4 +276,38 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function checkRecoveryMode(
         uint256 _price
     ) external view override returns (bool) {}
+
+    function _calcDecayedBaseRate() internal view returns (uint) {
+        uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
+        uint256 decayFactor = LiquityMath._decPow(
+            MINUTE_DECAY_FACTOR,
+            minutesPassed
+        );
+
+        return (baseRate * decayFactor) / DECIMAL_PRECISION;
+    }
+
+    function _minutesPassedSinceLastFeeOp() internal view returns (uint) {
+        // solhint-disable-next-line not-rely-on-time
+        return (block.timestamp - lastFeeOperationTime) / 1 minutes;
+    }
+
+    // --- 'require' wrapper functions ---
+
+    function _requireCallerIsBorrowerOperations() internal view {
+        require(
+            msg.sender == borrowerOperationsAddress,
+            "TroveManager: Caller is not the BorrowerOperations contract"
+        );
+    }
+
+    function _calcBorrowingRate(
+        uint256 _baseRate
+    ) internal pure returns (uint) {
+        return
+            LiquityMath._min(
+                BORROWING_FEE_FLOOR + _baseRate,
+                MAX_BORROWING_FEE
+            );
+    }
 }
