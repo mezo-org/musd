@@ -13,6 +13,8 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
+import "./dependencies/console.sol";
+
 contract BorrowerOperations is
     LiquityBase,
     Ownable,
@@ -240,34 +242,34 @@ contract BorrowerOperations is
     function claimCollateral() external override {}
 
     function setAddresses(
-        address _troveManagerAddress,
         address _activePoolAddress,
-        address _defaultPoolAddress,
-        address _stabilityPoolAddress,
-        address _gasPoolAddress,
+        address _collateralAddress,
         address _collSurplusPoolAddress,
-        address _priceFeedAddress,
-        address _sortedTrovesAddress,
+        address _defaultPoolAddress,
+        address _gasPoolAddress,
         address _musdTokenAddress,
         address _pcvAddress,
-        address _collateralAddress
+        address _priceFeedAddress,
+        address _stabilityPoolAddress,
+        address _sortedTrovesAddress,
+        address _troveManagerAddress
     ) external override onlyOwner {
         // This makes impossible to open a trove with zero withdrawn MUSD
         assert(MIN_NET_DEBT > 0);
 
-        checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
-        checkContract(_defaultPoolAddress);
-        checkContract(_stabilityPoolAddress);
-        checkContract(_gasPoolAddress);
-        checkContract(_collSurplusPoolAddress);
-        checkContract(_priceFeedAddress);
-        checkContract(_sortedTrovesAddress);
-        checkContract(_musdTokenAddress);
-        checkContract(_pcvAddress);
         if (_collateralAddress != address(0)) {
             checkContract(_collateralAddress);
         }
+        checkContract(_collSurplusPoolAddress);
+        checkContract(_defaultPoolAddress);
+        checkContract(_gasPoolAddress);
+        checkContract(_musdTokenAddress);
+        checkContract(_pcvAddress);
+        checkContract(_priceFeedAddress);
+        checkContract(_stabilityPoolAddress);
+        checkContract(_sortedTrovesAddress);
+        checkContract(_troveManagerAddress);
 
         troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);

@@ -25,7 +25,6 @@ interface IPCV {
     function setAddresses(
         address _musdTokenAddress,
         address _borrowerOperations,
-        address payable _bammAddress,
         address _collateralERC20
     ) external;
     function initialize() external;

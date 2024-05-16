@@ -31,17 +31,17 @@ interface IBorrowerOperations {
     // --- Functions ---
 
     function setAddresses(
-        address _troveManagerAddress,
         address _activePoolAddress,
-        address _defaultPoolAddress,
-        address _stabilityPoolAddress,
-        address _gasPoolAddress,
+        address _collateralAddress,
         address _collSurplusPoolAddress,
-        address _priceFeedAddress,
-        address _sortedTrovesAddress,
+        address _defaultPoolAddress,
+        address _gasPoolAddress,
         address _musdTokenAddress,
         address _pcvAddress,
-        address _collateralAddress
+        address _priceFeedAddress,
+        address _stabilityPoolAddress,
+        address _sortedTrovesAddress,
+        address _troveManagerAddress
     ) external;
 
     function openTrove(

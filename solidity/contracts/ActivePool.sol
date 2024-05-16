@@ -7,6 +7,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePool.sol";
+import "./interfaces/IBorrowerOperations.sol";
+import "./interfaces/ICollSurplusPool.sol";
+import "./interfaces/IDefaultPool.sol";
+import "./interfaces/IStabilityPool.sol";
 
 /*
  * The Active Pool holds the collateral and THUSD debt (but not THUSD tokens) for all active troves.
@@ -16,7 +20,83 @@ import "./interfaces/IActivePool.sol";
  *
  */
 contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
+    address public borrowerOperationsAddress;
+    address public collateralAddress;
+    address public collSurplusPoolAddress;
+    address public defaultPoolAddress;
+    address public stabilityPoolAddress;
+    address public troveManagerAddress;
+    uint256 internal collateral; // deposited collateral tracker
+
     constructor() Ownable(msg.sender) {}
+
+    // --- Fallback function ---
+
+    // This executes when the contract recieves ETH
+    // solhint-disable no-complex-fallback
+    receive() external payable {
+        _requireCallerIsBorrowerOperationsOrDefaultPool();
+        require(
+            collateralAddress == address(0),
+            "ActivePool: ERC20 collateral needed, not ETH"
+        );
+        collateral += msg.value;
+        emit ActivePoolCollateralBalanceUpdated(collateral);
+    }
+
+    // --- Contract setters ---
+
+    function setAddresses(
+        address _borrowerOperationsAddress,
+        address _collateralAddress,
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _troveManagerAddress,
+        address _stabilityPoolAddress
+    ) external onlyOwner {
+        checkContract(_borrowerOperationsAddress);
+        if (_collateralAddress != address(0)) {
+            checkContract(_collateralAddress);
+        }
+        checkContract(_collSurplusPoolAddress);
+        checkContract(_defaultPoolAddress);
+        checkContract(_stabilityPoolAddress);
+        checkContract(_troveManagerAddress);
+
+        borrowerOperationsAddress = _borrowerOperationsAddress;
+        collateralAddress = _collateralAddress;
+        collSurplusPoolAddress = _collSurplusPoolAddress;
+        defaultPoolAddress = _defaultPoolAddress;
+        stabilityPoolAddress = _stabilityPoolAddress;
+        troveManagerAddress = _troveManagerAddress;
+
+        require(
+            (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
+                IBorrowerOperations(_borrowerOperationsAddress)
+                    .collateralAddress() ==
+                _collateralAddress) &&
+                (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
+                    ICollSurplusPool(_collSurplusPoolAddress)
+                        .collateralAddress() ==
+                    _collateralAddress) &&
+                (Ownable(_defaultPoolAddress).owner() != address(0) ||
+                    IDefaultPool(_defaultPoolAddress).collateralAddress() ==
+                    _collateralAddress) &&
+                (Ownable(_stabilityPoolAddress).owner() != address(0) ||
+                    IStabilityPool(stabilityPoolAddress).collateralAddress() ==
+                    _collateralAddress),
+            "The same collateral address must be used for the entire set of contracts"
+        );
+
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        emit CollateralAddressChanged(_collateralAddress);
+        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
+        emit DefaultPoolAddressChanged(_defaultPoolAddress);
+        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
+        emit TroveManagerAddressChanged(_troveManagerAddress);
+
+        renounceOwnership();
+    }
 
     function increaseMUSDDebt(uint256 _amount) external override {}
 
@@ -29,9 +109,15 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
     function updateCollateralBalance(uint256 _amount) external override {}
 
-    function collateralAddress() external view override returns (address) {}
-
     function getCollateralBalance() external view override returns (uint) {}
 
     function getMUSDDebt() external view override returns (uint) {}
+
+    function _requireCallerIsBorrowerOperationsOrDefaultPool() internal view {
+        require(
+            msg.sender == borrowerOperationsAddress ||
+                msg.sender == defaultPoolAddress,
+            "ActivePool: Caller is neither BorrowerOperations nor Default Pool"
+        );
+    }
 }

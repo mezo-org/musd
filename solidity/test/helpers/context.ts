@@ -7,8 +7,10 @@ import type {
   CollSurplusPool,
   DefaultPool,
   Dummy,
+  GasPool,
   MUSD,
   PCV,
+  SortedTroves,
   StabilityPool,
   TroveManager,
 } from "../../typechain/contracts"
@@ -28,12 +30,14 @@ export async function deployment() {
   const collSurplusPool: CollSurplusPool =
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
+  const gasPool: GasPool = await getDeployedContract("GasPool")
   const musd: MUSD = await getDeployedContract("MUSD")
   const musdTester: MUSDTester = await getDeployedContract("MUSDTester")
   const newBorrowerOperations: BorrowerOperations =
     await getDeployedContract("Dummy")
   const newStabilityPool: StabilityPool = await getDeployedContract("Dummy")
   const newTroveManager: TroveManager = await getDeployedContract("Dummy")
+  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
   const troveManager: TroveManager = await getDeployedContract("TroveManager")
@@ -46,6 +50,7 @@ export async function deployment() {
     borrowerOperations,
     collSurplusPool,
     defaultPool,
+    gasPool,
     musd,
     musdTester,
     newBorrowerOperations,
@@ -53,6 +58,7 @@ export async function deployment() {
     newTroveManager,
     pcv,
     priceFeedTestnet,
+    sortedTroves,
     stabilityPool,
     troveManager,
   }
@@ -66,6 +72,7 @@ export async function fixture() {
     borrowerOperations,
     collSurplusPool,
     defaultPool,
+    gasPool,
     musd,
     musdTester,
     newBorrowerOperations,
@@ -73,6 +80,7 @@ export async function fixture() {
     newTroveManager,
     pcv,
     priceFeedTestnet,
+    sortedTroves,
     stabilityPool,
     troveManager,
   } = await deployment()
@@ -90,6 +98,7 @@ export async function fixture() {
     defaultPool,
     deployer,
     dummy,
+    gasPool,
     newTroveManager,
     newBorrowerOperations,
     newStabilityPool,
@@ -97,6 +106,7 @@ export async function fixture() {
     musdTester,
     pcv,
     priceFeedTestnet,
+    sortedTroves,
     stabilityPool,
     troveManager,
   }

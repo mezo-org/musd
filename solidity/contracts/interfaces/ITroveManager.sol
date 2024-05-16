@@ -70,16 +70,16 @@ interface ITroveManager {
     // --- Functions ---
 
     function setAddresses(
-        address _borrowerOperationsAddress,
         address _activePoolAddress,
-        address _defaultPoolAddress,
-        address _stabilityPoolAddress,
-        address _gasPoolAddress,
+        address _borrowerOperationsAddress,
         address _collSurplusPoolAddress,
-        address _priceFeedAddress,
+        address _defaultPoolAddress,
+        address _gasPoolAddress,
         address _musdTokenAddress,
+        address _pcvAddress,
+        address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _pcvAddress
+        address _stabilityPoolAddress
     ) external;
 
     function liquidate(address _borrower) external;

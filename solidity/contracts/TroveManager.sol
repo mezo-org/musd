@@ -58,27 +58,27 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
-        address _borrowerOperationsAddress,
         address _activePoolAddress,
-        address _defaultPoolAddress,
-        address _stabilityPoolAddress,
-        address _gasPoolAddress,
+        address _borrowerOperationsAddress,
         address _collSurplusPoolAddress,
-        address _priceFeedAddress,
+        address _defaultPoolAddress,
+        address _gasPoolAddress,
         address _musdTokenAddress,
+        address _pcvAddress,
+        address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _pcvAddress
+        address _stabilityPoolAddress
     ) external override onlyOwner {
-        checkContract(_borrowerOperationsAddress);
         checkContract(_activePoolAddress);
-        checkContract(_defaultPoolAddress);
-        checkContract(_stabilityPoolAddress);
-        checkContract(_gasPoolAddress);
+        checkContract(_borrowerOperationsAddress);
         checkContract(_collSurplusPoolAddress);
-        checkContract(_priceFeedAddress);
+        checkContract(_defaultPoolAddress);
+        checkContract(_gasPoolAddress);
         checkContract(_musdTokenAddress);
-        checkContract(_sortedTrovesAddress);
         checkContract(_pcvAddress);
+        checkContract(_priceFeedAddress);
+        checkContract(_sortedTrovesAddress);
+        checkContract(_stabilityPoolAddress);
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
@@ -275,7 +275,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function checkRecoveryMode(
         uint256 _price
-    ) external view override returns (bool) {}
+    ) external view override returns (bool) {
+        return _checkRecoveryMode(_price);
+    }
 
     function _calcDecayedBaseRate() internal view returns (uint) {
         uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
