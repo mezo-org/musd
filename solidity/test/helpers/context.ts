@@ -1,12 +1,12 @@
 import { deployments, helpers } from "hardhat"
 import { getDeployedContract } from "./contract"
-
+import { to1e18, ZERO_ADDRESS } from "../utils"
+import { Contracts, Users, TestSetup, TestingAddresses } from "./interfaces"
 import type {
   ActivePool,
   BorrowerOperations,
   CollSurplusPool,
   DefaultPool,
-  Dummy,
   GasPool,
   MUSD,
   PCV,
@@ -37,15 +37,15 @@ export async function deployment() {
     await getDeployedContract("Dummy")
   const newStabilityPool: StabilityPool = await getDeployedContract("Dummy")
   const newTroveManager: TroveManager = await getDeployedContract("Dummy")
+  const pcv: PCV = await getDeployedContract("PCV")
+  const priceFeedTestnet: PriceFeedTestnet =
+    await getDeployedContract("PriceFeedTestnet")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
   const troveManager: TroveManager = await getDeployedContract("TroveManager")
-  const pcv: PCV = await getDeployedContract("PCV")
-  const priceFeedTestnet: PriceFeedTestnet =
-    await getDeployedContract("PriceFeedTestnet")
 
-  return {
+  const contracts: Contracts = {
     activePool,
     borrowerOperations,
     collSurplusPool,
@@ -62,52 +62,112 @@ export async function deployment() {
     stabilityPool,
     troveManager,
   }
+
+  return contracts
 }
 
 export async function fixture() {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [alice, bob, carol, dennis] = await helpers.signers.getUnnamedSigners()
-  const {
-    activePool,
-    borrowerOperations,
-    collSurplusPool,
-    defaultPool,
-    gasPool,
-    musd,
-    musdTester,
-    newBorrowerOperations,
-    newStabilityPool,
-    newTroveManager,
-    pcv,
-    priceFeedTestnet,
-    sortedTroves,
-    stabilityPool,
-    troveManager,
-  } = await deployment()
+  const contracts = await deployment()
 
-  const dummy: Dummy = await getDeployedContract("Dummy")
-
-  return {
-    activePool,
+  const users: Users = {
     alice,
     bob,
-    borrowerOperations,
     carol,
-    collSurplusPool,
     dennis,
-    defaultPool,
     deployer,
-    dummy,
-    gasPool,
-    newTroveManager,
-    newBorrowerOperations,
-    newStabilityPool,
-    musd,
-    musdTester,
-    pcv,
-    priceFeedTestnet,
-    sortedTroves,
-    stabilityPool,
-    troveManager,
   }
+
+  const testSetup: TestSetup = {
+    users,
+    contracts,
+  }
+
+  return testSetup
+}
+
+export async function getAddresses(contracts: Contracts, users: Users) {
+  const addresses: TestingAddresses = {
+    // contracts
+    activePool: await contracts.activePool.getAddress(),
+    borrowerOperations: await contracts.borrowerOperations.getAddress(),
+    collSurplusPool: await contracts.collSurplusPool.getAddress(),
+    defaultPool: await contracts.defaultPool.getAddress(),
+    gasPool: await contracts.gasPool.getAddress(),
+    musd: await contracts.musd.getAddress(),
+    musdTester: await contracts.musdTester.getAddress(),
+    newBorrowerOperations: await contracts.newBorrowerOperations.getAddress(),
+    newStabilityPool: await contracts.newStabilityPool.getAddress(),
+    newTroveManager: await contracts.newTroveManager.getAddress(),
+    pcv: await contracts.pcv.getAddress(),
+    priceFeedTestnet: await contracts.priceFeedTestnet.getAddress(),
+    sortedTroves: await contracts.sortedTroves.getAddress(),
+    stabilityPool: await contracts.stabilityPool.getAddress(),
+    troveManager: await contracts.troveManager.getAddress(),
+    // users
+    alice: users.alice.address,
+    bob: users.bob.address,
+    carol: users.carol.address,
+    dennis: users.dennis.address,
+    deployer: users.deployer.address,
+  }
+
+  return addresses
+}
+
+export async function connectContracts(contracts: Contracts, users: Users) {
+  //  connect contracts
+  await contracts.pcv
+    .connect(users.deployer)
+    .setAddresses(
+      await contracts.musd.getAddress(),
+      await contracts.borrowerOperations.getAddress(),
+      ZERO_ADDRESS,
+    )
+
+  await contracts.activePool
+    .connect(users.deployer)
+    .setAddresses(
+      await contracts.borrowerOperations.getAddress(),
+      ZERO_ADDRESS,
+      await contracts.collSurplusPool.getAddress(),
+      await contracts.defaultPool.getAddress(),
+      await contracts.troveManager.getAddress(),
+      await contracts.stabilityPool.getAddress(),
+    )
+
+  await contracts.borrowerOperations
+    .connect(users.deployer)
+    .setAddresses(
+      await contracts.activePool.getAddress(),
+      ZERO_ADDRESS,
+      await contracts.collSurplusPool.getAddress(),
+      await contracts.defaultPool.getAddress(),
+      await contracts.gasPool.getAddress(),
+      await contracts.musd.getAddress(),
+      await contracts.pcv.getAddress(),
+      await contracts.priceFeedTestnet.getAddress(),
+      await contracts.stabilityPool.getAddress(),
+      await contracts.sortedTroves.getAddress(),
+      await contracts.troveManager.getAddress(),
+    )
+
+  await contracts.troveManager
+    .connect(users.deployer)
+    .setAddresses(
+      await contracts.activePool.getAddress(),
+      await contracts.borrowerOperations.getAddress(),
+      await contracts.collSurplusPool.getAddress(),
+      await contracts.defaultPool.getAddress(),
+      await contracts.gasPool.getAddress(),
+      await contracts.musd.getAddress(),
+      await contracts.pcv.getAddress(),
+      await contracts.priceFeedTestnet.getAddress(),
+      await contracts.sortedTroves.getAddress(),
+      await contracts.stabilityPool.getAddress(),
+    )
+  await contracts.musdTester.unprotectedMint(users.alice, to1e18(150))
+  await contracts.musdTester.unprotectedMint(users.bob, to1e18(100))
+  await contracts.musdTester.unprotectedMint(users.carol, to1e18(50))
 }

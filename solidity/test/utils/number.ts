@@ -22,3 +22,6 @@ export function to1ePrecision(
 export function to1e18(n: string | number | bigint): bigint {
   return to1ePrecision(n, 18)
 }
+
+export const GOVERNANCE_TIME_DELAY = 90 * 24 * 60 * 60 // 90 days in seconds
+export const ZERO_ADDRESS = `0x${"0".repeat(40)}`
