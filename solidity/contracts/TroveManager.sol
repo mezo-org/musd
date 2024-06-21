@@ -166,7 +166,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function removeStake(address _borrower) external override {}
 
-    function decayBaseRateFromBorrowing() external override {}
+    // Updates the baseRate state variable based on time elapsed since the last redemption or THUSD borrowing operation.
+    function decayBaseRateFromBorrowing() external override {
+        _requireCallerIsBorrowerOperations();
+
+        uint256 decayedBaseRate = _calcDecayedBaseRate();
+        assert(decayedBaseRate <= DECIMAL_PRECISION); // The baseRate can decay to 0
+
+        baseRate = decayedBaseRate;
+        emit BaseRateUpdated(decayedBaseRate);
+
+        _updateLastFeeOpTime();
+    }
 
     // --- Trove property setters, called by BorrowerOperations ---
 
