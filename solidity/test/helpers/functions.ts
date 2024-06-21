@@ -1,4 +1,5 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
+import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
 import { Contracts, OpenTroveParams } from "./interfaces"
 import { fastForwardTime } from "./time"
@@ -29,6 +30,50 @@ export async function getOpenTroveTotalDebt(
   return compositeDebt + fee
 }
 
+export async function getTroveEntireColl(
+  contracts: Contracts,
+  address: HardhatEthersSigner,
+) {
+  return (await contracts.troveManager.getEntireDebtAndColl(address))[1]
+}
+
+export async function getTroveEntireDebt(
+  contracts: Contracts,
+  address: HardhatEthersSigner,
+) {
+  return (await contracts.troveManager.getEntireDebtAndColl(address))[0]
+}
+
+export async function getEventArgByName(
+  tx: ContractTransactionResponse,
+  abi: Array<string>,
+  eventName: string,
+  argIndex: number,
+) {
+  const txReceipt = await tx.wait()
+
+  const iface = new ethers.Interface(abi)
+
+  if (txReceipt) {
+    txReceipt.logs.forEach((log) => {
+      try {
+        const parsedLog = iface.parseLog(log)
+        if (parsedLog && parsedLog.name === eventName) {
+          return parsedLog.args[argIndex]
+        }
+      } catch (error) {
+        // continue if the log does not match the event
+        return false
+      }
+      return false
+    })
+  }
+
+  throw new Error(
+    `The transaction logs do not contain event ${eventName} and arg ${argIndex}`,
+  )
+}
+
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const params = inputs
   // fill in hints for searching trove list if not provided
@@ -55,10 +100,9 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
 
   // amount of assets required for the loan
-  const price = await contracts.priceFeedTestnet.getPrice()
+  const price = await contracts.priceFeed.getPrice()
   const assetAmount = (ICR * totalDebt) / price
 
-  // try {
   const tx = await contracts.borrowerOperations
     .connect(params.sender)
     .openTrove(
@@ -68,14 +112,9 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
       params.upperHint,
       params.lowerHint,
       {
-        value: assetAmount, // Replace "1.0" with the amount of ETH to send
+        value: assetAmount, // The amount of chain base asset to send
       },
     )
-  // console.log(tx)
-  // } catch (error) {
-  //   // Log the revert reason
-  //   console.log("Revert reason:", error.message);
-  // }
 
   return {
     musdAmount,

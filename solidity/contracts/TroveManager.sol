@@ -46,6 +46,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      * (1/2) = d^720 => d = (1/2)^(1/720)
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
+    uint256 public constant REDEMPTION_FEE_FLOOR =
+        (DECIMAL_PRECISION / 1000) * 5; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION / 100) * 5; // 5%
 
     uint256 public baseRate;
@@ -54,6 +56,29 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public lastFeeOperationTime;
 
     mapping(address => Trove) public Troves;
+
+    /*
+     * L_Collateral and L_THUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
+     *
+     * An collateral gain of ( stake * [L_Collateral - L_Collateral(0)] )
+     * A THUSDDebt increase  of ( stake * [L_THUSDDebt - L_THUSDDebt(0)] )
+     *
+     * Where L_Collateral(0) and L_THUSDDebt(0) are snapshots of L_Collateral and L_THUSDDebt for the active Trove taken at the instant the stake was made
+     */
+    uint256 public L_Collateral;
+    uint256 public L_MUSDDebt;
+
+    // Object containing the collateral and THUSD snapshots for a given active trove
+    struct RewardSnapshot {
+        uint256 collateral;
+        uint256 MUSDDebt;
+    }
+
+    // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
+    address[] public TroveOwners;
+
+    // Map addresses with active troves to their RewardSnapshot
+    mapping(address => RewardSnapshot) public rewardSnapshots;
 
     constructor() Ownable(msg.sender) {}
 
@@ -202,11 +227,45 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getPendingCollateralReward(
         address _borrower
-    ) external view override returns (uint) {}
+    ) public view override returns (uint) {
+        uint256 snapshotCollateral = rewardSnapshots[_borrower].collateral;
+        uint256 rewardPerUnitStaked = L_Collateral - snapshotCollateral;
+
+        if (
+            rewardPerUnitStaked == 0 ||
+            Troves[_borrower].status != Status.active
+        ) {
+            return 0;
+        }
+
+        uint256 stake = Troves[_borrower].stake;
+
+        uint256 pendingCollateralReward = (stake * rewardPerUnitStaked) /
+            DECIMAL_PRECISION;
+
+        return pendingCollateralReward;
+    }
 
     function getPendingMUSDDebtReward(
         address _borrower
-    ) external view override returns (uint) {}
+    ) public view override returns (uint) {
+        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].MUSDDebt;
+        uint256 rewardPerUnitStaked = L_MUSDDebt - snapshotMUSDDebt;
+
+        if (
+            rewardPerUnitStaked == 0 ||
+            Troves[_borrower].status != Status.active
+        ) {
+            return 0;
+        }
+
+        uint256 stake = Troves[_borrower].stake;
+
+        uint256 pendingMUSDDebtReward = (stake * rewardPerUnitStaked) /
+            DECIMAL_PRECISION;
+
+        return pendingMUSDDebtReward;
+    }
 
     function hasPendingRewards(
         address _borrower
@@ -224,9 +283,16 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 pendingMUSDDebtReward,
             uint256 pendingCollateralReward
         )
-    {}
+    {
+        debt = Troves[_borrower].debt;
+        coll = Troves[_borrower].coll;
 
-    function getRedemptionRate() external view override returns (uint) {}
+        pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
+        pendingCollateralReward = getPendingCollateralReward(_borrower);
+
+        debt += pendingMUSDDebtReward;
+        coll += pendingCollateralReward;
+    }
 
     function getRedemptionRateWithDecay()
         external
@@ -279,6 +345,48 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _checkRecoveryMode(_price);
     }
 
+    function _updateLastFeeOpTime() internal {
+        uint256 timePassed = block.timestamp - lastFeeOperationTime;
+
+        if (timePassed >= 1 minutes) {
+            lastFeeOperationTime = block.timestamp;
+            emit LastFeeOpTimeUpdated(block.timestamp);
+        }
+    }
+
+    function getRedemptionRate() public view override returns (uint) {
+        return _calcRedemptionRate(baseRate);
+    }
+
+    function _calcRedemptionRate(
+        uint256 _baseRate
+    ) internal pure returns (uint) {
+        return
+            LiquityMath._min(
+                REDEMPTION_FEE_FLOOR + _baseRate,
+                DECIMAL_PRECISION // cap at a maximum of 100%
+            );
+    }
+
+    function _getRedemptionFee(
+        uint256 _collateralDrawn
+    ) internal view returns (uint) {
+        return _calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
+    }
+
+    function _calcRedemptionFee(
+        uint256 _redemptionRate,
+        uint256 _collateralDrawn
+    ) internal pure returns (uint) {
+        uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
+            DECIMAL_PRECISION;
+        require(
+            redemptionFee < _collateralDrawn,
+            "TroveManager: Fee would eat up all returned collateral"
+        );
+        return redemptionFee;
+    }
+
     function _calcDecayedBaseRate() internal view returns (uint) {
         uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
         uint256 decayFactor = LiquityMath._decPow(
@@ -311,5 +419,34 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 BORROWING_FEE_FLOOR + _baseRate,
                 MAX_BORROWING_FEE
             );
+    }
+
+    /*
+     * Remove a Trove owner from the TroveOwners array, not preserving array order. Removing owner 'B' does the following:
+     * [A B C D E] => [A E C D], and updates E's Trove struct to point to its new array index.
+     */
+    function _removeTroveOwner(
+        address _borrower,
+        uint256 TroveOwnersArrayLength
+    ) internal {
+        Status troveStatus = Troves[_borrower].status;
+        // It’s set in caller function `_closeTrove`
+        assert(
+            troveStatus != Status.nonExistent && troveStatus != Status.active
+        );
+
+        uint128 index = Troves[_borrower].arrayIndex;
+        uint256 length = TroveOwnersArrayLength;
+        uint256 idxLast = length - 1;
+
+        assert(index <= idxLast);
+
+        address addressToMove = TroveOwners[idxLast];
+
+        TroveOwners[index] = addressToMove;
+        Troves[addressToMove].arrayIndex = index;
+        emit TroveIndexUpdated(addressToMove, index);
+
+        TroveOwners.pop();
     }
 }

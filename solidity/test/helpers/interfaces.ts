@@ -14,6 +14,7 @@ import {
   SortedTroves,
   StabilityPool,
   TroveManager,
+  TroveManagerTester,
 } from "../../typechain"
 
 export interface TestingAddresses {
@@ -23,12 +24,8 @@ export interface TestingAddresses {
   defaultPool: string
   gasPool: string
   musd: string
-  musdTester: string
-  newBorrowerOperations: string
-  newStabilityPool: string
-  newTroveManager: string
   pcv: string
-  priceFeedTestnet: string
+  priceFeed: string
   sortedTroves: string
   stabilityPool: string
   troveManager: string
@@ -45,16 +42,12 @@ export interface Contracts {
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
   gasPool: GasPool
-  musd: MUSD
-  musdTester: MUSDTester
-  newBorrowerOperations: BorrowerOperations
-  newStabilityPool: StabilityPool
-  newTroveManager: TroveManager
+  musd: MUSD | MUSDTester
   pcv: PCV
-  priceFeedTestnet: PriceFeedTestnet
+  priceFeed: PriceFeedTestnet
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
-  troveManager: TroveManager
+  troveManager: TroveManager | TroveManagerTester
 }
 
 export interface Users {
@@ -62,6 +55,7 @@ export interface Users {
   bob: HardhatEthersSigner
   carol: HardhatEthersSigner
   dennis: HardhatEthersSigner
+  eric: HardhatEthersSigner
   deployer: HardhatEthersSigner
 }
 

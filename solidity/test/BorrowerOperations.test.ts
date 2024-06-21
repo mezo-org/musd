@@ -1,13 +1,16 @@
 import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { expect } from "chai"
+import { expect, assert } from "chai"
 import {
   Contracts,
   TestSetup,
-  fixture,
+  fixtureBorrowerOperations,
   connectContracts,
   removeMintlist,
   openTrove,
+  getTroveEntireColl,
+  getTroveEntireDebt,
+  getEventArgByName,
 } from "./helpers"
 import { to1e18 } from "./utils"
 
@@ -15,17 +18,27 @@ describe("BorrowerOperations", () => {
   // users
   let alice: HardhatEthersSigner
   let bob: HardhatEthersSigner
+  let carol: HardhatEthersSigner
+  let dennis: HardhatEthersSigner
+  let eric: HardhatEthersSigner
   let deployer: HardhatEthersSigner
   let contracts: Contracts
+  let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
   beforeEach(async () => {
-    testSetup = await loadFixture(fixture)
+    // fixtureBorrowerOperations has a mock trove manager so we can change rates
+    cachedTestSetup = await loadFixture(fixtureBorrowerOperations)
+    testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
+
     await connectContracts(contracts, testSetup.users)
     // users
     alice = testSetup.users.alice
     bob = testSetup.users.bob
+    carol = testSetup.users.carol
+    dennis = testSetup.users.dennis
+    eric = testSetup.users.eric
     deployer = testSetup.users.deployer
   })
 
@@ -51,7 +64,86 @@ describe("BorrowerOperations", () => {
     })
 
     it("openTrove(): emits a TroveUpdated event with the correct collateral and debt", async () => {
-      // TODO requires other contract functionality
+      const abi = [
+        // Add your contract ABI here
+        "event TroveUpdated(address indexed borrower, uint256 debt, uint256 coll, uint256 stake, uint8 operation)",
+      ]
+
+      let transactions = [
+        {
+          musdAmount: "15,000",
+          ICR: "200",
+          sender: alice,
+        },
+        {
+          musdAmount: "5,000",
+          ICR: "200",
+          sender: bob,
+        },
+        {
+          musdAmount: "3,000",
+          ICR: "200",
+          sender: carol,
+        },
+      ]
+
+      let tx
+      let coll
+      let emittedColl
+      let debt
+      let emittedDebt
+
+      for (let i = 0; i < transactions.length; i++) {
+        tx = (await openTrove(contracts, transactions[i])).tx
+
+        coll = await getTroveEntireColl(contracts, transactions[i].sender)
+        emittedColl = await getEventArgByName(tx, abi, "TroveUpdated", 2)
+        expect(coll).to.equal(emittedColl)
+
+        debt = await getTroveEntireDebt(contracts, transactions[i].sender)
+        emittedDebt = await getEventArgByName(tx, abi, "TroveUpdated", 1)
+        expect(debt).to.equal(emittedDebt)
+      }
+
+      const baseRateBefore = await contracts.troveManager.baseRate()
+
+      if ("setBaseRate" in contracts.troveManager) {
+        // Artificially make baseRate 5%
+        const newRate = to1e18(5) / 100n
+        await contracts.troveManager.setBaseRate(newRate)
+        await contracts.troveManager.setLastFeeOpTimeToNow()
+      } else {
+        assert.fail("TroveManagerTester not loaded")
+      }
+
+      expect(await contracts.troveManager.baseRate()).to.be.greaterThan(
+        baseRateBefore,
+      )
+
+      transactions = [
+        {
+          musdAmount: "5,000",
+          ICR: "200",
+          sender: dennis,
+        },
+        {
+          musdAmount: "3,000",
+          ICR: "200",
+          sender: eric,
+        },
+      ]
+
+      for (let i = 0; i < transactions.length; i++) {
+        tx = (await openTrove(contracts, transactions[i])).tx
+
+        coll = await getTroveEntireColl(contracts, transactions[i].sender)
+        emittedColl = await getEventArgByName(tx, abi, "TroveUpdated", 2)
+        expect(coll).to.equal(emittedColl)
+
+        debt = await getTroveEntireDebt(contracts, transactions[i].sender)
+        emittedDebt = await getEventArgByName(tx, abi, "TroveUpdated", 1)
+        expect(debt).to.equal(emittedDebt)
+      }
     })
 
     it("openTrove(): Opens a trove with net debt >= minimum net debt", async () => {
@@ -209,7 +301,7 @@ describe("BorrowerOperations", () => {
 
       // collateral value drops from 200 to 10
       const price = to1e18(10)
-      await contracts.priceFeedTestnet.connect(deployer).setPrice(price)
+      await contracts.priceFeed.connect(deployer).setPrice(price)
 
       // TODO requires other contract functionality for checkRecoveryMode to work
       // expect(await contracts.troveManager.checkRecoveryMode(price)).to.be.true

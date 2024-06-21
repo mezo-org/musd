@@ -1,4 +1,5 @@
 import { deployments, helpers } from "hardhat"
+import { assert } from "chai"
 import { getDeployedContract } from "./contract"
 import { to1e18, ZERO_ADDRESS } from "../utils"
 import { Contracts, Users, TestSetup, TestingAddresses } from "./interfaces"
@@ -18,10 +19,11 @@ import type {
 import type {
   MUSDTester,
   PriceFeedTestnet,
+  TroveManagerTester,
 } from "../../typechain/contracts/tests"
 
 // eslint-disable-next-line import/prefer-default-export
-export async function deployment() {
+export async function deployment(overwrite: Array<string>) {
   await deployments.fixture()
 
   const activePool: ActivePool = await getDeployedContract("ActivePool")
@@ -31,19 +33,20 @@ export async function deployment() {
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
-  const musd: MUSD = await getDeployedContract("MUSD")
-  const musdTester: MUSDTester = await getDeployedContract("MUSDTester")
-  const newBorrowerOperations: BorrowerOperations =
-    await getDeployedContract("Dummy")
-  const newStabilityPool: StabilityPool = await getDeployedContract("Dummy")
-  const newTroveManager: TroveManager = await getDeployedContract("Dummy")
+  const musd: MUSD | MUSDTester = overwrite.includes("MUSD")
+    ? await getDeployedContract("MUSDTester")
+    : await getDeployedContract("MUSD")
   const pcv: PCV = await getDeployedContract("PCV")
-  const priceFeedTestnet: PriceFeedTestnet =
+  const priceFeed: PriceFeedTestnet =
     await getDeployedContract("PriceFeedTestnet")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
-  const troveManager: TroveManager = await getDeployedContract("TroveManager")
+  const troveManager: TroveManager | TroveManagerTester = overwrite.includes(
+    "TroveManager",
+  )
+    ? await getDeployedContract("TroveManagerTester")
+    : await getDeployedContract("TroveManager")
 
   const contracts: Contracts = {
     activePool,
@@ -52,12 +55,8 @@ export async function deployment() {
     defaultPool,
     gasPool,
     musd,
-    musdTester,
-    newBorrowerOperations,
-    newStabilityPool,
-    newTroveManager,
     pcv,
-    priceFeedTestnet,
+    priceFeed,
     sortedTroves,
     stabilityPool,
     troveManager,
@@ -66,16 +65,54 @@ export async function deployment() {
   return contracts
 }
 
-export async function fixture() {
+/*
+ * For explanation on why each testcontract has its own fixture function
+ * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
+ */
+
+export async function fixtureMUSD(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [alice, bob, carol, dennis] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deployment()
+  const contracts = await deployment(["MUSD"])
 
   const users: Users = {
     alice,
     bob,
     carol,
     dennis,
+    eric,
+    deployer,
+  }
+
+  const testSetup: TestSetup = {
+    users,
+    contracts,
+  }
+
+  // Mint using tester functions.
+  if ("unprotectedMint" in contracts.musd) {
+    await contracts.musd.unprotectedMint(alice, to1e18(150))
+    await contracts.musd.unprotectedMint(bob, to1e18(100))
+    await contracts.musd.unprotectedMint(carol, to1e18(50))
+  } else {
+    assert.fail("MUSDTester not loaded in context.ts")
+  }
+
+  return testSetup
+}
+
+export async function fixtureBorrowerOperations(): Promise<TestSetup> {
+  const { deployer } = await helpers.signers.getNamedSigners()
+  const [alice, bob, carol, dennis, eric] =
+    await helpers.signers.getUnnamedSigners()
+  const contracts = await deployment(["TroveManager"])
+
+  const users: Users = {
+    alice,
+    bob,
+    carol,
+    dennis,
+    eric,
     deployer,
   }
 
@@ -96,12 +133,8 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     defaultPool: await contracts.defaultPool.getAddress(),
     gasPool: await contracts.gasPool.getAddress(),
     musd: await contracts.musd.getAddress(),
-    musdTester: await contracts.musdTester.getAddress(),
-    newBorrowerOperations: await contracts.newBorrowerOperations.getAddress(),
-    newStabilityPool: await contracts.newStabilityPool.getAddress(),
-    newTroveManager: await contracts.newTroveManager.getAddress(),
     pcv: await contracts.pcv.getAddress(),
-    priceFeedTestnet: await contracts.priceFeedTestnet.getAddress(),
+    priceFeed: await contracts.priceFeed.getAddress(),
     sortedTroves: await contracts.sortedTroves.getAddress(),
     stabilityPool: await contracts.stabilityPool.getAddress(),
     troveManager: await contracts.troveManager.getAddress(),
@@ -118,6 +151,7 @@ export async function getAddresses(contracts: Contracts, users: Users) {
 
 export async function connectContracts(contracts: Contracts, users: Users) {
   //  connect contracts
+
   await contracts.pcv
     .connect(users.deployer)
     .setAddresses(
@@ -147,7 +181,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.gasPool.getAddress(),
       await contracts.musd.getAddress(),
       await contracts.pcv.getAddress(),
-      await contracts.priceFeedTestnet.getAddress(),
+      await contracts.priceFeed.getAddress(),
       await contracts.stabilityPool.getAddress(),
       await contracts.sortedTroves.getAddress(),
       await contracts.troveManager.getAddress(),
@@ -163,11 +197,8 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.gasPool.getAddress(),
       await contracts.musd.getAddress(),
       await contracts.pcv.getAddress(),
-      await contracts.priceFeedTestnet.getAddress(),
+      await contracts.priceFeed.getAddress(),
       await contracts.sortedTroves.getAddress(),
       await contracts.stabilityPool.getAddress(),
     )
-  await contracts.musdTester.unprotectedMint(users.alice, to1e18(150))
-  await contracts.musdTester.unprotectedMint(users.bob, to1e18(100))
-  await contracts.musdTester.unprotectedMint(users.carol, to1e18(50))
 }
