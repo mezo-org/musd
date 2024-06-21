@@ -164,6 +164,14 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       ZERO_ADDRESS,
     )
 
+  await contracts.defaultPool
+    .connect(users.deployer)
+    .setAddresses(
+      await contracts.troveManager.getAddress(),
+      await contracts.activePool.getAddress(),
+      ZERO_ADDRESS,
+    )
+
   await contracts.activePool
     .connect(users.deployer)
     .setAddresses(

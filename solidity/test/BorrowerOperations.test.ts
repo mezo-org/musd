@@ -187,11 +187,27 @@ describe("BorrowerOperations", () => {
     })
 
     it("openTrove(): Opens a trove with net debt >= minimum net debt", async () => {
-      await openTrove(contracts, {
+      const { tx } = await openTrove(contracts, {
         musdAmount: MIN_NET_DEBT,
         ICR: "200",
         sender: alice,
       })
+
+      const abi = [
+        // Add your contract ABI here
+        "event TroveUpdated(address indexed borrower, uint256 debt, uint256 coll, uint256 stake, uint8 operation)",
+      ]
+
+      const coll = await getTroveEntireColl(contracts, alice)
+      const emittedColl = await getEventArgByName(tx, abi, "TroveUpdated", 2)
+      expect(coll).to.equal(emittedColl)
+      expect(coll).to.greaterThan(0)
+
+      const debt = await getTroveEntireDebt(contracts, alice)
+      const emittedDebt = await getEventArgByName(tx, abi, "TroveUpdated", 1)
+      expect(debt).to.equal(emittedDebt)
+      expect(debt).to.greaterThan(0)
+
       expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
         true,
       )
@@ -369,24 +385,26 @@ describe("BorrowerOperations", () => {
     })
 
     it("openTrove(): Allows max fee < 0.5% in Recovery Mode", async () => {
-      // TODO requires implementing functionality for troveManager.checkRecoveryMode
-      // openTrove(contracts, {
-      //   musdAmount: "100,000",
-      //   ICR: "200",
-      //   sender: alice,
-      // })
-      // // collateral value drops from 200 to 10
-      // let price = to1e18(10)
-      // await contracts.priceFeedTestnet.connect(deployer).setPrice(price)
-      // expect(await contracts.troveManager.checkRecoveryMode(price)).to.be.true
-      // openTrove(contracts, {
-      //   musdAmount: "10,000",
-      //   ICR: "200",
-      //   sender: bob,
-      //   maxFeePercentage: "0.4999999999999999"
-      // })
-      // const after = await contracts.musd.balanceOf(bob)
-      // expect(after).to.equal(to1e18("10,000"))
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "200",
+        sender: alice,
+      })
+      // collateral value drops from 200 to 10
+      const price = to1e18(10)
+      await contracts.priceFeed.connect(deployer).setPrice(price)
+
+      expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
+        true,
+      )
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "200",
+        sender: bob,
+        maxFeePercentage: "0.4999999999999999",
+      })
+      const after = await contracts.musd.balanceOf(bob)
+      expect(after).to.equal(to1e18("10,000"))
     })
 
     it("openTrove(): Reverts if fee exceeds max fee percentage", async () => {
@@ -455,8 +473,8 @@ describe("BorrowerOperations", () => {
       ).to.be.revertedWith("MUSD: Caller not allowed to mint")
 
       // collateral value drops from 200 to 10
-      const price = to1e18(10)
-      await contracts.priceFeed.connect(deployer).setPrice(price)
+      // const price = to1e18(10)
+      // await contracts.priceFeed.connect(deployer).setPrice(price)
 
       // TODO requires other contract functionality for checkRecoveryMode to work
       // expect(await contracts.troveManager.checkRecoveryMode(price)).to.be.true

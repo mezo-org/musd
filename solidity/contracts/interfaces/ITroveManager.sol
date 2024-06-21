@@ -137,7 +137,6 @@ interface ITroveManager {
     ) external returns (uint);
 
     function stabilityPool() external view returns (IStabilityPool);
-    function musd() external view returns (IMUSD);
     function pcv() external view returns (IPCV);
 
     function getTroveOwnersCount() external view returns (uint);

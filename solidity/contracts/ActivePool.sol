@@ -13,9 +13,9 @@ import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IStabilityPool.sol";
 
 /*
- * The Active Pool holds the collateral and THUSD debt (but not THUSD tokens) for all active troves.
+ * The Active Pool holds the collateral and MUSD debt (but not MUSD tokens) for all active troves.
  *
- * When a trove is liquidated, it's collateral and THUSD debt are transferred from the Active Pool, to either the
+ * When a trove is liquidated, it's collateral and MUSD debt are transferred from the Active Pool, to either the
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
@@ -27,6 +27,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public stabilityPoolAddress;
     address public troveManagerAddress;
     uint256 internal collateral; // deposited collateral tracker
+    uint256 internal MUSDDebt;
 
     constructor() Ownable(msg.sender) {}
 
@@ -98,26 +99,69 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         renounceOwnership();
     }
 
-    function increaseMUSDDebt(uint256 _amount) external override {}
+    function increaseMUSDDebt(uint256 _amount) external override {
+        _requireCallerIsBorrwerOperationsOrTroveManager();
+        MUSDDebt += _amount;
+        emit ActivePoolMUSDDebtUpdated(MUSDDebt);
+    }
 
-    function decreaseMUSDDebt(uint256 _amount) external override {}
+    function decreaseMUSDDebt(uint256 _amount) external override {
+        _requireCallerIsBOorTroveMorSP();
+        MUSDDebt -= _amount;
+        emit ActivePoolMUSDDebtUpdated(MUSDDebt);
+    }
 
     function sendCollateral(
         address _account,
         uint256 _amount
     ) external override {}
 
-    function updateCollateralBalance(uint256 _amount) external override {}
+    // When ERC20 token collateral is received this function needs to be called
+    function updateCollateralBalance(uint256 _amount) external override {
+        _requireCallerIsBorrowerOperationsOrDefaultPool();
+        require(
+            collateralAddress != address(0),
+            "ActivePool: BTC collateral needed, not ERC20"
+        );
+        collateral += _amount;
+        emit ActivePoolCollateralBalanceUpdated(collateral);
+    }
 
-    function getCollateralBalance() external view override returns (uint) {}
+    /*
+     * Returns the collateral state variable.
+     *
+     * Not necessarily equal to the the contract's raw collateral balance - collateral can be forcibly sent to contracts.
+     */
+    function getCollateralBalance() external view override returns (uint) {
+        return collateral;
+    }
 
-    function getMUSDDebt() external view override returns (uint) {}
+    function getMUSDDebt() external view override returns (uint) {
+        return MUSDDebt;
+    }
 
     function _requireCallerIsBorrowerOperationsOrDefaultPool() internal view {
         require(
             msg.sender == borrowerOperationsAddress ||
                 msg.sender == defaultPoolAddress,
             "ActivePool: Caller is neither BorrowerOperations nor Default Pool"
+        );
+    }
+
+    function _requireCallerIsBorrwerOperationsOrTroveManager() internal view {
+        require(
+            msg.sender == borrowerOperationsAddress ||
+                msg.sender == troveManagerAddress,
+            "ActivePool: Caller is neither BorrowerOperations nor TroveManager"
+        );
+    }
+
+    function _requireCallerIsBOorTroveMorSP() internal view {
+        require(
+            msg.sender == borrowerOperationsAddress ||
+                msg.sender == troveManagerAddress ||
+                msg.sender == stabilityPoolAddress,
+            "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
         );
     }
 }

@@ -22,7 +22,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint128 arrayIndex;
     }
 
-    // Object containing the collateral and THUSD snapshots for a given active trove
+    // Object containing the collateral and MUSD snapshots for a given active trove
     struct RewardSnapshot {
         uint256 collateral;
         uint256 MUSDDebt;
@@ -58,18 +58,26 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     uint256 public baseRate;
 
-    // The timestamp of the latest fee operation (redemption or new THUSD issuance)
+    // The timestamp of the latest fee operation (redemption or new MUSD issuance)
     uint256 public lastFeeOperationTime;
 
     mapping(address => Trove) public Troves;
 
+    uint256 public totalStakes;
+
+    // Snapshot of the value of totalStakes, taken immediately after the latest liquidation
+    uint256 public totalStakesSnapshot;
+
+    // Snapshot of the total collateral across the ActivePool and DefaultPool, immediately after the latest liquidation.
+    uint256 public totalCollateralSnapshot;
+
     /*
-     * L_Collateral and L_THUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
+     * L_Collateral and L_MUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
      *
      * An collateral gain of ( stake * [L_Collateral - L_Collateral(0)] )
-     * A THUSDDebt increase  of ( stake * [L_THUSDDebt - L_THUSDDebt(0)] )
+     * A MUSDDebt increase  of ( stake * [L_MUSDDebt - L_MUSDDebt(0)] )
      *
-     * Where L_Collateral(0) and L_THUSDDebt(0) are snapshots of L_Collateral and L_THUSDDebt for the active Trove taken at the instant the stake was made
+     * Where L_Collateral(0) and L_MUSDDebt(0) are snapshots of L_Collateral and L_MUSDDebt for the active Trove taken at the instant the stake was made
      */
     uint256 public L_Collateral;
     uint256 public L_MUSDDebt;
@@ -152,13 +160,24 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function updateStakeAndTotalStakes(
         address _borrower
-    ) external override returns (uint) {}
+    ) external override returns (uint) {
+        _requireCallerIsBorrowerOperations();
+        return _updateStakeAndTotalStakes(_borrower);
+    }
 
-    function updateTroveRewardSnapshots(address _borrower) external override {}
+    // Update borrower's snapshots of L_Collateral and L_MUSDDebt to reflect the current values
+    function updateTroveRewardSnapshots(address _borrower) external override {
+        _requireCallerIsBorrowerOperations();
+        return _updateTroveRewardSnapshots(_borrower);
+    }
 
+    // Push the owner's address to the Trove owners list, and record the corresponding array index on the Trove struct
     function addTroveOwnerToArray(
         address _borrower
-    ) external override returns (uint256 index) {}
+    ) external override returns (uint256 index) {
+        _requireCallerIsBorrowerOperations();
+        return _addTroveOwnerToArray(_borrower);
+    }
 
     function applyPendingRewards(address _borrower) external override {}
 
@@ -166,7 +185,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function removeStake(address _borrower) external override {}
 
-    // Updates the baseRate state variable based on time elapsed since the last redemption or THUSD borrowing operation.
+    // Updates the baseRate state variable based on time elapsed since the last redemption or MUSD borrowing operation.
     function decayBaseRateFromBorrowing() external override {
         _requireCallerIsBorrowerOperations();
 
@@ -218,8 +237,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _borrower,
         uint256 _collDecrease
     ) external override returns (uint) {}
-
-    function musd() external view override returns (IMUSD) {}
 
     function getTroveOwnersCount() external view override returns (uint) {}
 
@@ -360,6 +377,42 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
+    // Update borrower's stake based on their latest collateral value
+    function _updateStakeAndTotalStakes(
+        address _borrower
+    ) internal returns (uint) {
+        uint256 newStake = _computeNewStake(Troves[_borrower].coll);
+        uint256 oldStake = Troves[_borrower].stake;
+        Troves[_borrower].stake = newStake;
+
+        totalStakes = totalStakes - oldStake + newStake;
+        emit TotalStakesUpdated(totalStakes);
+
+        return newStake;
+    }
+
+    function _updateTroveRewardSnapshots(address _borrower) internal {
+        rewardSnapshots[_borrower].collateral = L_Collateral;
+        rewardSnapshots[_borrower].MUSDDebt = L_MUSDDebt;
+        emit TroveSnapshotsUpdated(L_Collateral, L_MUSDDebt);
+    }
+
+    function _addTroveOwnerToArray(
+        address _borrower
+    ) internal returns (uint128 index) {
+        /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum MUSD
+        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 MUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
+
+        // Push the Troveowner to the array
+        TroveOwners.push(_borrower);
+
+        // Record the index of the new Troveowner on their Trove struct
+        index = uint128(TroveOwners.length - 1);
+        Troves[_borrower].arrayIndex = index;
+
+        return index;
+    }
+
     function _updateLastFeeOpTime() internal {
         // solhint-disable-next-line not-rely-on-time
         uint256 timePassed = block.timestamp - lastFeeOperationTime;
@@ -370,6 +423,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             // solhint-disable-next-line not-rely-on-time
             emit LastFeeOpTimeUpdated(block.timestamp);
         }
+    }
+
+    // Move a Trove's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
+    function _movePendingTroveRewardsToActivePool(
+        IActivePool _activePool,
+        IDefaultPool _defaultPool,
+        uint256 _MUSD,
+        uint256 _collateral
+    ) internal {
+        _defaultPool.decreaseMUSDDebt(_MUSD);
+        _activePool.increaseMUSDDebt(_MUSD);
+        _defaultPool.sendCollateralToActivePool(_collateral);
     }
 
     /*
@@ -399,6 +464,24 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit TroveIndexUpdated(addressToMove, index);
 
         TroveOwners.pop();
+    }
+
+    // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
+    function _computeNewStake(uint256 _coll) internal view returns (uint) {
+        uint256 stake;
+        if (totalCollateralSnapshot == 0) {
+            stake = _coll;
+        } else {
+            /*
+             * The following assert() holds true because:
+             * - The system always contains >= 1 trove
+             * - When we close or liquidate a trove, we redistribute the pending rewards, so if all troves were closed/liquidated,
+             * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
+             */
+            assert(totalStakesSnapshot > 0);
+            stake = (_coll * totalStakesSnapshot) / totalCollateralSnapshot;
+        }
+        return stake;
     }
 
     function _getRedemptionFee(
