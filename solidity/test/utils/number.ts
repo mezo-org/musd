@@ -4,7 +4,7 @@ export function to1ePrecision(
 ): bigint {
   const [integerPart, fractionalPart = ""] = n
     .toString()
-    .replace(",", "")
+    .replace(/,/g, "")
     .split(".")
 
   // Pad the fractional part with zeros to ensure it has at least `precision` digits

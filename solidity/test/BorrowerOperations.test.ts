@@ -25,6 +25,7 @@ describe("BorrowerOperations", () => {
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
+  let MIN_NET_DEBT: bigint
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
@@ -40,6 +41,8 @@ describe("BorrowerOperations", () => {
     dennis = testSetup.users.dennis
     eric = testSetup.users.eric
     deployer = testSetup.users.deployer
+
+    MIN_NET_DEBT = await contracts.borrowerOperations.MIN_NET_DEBT()
   })
 
   describe("Initial State", () => {
@@ -69,6 +72,7 @@ describe("BorrowerOperations", () => {
         "event TroveUpdated(address indexed borrower, uint256 debt, uint256 coll, uint256 stake, uint8 operation)",
       ]
 
+      // data setup
       let transactions = [
         {
           musdAmount: "15,000",
@@ -93,6 +97,7 @@ describe("BorrowerOperations", () => {
       let debt
       let emittedDebt
 
+      // validation
       for (let i = 0; i < transactions.length; i++) {
         tx = (await openTrove(contracts, transactions[i])).tx
 
@@ -105,6 +110,7 @@ describe("BorrowerOperations", () => {
         expect(debt).to.equal(emittedDebt)
       }
 
+      // system state change via Tester functionality
       const baseRateBefore = await contracts.troveManager.baseRate()
 
       if ("setBaseRate" in contracts.troveManager) {
@@ -120,6 +126,7 @@ describe("BorrowerOperations", () => {
         baseRateBefore,
       )
 
+      // data setup
       transactions = [
         {
           musdAmount: "5,000",
@@ -133,6 +140,7 @@ describe("BorrowerOperations", () => {
         },
       ]
 
+      // validation
       for (let i = 0; i < transactions.length; i++) {
         tx = (await openTrove(contracts, transactions[i])).tx
 
@@ -148,6 +156,22 @@ describe("BorrowerOperations", () => {
 
     it("openTrove(): Opens a trove with net debt >= minimum net debt", async () => {
       // TODO requires other contract functionality
+
+      await openTrove(contracts, {
+        musdAmount: MIN_NET_DEBT,
+        ICR: "200",
+        sender: alice,
+      })
+      expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
+        true,
+      )
+
+      await openTrove(contracts, {
+        musdAmount: "477,898,980,000",
+        ICR: "200",
+        sender: eric,
+      })
+      expect(await contracts.sortedTroves.contains(eric.address)).to.equal(true)
     })
 
     it("openTrove(): reverts if net debt < minimum net debt", async () => {

@@ -51,11 +51,11 @@ export async function getEventArgByName(
   argIndex: number,
 ) {
   const txReceipt = await tx.wait()
-
   const iface = new ethers.Interface(abi)
 
   if (txReceipt) {
-    txReceipt.logs.forEach((log) => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const log of txReceipt.logs) {
       try {
         const parsedLog = iface.parseLog(log)
         if (parsedLog && parsedLog.name === eventName) {
@@ -63,12 +63,9 @@ export async function getEventArgByName(
         }
       } catch (error) {
         // continue if the log does not match the event
-        return false
       }
-      return false
-    })
+    }
   }
-
   throw new Error(
     `The transaction logs do not contain event ${eventName} and arg ${argIndex}`,
   )

@@ -8,6 +8,38 @@ import "../TroveManager.sol";
 for testing the parent's internal functions. */
 
 contract TroveManagerTester is TroveManager {
+    function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
+        baseRate = _calcDecayedBaseRate();
+        assert(baseRate >= 0 && baseRate <= DECIMAL_PRECISION);
+
+        _updateLastFeeOpTime();
+        return baseRate;
+    }
+
+    function setLastFeeOpTimeToNow() external {
+        // solhint-disable-next-line not-rely-on-time
+        lastFeeOperationTime = block.timestamp;
+    }
+
+    function setBaseRate(uint256 _baseRate) external {
+        baseRate = _baseRate;
+    }
+
+    function callInternalRemoveTroveOwner(address _troveOwner) external {
+        uint256 troveOwnersArrayLength = TroveOwners.length;
+        _removeTroveOwner(_troveOwner, troveOwnersArrayLength);
+    }
+
+    function minutesPassedSinceLastFeeOp() external view returns (uint) {
+        return _minutesPassedSinceLastFeeOp();
+    }
+
+    function callGetRedemptionFee(
+        uint256 _collateralDrawn
+    ) external view returns (uint) {
+        return _getRedemptionFee(_collateralDrawn);
+    }
+
     function computeICR(
         uint256 _coll,
         uint256 _debt,
@@ -30,40 +62,9 @@ contract TroveManagerTester is TroveManager {
         return _getCompositeDebt(_debt);
     }
 
-    function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
-        baseRate = _calcDecayedBaseRate();
-        assert(baseRate >= 0 && baseRate <= DECIMAL_PRECISION);
-
-        _updateLastFeeOpTime();
-        return baseRate;
-    }
-
-    function minutesPassedSinceLastFeeOp() external view returns (uint) {
-        return _minutesPassedSinceLastFeeOp();
-    }
-
-    function setLastFeeOpTimeToNow() external {
-        lastFeeOperationTime = block.timestamp;
-    }
-
-    function setBaseRate(uint256 _baseRate) external {
-        baseRate = _baseRate;
-    }
-
-    function callGetRedemptionFee(
-        uint256 _collateralDrawn
-    ) external view returns (uint) {
-        return _getRedemptionFee(_collateralDrawn);
-    }
-
     function getActualDebtFromComposite(
         uint256 _debtVal
     ) external pure returns (uint) {
         return _getNetDebt(_debtVal);
-    }
-
-    function callInternalRemoveTroveOwner(address _troveOwner) external {
-        uint256 troveOwnersArrayLength = TroveOwners.length;
-        _removeTroveOwner(_troveOwner, troveOwnersArrayLength);
     }
 }

@@ -22,6 +22,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint128 arrayIndex;
     }
 
+    // Object containing the collateral and THUSD snapshots for a given active trove
+    struct RewardSnapshot {
+        uint256 collateral;
+        uint256 MUSDDebt;
+    }
+
     // --- Connected contract declarations ---
 
     address public borrowerOperationsAddress;
@@ -67,12 +73,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      */
     uint256 public L_Collateral;
     uint256 public L_MUSDDebt;
-
-    // Object containing the collateral and THUSD snapshots for a given active trove
-    struct RewardSnapshot {
-        uint256 collateral;
-        uint256 MUSDDebt;
-    }
 
     // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
     address[] public TroveOwners;
@@ -225,48 +225,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _price
     ) external view override returns (uint) {}
 
-    function getPendingCollateralReward(
-        address _borrower
-    ) public view override returns (uint) {
-        uint256 snapshotCollateral = rewardSnapshots[_borrower].collateral;
-        uint256 rewardPerUnitStaked = L_Collateral - snapshotCollateral;
-
-        if (
-            rewardPerUnitStaked == 0 ||
-            Troves[_borrower].status != Status.active
-        ) {
-            return 0;
-        }
-
-        uint256 stake = Troves[_borrower].stake;
-
-        uint256 pendingCollateralReward = (stake * rewardPerUnitStaked) /
-            DECIMAL_PRECISION;
-
-        return pendingCollateralReward;
-    }
-
-    function getPendingMUSDDebtReward(
-        address _borrower
-    ) public view override returns (uint) {
-        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].MUSDDebt;
-        uint256 rewardPerUnitStaked = L_MUSDDebt - snapshotMUSDDebt;
-
-        if (
-            rewardPerUnitStaked == 0 ||
-            Troves[_borrower].status != Status.active
-        ) {
-            return 0;
-        }
-
-        uint256 stake = Troves[_borrower].stake;
-
-        uint256 pendingMUSDDebtReward = (stake * rewardPerUnitStaked) /
-            DECIMAL_PRECISION;
-
-        return pendingMUSDDebtReward;
-    }
-
     function hasPendingRewards(
         address _borrower
     ) external view override returns (bool) {}
@@ -345,46 +303,97 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _checkRecoveryMode(_price);
     }
 
-    function _updateLastFeeOpTime() internal {
-        uint256 timePassed = block.timestamp - lastFeeOperationTime;
+    function getPendingCollateralReward(
+        address _borrower
+    ) public view override returns (uint) {
+        uint256 snapshotCollateral = rewardSnapshots[_borrower].collateral;
+        uint256 rewardPerUnitStaked = L_Collateral - snapshotCollateral;
 
-        if (timePassed >= 1 minutes) {
-            lastFeeOperationTime = block.timestamp;
-            emit LastFeeOpTimeUpdated(block.timestamp);
+        if (
+            rewardPerUnitStaked == 0 ||
+            Troves[_borrower].status != Status.active
+        ) {
+            return 0;
         }
+
+        uint256 stake = Troves[_borrower].stake;
+
+        uint256 pendingCollateralReward = (stake * rewardPerUnitStaked) /
+            DECIMAL_PRECISION;
+
+        return pendingCollateralReward;
+    }
+
+    function getPendingMUSDDebtReward(
+        address _borrower
+    ) public view override returns (uint) {
+        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].MUSDDebt;
+        uint256 rewardPerUnitStaked = L_MUSDDebt - snapshotMUSDDebt;
+
+        if (
+            rewardPerUnitStaked == 0 ||
+            Troves[_borrower].status != Status.active
+        ) {
+            return 0;
+        }
+
+        uint256 stake = Troves[_borrower].stake;
+
+        uint256 pendingMUSDDebtReward = (stake * rewardPerUnitStaked) /
+            DECIMAL_PRECISION;
+
+        return pendingMUSDDebtReward;
     }
 
     function getRedemptionRate() public view override returns (uint) {
         return _calcRedemptionRate(baseRate);
     }
 
-    function _calcRedemptionRate(
-        uint256 _baseRate
-    ) internal pure returns (uint) {
-        return
-            LiquityMath._min(
-                REDEMPTION_FEE_FLOOR + _baseRate,
-                DECIMAL_PRECISION // cap at a maximum of 100%
-            );
+    function _updateLastFeeOpTime() internal {
+        // solhint-disable-next-line not-rely-on-time
+        uint256 timePassed = block.timestamp - lastFeeOperationTime;
+
+        if (timePassed >= 1 minutes) {
+            // solhint-disable-next-line not-rely-on-time
+            lastFeeOperationTime = block.timestamp;
+            // solhint-disable-next-line not-rely-on-time
+            emit LastFeeOpTimeUpdated(block.timestamp);
+        }
+    }
+
+    /*
+     * Remove a Trove owner from the TroveOwners array, not preserving array order. Removing owner 'B' does the following:
+     * [A B C D E] => [A E C D], and updates E's Trove struct to point to its new array index.
+     */
+    function _removeTroveOwner(
+        address _borrower,
+        uint256 TroveOwnersArrayLength
+    ) internal {
+        Status troveStatus = Troves[_borrower].status;
+        // It’s set in caller function `_closeTrove`
+        assert(
+            troveStatus != Status.nonExistent && troveStatus != Status.active
+        );
+
+        uint128 index = Troves[_borrower].arrayIndex;
+        uint256 length = TroveOwnersArrayLength;
+        uint256 idxLast = length - 1;
+
+        assert(index <= idxLast);
+
+        address addressToMove = TroveOwners[idxLast];
+
+        TroveOwners[index] = addressToMove;
+        Troves[addressToMove].arrayIndex = index;
+        emit TroveIndexUpdated(addressToMove, index);
+
+        TroveOwners.pop();
     }
 
     function _getRedemptionFee(
         uint256 _collateralDrawn
     ) internal view returns (uint) {
         return _calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
-    }
-
-    function _calcRedemptionFee(
-        uint256 _redemptionRate,
-        uint256 _collateralDrawn
-    ) internal pure returns (uint) {
-        uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
-            DECIMAL_PRECISION;
-        require(
-            redemptionFee < _collateralDrawn,
-            "TroveManager: Fee would eat up all returned collateral"
-        );
-        return redemptionFee;
     }
 
     function _calcDecayedBaseRate() internal view returns (uint) {
@@ -421,32 +430,26 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
     }
 
-    /*
-     * Remove a Trove owner from the TroveOwners array, not preserving array order. Removing owner 'B' does the following:
-     * [A B C D E] => [A E C D], and updates E's Trove struct to point to its new array index.
-     */
-    function _removeTroveOwner(
-        address _borrower,
-        uint256 TroveOwnersArrayLength
-    ) internal {
-        Status troveStatus = Troves[_borrower].status;
-        // It’s set in caller function `_closeTrove`
-        assert(
-            troveStatus != Status.nonExistent && troveStatus != Status.active
+    function _calcRedemptionFee(
+        uint256 _redemptionRate,
+        uint256 _collateralDrawn
+    ) internal pure returns (uint) {
+        uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
+            DECIMAL_PRECISION;
+        require(
+            redemptionFee < _collateralDrawn,
+            "TroveManager: Fee would eat up all returned collateral"
         );
+        return redemptionFee;
+    }
 
-        uint128 index = Troves[_borrower].arrayIndex;
-        uint256 length = TroveOwnersArrayLength;
-        uint256 idxLast = length - 1;
-
-        assert(index <= idxLast);
-
-        address addressToMove = TroveOwners[idxLast];
-
-        TroveOwners[index] = addressToMove;
-        Troves[addressToMove].arrayIndex = index;
-        emit TroveIndexUpdated(addressToMove, index);
-
-        TroveOwners.pop();
+    function _calcRedemptionRate(
+        uint256 _baseRate
+    ) internal pure returns (uint) {
+        return
+            LiquityMath._min(
+                REDEMPTION_FEE_FLOOR + _baseRate,
+                DECIMAL_PRECISION // cap at a maximum of 100%
+            );
     }
 }

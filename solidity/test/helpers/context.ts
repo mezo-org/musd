@@ -22,6 +22,8 @@ import type {
   TroveManagerTester,
 } from "../../typechain/contracts/tests"
 
+const maxBytes32 = `0x${"f".repeat(64)}`
+
 // eslint-disable-next-line import/prefer-default-export
 export async function deployment(overwrite: Array<string>) {
   await deployments.fixture()
@@ -72,7 +74,8 @@ export async function deployment(overwrite: Array<string>) {
 
 export async function fixtureMUSD(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
-  const [alice, bob, carol, dennis] = await helpers.signers.getUnnamedSigners()
+  const [alice, bob, carol, dennis, eric] =
+    await helpers.signers.getUnnamedSigners()
   const contracts = await deployment(["MUSD"])
 
   const users: Users = {
@@ -143,6 +146,7 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     bob: users.bob.address,
     carol: users.carol.address,
     dennis: users.dennis.address,
+    eric: users.eric.address,
     deployer: users.deployer.address,
   }
 
@@ -200,5 +204,13 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.priceFeed.getAddress(),
       await contracts.sortedTroves.getAddress(),
       await contracts.stabilityPool.getAddress(),
+    )
+
+  await contracts.sortedTroves
+    .connect(users.deployer)
+    .setParams(
+      maxBytes32,
+      await contracts.troveManager.getAddress(),
+      await contracts.borrowerOperations.getAddress(),
     )
 }

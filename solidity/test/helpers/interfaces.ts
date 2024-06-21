@@ -33,6 +33,7 @@ export interface TestingAddresses {
   bob: string
   carol: string
   dennis: string
+  eric: string
   deployer: string
 }
 
