@@ -14,10 +14,13 @@ import {
   getEventArgByName,
   fastForwardTime,
   getLatestBlockTimestamp,
+  TestingAddresses,
+  getAddresses,
 } from "./helpers"
 import { to1e18 } from "./utils"
 
 describe("BorrowerOperations", () => {
+  let addresses: TestingAddresses
   // users
   let alice: HardhatEthersSigner
   let bob: HardhatEthersSigner
@@ -81,6 +84,9 @@ describe("BorrowerOperations", () => {
     deployer = testSetup.users.deployer
 
     MIN_NET_DEBT = await contracts.borrowerOperations.MIN_NET_DEBT()
+
+    // readability helper
+    addresses = await getAddresses(contracts, testSetup.users)
   })
 
   describe("Initial State", () => {
@@ -408,7 +414,30 @@ describe("BorrowerOperations", () => {
     })
 
     it("openTrove(): Reverts if fee exceeds max fee percentage", async () => {
-      // TODO requires other contract functionality
+      // setup
+      await defaultTrovesSetup()
+      const newRate = to1e18(5) / 100n
+      await setNewRate(newRate)
+
+      const baseRate = await contracts.troveManager.baseRate() // expect 5% base rate
+      expect(baseRate).to.equal(to1e18(5) / 100n)
+
+      // 100%: 1e18,  10%: 1e17,  1%: 1e16,  0.1%: 1e15
+      // 5%: 5e16
+      // 0.5%: 5e15
+      // actual: 0.5%, 5e15
+
+      const lessThan5pct = "49999999999999999"
+      expect(
+        await contracts.borrowerOperations
+          .connect(alice)
+          .withdrawMUSD(
+            lessThan5pct,
+            to1e18(3),
+            addresses.alice,
+            addresses.alice,
+          ),
+      ).to.be.revertedWith("Fee exceeded provided maximum")
     })
 
     it("openTrove(): Succeeds when fee is less than max fee percentage", async () => {

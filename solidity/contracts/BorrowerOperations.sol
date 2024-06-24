@@ -27,6 +27,22 @@ contract BorrowerOperations is
     Used to hold, return and assign variables inside a function, in order to avoid the error:
     "CompilerError: Stack too deep". */
 
+    struct LocalVariables_adjustTrove {
+        uint256 price;
+        uint256 collChange;
+        uint256 netDebtChange;
+        bool isCollIncrease;
+        uint256 debt;
+        uint256 coll;
+        uint256 oldICR;
+        uint256 newICR;
+        uint256 newTCR;
+        uint256 MUSDFee;
+        uint256 newDebt;
+        uint256 newColl;
+        uint256 stake;
+    }
+
     struct LocalVariables_openTrove {
         uint256 price;
         uint256 MUSDFee;
@@ -41,7 +57,7 @@ contract BorrowerOperations is
     struct ContractsCache {
         ITroveManager troveManager;
         IActivePool activePool;
-        IMUSD thusdToken;
+        IMUSD musd;
     }
 
     enum BorrowerOperation {
@@ -97,7 +113,7 @@ contract BorrowerOperations is
         if (!isRecoveryMode) {
             vars.MUSDFee = _triggerBorrowingFee(
                 contractsCache.troveManager,
-                contractsCache.thusdToken,
+                contractsCache.musd,
                 _debtAmount,
                 _maxFeePercentage
             );
@@ -165,7 +181,7 @@ contract BorrowerOperations is
         _activePoolAddColl(contractsCache.activePool, _assetAmount);
         _withdrawMUSD(
             contractsCache.activePool,
-            contractsCache.thusdToken,
+            contractsCache.musd,
             msg.sender,
             _debtAmount,
             vars.netDebt
@@ -173,7 +189,7 @@ contract BorrowerOperations is
         // Move the MUSD gas compensation to the Gas Pool
         _withdrawMUSD(
             contractsCache.activePool,
-            contractsCache.thusdToken,
+            contractsCache.musd,
             gasPoolAddress,
             MUSD_GAS_COMPENSATION,
             MUSD_GAS_COMPENSATION
@@ -217,7 +233,18 @@ contract BorrowerOperations is
         uint256 _amount,
         address _upperHint,
         address _lowerHint
-    ) external override {}
+    ) external override {
+        _adjustTrove(
+            msg.sender,
+            0,
+            _amount,
+            true,
+            0,
+            _upperHint,
+            _lowerHint,
+            _maxFeePercentage
+        );
+    }
 
     // Repay MUSD tokens to a Trove: Burn the repaid MUSD tokens, and reduce the trove's debt accordingly
     function repayMUSD(
@@ -325,7 +352,153 @@ contract BorrowerOperations is
         return _getCompositeDebt(_debt);
     }
 
-    // Issue the specified amount of THUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a THUSDFee)
+    /*
+     * _adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
+     *
+     * It therefore expects either a positive msg.value, or a positive _collWithdrawal argument.
+     *
+     * If both are positive, it will revert.
+     */
+    function _adjustTrove(
+        address _borrower,
+        uint256 _collWithdrawal,
+        uint256 _MUSDChange,
+        bool _isDebtIncrease,
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint,
+        uint256 _maxFeePercentage
+    ) internal {
+        ContractsCache memory contractsCache = ContractsCache(
+            troveManager,
+            activePool,
+            musd
+        );
+        LocalVariables_adjustTrove memory vars;
+
+        vars.price = priceFeed.fetchPrice();
+        bool isRecoveryMode = _checkRecoveryMode(vars.price);
+
+        if (_isDebtIncrease) {
+            _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
+            _requireNonZeroDebtChange(_MUSDChange);
+        }
+        _requireSingularCollChange(_collWithdrawal, _assetAmount);
+        _requireNonZeroAdjustment(_collWithdrawal, _MUSDChange, _assetAmount);
+        _requireTroveisActive(contractsCache.troveManager, _borrower);
+
+        // Confirm the operation is either a borrower adjusting their own trove, or a pure collateral transfer from the Stability Pool to a trove
+        assert(
+            msg.sender == _borrower ||
+                (msg.sender == stabilityPoolAddress &&
+                    _assetAmount > 0 &&
+                    _MUSDChange == 0)
+        );
+
+        contractsCache.troveManager.applyPendingRewards(_borrower);
+
+        // Get the collChange based on whether or not collateral was sent in the transaction
+        (vars.collChange, vars.isCollIncrease) = _getCollChange(
+            _assetAmount,
+            _collWithdrawal
+        );
+
+        vars.netDebtChange = _MUSDChange;
+
+        // If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
+        if (_isDebtIncrease && !isRecoveryMode) {
+            vars.MUSDFee = _triggerBorrowingFee(
+                contractsCache.troveManager,
+                contractsCache.musd,
+                _MUSDChange,
+                _maxFeePercentage
+            );
+            vars.netDebtChange += vars.MUSDFee; // The raw debt change includes the fee
+        }
+
+        vars.debt = contractsCache.troveManager.getTroveDebt(_borrower);
+        vars.coll = contractsCache.troveManager.getTroveColl(_borrower);
+
+        // Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
+        vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
+        vars.newICR = _getNewICRFromTroveChange(
+            vars.coll,
+            vars.debt,
+            vars.collChange,
+            vars.isCollIncrease,
+            vars.netDebtChange,
+            _isDebtIncrease,
+            vars.price
+        );
+        assert(_collWithdrawal <= vars.coll);
+
+        // Check the adjustment satisfies all conditions for the current system mode
+        _requireValidAdjustmentInCurrentMode(
+            isRecoveryMode,
+            _collWithdrawal,
+            _isDebtIncrease,
+            vars
+        );
+
+        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough MUSD
+        if (!_isDebtIncrease && _MUSDChange > 0) {
+            _requireAtLeastMinNetDebt(
+                _getNetDebt(vars.debt) - vars.netDebtChange
+            );
+            _requireValidMUSDRepayment(vars.debt, vars.netDebtChange);
+            _requireSufficientMUSDBalance(
+                contractsCache.musd,
+                _borrower,
+                vars.netDebtChange
+            );
+        }
+
+        (vars.newColl, vars.newDebt) = _updateTroveFromAdjustment(
+            contractsCache.troveManager,
+            _borrower,
+            vars.collChange,
+            vars.isCollIncrease,
+            vars.netDebtChange,
+            _isDebtIncrease
+        );
+        vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
+            _borrower
+        );
+
+        // Re-insert trove in to the sorted list
+        uint256 newNICR = _getNewNominalICRFromTroveChange(
+            vars.coll,
+            vars.debt,
+            vars.collChange,
+            vars.isCollIncrease,
+            vars.netDebtChange,
+            _isDebtIncrease
+        );
+        sortedTroves.reInsert(_borrower, newNICR, _upperHint, _lowerHint);
+
+        emit TroveUpdated(
+            _borrower,
+            vars.newDebt,
+            vars.newColl,
+            vars.stake,
+            uint8(BorrowerOperation.adjustTrove)
+        );
+        emit MUSDBorrowingFeePaid(msg.sender, vars.MUSDFee);
+
+        // Use the unmodified _MUSDChange here, as we don't send the fee to the user
+        _moveTokensAndCollateralfromAdjustment(
+            contractsCache.activePool,
+            contractsCache.musd,
+            msg.sender,
+            vars.collChange,
+            vars.isCollIncrease,
+            _MUSDChange,
+            _isDebtIncrease,
+            vars.netDebtChange
+        );
+    }
+
+    // Issue the specified amount of MUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
     function _withdrawMUSD(
         IActivePool _activePool,
         IMUSD _musd,
@@ -335,6 +508,46 @@ contract BorrowerOperations is
     ) internal {
         _activePool.increaseMUSDDebt(_netDebtIncrease);
         _musd.mint(_account, _debtAmount);
+    }
+
+    // Burn the specified amount of MUSD from _account and decreases the total active debt
+    function _repayMUSD(
+        IActivePool _activePool,
+        IMUSD _musd,
+        address _account,
+        uint256 _MUSD
+    ) internal {
+        _activePool.decreaseMUSDDebt(_MUSD);
+        _musd.burn(_account, _MUSD);
+    }
+
+    function _moveTokensAndCollateralfromAdjustment(
+        IActivePool _activePool,
+        IMUSD _musd,
+        address _borrower,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _MUSDChange,
+        bool _isDebtIncrease,
+        uint256 _netDebtChange
+    ) internal {
+        if (_isDebtIncrease) {
+            _withdrawMUSD(
+                _activePool,
+                _musd,
+                _borrower,
+                _MUSDChange,
+                _netDebtChange
+            );
+        } else {
+            _repayMUSD(_activePool, _musd, _borrower, _MUSDChange);
+        }
+
+        if (_isCollIncrease) {
+            _activePoolAddColl(_activePool, _collChange);
+        } else {
+            _activePool.sendCollateral(_borrower, _collChange);
+        }
     }
 
     // Send collateral to Active Pool and increase its recorded collateral balance
@@ -355,22 +568,41 @@ contract BorrowerOperations is
         _activePool.updateCollateralBalance(_amount);
     }
 
+    // Update trove's coll and debt based on whether they increase or decrease
+    function _updateTroveFromAdjustment(
+        ITroveManager _troveManager,
+        address _borrower,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _debtChange,
+        bool _isDebtIncrease
+    ) internal returns (uint, uint) {
+        uint256 newColl = (_isCollIncrease)
+            ? _troveManager.increaseTroveColl(_borrower, _collChange)
+            : _troveManager.decreaseTroveColl(_borrower, _collChange);
+        uint256 newDebt = (_isDebtIncrease)
+            ? _troveManager.increaseTroveDebt(_borrower, _debtChange)
+            : _troveManager.decreaseTroveDebt(_borrower, _debtChange);
+
+        return (newColl, newDebt);
+    }
+
     // --- Helper functions ---
 
     function _triggerBorrowingFee(
         ITroveManager _troveManager,
-        IMUSD _thusdToken,
-        uint256 _THUSDAmount,
+        IMUSD _musd,
+        uint256 _MUSDAmount,
         uint256 _maxFeePercentage
     ) internal returns (uint) {
         _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint256 THUSDFee = _troveManager.getBorrowingFee(_THUSDAmount);
+        uint256 MUSDFee = _troveManager.getBorrowingFee(_MUSDAmount);
 
-        _requireUserAcceptsFee(THUSDFee, _THUSDAmount, _maxFeePercentage);
+        _requireUserAcceptsFee(MUSDFee, _MUSDAmount, _maxFeePercentage);
 
         // Send fee to PCV contract
-        _thusdToken.mint(pcvAddress, THUSDFee);
-        return THUSDFee;
+        _musd.mint(pcvAddress, MUSDFee);
+        return MUSDFee;
     }
 
     function getAssetAmount(
@@ -419,6 +651,140 @@ contract BorrowerOperations is
         return newTCR;
     }
 
+    function _requireTroveisActive(
+        ITroveManager _troveManager,
+        address _borrower
+    ) internal view {
+        ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
+        require(
+            status == ITroveManager.Status.active,
+            "BorrowerOps: Trove does not exist or is closed"
+        );
+    }
+
+    function _requireValidAdjustmentInCurrentMode(
+        bool _isRecoveryMode,
+        uint256 _collWithdrawal,
+        bool _isDebtIncrease,
+        LocalVariables_adjustTrove memory _vars
+    ) internal view {
+        /*
+         *In Recovery Mode, only allow:
+         *
+         * - Pure collateral top-up
+         * - Pure debt repayment
+         * - Collateral top-up with debt repayment
+         * - A debt increase combined with a collateral top-up which makes the ICR >= 150% and improves the ICR (and by extension improves the TCR).
+         *
+         * In Normal Mode, ensure:
+         *
+         * - The new ICR is above MCR
+         * - The adjustment won't pull the TCR below CCR
+         */
+        if (_isRecoveryMode) {
+            _requireNoCollWithdrawal(_collWithdrawal);
+            if (_isDebtIncrease) {
+                _requireICRisAboveCCR(_vars.newICR);
+                _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
+            }
+        } else {
+            // if Normal Mode
+            _requireICRisAboveMCR(_vars.newICR);
+            _vars.newTCR = _getNewTCRFromTroveChange(
+                _vars.collChange,
+                _vars.isCollIncrease,
+                _vars.netDebtChange,
+                _isDebtIncrease,
+                _vars.price
+            );
+            _requireNewTCRisAboveCCR(_vars.newTCR);
+        }
+    }
+
+    function _requireSufficientMUSDBalance(
+        IMUSD _musd,
+        address _borrower,
+        uint256 _debtRepayment
+    ) internal view {
+        require(
+            _musd.balanceOf(_borrower) >= _debtRepayment,
+            "BorrowerOps: Caller doesnt have enough MUSD to make repayment"
+        );
+    }
+
+    function _getCollChange(
+        uint256 _collReceived,
+        uint256 _requestedCollWithdrawal
+    ) internal pure returns (uint256 collChange, bool isCollIncrease) {
+        if (_collReceived != 0) {
+            collChange = _collReceived;
+            isCollIncrease = true;
+        } else {
+            collChange = _requestedCollWithdrawal;
+        }
+    }
+
+    // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
+    function _getNewICRFromTroveChange(
+        uint256 _coll,
+        uint256 _debt,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _debtChange,
+        bool _isDebtIncrease,
+        uint256 _price
+    ) internal pure returns (uint) {
+        (uint256 newColl, uint256 newDebt) = _getNewTroveAmounts(
+            _coll,
+            _debt,
+            _collChange,
+            _isCollIncrease,
+            _debtChange,
+            _isDebtIncrease
+        );
+        uint256 newICR = LiquityMath._computeCR(newColl, newDebt, _price);
+        return newICR;
+    }
+
+    function _getNewTroveAmounts(
+        uint256 _coll,
+        uint256 _debt,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _debtChange,
+        bool _isDebtIncrease
+    ) internal pure returns (uint, uint) {
+        uint256 newColl = _coll;
+        uint256 newDebt = _debt;
+
+        newColl = _isCollIncrease ? _coll + _collChange : _coll - _collChange;
+        newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
+
+        return (newColl, newDebt);
+    }
+
+    // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
+    function _getNewNominalICRFromTroveChange(
+        uint256 _coll,
+        uint256 _debt,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _debtChange,
+        bool _isDebtIncrease
+    ) internal pure returns (uint) {
+        (uint256 newColl, uint256 newDebt) = _getNewTroveAmounts(
+            _coll,
+            _debt,
+            _collChange,
+            _isCollIncrease,
+            _debtChange,
+            _isDebtIncrease
+        );
+
+        uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
+        return newNICR;
+    }
+
     function _requireValidMaxFeePercentage(
         uint256 _maxFeePercentage,
         bool _isRecoveryMode
@@ -462,6 +828,61 @@ contract BorrowerOperations is
         require(
             _newTCR >= CCR,
             "BorrowerOps: An operation that would result in TCR < CCR is not permitted"
+        );
+    }
+
+    function _requireNonZeroDebtChange(uint256 _MUSDChange) internal pure {
+        require(
+            _MUSDChange > 0,
+            "BorrowerOps: Debt increase requires non-zero debtChange"
+        );
+    }
+
+    function _requireSingularCollChange(
+        uint256 _collWithdrawal,
+        uint256 _assetAmount
+    ) internal pure {
+        require(
+            _assetAmount == 0 || _collWithdrawal == 0,
+            "BorrowerOperations: Cannot withdraw and add coll"
+        );
+    }
+
+    function _requireNonZeroAdjustment(
+        uint256 _collWithdrawal,
+        uint256 _MUSDChange,
+        uint256 _assetAmount
+    ) internal pure {
+        require(
+            _assetAmount != 0 || _collWithdrawal != 0 || _MUSDChange != 0,
+            "BorrowerOps: There must be either a collateral change or a debt change"
+        );
+    }
+
+    function _requireNoCollWithdrawal(uint256 _collWithdrawal) internal pure {
+        require(
+            _collWithdrawal == 0,
+            "BorrowerOps: Collateral withdrawal not permitted Recovery Mode"
+        );
+    }
+
+    function _requireNewICRisAboveOldICR(
+        uint256 _newICR,
+        uint256 _oldICR
+    ) internal pure {
+        require(
+            _newICR >= _oldICR,
+            "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode"
+        );
+    }
+
+    function _requireValidMUSDRepayment(
+        uint256 _currentDebt,
+        uint256 _debtRepayment
+    ) internal pure {
+        require(
+            _debtRepayment <= _currentDebt - MUSD_GAS_COMPENSATION,
+            "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
         );
     }
 }

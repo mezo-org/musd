@@ -133,7 +133,7 @@ interface ITroveManager {
 
     function decreaseTroveDebt(
         address _borrower,
-        uint256 _collDecrease
+        uint256 _debtDecrease
     ) external returns (uint);
 
     function stabilityPool() external view returns (IStabilityPool);
