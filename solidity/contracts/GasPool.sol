@@ -19,5 +19,5 @@ import "./interfaces/IGasPool.sol";
 contract GasPool is Ownable, CheckContract, IGasPool {
     constructor() Ownable(msg.sender) {}
 
-    function sendTHUSD(address _account, uint256 _amount) external override {}
+    function sendMUSD(address _account, uint256 _amount) external override {}
 }

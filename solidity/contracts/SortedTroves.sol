@@ -99,7 +99,10 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         _insert(troveManagerCached, _id, _NICR, _prevId, _nextId);
     }
 
-    function remove(address _id) external override {}
+    function remove(address _id) external override {
+        _requireCallerIsTroveManager();
+        _remove(_id);
+    }
 
     function reInsert(
         address _id,
@@ -108,7 +111,9 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         address _nextId
     ) external override {}
 
-    function getSize() external view override returns (uint256) {}
+    function getSize() external view override returns (uint256) {
+        return data.size;
+    }
 
     function getMaxSize() external view override returns (uint256) {}
 
@@ -159,6 +164,51 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
      */
     function isEmpty() public view override returns (bool) {
         return data.size == 0;
+    }
+
+    /*
+     * @dev Remove a node from the list
+     * @param _id Node's id
+     */
+    function _remove(address _id) internal {
+        // List must contain the node
+        require(contains(_id), "SortedTroves: List does not contain the id");
+
+        if (data.size > 1) {
+            // List contains more than a single node
+            if (_id == data.head) {
+                // The removed node is the head
+                // Set head to next node
+                data.head = data.nodes[_id].nextId;
+                // Set prev pointer of new head to null
+                data.nodes[data.head].prevId = address(0);
+            } else if (_id == data.tail) {
+                // The removed node is the tail
+                // Set tail to previous node
+                data.tail = data.nodes[_id].prevId;
+                // Set next pointer of new tail to null
+                data.nodes[data.tail].nextId = address(0);
+            } else {
+                // The removed node is neither the head nor the tail
+                // Set next pointer of previous node to the next node
+                data.nodes[data.nodes[_id].prevId].nextId = data
+                    .nodes[_id]
+                    .nextId;
+                // Set prev pointer of next node to the previous node
+                data.nodes[data.nodes[_id].nextId].prevId = data
+                    .nodes[_id]
+                    .prevId;
+            }
+        } else {
+            // List contains a single node
+            // Set the head and tail to null
+            data.head = address(0);
+            data.tail = address(0);
+        }
+
+        delete data.nodes[_id];
+        data.size -= 1;
+        emit NodeRemoved(_id);
     }
 
     function _insert(
@@ -364,6 +414,12 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
     }
 
     // --- 'require' functions ---
+    function _requireCallerIsTroveManager() internal view {
+        require(
+            msg.sender == address(troveManager),
+            "SortedTroves: Caller is not the TroveManager"
+        );
+    }
 
     function _requireCallerIsBOorTroveM(
         ITroveManager _troveManager

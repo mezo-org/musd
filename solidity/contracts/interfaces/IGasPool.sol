@@ -5,8 +5,8 @@ pragma solidity ^0.8.17;
 interface IGasPool {
     // --- Events ---
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
-    event THUSDTokenAddressChanged(address _thusdTokenAddress);
+    event MUSDTokenAddressChanged(address _musdTokenAddress);
 
     // --- Functions ---
-    function sendTHUSD(address _account, uint256 _amount) external;
+    function sendMUSD(address _account, uint256 _amount) external;
 }

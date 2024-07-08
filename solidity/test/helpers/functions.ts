@@ -25,8 +25,14 @@ export async function getOpenTroveTotalDebt(
   musdAmount: bigint,
 ) {
   const fee = await contracts.troveManager.getBorrowingFee(musdAmount)
+  const price = await contracts.priceFeed.getPrice()
+  const recoveryMode = await contracts.troveManager.checkRecoveryMode(price)
   const compositeDebt =
     await contracts.borrowerOperations.getCompositeDebt(musdAmount)
+
+  if (recoveryMode) {
+    return compositeDebt
+  }
   return compositeDebt + fee
 }
 
@@ -73,6 +79,7 @@ export async function getEventArgByName(
 
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const params = inputs
+
   // fill in hints for searching trove list if not provided
   if (params.lowerHint === undefined) params.lowerHint = ZERO_ADDRESS
   if (params.upperHint === undefined) params.upperHint = ZERO_ADDRESS
@@ -93,11 +100,12 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
       ? params.musdAmount
       : to1e18(params.musdAmount)
 
+  const price = await contracts.priceFeed.getPrice()
+
   // amount of debt to take on
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
 
   // amount of assets required for the loan
-  const price = await contracts.priceFeed.getPrice()
   const assetAmount = (ICR * totalDebt) / price
 
   const tx = await contracts.borrowerOperations
@@ -119,4 +127,9 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
     collateral: assetAmount,
     tx,
   }
+}
+
+export async function getTCR(contracts: Contracts) {
+  const price = await contracts.priceFeed.getPrice()
+  return contracts.troveManager.getTCR(price)
 }

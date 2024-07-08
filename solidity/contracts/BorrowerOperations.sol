@@ -253,7 +253,67 @@ contract BorrowerOperations is
         address _lowerHint
     ) external override {}
 
-    function closeTrove() external override {}
+    function closeTrove() external override {
+        ITroveManager troveManagerCached = troveManager;
+        IActivePool activePoolCached = activePool;
+        IMUSD musdTokenCached = musd;
+        bool canMint = musdTokenCached.mintList(address(this));
+
+        _requireTroveisActive(troveManagerCached, msg.sender);
+        uint256 price = priceFeed.fetchPrice();
+        if (canMint) {
+            _requireNotInRecoveryMode(price);
+        }
+
+        troveManagerCached.applyPendingRewards(msg.sender);
+
+        uint256 coll = troveManagerCached.getTroveColl(msg.sender);
+        uint256 debt = troveManagerCached.getTroveDebt(msg.sender);
+
+        _requireSufficientMUSDBalance(
+            musdTokenCached,
+            msg.sender,
+            debt - MUSD_GAS_COMPENSATION
+        );
+        if (canMint) {
+            uint256 newTCR = _getNewTCRFromTroveChange(
+                coll,
+                false,
+                debt,
+                false,
+                price
+            );
+            _requireNewTCRisAboveCCR(newTCR);
+        }
+
+        troveManagerCached.removeStake(msg.sender);
+        troveManagerCached.closeTrove(msg.sender);
+
+        emit TroveUpdated(
+            msg.sender,
+            0,
+            0,
+            0,
+            uint8(BorrowerOperation.closeTrove)
+        );
+
+        // Burn the repaid MUSD from the user's balance and the gas compensation from the Gas Pool
+        _repayMUSD(
+            activePoolCached,
+            musdTokenCached,
+            msg.sender,
+            debt - MUSD_GAS_COMPENSATION
+        );
+        _repayMUSD(
+            activePoolCached,
+            musdTokenCached,
+            gasPoolAddress,
+            MUSD_GAS_COMPENSATION
+        );
+
+        // Send the collateral back to the user
+        activePoolCached.sendCollateral(msg.sender, coll);
+    }
 
     function adjustTrove(
         uint256 _maxFeePercentage,
@@ -617,6 +677,13 @@ contract BorrowerOperations is
             "BorrowerOperations: ERC20 collateral needed, not ETH"
         );
         return _assetAmount;
+    }
+
+    function _requireNotInRecoveryMode(uint256 _price) internal view {
+        require(
+            !_checkRecoveryMode(_price),
+            "BorrowerOps: Operation not permitted during Recovery Mode"
+        );
     }
 
     function _requireTroveisNotActive(
