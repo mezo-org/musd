@@ -1,0 +1,68 @@
+{
+  "root": true,
+  "extends": ["@thesis-co"],
+  "plugins": ["react", "simple-import-sort"],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["src"],
+        "extensions": [".js", ".jsx", ".ts", ".d.ts", ".tsx"]
+      },
+      "typescript": {
+        "project": "./tsconfig.json"
+      }
+    },
+    "sort-imports": ["error", { "allowSeparatedGroups": false }]
+  },
+  "rules": {
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "react/default-props-match-prop-types": [
+      2,
+      { "allowRequiredDefaults": true }
+    ],
+    "react/require-default-props": [0],
+    "react/prop-types": [0],
+    "react/jsx-props-no-spreading": [0],
+    "react/no-unknown-property": [
+      2,
+      {
+        "ignore": ["jsx", "global"]
+      }
+    ],
+    "react/react-in-jsx-scope": [0],
+    // Some of dev dependencies are being forced, to be included as 'dependencies'
+    // instead of 'devDependencies'
+    "import/no-extraneous-dependencies": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.jsx", "*.ts", "*.tsx"],
+      "excludedFiles": ["src/routeTree.gen.ts"],
+      "rules": {
+        "simple-import-sort/imports": [
+          "error",
+          {
+            "groups": [
+              // Packages `react` related packages come first.
+              ["^react", "^@?\\w"],
+              // Internal packages.
+              ["^(@|components)(/.*|$)"],
+              // Path aliases
+              ["^#/(.*)"],
+              // Side effect imports.
+              ["^\\u0000"],
+              // Parent imports. Put `..` last.
+              ["^\\.\\.(?!/?$)", "^\\.\\./?$"],
+              // Other relative imports. Put same-folder imports and `.` last.
+              ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
+              // Style imports.
+              ["^.+\\.?(css)$"]
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": ["dist", "src/routeTree.gen.ts"]
+}
