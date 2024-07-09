@@ -26,7 +26,7 @@ pnpm build
 
 ### Local development
 
-During local development (no testnet / mainnet interaction), run hardhat localy in `solidity` directory
+During local development (no testnet / mainnet interaction), run hardhat locally in `solidity` directory
 
 ```bash
     cd ../solidity

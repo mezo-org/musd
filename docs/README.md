@@ -2,7 +2,7 @@
 
 MUSD is a stablecoin that is minted by creating a loan against the borrowers crytpo assets, this is known as a Collateralised Debt Position (CDP).
 
-MUSD v0 is based on [Threshold USD](https://github.com/Threshold-USD/dev/tree/thUSD) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
+MUSD v0 is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
 
 ## Core Ideas
 
@@ -31,7 +31,7 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 `startRevokeMintList(address _account)`: This function initiates the process of revoking a borrower operations contract's capability to mint new tokens. It first validates that the address provided in `_account` parameter is included in the `mintList`. Once verified, the function initializes the revocation process by updating `revokeMintListInitiated` with the current block timestamp and `pendingRevokedMintAddress` with the address passed in `_account` parameter.
 
-`cancelRevokeMintList()`: It cancels the existing revoking mint process. The function first validates whether the `pendingRevokedMintAddress` is non-zero to confirm the presence of an ongoing pending revoking process. Once verified, it resets both `revokeMintListInitiated` and `pendingRevokedMintAddress` to zero and `address(0)` respectively. Effectively finalizing the existing revoking process.
+`cancelRevokeMintList()`: It cancels the existing revoking mint process. The function first validates whether the `pendingRevokedMintAddress` is non-zero to confirm the presence of an ongoing pending revoking process. Once verified, it resets both `revokeMintListInitiated` and `pendingRevokedMintAddress` to zero and `address(0)` respectively, effectively finalizing the existing revoking process.
 
 `finalizeRevokeMintList()`: This function revokes the minting capability to the borrower operations contract, previously designated in the `pendingRevokedMintAddress`. It executes only after the governance delay has elapsed following the `revokeMintListInitiated` timestamp. By finalizing the revoke mint process it resets the `pendingRevokedMintAddress` and `revokeMintListInitiated`.
 
@@ -41,7 +41,7 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 `finalizeAddMintList()`: This function adds the minting capability to the borrower operations contract, previously designated in the `pendingAddedMintAddress`. It executes only after the governance delay has elapsed following the `addMintListInitiated` timestamp. By finalizing the revoke mint process it resets the `pendingAddedMintAddress` and `addMintListInitiated`.
 
-`startAddContracts(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress)`: This function initiates the process of integrating borrower operations, trove manager, and stability pool contracts, enabling them to mint and burn MUSD tokens. It begins by verifying that the contract addresses provided as parameters are indeed contracts. Once confirmed, it assigns the addresses to p`endingTroveManager`, `pendingStabilityPool`, and `pendingBorrowerOperations` using `_troveManagerAddress`, `_stabilityPoolAddress`, and `_borrowerOperationsAddress`, respectively. Additionally, it records the initiation of adding these contracts by setting `addContractsInitiated` to the current block timestamp when the transaction is executed.
+`startAddContracts(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress)`: This function initiates the process of integrating borrower operations, trove manager, and stability pool contracts, enabling them to mint and burn MUSD tokens. It begins by verifying that the contract addresses provided as parameters are indeed contracts. Once confirmed, it assigns the addresses to `pendingTroveManager`, `pendingStabilityPool`, and `pendingBorrowerOperations` using `_troveManagerAddress`, `_stabilityPoolAddress`, and `_borrowerOperationsAddress`, respectively. Additionally, it records the initiation of adding these contracts by setting `addContractsInitiated` to the current block timestamp when the transaction is executed.
 
 `cancelAddContracts()`: This function terminates the current process of adding contracts. Initially, it checks that `addContractsInitiated` is not zero, which indicates an active process of adding contracts is underway. Upon confirmation, it resets `addContractsInitiated`, `pendingTroveManager`, `pendingStabilityPool`, and `pendingRevokedMintAddress` to 0, `address(0)`, `address(0)`, and `address(0)` respectively. This action effectively concludes the process of adding contracts.
 
