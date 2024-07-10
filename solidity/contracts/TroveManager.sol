@@ -147,6 +147,24 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public lastCollateralError_Redistribution;
     uint256 public lastMUSDDebtError_Redistribution;
 
+    // Interest rate per year
+    uint256 private _interestRate;
+
+    // Event to emit when the interest rate is updated
+    event InterestRateUpdated(uint256 newInterestRate);
+
+    // Function to update the interest rate, restricted to the contract owner
+    // TODO Restrict this to whitelisted addresses
+    function updateInterestRate(uint256 newInterestRate) external onlyOwner {
+        _interestRate = newInterestRate;
+        emit InterestRateUpdated(newInterestRate);
+    }
+
+    // Getter function for the interest rate
+    function getInterestRate() external view returns (uint256) {
+        return _interestRate;
+    }
+
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
