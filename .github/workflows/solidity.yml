@@ -109,6 +109,35 @@ jobs:
       - name: Run tests
         run: pnpm run test --no-compile
 
+  solidity-code-coverage:
+    needs: [solidity-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: ./solidity
+
+      - name: Create Coverage Report
+        run: npx hardhat coverage
+
+      - name: Check Coverage
+        run: npx istanbul check-coverage --statements 90 --branches 90 --functions 90 --lines 90
+
   solidity-slither:
     needs: [solidity-build]
     if: github.event_name != 'workflow_dispatch'
