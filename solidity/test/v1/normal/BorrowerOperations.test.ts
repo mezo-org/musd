@@ -577,6 +577,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
+      it.only("openTrove(): Creates a new trove and sets the interest rate to the current global interest rate", async () => {
+        await contracts.troveManager.connect(deployer).updateInterestRate(1)
+        await openTrove(contracts, {
+          musdAmount: "100,000",
+          sender: alice,
+        })
+
+        const trove = await contracts.troveManager.Troves(alice.address)
+        console.log(trove)
+        expect(trove.interestRate).to.equal(1)
+      })
+
       it("openTrove(): Creates a new Trove and assigns the correct collateral and debt amount", async () => {
         // TODO requires other contract functionality
         const debtBefore = await getTroveEntireDebt(contracts, alice)

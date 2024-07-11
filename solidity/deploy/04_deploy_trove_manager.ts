@@ -7,6 +7,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
+  console.log()
+
   const deployment = await deployments.getOrNull("TroveManager")
   if (deployment && helpers.address.isValid(deployment.address)) {
     log(`Using TroveManager at ${deployment.address}`)

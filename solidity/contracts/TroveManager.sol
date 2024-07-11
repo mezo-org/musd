@@ -30,6 +30,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 stake;
         Status status;
         uint128 arrayIndex;
+        uint256 interestRate;
     }
 
     // Object containing the collateral and MUSD snapshots for a given active trove
@@ -294,6 +295,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) external override {
         _requireCallerIsBorrowerOperations();
         Troves[_borrower].status = _status;
+    }
+
+    function setTroveInterestRate(
+        address _borrower,
+        uint256 _rate
+    ) external {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].interestRate = _rate;
     }
 
     function increaseTroveColl(
