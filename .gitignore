@@ -19,3 +19,6 @@ tmp/
 
 # Local Netlify folder
 .netlify
+
+# Code Coverage
+**/coverage/
