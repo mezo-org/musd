@@ -42,7 +42,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         troveManager.address,
         stabilityPool.address,
         borrowerOperations.address,
-        delay,
+        10,
       ],
       from: deployer,
       log: true,
