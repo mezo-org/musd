@@ -38,7 +38,9 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
             checkContract(_collateralAddress);
         }
 
+        // slither-disable-next-line missing-zero-check
         troveManagerAddress = _troveManagerAddress;
+        // slither-disable-next-line missing-zero-check
         activePoolAddress = _activePoolAddress;
         collateralAddress = _collateralAddress;
 

@@ -578,7 +578,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("openTrove(): Creates a new Trove and assigns the correct collateral and debt amount", async () => {
-        // TODO requires other contract functionality
         const debtBefore = await getTroveEntireDebt(contracts, alice)
         const collBefore = await getTroveEntireColl(contracts, alice)
         const statusBefore = await contracts.troveManager.getTroveStatus(alice)
@@ -612,7 +611,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("openTrove(): Allows a user to open a Trove, then close it, then re-open it", async () => {
-        // TODO requires other contract functionality
         await lowCRSetup()
 
         // Check trove is active

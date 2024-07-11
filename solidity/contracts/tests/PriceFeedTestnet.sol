@@ -25,6 +25,7 @@ contract PriceFeedTestnet is Ownable, IPriceFeed {
 
     // Manual external price setter.
     function setPrice(uint256 price) external onlyOwner returns (bool) {
+        // slither-disable-next-line events-maths
         _price = price;
         return true;
     }

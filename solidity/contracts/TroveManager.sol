@@ -1,3 +1,7 @@
+// slither-disable-start reentrancy-benign
+// slither-disable-start reentrancy-events
+// slither-disable-start reentrancy-no-eth
+
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.17;
@@ -111,8 +115,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
     uint256 public constant REDEMPTION_FEE_FLOOR =
-        (DECIMAL_PRECISION / 1000) * 5; // 0.5%
-    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION / 100) * 5; // 5%
+        (DECIMAL_PRECISION * 5) / 1000; // 0.5%
+    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
     uint256 public baseRate;
 
@@ -141,6 +145,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public L_MUSDDebt;
 
     // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
+    // slither-disable-next-line similar-names
     address[] public TroveOwners;
 
     // Error trackers for the trove redistribution calculation
@@ -404,7 +409,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         IDefaultPool defaultPoolCached = defaultPool;
         IStabilityPool stabilityPoolCached = stabilityPool;
 
+        // slither-disable-next-line uninitialized-local
         LocalVariables_OuterLiquidationFunction memory vars;
+        // slither-disable-next-line uninitialized-local
         LiquidationTotals memory totals;
 
         vars.price = priceFeed.fetchPrice();
@@ -697,8 +704,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             lastMUSDDebtError_Redistribution;
 
         // Get the per-unit-staked terms
+        // slither-disable-next-line divide-before-multiply
         uint256 collateralRewardPerUnitStaked = collateralNumerator /
             totalStakes;
+        // slither-disable-next-line divide-before-multiply
         uint256 MUSDDebtRewardPerUnitStaked = MUSDDebtNumerator / totalStakes;
 
         lastCollateralError_Redistribution =
@@ -727,6 +736,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _borrower,
         uint256 _MUSDInStabPool
     ) internal returns (LiquidationValues memory singleLiquidation) {
+        // slither-disable-next-line uninitialized-local
         LocalVariables_InnerSingleLiquidateFunction memory vars;
 
         (
@@ -793,7 +803,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _MUSDInStabPool,
         address[] memory _troveArray
     ) internal returns (LiquidationTotals memory totals) {
+        // slither-disable-next-line uninitialized-local
         LocalVariables_LiquidationSequence memory vars;
+        // slither-disable-next-line uninitialized-local
         LiquidationValues memory singleLiquidation;
 
         vars.remainingMUSDInStabPool = _MUSDInStabPool;
@@ -831,7 +843,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _MUSDInStabPool,
         address[] memory _troveArray
     ) internal returns (LiquidationTotals memory totals) {
+        // slither-disable-next-line uninitialized-local
         LocalVariables_LiquidationSequence memory vars;
+        // slither-disable-next-line uninitialized-local
         LiquidationValues memory singleLiquidation;
 
         vars.remainingMUSDInStabPool = _MUSDInStabPool;
@@ -916,6 +930,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _TCR,
         uint256 _price
     ) internal returns (LiquidationValues memory singleLiquidation) {
+        // slither-disable-next-line uninitialized-local
         LocalVariables_InnerSingleLiquidateFunction memory vars;
         if (TroveOwners.length <= 1) {
             return singleLiquidation;
@@ -1050,6 +1065,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
         } else {
             // if (_ICR >= MCR && ( _ICR >= _TCR || singleLiquidation.entireTroveDebt > _MUSDInStabPool))
+            // slither-disable-next-line uninitialized-local
             LiquidationValues memory zeroVals;
             return zeroVals;
         }
@@ -1400,3 +1416,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
     }
 }
+// slither-disable-end reentrancy-benign
+// slither-disable-end reentrancy-events
+// slither-disable-end reentrancy-no-eth

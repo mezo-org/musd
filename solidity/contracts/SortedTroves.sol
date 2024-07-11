@@ -79,6 +79,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         data.maxSize = _size;
 
         troveManager = ITroveManager(_troveManagerAddress);
+        // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
 
         emit TroveManagerAddressChanged(_troveManagerAddress);

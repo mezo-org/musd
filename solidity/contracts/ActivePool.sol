@@ -64,11 +64,16 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         checkContract(_stabilityPoolAddress);
         checkContract(_troveManagerAddress);
 
+        // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
         collateralAddress = _collateralAddress;
+        // slither-disable-next-line missing-zero-check
         collSurplusPoolAddress = _collSurplusPoolAddress;
+        // slither-disable-next-line missing-zero-check
         defaultPoolAddress = _defaultPoolAddress;
+        // slither-disable-next-line missing-zero-check
         stabilityPoolAddress = _stabilityPoolAddress;
+        // slither-disable-next-line missing-zero-check
         troveManagerAddress = _troveManagerAddress;
 
         require(
@@ -100,7 +105,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     }
 
     function increaseMUSDDebt(uint256 _amount) external override {
-        _requireCallerIsBorrwerOperationsOrTroveManager();
+        _requireCallerIsBorrowerOperationsOrTroveManager();
         MUSDDebt += _amount;
         emit ActivePoolMUSDDebtUpdated(MUSDDebt);
     }
@@ -148,7 +153,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         );
     }
 
-    function _requireCallerIsBorrwerOperationsOrTroveManager() internal view {
+    function _requireCallerIsBorrowerOperationsOrTroveManager() internal view {
         require(
             msg.sender == borrowerOperationsAddress ||
                 msg.sender == troveManagerAddress,

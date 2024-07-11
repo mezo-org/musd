@@ -10,7 +10,7 @@ for testing the parent's internal functions. */
 contract TroveManagerTester is TroveManager {
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
-        assert(baseRate >= 0 && baseRate <= DECIMAL_PRECISION);
+        assert(baseRate <= DECIMAL_PRECISION);
 
         _updateLastFeeOpTime();
         return baseRate;

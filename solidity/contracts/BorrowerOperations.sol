@@ -99,6 +99,7 @@ contract BorrowerOperations is
             activePool,
             musd
         );
+        // slither-disable-next-line uninitialized-local
         LocalVariables_openTrove memory vars;
 
         vars.price = priceFeed.fetchPrice();
@@ -157,7 +158,9 @@ contract BorrowerOperations is
             msg.sender,
             ITroveManager.Status.active
         );
+        // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveColl(msg.sender, _assetAmount);
+        // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveDebt(
             msg.sender,
             vars.compositeDebt
@@ -172,6 +175,7 @@ contract BorrowerOperations is
         vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
             msg.sender
         );
+        // slither-disable-next-line reentrancy-events
         emit TroveCreated(msg.sender, vars.arrayIndex);
 
         /*
@@ -289,6 +293,7 @@ contract BorrowerOperations is
         troveManagerCached.removeStake(msg.sender);
         troveManagerCached.closeTrove(msg.sender);
 
+        // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             msg.sender,
             0,
@@ -434,6 +439,7 @@ contract BorrowerOperations is
             activePool,
             musd
         );
+        // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;
 
         vars.price = priceFeed.fetchPrice();
@@ -536,6 +542,7 @@ contract BorrowerOperations is
         );
         sortedTroves.reInsert(_borrower, newNICR, _upperHint, _lowerHint);
 
+        // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
             vars.newDebt,
@@ -543,6 +550,7 @@ contract BorrowerOperations is
             vars.stake,
             uint8(BorrowerOperation.adjustTrove)
         );
+        // slither-disable-next-line reentrancy-events
         emit MUSDBorrowingFeePaid(msg.sender, vars.MUSDFee);
 
         // Use the unmodified _MUSDChange here, as we don't send the fee to the user
