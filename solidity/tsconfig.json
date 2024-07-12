@@ -3,5 +3,5 @@
   "compilerOptions": {
     "module": "CommonJS"
   },
-  "include": ["test/**/*.ts"],
+  "include": ["./deploy", "./test", "./typechain"]
 }

@@ -11,5 +11,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitOverride": true
-  }
+  },
+  "include": ["solidity/test/**/*.ts"]
 }
