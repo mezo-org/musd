@@ -17,7 +17,7 @@ defaults:
     working-directory: ./dapp
 
 jobs:
-  coverage:
+  dapp-coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
