@@ -17,6 +17,29 @@ defaults:
     working-directory: ./dapp
 
 jobs:
+  dapp-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Coverage Report
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: ./dapp
+          test-script: pnpm run test
+          skip-step: install
+
   dapp-format:
     runs-on: ubuntu-latest
     steps:
