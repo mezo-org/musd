@@ -13,19 +13,19 @@ dotenv.config({
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
-const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL
+const MAINNET_RPC_URL: string = process.env.MAINNET_RPC_URL
   ? process.env.MAINNET_RPC_URL
   : ""
 
-const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+const MAINNET_PRIVATE_KEY: string[] = process.env.MAINNET_PRIVATE_KEY
   ? [process.env.MAINNET_PRIVATE_KEY]
   : []
 
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL
+const SEPOLIA_RPC_URL: string = process.env.SEPOLIA_RPC_URL
   ? process.env.SEPOLIA_RPC_URL
   : ""
 
-const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY
+const SEPOLIA_PRIVATE_KEY: string[] = process.env.SEPOLIA_PRIVATE_KEY
   ? [process.env.SEPOLIA_PRIVATE_KEY]
   : []
 
@@ -33,6 +33,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
   ? process.env.ETHERSCAN_API_KEY
   : ""
 
+// TODO Fix type to match without cast
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
@@ -128,7 +129,7 @@ const config: HardhatUserConfig = {
     deployer: 0,
     governance: {
       default: 0,
-      mainnet: "0x98d8899c3030741925be630c710a98b57f397c7a",
+      1: "0x98d8899c3030741925be630c710a98b57f397c7a",
     },
   },
   contractSizer: {
@@ -139,6 +140,6 @@ const config: HardhatUserConfig = {
   gasReporter: {
     enabled: true,
   },
-}
+} as HardhatUserConfig
 
 export default config

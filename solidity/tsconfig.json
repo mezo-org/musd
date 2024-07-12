@@ -1,7 +1,11 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS"
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node", "chai", "mocha", "hardhat"],
   },
-  "include": ["./deploy", "./test", "./typechain"]
+  "include": ["./deploy", "./test", "./typechain", "hardhat.config.ts"]
 }

@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { helpers } from "hardhat"
-import { Contracts, deployment } from "../../helpers"
+import { deployment } from "../../helpers"
 
 describe("TroveManager in Normal Mode", () => {
   it("should return the current interest rate", async () => {
