@@ -8,12 +8,10 @@ import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
-import "./interfaces/IMUSD.sol";
+import "../token/IMUSD.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
-
-import "./dependencies/console.sol";
 
 contract BorrowerOperations is
     LiquityBase,

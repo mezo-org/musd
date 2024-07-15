@@ -5,8 +5,8 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./dependencies/CheckContract.sol";
-import "./interfaces/IMUSD.sol";
+import "./../v1/dependencies/CheckContract.sol";
+import "./IMUSD.sol";
 
 contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     // --- Addresses ---
