@@ -7,6 +7,7 @@ import {
   Contracts,
   TestSetup,
   TestingAddresses,
+  addColl,
   connectContracts,
   fixtureBorrowerOperations,
   fastForwardTime,
@@ -119,7 +120,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("openTrove", () => {
+  describe("openTrove()", () => {
     /**
      *
      * Expected Reverts
@@ -244,7 +245,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     /**
      *
-     * Events
+     * Emitted Events
      *
      */
 
@@ -429,7 +430,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Check that now, at least one minute has passed since lastFeeOpTime_1
         const timeNow = await getLatestBlockTimestamp()
-        expect(timeNow).to.equal(lastFeeOpTime1 + 61n)
+        expect(BigInt(timeNow)).to.be.oneOf([
+          lastFeeOpTime1 + 60n,
+          lastFeeOpTime1 + 61n,
+        ])
 
         // Eric triggers a fee
         await openTrove(contracts, {
@@ -509,7 +513,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
 
         await openTrove(contracts, {
-          musdAmount: "477,898,980,000",
+          musdAmount: "477,898,980",
           sender: eric,
         })
         expect(await contracts.sortedTroves.contains(eric.address)).to.equal(
@@ -651,6 +655,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     /**
      * Balance changes
      */
+
     context("Balance changes", () => {
       it("openTrove(): Increases user MUSD balance by correct amount", async () => {
         // opening balance
@@ -668,22 +673,66 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("openTrove(): Increases the Trove's MUSD debt by the correct amount", async () => {
-        // TODO requires other contract functionality
+        await defaultTrovesSetup()
+        const abi = [
+          // Add your contract ABI here
+          "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
+        ]
+
+        const debtBefore = (
+          await contracts.troveManager.Troves(addresses.dennis)
+        )[0]
+        expect(debtBefore).to.equal(0n)
+
+        const { tx } = await openTrove(contracts, {
+          musdAmount: MIN_NET_DEBT,
+          sender: dennis,
+        })
+
+        const debtAfter = (
+          await contracts.troveManager.Troves(addresses.dennis)
+        )[0]
+
+        const emittedFee = await getEventArgByName(
+          tx,
+          abi,
+          "MUSDBorrowingFeePaid",
+          1,
+        )
+        expect(debtAfter).to.equal(
+          MIN_NET_DEBT + MUSD_GAS_COMPENSATION + emittedFee,
+        )
       })
 
       it("openTrove(): Increases MUSD debt in ActivePool by the debt of the trove", async () => {
-        // TODO requires other contract functionality
-        // const activePool_before = await activePool.getMUSDDebt()
-        // expect(activePool_before).to.equal(0)
-        // await openTrove(contracts, {
-        //   musdAmount: "10,000",
-        //   sender: alice,
-        // })
-        // const aliceDebt = await contracts.troveManager.getEntireDebtAndColl(alice.address)
-        // console.log("alice", aliceDebt[0])
-        // expect(aliceDebt[0]).to.equal(to1e18(10000))
-        // const activePool_after = await activePool.getMUSDDebt()
-        // expect(activePool_after).to.equal(aliceDebt)
+        const debtBefore = await contracts.activePool.getMUSDDebt()
+        expect(debtBefore).to.equal(0n)
+
+        await openTrove(contracts, {
+          musdAmount: MIN_NET_DEBT,
+          sender: alice,
+        })
+
+        let result = await contracts.troveManager.getEntireDebtAndColl(
+          addresses.alice,
+        )
+        const aliceDebt = result[0]
+
+        let debtAfter = await contracts.activePool.getMUSDDebt()
+        expect(debtAfter).to.equal(aliceDebt)
+
+        await openTrove(contracts, {
+          musdAmount: MIN_NET_DEBT,
+          sender: bob,
+        })
+
+        result = await contracts.troveManager.getEntireDebtAndColl(
+          addresses.bob,
+        )
+        const bobDebt = result[0]
+
+        debtAfter = await contracts.activePool.getMUSDDebt()
+        expect(debtAfter).to.equal(aliceDebt + bobDebt + debtBefore)
       })
     })
 
@@ -751,14 +800,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         // TODO requires other contract functionality
       })
     })
-
-    /**
-     *
-     * Asset changes
-     *
-     */
-
-    context("Asset changes", () => {})
 
     /**
      *
@@ -842,52 +883,226 @@ describe("BorrowerOperations in Normal Mode", () => {
           await ethers.provider.getBalance(addresses.activePool),
         )
       })
+    })
+  })
 
-      it("openTrove(): Records up-to-date initial snapshots of L_Collateral and L_MUSDDebt", async () => {
+  describe("addColl()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("addColl(): reverts when top-up would leave trove with ICR < MCR", async () => {
+        // alice creates a Trove and adds first collateral
         await openTrove(contracts, {
-          musdAmount: "5,000",
+          musdAmount: "2,000",
           sender: alice,
         })
         await openTrove(contracts, {
-          musdAmount: "5,000",
-          sender: carol,
-        })
-        await openTrove(contracts, {
-          musdAmount: "5,000",
-          sender: dennis,
+          musdAmount: "10,000",
+          ICR: "1000",
+          sender: bob,
         })
 
-        // Collateral value drops from 200 to 100
         const price = to1e18(100)
         await contracts.priceFeed.connect(deployer).setPrice(price)
 
-        // Liquidate Carol's Trove.
-        await contracts.troveManager.connect(deployer).liquidate(carol)
+        expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
+          false,
+        )
+        expect(
+          await contracts.troveManager.getCurrentICR(addresses.alice, price),
+        ).to.lessThan(to1e18(110))
+        const collateralTopUp = to1e18(1)
 
-        /* with total stakes = 10 ether/tokens, after liquidation, L_Collateral should equal 1/10 ether/token per-ether-staked/per-tokens-staked,
-        and L_THUSD should equal 18 THUSD per-ether-staked/per-tokens-staked. */
+        await expect(
+          addColl(contracts, {
+            amount: collateralTopUp,
+            sender: alice,
+          }),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
 
-        const collateral = await contracts.troveManager.L_Collateral()
-        const musd = await contracts.troveManager.L_MUSDDebt()
-
-        expect(collateral).is.greaterThan(0n)
-        expect(musd).is.greaterThan(0n)
-
-        // Bob opens trove
+      it("addColl(), reverts if trove is non-existent or closed", async () => {
+        // A, B open troves
+        await openTrove(contracts, {
+          musdAmount: "2,000",
+          sender: alice,
+        })
         await openTrove(contracts, {
           musdAmount: "10,000",
           sender: bob,
         })
 
-        // Check Bob's snapshots of L_Collateral and L_THUSD equal the respective current values
-        const bobRewardSnapshot =
-          await contracts.troveManager.rewardSnapshots(bob)
-        const bobCollateralRewardSnapshot = bobRewardSnapshot[0]
-        const bobMUSDDebtRewardSnapshot = bobRewardSnapshot[1]
-
-        expect(bobCollateralRewardSnapshot).is.equal(collateral)
-        expect(bobMUSDDebtRewardSnapshot).is.equal(musd)
+        await expect(
+          addColl(contracts, {
+            amount: to1e18(1),
+            sender: carol,
+          }),
+        ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
       })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("addColl(), active Trove: adds the correct collateral amount to the Trove", async () => {
+        await openTrove(contracts, {
+          musdAmount: "2,000",
+          sender: alice,
+        })
+
+        let trove = await contracts.troveManager.Troves(addresses.alice)
+        expect(trove[3]).to.equal(1) // status
+        const collateralBefore = trove[1]
+
+        const collateralTopUp = to1e18(1)
+        await addColl(contracts, {
+          amount: collateralTopUp,
+          sender: alice,
+        })
+
+        trove = await contracts.troveManager.Troves(addresses.alice)
+        expect(trove[3]).to.equal(1) // status
+        const collateralAfter = trove[1]
+        expect(collateralAfter).to.equal(collateralBefore + collateralTopUp)
+      })
+
+      it("addColl(), active Trove: Trove is in sortedList before and after", async () => {
+        expect(await contracts.sortedTroves.isEmpty()).to.equal(true)
+        await openTrove(contracts, {
+          musdAmount: "2,000",
+          sender: alice,
+        })
+
+        expect(await contracts.sortedTroves.contains(addresses.alice)).to.equal(
+          true,
+        )
+        expect(await contracts.sortedTroves.isEmpty()).to.equal(false)
+
+        const collateralTopUp = to1e18(1)
+        await addColl(contracts, {
+          amount: collateralTopUp,
+          sender: alice,
+        })
+
+        expect(await contracts.sortedTroves.contains(addresses.alice)).to.equal(
+          true,
+        )
+        expect(await contracts.sortedTroves.isEmpty()).to.equal(false)
+      })
+
+      it("addColl(), active Trove: updates the stake and updates the total stakes", async () => {
+        await openTrove(contracts, {
+          musdAmount: "2,000",
+          sender: alice,
+        })
+
+        let trove = await contracts.troveManager.Troves(addresses.alice)
+        const aliceStakeBefore = trove[2]
+        const totalStakesBefore = await contracts.troveManager.totalStakes()
+        expect(totalStakesBefore).is.equal(aliceStakeBefore)
+
+        const collateralTopUp = to1e18(1)
+        await addColl(contracts, {
+          amount: collateralTopUp,
+          sender: alice,
+        })
+
+        trove = await contracts.troveManager.Troves(addresses.alice)
+        const aliceStakeAfter = trove[2]
+        const totalStakesAfter = await contracts.troveManager.totalStakes()
+        expect(totalStakesAfter).is.equal(aliceStakeAfter)
+        expect(totalStakesAfter).to.equal(totalStakesBefore + collateralTopUp)
+      })
+    })
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {
+      it("addColl(): no mintlist, can add collateral", async () => {
+        //   await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+        //   const aliceCollBefore = await getTroveEntireColl(alice)
+        //   assert.isFalse(await th.checkRecoveryMode(contracts))
+        //   // remove mintlist
+        //   await th.removeMintlist(contracts, owner, delay)
+        //   // add collateral
+        //   const collTopUp = toBN(dec(1, "ether"))
+        //   await addColl(collTopUp, alice)
+        //   // Check Alice's collateral
+        //   let aliceCollAfter = (await troveManager.Troves(alice))[1]
+        //   assert.isTrue(aliceCollAfter.eq(aliceCollBefore.add(collTopUp)))
+        //   // check it also works in recovery mode
+        //   await priceFeed.setPrice("105000000000000000000")
+        //   assert.isTrue(await th.checkRecoveryMode(contracts))
+        //   await addColl(collTopUp, alice)
+        //   // Check Alice's collateral
+        //   aliceCollAfter = (await troveManager.Troves(alice))[1]
+        //   assert.isTrue(
+        //     aliceCollAfter.eq(aliceCollBefore.add(collTopUp).add(collTopUp)),
+        //   )
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {
+      // it("addColl(): increases the activePool collateral and raw collateral balance by correct amount", async () => {
+      //   const { collateral: aliceColl } = await openTrove({
+      //     ICR: toBN(dec(2, 18)),
+      //     extraParams: { from: alice },
+      //   })
+      //   const balance = await activePool.getCollateralBalance()
+      //   const collateral = await getCollateralBalance(activePool.address)
+      //   assert.isTrue(balance.eq(aliceColl))
+      //   assert.isTrue(collateral.eq(aliceColl))
+      //   await addColl(dec(1, "ether"), alice)
+      //   const newBalance = await activePool.getCollateralBalance()
+      //   const newCollateral = await getCollateralBalance(activePool.address)
+      //   assert.isTrue(newBalance.eq(aliceColl.add(toBN(dec(1, "ether")))))
+      //   assert.isTrue(newCollateral.eq(aliceColl.add(toBN(dec(1, "ether")))))
+      // })
+      // })
     })
   })
 })

@@ -8,7 +8,7 @@ export async function getLatestBlockTimestamp() {
     return latestBlock.timestamp
   }
   // console.error("Failed to fetch latest block")
-  return null
+  return 0n
 }
 
 export async function fastForwardTime(seconds: number): Promise<void> {

@@ -10,17 +10,14 @@ import type {
   DefaultPool,
   GasPool,
   MUSD,
+  MUSDTester,
   PCV,
+  PriceFeedTestnet,
   SortedTroves,
   StabilityPool,
   TroveManager,
-} from "../../typechain/contracts"
-
-import type {
-  MUSDTester,
-  PriceFeedTestnet,
   TroveManagerTester,
-} from "../../typechain/contracts/tests"
+} from "../../typechain"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 

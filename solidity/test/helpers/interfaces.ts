@@ -65,6 +65,13 @@ export interface TestSetup {
   users: Users
 }
 
+export interface AddCollParams {
+  amount: string | bigint
+  lowerHint?: string
+  sender: HardhatEthersSigner
+  upperHint?: string
+}
+
 export interface OpenTroveParams {
   musdAmount: string | bigint
   ICR?: string
