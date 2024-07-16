@@ -20,10 +20,6 @@ library LiquityMath {
         return (_a < _b) ? _a : _b;
     }
 
-    function _max(uint256 _a, uint256 _b) internal pure returns (uint) {
-        return (_a >= _b) ? _a : _b;
-    }
-
     /*
      * Multiply two decimal numbers and use normal rounding rules:
      * -round product up if 19'th mantissa digit >= 5
@@ -87,13 +83,6 @@ library LiquityMath {
         }
 
         return decMul(x, y);
-    }
-
-    function _getAbsoluteDifference(
-        uint256 _a,
-        uint256 _b
-    ) internal pure returns (uint) {
-        return (_a >= _b) ? _a - _b : _b - _a;
     }
 
     function _computeNominalCR(

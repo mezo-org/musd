@@ -37,7 +37,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     // slither-disable-next-line uninitialized-state
     IActivePool public activePool;
 
-    // slither-disable-next-line uninitialized-state
+    // slither-disable-next-line all
     IDefaultPool public defaultPool;
 
     // slither-disable-next-line uninitialized-state

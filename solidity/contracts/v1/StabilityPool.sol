@@ -30,11 +30,6 @@ contract StabilityPool is
     // Needed to check if there are pending liquidations
     ISortedTroves public sortedTroves;
 
-    uint256 internal collateral; // deposited collateral tracker
-
-    // Tracker for MUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
-    uint256 internal totalMUSDDeposits;
-
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
