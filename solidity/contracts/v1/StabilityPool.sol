@@ -7,7 +7,7 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
-import "./interfaces/IMUSD.sol";
+import "../token/IMUSD.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";

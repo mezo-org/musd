@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "./IStabilityPool.sol";
-import "./IMUSD.sol";
+import "../../token/IMUSD.sol";
 import "./IPCV.sol";
 
 // Common interface for the Trove Manager.

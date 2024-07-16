@@ -11,13 +11,11 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
-import "./interfaces/IMUSD.sol";
+import "../token/IMUSD.sol";
 import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
-
-import "./dependencies/console.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
