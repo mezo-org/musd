@@ -13,6 +13,7 @@ import {
   getTroveEntireColl,
   getTroveEntireDebt,
   openTrove,
+  removeMintlist,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -80,7 +81,20 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
     context("Expected Reverts", () => {
       it("openTrove(): Reverts when system is in Recovery Mode and ICR < CCR", async () => {
-        // TODO requires other contract functionality
+        await defaultTrovesSetup()
+        // collateral value drops from 200 to 10
+        const price = to1e18(10)
+        await contracts.priceFeed.connect(deployer).setPrice(price)
+
+        await expect(
+          openTrove(contracts, {
+            musdAmount: to1e18("2,000"),
+            ICR: "149",
+            sender: dennis,
+          }),
+        ).to.be.revertedWith(
+          "BorrowerOps: Operation must leave trove with ICR >= CCR",
+        )
       })
 
       it("openTrove(): Reverts when trove ICR < MCR", async () => {
@@ -545,7 +559,36 @@ describe("BorrowerOperations in Recovery Mode", () => {
      *
      */
 
-    context("Balance changes", () => {})
+    context("Balance changes", () => {
+      it("addColl(): no mintlist, can add collateral", async () => {
+        await openTrove(contracts, {
+          musdAmount: "2,000",
+          sender: alice,
+        })
+
+        // put system in recovery mode
+        await contracts.priceFeed
+          .connect(deployer)
+          .setPrice(105000000000000000000n)
+        const aliceCollBefore = await getTroveEntireColl(contracts, alice)
+        const price = await contracts.priceFeed.getPrice()
+        expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
+          true,
+        )
+
+        await removeMintlist(contracts, deployer)
+
+        const collateralTopUp = to1e18(1)
+        await addColl(contracts, {
+          amount: collateralTopUp,
+          sender: alice,
+        })
+
+        const aliceCollAfter = await getTroveEntireColl(contracts, alice)
+
+        expect(aliceCollAfter).to.equal(aliceCollBefore + collateralTopUp)
+      })
+    })
 
     /**
      *

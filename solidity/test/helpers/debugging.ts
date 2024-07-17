@@ -67,14 +67,11 @@ async function printAddressBalances(
   }
 }
 
-export async function debugBalances(
+async function debugBalances(
   contracts: Contracts,
   users: Users,
   displayUsers: string[],
 ) {
-  // , users: Users, print: boolean
-
-  // if (print) {
   console.log(
     "==================================================================",
   )
@@ -82,7 +79,7 @@ export async function debugBalances(
   console.log(
     "------------------------------------------------------------------",
   )
-  // }
+
   const data: Data = {}
   const contractNames = [
     "activePool",
@@ -98,7 +95,7 @@ export async function debugBalances(
     "gasPool",
   ]
 
-  for (const contractName of contractNames) {
+  contractNames.forEach(async (contractName) => {
     if (contractName in contracts) {
       const address = await contracts[contractName].getAddress()
       if (address !== undefined) {
@@ -106,7 +103,7 @@ export async function debugBalances(
         await printAddressBalances(data[address], address, contractName)
       }
     }
-  }
+  })
 
   if (displayUsers.length > 0) {
     console.log(
@@ -116,21 +113,18 @@ export async function debugBalances(
     console.log(
       "------------------------------------------------------------------",
     )
-    // }
-    for (const [key, user] of Object.entries(users)) {
-      const address = await user.getAddress()
-      // console.log(`${key}: ${address}`);
-      const temp = await getAddressBalances(contracts, address)
-      if (key !== "deployer" && displayUsers.includes(key)) {
-        printAddressBalances(temp, address, key)
-      }
-    }
+
+    await Promise.all(
+      Object.entries(users).map(async ([key, user]) => {
+        const address = await user.getAddress()
+        // console.log(`${key}: ${address}`);
+        const temp = await getAddressBalances(contracts, address)
+        if (key !== "deployer" && displayUsers.includes(key)) {
+          await printAddressBalances(temp, address, key)
+        }
+      }),
+    )
   }
-  //   for (let address of users) {
-  //     users[address] = await getAddressBalances(contracts, address);
-  //     // if (print) {
-  //       printAddressBalances(data[address], address, "");
-  //     // }
-  //   }
-  //   return data;
 }
+
+export default debugBalances
