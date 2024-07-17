@@ -154,9 +154,34 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Maximum interest rate that can be set, defaults to 100%
     uint256 private _maxInterestRate = 100;
 
+    uint256 private _proposedInterestRate;
+    uint256 private _proposalTime;
+    uint256 public constant MIN_DELAY = 7 days;
+
+    event InterestRateProposed(uint256 proposedRate, uint256 proposalTime);
+
     // Event to emit when the interest rate is updated
     event InterestRateUpdated(uint256 newInterestRate);
     event MaxInterestRateUpdated(uint256 newMaxInterestRate);
+
+    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwner {
+        // TODO Maybe require proposed interest rate to be less than the max interest rate
+        _proposedInterestRate = _newProposedInterestRate;
+        _proposalTime = block.timestamp;
+        emit InterestRateProposed(_proposedInterestRate, _proposalTime);
+    }
+
+    // Approve and update the interest rate after the delay
+    function approveInterestRate() external onlyOwner {
+        require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
+        console.log(_proposedInterestRate);
+        _interestRate = _proposedInterestRate;
+
+        // Reset proposal time to prevent immediate re-approval
+        _proposalTime = 0;
+
+        emit InterestRateUpdated(_interestRate);
+    }
 
     // TODO Change this from onlyOwner to some other modifier to restrict it to governance if needed
     function setMaxInterestRate(uint256 _newMaxInterestRate) external onlyOwner {

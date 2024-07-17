@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { helpers } from "hardhat"
-import { deployment } from "../../helpers"
+import { deployment, fastForwardTime } from "../../helpers"
 
 describe.only("TroveManager in Normal Mode", () => {
   it("should return the current interest rate", async () => {
@@ -67,5 +67,18 @@ describe.only("TroveManager in Normal Mode", () => {
     )
       .to.emit(contracts.troveManager, "MaxInterestRateUpdated")
       .withArgs(50)
+  })
+
+  it("should require two transactions to change the interest rate with a 7 day time delay", async () => {
+    const contracts = await deployment(["TroveManager"])
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+
+    // Simulate 7 days passing
+    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(timeToIncrease)
+
+    await contracts.troveManager.connect(deployer).approveInterestRate()
+    expect(await contracts.troveManager.getInterestRate()).to.equal(1)
   })
 })
