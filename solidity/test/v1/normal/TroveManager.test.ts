@@ -38,4 +38,13 @@ describe.only("TroveManager in Normal Mode", () => {
     await contracts.troveManager.connect(deployer).setMaxInterestRate(5)
     expect(await contracts.troveManager.getMaxInterestRate()).to.equal(5)
   })
+
+  it("should revert if the interest rate is above the maximum interest rate", async () => {
+    const contracts = await deployment(["TroveManager"])
+    const { deployer } = await helpers.signers.getNamedSigners()
+
+    await expect(
+      contracts.troveManager.connect(deployer).updateInterestRate(101),
+    ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
+  })
 })
