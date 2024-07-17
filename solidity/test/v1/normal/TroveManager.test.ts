@@ -59,4 +59,13 @@ describe.only("TroveManager in Normal Mode", () => {
       "OwnableUnauthorizedAccount",
     )
   })
+  it("should emit MaxInterestRateUpdated when the maximum interest rate is updated", async () => {
+    const contracts = await deployment(["TroveManager"])
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await expect(
+      contracts.troveManager.connect(deployer).setMaxInterestRate(50),
+    )
+      .to.emit(contracts.troveManager, "MaxInterestRateUpdated")
+      .withArgs(50)
+  })
 })
