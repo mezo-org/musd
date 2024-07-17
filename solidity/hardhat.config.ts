@@ -1,4 +1,5 @@
 import { HardhatUserConfig } from "hardhat/config"
+import "@nomicfoundation/hardhat-ethers"
 import "@keep-network/hardhat-helpers"
 import "@nomicfoundation/hardhat-toolbox"
 import "@nomicfoundation/hardhat-chai-matchers"

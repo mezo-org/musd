@@ -2,7 +2,7 @@ import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signer
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect, assert } from "chai"
 
-import { ethers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import {
   Contracts,
   TestSetup,
@@ -18,6 +18,7 @@ import {
   getAddresses,
   openTrove,
   removeMintlist,
+  deployment,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -577,7 +578,11 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it.only("openTrove(): Creates a new trove and sets the interest rate to the current global interest rate", async () => {
+      it("openTrove(): Creates a new trove and sets the interest rate to the current global interest rate", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-shadow
+        const contracts = await deployment(["TroveManager"])
+        // eslint-disable-next-line @typescript-eslint/no-shadow
+        const { deployer } = await helpers.signers.getNamedSigners()
         await contracts.troveManager.connect(deployer).updateInterestRate(1)
         await openTrove(contracts, {
           musdAmount: "100,000",

@@ -7,5 +7,5 @@
     "skipLibCheck": true,
     "types": ["node", "chai", "mocha", "hardhat"],
   },
-  "include": ["./deploy", "./test", "./typechain", "hardhat.config.ts"]
+  "include": ["./deploy", "./test", "./typechain", "hardhat.config.ts", "global.d.ts"]
 }

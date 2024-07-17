@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { helpers } from "hardhat"
 import { deployment } from "../../helpers"
 
-describe("TroveManager in Normal Mode", () => {
+describe.only("TroveManager in Normal Mode", () => {
   it("should return the current interest rate", async () => {
     const contracts = await deployment(["TroveManager"])
     expect(await contracts.troveManager.getInterestRate()).to.equal(0)
@@ -30,5 +30,12 @@ describe("TroveManager in Normal Mode", () => {
     await expect(contracts.troveManager.connect(deployer).updateInterestRate(1))
       .to.emit(contracts.troveManager, "InterestRateUpdated")
       .withArgs(1)
+  })
+
+  it("should allow for setting the maximum interest rate", async () => {
+    const contracts = await deployment(["TroveManager"])
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await contracts.troveManager.connect(deployer).setMaxInterestRate(5)
+    expect(await contracts.troveManager.getMaxInterestRate()).to.equal(5)
   })
 })

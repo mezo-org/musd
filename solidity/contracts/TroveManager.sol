@@ -151,19 +151,34 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Interest rate per year
     uint256 private _interestRate;
 
+    // Maximum interest rate that can be set, defaults to 100%
+    uint256 private _maxInterestRate = 100;
+
     // Event to emit when the interest rate is updated
     event InterestRateUpdated(uint256 newInterestRate);
+    event MaxInterestRateUpdated(uint256 newMaxInterestRate);
+
+    // TODO Change this from onlyOwner to some other modifier to restrict it to governance if needed
+    function setMaxInterestRate(uint256 _newMaxInterestRate) external onlyOwner {
+        _maxInterestRate = _newMaxInterestRate;
+        emit MaxInterestRateUpdated(_newMaxInterestRate);
+    }
 
     // Function to update the interest rate, restricted to the contract owner
     // TODO Restrict this to whitelisted addresses
-    function updateInterestRate(uint256 newInterestRate) external onlyOwner {
-        _interestRate = newInterestRate;
-        emit InterestRateUpdated(newInterestRate);
+    function updateInterestRate(uint256 _newInterestRate) external onlyOwner {
+        require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
+        _interestRate = _newInterestRate;
+        emit InterestRateUpdated(_newInterestRate);
     }
 
     // Getter function for the interest rate
     function getInterestRate() external view returns (uint256) {
         return _interestRate;
+    }
+
+    function getMaxInterestRate() external view returns (uint256) {
+        return _maxInterestRate;
     }
 
     // Map addresses with active troves to their RewardSnapshot
