@@ -81,4 +81,18 @@ describe.only("TroveManager in Normal Mode", () => {
     await contracts.troveManager.connect(deployer).approveInterestRate()
     expect(await contracts.troveManager.getInterestRate()).to.equal(1)
   })
+
+  it("should revert if the time delay has not finished", async () => {
+    const contracts = await deployment(["TroveManager"])
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+
+    // Simulate 6 days passing
+    const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+    await fastForwardTime(timeToIncrease)
+
+    await expect(
+      contracts.troveManager.connect(deployer).approveInterestRate(),
+    ).to.be.revertedWith("Proposal delay not met")
+  })
 })
