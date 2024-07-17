@@ -47,4 +47,16 @@ describe.only("TroveManager in Normal Mode", () => {
       contracts.troveManager.connect(deployer).updateInterestRate(101),
     ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
   })
+
+  it("should revert if a non-whitelisted address tries to set the maximum interest rate", async () => {
+    const contracts = await deployment(["TroveManager"])
+    const [alice] = await helpers.signers.getUnnamedSigners()
+
+    await expect(
+      contracts.troveManager.connect(alice).setMaxInterestRate(1),
+    ).to.be.revertedWithCustomError(
+      contracts.troveManager,
+      "OwnableUnauthorizedAccount",
+    )
+  })
 })
