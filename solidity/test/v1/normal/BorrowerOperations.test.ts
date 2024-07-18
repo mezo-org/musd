@@ -583,7 +583,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const contracts = await deployment(["TroveManager"])
         // eslint-disable-next-line @typescript-eslint/no-shadow
         const { deployer } = await helpers.signers.getNamedSigners()
-        await contracts.troveManager.connect(deployer).updateInterestRate(1)
+        await contracts.troveManager.connect(deployer).setInterestRate(1)
         await openTrove(contracts, {
           musdAmount: "100,000",
           sender: alice,

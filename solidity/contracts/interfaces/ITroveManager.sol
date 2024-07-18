@@ -202,8 +202,6 @@ interface ITroveManager {
 
     function getInterestRate() external view returns (uint256);
 
-    function updateInterestRate(uint256 newInterestRate) external;
-
     function setTroveInterestRate(
         address _borrower,
         uint256 _rate

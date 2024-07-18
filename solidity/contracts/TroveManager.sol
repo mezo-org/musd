@@ -148,6 +148,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public lastCollateralError_Redistribution;
     uint256 public lastMUSDDebtError_Redistribution;
 
+    struct InterestRateChange {
+        uint256 interestRate;
+        uint256 blockNumber;
+    }
+
+    InterestRateChange[] public interestRateHistory;
+
     // Interest rate per year
     uint256 private _interestRate;
 
@@ -165,7 +172,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     event MaxInterestRateUpdated(uint256 newMaxInterestRate);
 
     function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwner {
-        // TODO Maybe require proposed interest rate to be less than the max interest rate
+        require(_newProposedInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _proposedInterestRate = _newProposedInterestRate;
         _proposalTime = block.timestamp;
         emit InterestRateProposed(_proposedInterestRate, _proposalTime);
@@ -174,13 +181,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Approve and update the interest rate after the delay
     function approveInterestRate() external onlyOwner {
         require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
-        console.log(_proposedInterestRate);
-        _interestRate = _proposedInterestRate;
+        _setInterestRate(_proposedInterestRate);
 
         // Reset proposal time to prevent immediate re-approval
         _proposalTime = 0;
-
-        emit InterestRateUpdated(_interestRate);
     }
 
     // TODO Change this from onlyOwner to some other modifier to restrict it to governance if needed
@@ -191,7 +195,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Function to update the interest rate, restricted to the contract owner
     // TODO Restrict this to whitelisted addresses
-    function updateInterestRate(uint256 _newInterestRate) external onlyOwner {
+    function _setInterestRate(uint256 _newInterestRate) internal {
         require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _interestRate = _newInterestRate;
         emit InterestRateUpdated(_newInterestRate);
