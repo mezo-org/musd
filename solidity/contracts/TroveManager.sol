@@ -198,7 +198,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _setInterestRate(uint256 _newInterestRate) internal {
         require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _interestRate = _newInterestRate;
+        interestRateHistory.push(InterestRateChange(_newInterestRate, block.number));
         emit InterestRateUpdated(_newInterestRate);
+    }
+
+    function getInterestRateHistory() external view returns (InterestRateChange[] memory) {
+        return interestRateHistory;
     }
 
     // Getter function for the interest rate
