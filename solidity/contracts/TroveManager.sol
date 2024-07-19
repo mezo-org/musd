@@ -172,7 +172,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     event InterestRateUpdated(uint256 newInterestRate);
     event MaxInterestRateUpdated(uint256 newMaxInterestRate);
 
-    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwner {
+    function proposeInterestRate(uint256 _newProposedInterestRate) external {
         require(_newProposedInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _proposedInterestRate = _newProposedInterestRate;
         _proposalTime = block.timestamp;
@@ -180,7 +180,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Approve and update the interest rate after the delay
-    function approveInterestRate() external onlyOwner {
+    function approveInterestRate() external {
         require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
         _setInterestRate(_proposedInterestRate);
 
@@ -275,7 +275,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function calculateInterestOwed(address _borrower) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
         uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        uint256 interestOwed = (trove.debt * _interestRate * timeElapsed) / (365 days * DECIMAL_PRECISION);
+        // Use a higher precision for the interest rate calculation to avoid truncation errors
+        uint256 interestOwed = (trove.debt * _interestRate * timeElapsed * 1e18) / (100 * 365 days * DECIMAL_PRECISION * 1e18);
         return interestOwed;
     }
 

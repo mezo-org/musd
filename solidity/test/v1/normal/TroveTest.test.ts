@@ -4,6 +4,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import {
   connectContracts,
   deployment,
+  fastForwardTime,
   fixtureBorrowerOperations,
   openTrove,
 } from "../../helpers"
@@ -54,11 +55,24 @@ describe.only("TroveManager in Normal Mode", () => {
     const testSetup = await loadFixture(fixtureBorrowerOperations)
     await connectContracts(testSetup.contracts, testSetup.users)
     const { contracts } = testSetup
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+
+    // Simulate 7 days passing
+    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(timeToIncrease)
+    await contracts.troveManager.connect(deployer).approveInterestRate()
+
     const [alice] = await helpers.signers.getUnnamedSigners()
     await openTrove(contracts, {
       musdAmount: "10000",
       sender: alice,
     })
+
+    // fast forward 30 days
+    const thirtyDays = 30 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(thirtyDays)
+
     const debt = await contracts.troveManager.calculateInterestOwed(alice)
     expect(debt).to.be.equal(8)
   })
