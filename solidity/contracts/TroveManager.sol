@@ -31,6 +31,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Status status;
         uint128 arrayIndex;
         uint256 interestRate;
+        uint256 lastInterestUpdateTime;
     }
 
     // Object containing the collateral and MUSD snapshots for a given active trove
@@ -195,7 +196,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Function to update the interest rate, restricted to the contract owner
     // TODO Restrict this to whitelisted addresses
-    function _setInterestRate(uint256 _newInterestRate) internal {
+    function _setInterestRate(uint256 _newInterestRate) public {
         require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _interestRate = _newInterestRate;
         interestRateHistory.push(InterestRateChange(_newInterestRate, block.number));
@@ -269,6 +270,31 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         renounceOwnership();
     }
+
+    // Function to calculate the interest owed
+    function calculateInterestOwed(address _borrower) public view returns (uint256) {
+        Trove storage trove = Troves[_borrower];
+        uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
+        uint256 interestOwed = (trove.debt * _interestRate * timeElapsed) / (365 days * DECIMAL_PRECISION);
+        return interestOwed;
+    }
+
+    // Function to update the debt of a trove to include owed interest
+    function updateDebtWithInterest(address _borrower) internal {
+        uint256 interestOwed = calculateInterestOwed(_borrower);
+        Troves[_borrower].debt += interestOwed;
+        // Update the last interest update time to the current timestamp
+        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
+    }
+
+// Example of integrating interest calculation into the liquidation process
+//    function liquidate(address _borrower) external override {
+//        _requireTroveIsActive(_borrower);
+//        // Update the trove's debt to include any interest owed before checking for liquidation eligibility
+//        updateDebtWithInterest(_borrower);
+//        // Proceed with liquidation if the updated collateralization ratio meets the criteria
+//        // This would involve further checks and potentially calling other functions to handle the liquidation
+//    }
 
     function liquidate(address _borrower) external override {
         _requireTroveIsActive(_borrower);

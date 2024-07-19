@@ -1,8 +1,8 @@
 import { expect } from "chai"
 import { ethers, helpers } from "hardhat"
-import { deployment, fastForwardTime } from "../../helpers"
+import { deployment, fastForwardTime, openTrove } from "../../helpers"
 
-describe.only("TroveManager in Normal Mode", () => {
+describe("TroveManager in Normal Mode", () => {
   it("should return the current interest rate", async () => {
     const contracts = await deployment(["TroveManager"])
     expect(await contracts.troveManager.getInterestRate()).to.equal(0)
@@ -102,5 +102,34 @@ describe.only("TroveManager in Normal Mode", () => {
     expect(history[1].blockNumber).to.equal(secondBlockNumber)
     expect(history[2].interestRate).to.equal(3)
     expect(history[2].blockNumber).to.equal(thirdBlockNumber)
+  })
+
+  xit("should calculate the interest owed on a trove", async () => {
+    // setup
+    // await defaultTrovesSetup()
+
+    // setting 1% interest rate
+    const contracts = await deployment(["TroveManager"])
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+
+    // Simulate 7 days passing
+    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(timeToIncrease)
+    await contracts.troveManager.connect(deployer).approveInterestRate()
+
+    // open a trove for 10000 mUSD
+    const [alice] = await helpers.signers.getUnnamedSigners()
+    await openTrove(contracts, {
+      musdAmount: "10,000",
+      sender: alice,
+    })
+
+    // fast forward 30 days
+    const thirtyDays = 30 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(thirtyDays)
+
+    const debt = await contracts.troveManager.calculateInterestOwed(alice)
+    expect(debt).to.be.equal(8.22)
   })
 })

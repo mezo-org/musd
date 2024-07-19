@@ -120,6 +120,7 @@ contract BorrowerOperations is
             vars.netDebt += vars.MUSDFee;
         }
 
+        console.log(vars.netDebt);
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested MUSD amount + MUSD borrowing fee + MUSD gas comp.
@@ -330,6 +331,11 @@ contract BorrowerOperations is
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {}
 
+    function setPriceFeed(address _priceFeedAddress) public {
+        priceFeed = IPriceFeed(_priceFeedAddress);
+        emit PriceFeedAddressChanged(_priceFeedAddress);
+    }
+
     function setAddresses(
         address _activePoolAddress,
         address _collateralAddress,
@@ -343,6 +349,7 @@ contract BorrowerOperations is
         address _sortedTrovesAddress,
         address _troveManagerAddress
     ) external override onlyOwner {
+        console.log("hello");
         // This makes impossible to open a trove with zero withdrawn MUSD
         assert(MIN_NET_DEBT > 0);
 
@@ -368,7 +375,9 @@ contract BorrowerOperations is
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
+
         priceFeed = IPriceFeed(_priceFeedAddress);
+//        console.log(priceFeed);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         musd = IMUSD(_musdTokenAddress);
         // slither-disable-next-line missing-zero-check

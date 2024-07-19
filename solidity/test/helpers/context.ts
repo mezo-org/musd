@@ -183,6 +183,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.stabilityPool.getAddress(),
     )
 
+  console.log(`price feed: ${await contracts.priceFeed.getAddress()}`)
   await contracts.borrowerOperations
     .connect(users.deployer)
     .setAddresses(
