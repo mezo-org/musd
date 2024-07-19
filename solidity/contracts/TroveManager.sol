@@ -281,9 +281,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Function to update the debt of a trove to include owed interest
-    function updateDebtWithInterest(address _borrower) internal {
+    function updateDebtWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);
-        Troves[_borrower].debt += interestOwed;
+        Troves[_borrower].debt += (interestOwed * 1e18);
         // Update the last interest update time to the current timestamp
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }

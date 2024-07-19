@@ -76,6 +76,8 @@ describe.only("TroveManager in Normal Mode", () => {
     const interest = await contracts.troveManager.calculateInterestOwed(alice)
     expect(interest).to.be.equal(5605)
 
+    // update debt
+    await contracts.troveManager.updateDebtWithInterest(alice)
     const debt = await contracts.troveManager.getTroveDebt(alice)
     expect(debt).to.be.equal((10250n + interest) * 10n ** 18n)
   })
