@@ -73,7 +73,10 @@ describe.only("TroveManager in Normal Mode", () => {
     const thirtyDays = 30 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(thirtyDays)
 
-    const debt = await contracts.troveManager.calculateInterestOwed(alice)
-    expect(debt).to.be.equal(8)
+    const interest = await contracts.troveManager.calculateInterestOwed(alice)
+    expect(interest).to.be.equal(5605)
+
+    const debt = await contracts.troveManager.getTroveDebt(alice)
+    expect(debt).to.be.equal((10250n + interest) * 10n ** 18n)
   })
 })
