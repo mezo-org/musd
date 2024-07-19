@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 // Common interface for the Pools.
 interface IPool {
@@ -16,7 +16,10 @@ interface IPool {
     // --- Functions ---
 
     function increaseMUSDDebt(uint256 _amount) external;
+
     function decreaseMUSDDebt(uint256 _amount) external;
+
     function getCollateralBalance() external view returns (uint);
+
     function getMUSDDebt() external view returns (uint);
 }

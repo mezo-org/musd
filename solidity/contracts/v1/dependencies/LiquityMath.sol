@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 library LiquityMath {
     uint256 internal constant DECIMAL_PRECISION = 1e18;

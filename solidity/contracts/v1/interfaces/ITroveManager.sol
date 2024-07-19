@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 import "./IStabilityPool.sol";
 import "../../token/IMUSD.sol";
@@ -109,11 +109,13 @@ interface ITroveManager {
     ) external returns (uint256 index);
 
     function applyPendingRewards(address _borrower) external;
+
     function closeTrove(address _borrower) external;
 
     function removeStake(address _borrower) external;
 
     function decayBaseRateFromBorrowing() external;
+
     function setTroveStatus(address _borrower, Status _status) external;
 
     function increaseTroveColl(
@@ -137,6 +139,7 @@ interface ITroveManager {
     ) external returns (uint);
 
     function stabilityPool() external view returns (IStabilityPool);
+
     function pcv() external view returns (IPCV);
 
     function getTroveOwnersCount() external view returns (uint);
@@ -146,6 +149,7 @@ interface ITroveManager {
     ) external view returns (address);
 
     function getNominalICR(address _borrower) external view returns (uint);
+
     function getCurrentICR(
         address _borrower,
         uint256 _price
@@ -174,6 +178,7 @@ interface ITroveManager {
         );
 
     function getRedemptionRate() external view returns (uint);
+
     function getRedemptionRateWithDecay() external view returns (uint);
 
     function getRedemptionFeeWithDecay(
@@ -181,9 +186,11 @@ interface ITroveManager {
     ) external view returns (uint);
 
     function getBorrowingRate() external view returns (uint);
+
     function getBorrowingRateWithDecay() external view returns (uint);
 
     function getBorrowingFee(uint256 MUSDDebt) external view returns (uint);
+
     function getBorrowingFeeWithDecay(
         uint256 _MUSDDebt
     ) external view returns (uint);
