@@ -29,6 +29,7 @@ contract PriceFeed is IPriceFeed, Ownable {
 
         oracle = chainLinkOracle;
         emit NewOracleRegistered(_oracle);
+        renounceOwnership();
     }
 
     // Public functions -------------------------------------------------------------------------------------------------
