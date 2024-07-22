@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.19;
 
-import "./dependencies/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "./interfaces/ChainlinkAggregatorV3Interface.sol";
 import "./interfaces/IPriceFeed.sol";
 
@@ -12,6 +13,8 @@ contract PriceFeed is IPriceFeed, Ownable {
 
     // State ------------------------------------------------------------------------------------------------------------
     ChainlinkAggregatorV3Interface oracle;
+
+    constructor() Ownable(msg.sender) {}
 
     // Admin routines ---------------------------------------------------------------------------------------------------
 
