@@ -34,4 +34,6 @@ contract PriceFeedTestnet is Ownable, IPriceFeed {
     function getPrice() external view returns (uint256) {
         return _price;
     }
+
+    function setOracle(address _oracle) external {}
 }
