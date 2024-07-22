@@ -81,4 +81,40 @@ describe.only("TroveManager in Normal Mode", () => {
     const debt = await contracts.troveManager.getTroveDebt(alice)
     expect(debt).to.be.equal((10250n + interest) * 10n ** 18n)
   })
+
+  it("liquidate(): closes a Trove that has ICR < MCR", async () => {
+    const testSetup = await loadFixture(fixtureBorrowerOperations)
+    await connectContracts(testSetup.contracts, testSetup.users)
+    const { contracts } = testSetup
+    const { deployer } = await helpers.signers.getNamedSigners()
+    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+
+    // Simulate 7 days passing
+    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(timeToIncrease)
+    await contracts.troveManager.connect(deployer).approveInterestRate()
+
+    const [alice] = await helpers.signers.getUnnamedSigners()
+    await openTrove(contracts, {
+      musdAmount: "10000",
+      sender: alice,
+    })
+
+    const price = await contracts.priceFeed.getPrice()
+    const ICR_before = await contracts.troveManager.getCurrentICR(alice, price)
+    console.log(ICR_before)
+
+    const MCR = (await contracts.troveManager.MCR()).toString()
+    console.log(MCR)
+
+    // collateral value drops
+    const newPrice = to1e18(100)
+    await contracts.priceFeed.connect(deployer).setPrice(newPrice)
+    const ICR_after = await contracts.troveManager.getCurrentICR(
+      alice,
+      newPrice,
+    )
+
+    await contracts.troveManager.connect(deployer).liquidate(alice)
+  })
 })

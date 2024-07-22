@@ -299,6 +299,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function liquidate(address _borrower) external override {
         _requireTroveIsActive(_borrower);
+        updateDebtWithInterest(_borrower);
 
         address[] memory borrowers = new address[](1);
         borrowers[0] = _borrower;
