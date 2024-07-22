@@ -210,4 +210,11 @@ interface ITroveManager {
     function getTCR(uint256 _price) external view returns (uint);
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
+
+    function getInterestRate() external view returns (uint256);
+
+    function setTroveInterestRate(
+        address _borrower,
+        uint256 _rate
+    ) external;
 }
