@@ -51,13 +51,34 @@ export interface Contracts {
   troveManager: TroveManager | TroveManagerTester
 }
 
+export interface User {
+  address: string
+  btc: {
+    before: bigint
+    after: bigint
+  }
+  collateral: {
+    before: bigint
+    after: bigint
+  }
+  debt: {
+    before: bigint
+    after: bigint
+  }
+  musd: {
+    before: bigint
+    after: bigint
+  }
+  wallet: HardhatEthersSigner
+}
+
 export interface Users {
-  alice: HardhatEthersSigner
-  bob: HardhatEthersSigner
-  carol: HardhatEthersSigner
-  dennis: HardhatEthersSigner
-  eric: HardhatEthersSigner
-  deployer: HardhatEthersSigner
+  alice: User
+  bob: User
+  carol: User
+  dennis: User
+  eric: User
+  deployer: User
 }
 
 export interface TestSetup {

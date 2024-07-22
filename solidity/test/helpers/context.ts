@@ -71,17 +71,131 @@ export async function deployment(overwrite: Array<string>) {
 
 export async function fixtureMUSD(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
-  const [alice, bob, carol, dennis, eric] =
+  const [aliceWallet, bobWallet, carolWallet, dennisWallet, ericWallet] =
     await helpers.signers.getUnnamedSigners()
   const contracts = await deployment(["MUSD"])
 
   const users: Users = {
-    alice,
-    bob,
-    carol,
-    dennis,
-    eric,
-    deployer,
+    alice: {
+      address: aliceWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: aliceWallet,
+    },
+    bob: {
+      address: bobWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: bobWallet,
+    },
+    carol: {
+      address: carolWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: carolWallet,
+    },
+    dennis: {
+      address: dennisWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: dennisWallet,
+    },
+    eric: {
+      address: ericWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: ericWallet,
+    },
+    deployer: {
+      address: deployer.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: deployer,
+    },
   }
 
   const testSetup: TestSetup = {
@@ -91,9 +205,9 @@ export async function fixtureMUSD(): Promise<TestSetup> {
 
   // Mint using tester functions.
   if ("unprotectedMint" in contracts.musd) {
-    await contracts.musd.unprotectedMint(alice, to1e18(150))
-    await contracts.musd.unprotectedMint(bob, to1e18(100))
-    await contracts.musd.unprotectedMint(carol, to1e18(50))
+    await contracts.musd.unprotectedMint(users.alice.wallet, to1e18(150))
+    await contracts.musd.unprotectedMint(users.bob.wallet, to1e18(100))
+    await contracts.musd.unprotectedMint(users.carol.wallet, to1e18(50))
   } else {
     assert.fail("MUSDTester not loaded in context.ts")
   }
@@ -103,17 +217,131 @@ export async function fixtureMUSD(): Promise<TestSetup> {
 
 export async function fixtureBorrowerOperations(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
-  const [alice, bob, carol, dennis, eric] =
+  const [aliceWallet, bobWallet, carolWallet, dennisWallet, ericWallet] =
     await helpers.signers.getUnnamedSigners()
   const contracts = await deployment(["TroveManager"])
 
   const users: Users = {
-    alice,
-    bob,
-    carol,
-    dennis,
-    eric,
-    deployer,
+    alice: {
+      address: aliceWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: aliceWallet,
+    },
+    bob: {
+      address: bobWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: bobWallet,
+    },
+    carol: {
+      address: carolWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: carolWallet,
+    },
+    dennis: {
+      address: dennisWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: dennisWallet,
+    },
+    eric: {
+      address: ericWallet.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: ericWallet,
+    },
+    deployer: {
+      address: deployer.address,
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+      wallet: deployer,
+    },
   }
 
   const testSetup: TestSetup = {
@@ -139,12 +367,12 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     stabilityPool: await contracts.stabilityPool.getAddress(),
     troveManager: await contracts.troveManager.getAddress(),
     // users
-    alice: users.alice.address,
-    bob: users.bob.address,
-    carol: users.carol.address,
-    dennis: users.dennis.address,
-    eric: users.eric.address,
-    deployer: users.deployer.address,
+    alice: users.alice.wallet.address,
+    bob: users.bob.wallet.address,
+    carol: users.carol.wallet.address,
+    dennis: users.dennis.wallet.address,
+    eric: users.eric.wallet.address,
+    deployer: users.deployer.wallet.address,
   }
 
   return addresses
@@ -154,7 +382,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
   //  connect contracts
 
   await contracts.pcv
-    .connect(users.deployer)
+    .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.musd.getAddress(),
       await contracts.borrowerOperations.getAddress(),
@@ -162,7 +390,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     )
 
   await contracts.defaultPool
-    .connect(users.deployer)
+    .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.troveManager.getAddress(),
       await contracts.activePool.getAddress(),
@@ -170,7 +398,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     )
 
   await contracts.activePool
-    .connect(users.deployer)
+    .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.borrowerOperations.getAddress(),
       ZERO_ADDRESS,
@@ -181,7 +409,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     )
 
   await contracts.borrowerOperations
-    .connect(users.deployer)
+    .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.activePool.getAddress(),
       ZERO_ADDRESS,
@@ -197,7 +425,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     )
 
   await contracts.troveManager
-    .connect(users.deployer)
+    .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.activePool.getAddress(),
       await contracts.borrowerOperations.getAddress(),
@@ -212,7 +440,7 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     )
 
   await contracts.sortedTroves
-    .connect(users.deployer)
+    .connect(users.deployer.wallet)
     .setParams(
       maxBytes32,
       await contracts.troveManager.getAddress(),
