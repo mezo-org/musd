@@ -4,7 +4,7 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
@@ -539,6 +539,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         debt += pendingMUSDDebtReward;
         coll += pendingCollateralReward;
     }
+
     function getBorrowingRate() public view override returns (uint) {
         return _calcBorrowingRate(baseRate);
     }

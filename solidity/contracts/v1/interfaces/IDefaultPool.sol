@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 import "./IPool.sol";
 
@@ -13,6 +13,8 @@ interface IDefaultPool is IPool {
 
     // --- Functions ---
     function sendCollateralToActivePool(uint256 _amount) external;
+
     function updateCollateralBalance(uint256 _amount) external;
+
     function collateralAddress() external view returns (address);
 }

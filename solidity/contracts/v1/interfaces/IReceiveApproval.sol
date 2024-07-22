@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 /// @notice An interface that should be implemented by contracts supporting
 ///         `approveAndCall`/`receiveApproval` pattern.

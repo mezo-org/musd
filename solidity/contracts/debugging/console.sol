@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // solhint-disable state-visibility
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 // Buidler's helper contract for console logging
 library console {
@@ -14,6 +14,7 @@ library console {
         );
         ignored;
     }
+
     function logInt(int p0) internal view {
         (bool ignored, ) = CONSOLE_ADDRESS.staticcall(
             abi.encodeWithSignature("log(int)", p0)

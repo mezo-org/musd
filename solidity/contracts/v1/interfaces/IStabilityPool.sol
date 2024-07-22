@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.24;
 
 /*
  * The Stability Pool holds MUSD tokens deposited by Stability Pool depositors.
