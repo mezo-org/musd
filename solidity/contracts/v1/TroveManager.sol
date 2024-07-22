@@ -32,6 +32,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 stake;
         Status status;
         uint128 arrayIndex;
+        uint256 interestRate;
+        uint256 lastInterestUpdateTime;
+    }
+
+    // Struct for storing interest rate changes and the block when they were changed
+    struct InterestRateChange {
+        uint256 interestRate;
+        uint256 blockNumber;
     }
 
     // Object containing the collateral and MUSD snapshots for a given active trove
@@ -150,6 +158,22 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public lastCollateralError_Redistribution;
     uint256 public lastMUSDDebtError_Redistribution;
 
+    // Array of historical interest rate changes
+    InterestRateChange[] public interestRateHistory;
+
+    // Current interest rate per year
+    uint256 private _interestRate;
+
+    // Maximum interest rate that can be set, defaults to 100%
+    uint256 private _maxInterestRate = 100;
+
+    // Proposed interest rate -- must be approved by governance after a minimum delay
+    uint256 private _proposedInterestRate;
+    uint256 private _proposalTime;
+
+    // Minimum time delay between interest rate proposal and approval
+    uint256 public constant MIN_DELAY = 7 days;
+
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
@@ -203,6 +227,46 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit PCVAddressChanged(_pcvAddress);
 
         renounceOwnership();
+    }
+
+    // Propose a new interest rate  to be approved by governance
+    function proposeInterestRate(uint256 _newProposedInterestRate) external {
+        require(_newProposedInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
+        _proposedInterestRate = _newProposedInterestRate;
+        _proposalTime = block.timestamp;
+        emit InterestRateProposed(_proposedInterestRate, _proposalTime);
+    }
+
+    // Function to update the interest rate, restricted to the contract owner
+    // TODO Restrict this to whitelisted addresses
+    function _setInterestRate(uint256 _newInterestRate) public {
+        require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
+        _interestRate = _newInterestRate;
+        interestRateHistory.push(InterestRateChange(_newInterestRate, block.number));
+        emit InterestRateUpdated(_newInterestRate);
+    }
+
+    // Get historical interest rates
+    function getInterestRateHistory() external view returns (InterestRateChange[] memory) {
+        return interestRateHistory;
+    }
+
+    // Get the current interest rate
+    function getInterestRate() external view returns (uint256) {
+        return _interestRate;
+    }
+
+    // Get the current max interest rate
+    function getMaxInterestRate() external view returns (uint256) {
+        return _maxInterestRate;
+    }
+
+    function setTroveInterestRate(
+        address _borrower,
+        uint256 _rate
+    ) external {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].interestRate = _rate;
     }
 
     function liquidate(address _borrower) external override {
