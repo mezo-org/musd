@@ -230,7 +230,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Propose a new interest rate  to be approved by governance
-    function proposeInterestRate(uint256 _newProposedInterestRate) external {
+    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwner {
         require(_newProposedInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _proposedInterestRate = _newProposedInterestRate;
         _proposalTime = block.timestamp;
@@ -238,7 +238,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Approve and update the interest rate after the delay
-    function approveInterestRate() external {
+    function approveInterestRate() external onlyOwner {
         require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
         _setInterestRate(_proposedInterestRate);
 
@@ -251,9 +251,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
 
-    // Function to update the interest rate, restricted to the contract owner
-    // TODO Restrict this to whitelisted addresses
-    function _setInterestRate(uint256 _newInterestRate) public {
+    // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
+    function _setInterestRate(uint256 _newInterestRate) internal {
         require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _interestRate = _newInterestRate;
         interestRateHistory.push(InterestRateChange(_newInterestRate, block.number));
