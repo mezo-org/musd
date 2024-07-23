@@ -24,8 +24,7 @@ async function deployAndGetContract(name: string) {
 }
 
 async function deployPriceFeed() {
-  await deployments.fixture(["PriceFeed"])
-  const priceFeed = await getContract("PriceFeed")
+  const priceFeed = await deployAndGetContract("PriceFeed")
   const eightDecimalAggregator = await deployAndGetContract(
     "MockEightDecimalAggregator",
   )
