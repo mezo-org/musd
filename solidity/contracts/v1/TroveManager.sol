@@ -248,9 +248,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function approveInterestRate() external onlyOwnerOrGovernance {
         require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
         _setInterestRate(_proposedInterestRate);
-
-        // Reset proposal time to prevent immediate re-approval
-        _proposalTime = 0;
     }
 
     function setMaxInterestRate(uint256 _newMaxInterestRate) external onlyOwnerOrGovernance {
