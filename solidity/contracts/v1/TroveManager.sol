@@ -177,6 +177,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
+    address public council;
+
+    modifier onlyOwnerOrGovernance() {
+        require(msg.sender == owner() || msg.sender == council, "TroveManager: Only governance can call this function");
+        _;
+    }
+
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
@@ -230,7 +237,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Propose a new interest rate  to be approved by governance
-    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwner {
+    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwnerOrGovernance {
         require(_newProposedInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
         _proposedInterestRate = _newProposedInterestRate;
         _proposalTime = block.timestamp;
@@ -238,7 +245,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Approve and update the interest rate after the delay
-    function approveInterestRate() external onlyOwner {
+    function approveInterestRate() external onlyOwnerOrGovernance {
         require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
         _setInterestRate(_proposedInterestRate);
 
@@ -246,7 +253,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _proposalTime = 0;
     }
 
-    function setMaxInterestRate(uint256 _newMaxInterestRate) external onlyOwner {
+    function setMaxInterestRate(uint256 _newMaxInterestRate) external onlyOwnerOrGovernance {
         _maxInterestRate = _newMaxInterestRate;
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }

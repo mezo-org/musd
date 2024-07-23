@@ -30,10 +30,7 @@ describe("TroveManager in Normal Mode", () => {
 
     await expect(
       contracts.troveManager.connect(alice).setMaxInterestRate(1),
-    ).to.be.revertedWithCustomError(
-      contracts.troveManager,
-      "OwnableUnauthorizedAccount",
-    )
+    ).to.be.revertedWith("TroveManager: Only governance can call this function")
   })
 
   it("should emit MaxInterestRateUpdated when the maximum interest rate is updated", async () => {
