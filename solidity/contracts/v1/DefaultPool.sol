@@ -25,6 +25,17 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
 
     constructor() Ownable(msg.sender) {}
 
+    // solhint-disable no-complex-fallback
+    receive() external payable {
+        _requireCallerIsActivePool();
+        require(
+            collateralAddress == address(0),
+            "DefaultPool: ERC20 collateral needed, not ETH"
+        );
+        collateral += msg.value;
+        emit DefaultPoolCollateralBalanceUpdated(collateral);
+    }
+
     // --- Dependency setters ---
 
     function setAddresses(
@@ -98,6 +109,13 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         require(
             msg.sender == troveManagerAddress,
             "DefaultPool: Caller is not the TroveManager"
+        );
+    }
+
+    function _requireCallerIsActivePool() internal view {
+        require(
+            msg.sender == activePoolAddress,
+            "DefaultPool: Caller is not the ActivePool"
         );
     }
 }

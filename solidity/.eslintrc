@@ -16,5 +16,13 @@
         ]
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["test/helpers/debugging.ts"], // Specify the path to the file
+      "rules": {
+        "no-console": "off" // Disable the no-console rule for this file
+      }
+    }
+  ]
 }

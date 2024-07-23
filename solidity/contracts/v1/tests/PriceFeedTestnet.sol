@@ -10,7 +10,7 @@ import "../interfaces/IPriceFeed.sol";
  * variable. The contract does not connect to a live Chainlink price feed.
  */
 contract PriceFeedTestnet is Ownable, IPriceFeed {
-    uint256 private _price = 200 * 1e18;
+    uint256 private _price = 50000 * 1e18;
 
     // --- Functions ---
 

@@ -1,7 +1,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { Contracts, OpenTroveParams } from "./interfaces"
+import { Contracts, OpenTroveParams, AddCollParams } from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -75,6 +75,29 @@ export async function getEventArgByName(
   throw new Error(
     `The transaction logs do not contain event ${eventName} and arg ${argIndex}`,
   )
+}
+
+export async function addColl(contracts: Contracts, inputs: AddCollParams) {
+  const params = inputs
+
+  const amount =
+    typeof params.amount === "bigint" ? params.amount : to1e18(params.amount)
+
+  // fill in hints for searching trove list if not provided
+  params.lowerHint =
+    inputs.lowerHint === undefined ? ZERO_ADDRESS : inputs.lowerHint
+  params.upperHint =
+    inputs.upperHint === undefined ? ZERO_ADDRESS : inputs.upperHint
+
+  const tx = await contracts.borrowerOperations
+    .connect(inputs.sender)
+    .addColl(amount, params.lowerHint, params.upperHint, {
+      value: amount, // The amount of chain base asset to send
+    })
+
+  return {
+    tx,
+  }
 }
 
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
