@@ -16,6 +16,5 @@ export async function getDeployedContract<T extends BaseContract>(
   const { address, abi } = await deployments.get(deploymentName)
   // Use default unnamed signer from index 0 to initialize the contract runner.
   const [defaultSigner] = await getUnnamedSigners()
-
   return new ethers.BaseContract(address, abi, defaultSigner) as T
 }

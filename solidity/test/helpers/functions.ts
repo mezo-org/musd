@@ -25,7 +25,7 @@ export async function getOpenTroveTotalDebt(
   musdAmount: bigint,
 ) {
   const fee = await contracts.troveManager.getBorrowingFee(musdAmount)
-  const price = await contracts.priceFeed.getPrice()
+  const price = await contracts.priceFeed.fetchPrice()
   const recoveryMode = await contracts.troveManager.checkRecoveryMode(price)
   const compositeDebt =
     await contracts.borrowerOperations.getCompositeDebt(musdAmount)
@@ -123,7 +123,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
       ? params.musdAmount
       : to1e18(params.musdAmount)
 
-  const price = await contracts.priceFeed.getPrice()
+  const price = await contracts.priceFeed.fetchPrice()
 
   // amount of debt to take on
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
@@ -153,6 +153,6 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 }
 
 export async function getTCR(contracts: Contracts) {
-  const price = await contracts.priceFeed.getPrice()
+  const price = await contracts.priceFeed.fetchPrice()
   return contracts.troveManager.getTCR(price)
 }

@@ -21,7 +21,7 @@ export interface Contracts {
   gasPool: GasPool
   musd: MUSD | MUSDTester
   pcv: PCV
-  priceFeed: PriceFeedTestnet
+  priceFeed: PriceFeed
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
   troveManager: TroveManager | TroveManagerTester
@@ -30,7 +30,7 @@ export interface Contracts {
 
 ## Smart Contract Helpers
 
-Tester versions of smart contracts allow extra functions to change the state of the network. E.g. to alter the value returned by the pricefeed. PriceFeedTestnet.sol has
+Tester versions of smart contracts allow extra functions to change the state of the network. E.g. to alter the value returned by the pricefeed. PriceFeed.sol has a mock aggregator loaded with an external price setter function
 
 ```
 // Manual external price setter.
@@ -44,7 +44,7 @@ function setPrice(uint256 price) external onlyOwner returns (bool) {
 Which can be called in the tests by connecting as the contract owner.
 
 ```
-await contracts.priceFeed.connect(deployer).setPrice(price)
+await contracts.mockAggregator.connect(deployer).setPrice(price)
 ```
 
 ## Deploying Contracts
@@ -176,7 +176,7 @@ async function recoveryModeSetup() {
 
   // collateral value drops from 50,000 to 10,000
   const price = to1e18("10,000")
-  await contracts.priceFeed.connect(deployer.wallet).setPrice(price)
+  await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
   expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(true)
 }
 

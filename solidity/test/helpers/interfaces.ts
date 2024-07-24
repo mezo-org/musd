@@ -7,10 +7,11 @@ import {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  MockAggregator,
   MUSD,
   MUSDTester,
   PCV,
-  PriceFeedTestnet,
+  PriceFeed,
   SortedTroves,
   StabilityPool,
   TroveManager,
@@ -23,6 +24,7 @@ export interface TestingAddresses {
   collSurplusPool: string
   defaultPool: string
   gasPool: string
+  mockAggregator: string
   musd: string
   pcv: string
   priceFeed: string
@@ -43,9 +45,10 @@ export interface Contracts {
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
   gasPool: GasPool
+  mockAggregator: MockAggregator
   musd: MUSD | MUSDTester
   pcv: PCV
-  priceFeed: PriceFeedTestnet
+  priceFeed: PriceFeed
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
   troveManager: TroveManager | TroveManagerTester

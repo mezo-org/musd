@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying MUSD contract...")
     const borrowerOperations = await deployments.get("BorrowerOperations")
     const stabilityPool = await deployments.get("StabilityPool")
-    const troveManager = await deployments.get("TroveManager")
+    const troveManager = await deployments.get("TroveManagerTester")
     const ZERO_ADDRESS = `0x${"0".repeat(40)}`
     const delay = 90 * 24 * 60 * 60 // 90 days in seconds
 

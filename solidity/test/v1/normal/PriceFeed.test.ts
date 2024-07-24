@@ -1,67 +1,81 @@
 import { expect } from "chai"
-import { deployments, ethers, getNamedAccounts } from "hardhat"
+import { deployments } from "hardhat"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
+import { to1e18 } from "../../utils"
 
-async function getContract(name: string) {
-  const deployer = await ethers.provider.getSigner()
-  return ethers.getContractAt(
-    name,
-    (await deployments.get(name)).address,
-    deployer,
-  )
-}
-
-async function deployAndGetContract(name: string) {
-  const { deployer } = await getNamedAccounts()
-  await deployments.deploy(name, {
-    contract: name,
-    args: [],
-    from: deployer,
-    log: true,
-    waitConfirmations: 1,
-  })
-  return getContract(name)
-}
-
-async function deployPriceFeed() {
-  const priceFeed = await deployAndGetContract("PriceFeed")
-  const eightDecimalAggregator = await deployAndGetContract(
-    "MockEightDecimalAggregator",
-  )
-  const eighteenDecimalAggregator = await deployAndGetContract(
-    "MockEighteenDecimalAggregator",
-  )
-  const twentyDecimalAggregator = await deployAndGetContract(
-    "MockTwentyDecimalAggregator",
-  )
-
-  return {
-    priceFeed,
-    eightDecimalAggregator,
-    eighteenDecimalAggregator,
-    twentyDecimalAggregator,
-  }
-}
+import {
+  Contracts,
+  TestSetup,
+  User,
+  fixture,
+  getDeployedContract,
+} from "../../helpers"
+import { MockAggregator } from "../../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
+  let contracts: Contracts
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
+  let deployer: User
+
+  async function deployAndGetContract(
+    name: string,
+    args: string[],
+  ): Promise<MockAggregator> {
+    await deployments.deploy(name, {
+      contract: name,
+      args,
+      from: deployer.wallet.address,
+      log: true,
+      waitConfirmations: 1,
+    })
+    // console.log(retval)
+    return getDeployedContract(name)
+  }
+
+  beforeEach(async () => {
+    // fixtureBorrowerOperations has a mock trove manager so we can change rates
+    cachedTestSetup = await loadFixture(fixture)
+    testSetup = { ...cachedTestSetup }
+    contracts = testSetup.contracts
+    // users
+    deployer = testSetup.users.deployer
+  })
+
   it("Handles an 8 decimal oracle", async () => {
-    const { priceFeed, eightDecimalAggregator } =
-      await loadFixture(deployPriceFeed)
-    await priceFeed.setOracle(await eightDecimalAggregator.getAddress())
-    expect(await priceFeed.fetchPrice()).to.be.equal(42n * 10n ** 18n)
+    const mockAggregator: MockAggregator = await deployAndGetContract(
+      "MockAggregator",
+      ["8"],
+    )
+
+    expect(await mockAggregator.decimals()).to.equal(8)
+
+    await contracts.priceFeed
+      .connect(deployer.wallet)
+      .setOracle(await mockAggregator.getAddress())
+    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
+      50000n * 10n ** 18n,
+    )
+
+    const price = to1e18("25,000")
+    await mockAggregator.connect(deployer.wallet).setPrice(price)
+    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(price)
   })
 
   it("Handles an 18 decimal oracle", async () => {
-    const { priceFeed, eighteenDecimalAggregator } =
-      await loadFixture(deployPriceFeed)
-    await priceFeed.setOracle(await eighteenDecimalAggregator.getAddress())
-    expect(await priceFeed.fetchPrice()).to.be.equal(42n * 10n ** 18n)
-  })
+    // default is 18
 
-  it("Handles a 20 decimal Oracle", async () => {
-    const { priceFeed, twentyDecimalAggregator } =
-      await loadFixture(deployPriceFeed)
-    await priceFeed.setOracle(await twentyDecimalAggregator.getAddress())
-    expect(await priceFeed.fetchPrice()).to.be.equal(42n * 10n ** 18n)
+    expect(await contracts.mockAggregator.decimals()).to.equal(18)
+
+    await contracts.priceFeed
+      .connect(deployer.wallet)
+      .setOracle(await contracts.mockAggregator.getAddress())
+    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
+      50000n * 10n ** 18n,
+    )
+
+    const price = to1e18("25,000")
+    await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
+    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(price)
   })
 })

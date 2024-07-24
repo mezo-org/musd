@@ -4,7 +4,7 @@ import { expect, assert } from "chai"
 import {
   Contracts,
   TestSetup,
-  fixtureMUSD,
+  fixture,
   getLatestBlockTimestamp,
   fastForwardTime,
   connectContracts,
@@ -30,7 +30,7 @@ describe("MUSD", () => {
   let newTroveManager: TroveManager
 
   beforeEach(async () => {
-    testSetup = await loadFixture(fixtureMUSD)
+    testSetup = await loadFixture(fixture)
     contracts = testSetup.contracts
     await connectContracts(contracts, testSetup.users)
 
@@ -51,6 +51,15 @@ describe("MUSD", () => {
     carol = testSetup.users.carol
     dennis = testSetup.users.dennis
     deployer = testSetup.users.deployer
+
+    // Mint using tester functions.
+    if ("unprotectedMint" in contracts.musd) {
+      await contracts.musd.unprotectedMint(alice.wallet, to1e18(150))
+      await contracts.musd.unprotectedMint(bob.wallet, to1e18(100))
+      await contracts.musd.unprotectedMint(carol.wallet, to1e18(50))
+    } else {
+      assert.fail("MUSDTester not loaded in context.ts")
+    }
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)

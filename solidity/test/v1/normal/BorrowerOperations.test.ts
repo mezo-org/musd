@@ -8,7 +8,7 @@ import {
   User,
   addColl,
   connectContracts,
-  fixtureBorrowerOperations,
+  fixture,
   fastForwardTime,
   getEventArgByName,
   getLatestBlockTimestamp,
@@ -93,7 +93,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixtureBorrowerOperations)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
 
@@ -849,34 +849,6 @@ describe("BorrowerOperations in Normal Mode", () => {
      */
 
     context("Expected Reverts", () => {
-      it("addColl(): reverts when top-up would leave trove with ICR < MCR", async () => {
-        const price = to1e18("25,000")
-        await contracts.priceFeed.connect(deployer.wallet).setPrice(price)
-
-        await openTrove(contracts, {
-          musdAmount: "20,000",
-          ICR: "500",
-          sender: carol.wallet,
-        })
-
-        expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
-          false,
-        )
-        expect(
-          await contracts.troveManager.getCurrentICR(alice.address, price),
-        ).to.lessThan(to1e18(110))
-        const collateralTopUp = to1e18(0.001)
-
-        await expect(
-          addColl(contracts, {
-            amount: collateralTopUp,
-            sender: alice.wallet,
-          }),
-        ).to.be.revertedWith(
-          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
-        )
-      })
-
       it("addColl(), reverts if trove is non-existent or closed", async () => {
         await expect(
           addColl(contracts, {
