@@ -67,6 +67,10 @@ interface ITroveManager {
     event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
 
+    event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
+    event InterestRateUpdated(uint256 _newInterestRate);
+    event MaxInterestRateUpdated(uint256 _newMaxInterestRate);
+
     // --- Functions ---
 
     function setAddresses(
@@ -206,4 +210,16 @@ interface ITroveManager {
     function getTCR(uint256 _price) external view returns (uint);
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
+
+    function getInterestRate() external view returns (uint256);
+
+    function setTroveInterestRate(
+        address _borrower,
+        uint256 _rate
+    ) external;
+
+    function setTroveLastInterestUpdateTime(
+        address _borrower,
+        uint256 _timestamp
+    ) external;
 }

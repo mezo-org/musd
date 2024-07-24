@@ -164,6 +164,8 @@ contract BorrowerOperations is
             vars.compositeDebt
         );
 
+        contractsCache.troveManager.setTroveInterestRate(msg.sender, contractsCache.troveManager.getInterestRate());
+        contractsCache.troveManager.setTroveLastInterestUpdateTime(msg.sender, block.timestamp);
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
             msg.sender
@@ -212,19 +214,7 @@ contract BorrowerOperations is
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) external payable override {
-        _assetAmount = getAssetAmount(_assetAmount);
-        _adjustTrove(
-            msg.sender,
-            0,
-            0,
-            false,
-            _assetAmount,
-            _upperHint,
-            _lowerHint,
-            0
-        );
-    }
+    ) external payable override {}
 
     // Send collateral to a trove. Called by only the Stability Pool.
     function moveCollateralGainToTrove(
@@ -752,7 +742,6 @@ contract BorrowerOperations is
         address _borrower
     ) internal view {
         ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
-
         require(
             status == ITroveManager.Status.active,
             "BorrowerOps: Trove does not exist or is closed"
