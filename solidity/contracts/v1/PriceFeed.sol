@@ -24,6 +24,7 @@ contract PriceFeed is IPriceFeed, Ownable {
             );
 
         require(chainLinkOracle.decimals() > 0, "Invalid Decimals from Oracle");
+        // slither-disable-next-line unused-return
         (, int256 price, , , ) = chainLinkOracle.latestRoundData();
         require(price != 0, "Oracle returns 0 for price");
 
@@ -35,6 +36,7 @@ contract PriceFeed is IPriceFeed, Ownable {
     // Public functions -------------------------------------------------------------------------------------------------
 
     function fetchPrice() public view virtual returns (uint256) {
+        // slither-disable-next-line unused-return
         (, int256 price, , , ) = oracle.latestRoundData();
         return _scalePriceByDigits(uint256(price), oracle.decimals());
     }
