@@ -1,3 +1,4 @@
+/* eslint no-param-reassign: ["error", { "props": false }] */
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
@@ -39,7 +40,7 @@ export async function getOpenTroveTotalDebt(
 export async function updateTroveSnapshot(
   contracts: Contracts,
   user: User,
-  type: string,
+  type: "before" | "after",
 ) {
   const [debt, collateral, stake, status] = await contracts.troveManager.Troves(
     user.address,
@@ -61,7 +62,7 @@ export async function updateTroveSnapshot(
 export async function updatePendingSnapshot(
   contracts: Contracts,
   user: User,
-  type: string,
+  type: "before" | "after",
 ) {
   const collateral = await contracts.troveManager.getPendingCollateralReward(
     user.address,
@@ -81,7 +82,7 @@ export async function updatePendingSnapshot(
 export async function updateRewardSnapshot(
   contracts: Contracts,
   user: User,
-  type: string,
+  type: "before" | "after",
 ) {
   const [collateral, debt] = await contracts.troveManager.rewardSnapshots(
     user.address,

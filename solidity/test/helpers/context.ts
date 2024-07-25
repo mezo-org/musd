@@ -77,7 +77,7 @@ export async function deployment(overwrite: Array<string>) {
   return contracts
 }
 
-async function initializeContractState(): Promise<ContractsState> {
+function initializeContractState(): ContractsState {
   return {
     troveManager: {
       baseRate: {
@@ -210,7 +210,7 @@ export async function fixture(): Promise<TestSetup> {
     deployer: await initializeUserObject(deployer),
   }
 
-  const state: ContractsState = await initializeContractState()
+  const state: ContractsState = initializeContractState()
 
   const testSetup: TestSetup = {
     users,
