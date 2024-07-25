@@ -7,15 +7,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("PriceFeedTestnet")
+  const deployment = await deployments.getOrNull("MockAggregator")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using PriceFeedTestnet at ${deployment.address}`)
+    log(`Using MockAggregator at ${deployment.address}`)
   } else {
-    log("Deploying PriceFeedTestnet contract...")
+    log("Deploying MockAggregator contract...")
 
-    await deployments.deploy("PriceFeedTestnet", {
-      contract: "PriceFeedTestnet",
-      args: [],
+    await deployments.deploy("MockAggregator", {
+      contract: "MockAggregator",
+      args: ["18"],
       from: deployer,
       log: true,
       waitConfirmations: waitConfirmationsNumber(hre),
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["PriceFeedTestnet"]
+func.tags = ["MockAggregator"]

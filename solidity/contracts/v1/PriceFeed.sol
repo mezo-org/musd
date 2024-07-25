@@ -12,7 +12,7 @@ contract PriceFeed is IPriceFeed, Ownable {
     uint8 public constant TARGET_DIGITS = 18;
 
     // State ------------------------------------------------------------------------------------------------------------
-    ChainlinkAggregatorV3Interface oracle;
+    ChainlinkAggregatorV3Interface public oracle;
 
     constructor() Ownable(msg.sender) {}
 
