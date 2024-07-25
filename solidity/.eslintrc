@@ -23,6 +23,12 @@
       "rules": {
         "no-console": "off" // Disable the no-console rule for this file
       }
+    },
+    {
+      "files": ["test/helpers/functions.ts"], // Specify the path to the file
+      "rules": {
+        "no-param-reassign": "off"  
+      }
     }
   ]
 }

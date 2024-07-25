@@ -18,9 +18,12 @@ import {
   getAddresses,
   openTrove,
   removeMintlist,
+  updateTroveSnapshot,
+  updateRewardSnapshot,
+  updatePendingSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import { OpenTroveParams } from "../../helpers/interfaces"
+import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
 
 describe("BorrowerOperations in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -33,6 +36,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   let deployer: User
   let contracts: Contracts
   let cachedTestSetup: TestSetup
+  let state: ContractsState
   let testSetup: TestSetup
   let MIN_NET_DEBT: bigint
   let MUSD_GAS_COMPENSATION: bigint
@@ -96,6 +100,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
+    state = testSetup.state
 
     await connectContracts(contracts, testSetup.users)
     // users
@@ -520,29 +525,20 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
         expect(emittedFee).to.greaterThan(0)
 
-        const newDebt = (await contracts.troveManager.Troves(dennis.address))[0]
+        await updateTroveSnapshot(contracts, dennis, "after")
 
         // Check debt on Trove struct equals drawn debt plus emitted fee
-        expect(newDebt).is.equal(
+        expect(dennis.trove.debt.after).is.equal(
           emittedFee + MUSD_GAS_COMPENSATION + musdAmount,
         )
       })
 
       it("openTrove(): Creates a new Trove and assigns the correct collateral and debt amount", async () => {
-        carol.debt.before = await getTroveEntireDebt(contracts, carol.wallet)
-        carol.collateral.before = await getTroveEntireColl(
-          contracts,
-          carol.wallet,
-        )
-        const statusBefore = await contracts.troveManager.getTroveStatus(
-          carol.wallet,
-        )
+        await updateTroveSnapshot(contracts, carol, "before")
 
-        // check coll and debt before
-        expect(carol.debt.before).is.equal(0)
-        expect(carol.collateral.before).is.equal(0)
-        // check non-existent status
-        expect(statusBefore).is.equal(0)
+        expect(carol.trove.debt.before).is.equal(0)
+        expect(carol.trove.collateral.before).is.equal(0)
+        expect(carol.trove.status.before).is.equal(0)
 
         await openTrove(contracts, {
           musdAmount: MIN_NET_DEBT,
@@ -555,29 +551,17 @@ describe("BorrowerOperations in Normal Mode", () => {
           (await contracts.troveManager.getBorrowingFee(MIN_NET_DEBT)) +
           MUSD_GAS_COMPENSATION
 
-        carol.debt.after = await getTroveEntireDebt(contracts, carol.wallet)
-        carol.collateral.after = await getTroveEntireColl(
-          contracts,
-          carol.wallet,
-        )
-        const statusAfter = await contracts.troveManager.getTroveStatus(
-          carol.wallet,
-        )
+        await updateTroveSnapshot(contracts, carol, "after")
 
-        expect(carol.collateral.after).is.greaterThan(carol.collateral.before)
-        expect(carol.debt.after).is.greaterThan(carol.debt.before)
-        expect(carol.debt.after).is.equal(expectedDebt)
-        // check active status
-        expect(statusAfter).is.equal(1n)
+        expect(carol.trove.collateral.after).is.greaterThan(
+          carol.trove.collateral.before,
+        )
+        expect(carol.trove.debt.after).is.greaterThan(carol.trove.debt.before)
+        expect(carol.trove.debt.after).is.equal(expectedDebt)
+        expect(carol.trove.status.after).is.equal(1n)
       })
 
       it("openTrove(): Allows a user to open a Trove, then close it, then re-open it", async () => {
-        // Check trove is active
-        expect(
-          (await contracts.troveManager.Troves(alice.address))[3],
-        ).to.equal(1)
-        expect(await contracts.sortedTroves.contains(alice.address))
-
         // Send MUSD to Alice so she has sufficent funds to close the trove
         await contracts.musd
           .connect(bob.wallet)
@@ -585,11 +569,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Repay and close Trove
         await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        await updateTroveSnapshot(contracts, alice, "before")
 
         // Check Alices trove is closed
-        expect(
-          (await contracts.troveManager.Troves(alice.address))[3],
-        ).is.equal(2)
+        expect(alice.trove.status.before).is.equal(2)
         expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
           false,
         )
@@ -600,9 +583,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: alice.wallet,
         })
 
-        expect(
-          (await contracts.troveManager.Troves(alice.address))[3],
-        ).is.equal(1)
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.status.after).is.equal(1)
         expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
           true,
         )
@@ -634,7 +616,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
         ]
 
-        expect(await getTroveEntireDebt(contracts, dennis.wallet)).to.equal(0n)
+        await updateTroveSnapshot(contracts, dennis, "before")
+        expect(dennis.trove.debt.before).to.equal(0n)
 
         const { tx } = await openTrove(contracts, {
           musdAmount: MIN_NET_DEBT,
@@ -647,7 +630,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           "MUSDBorrowingFeePaid",
           1,
         )
-        expect(await getTroveEntireDebt(contracts, dennis.wallet)).to.equal(
+        await updateTroveSnapshot(contracts, dennis, "after")
+        expect(dennis.trove.debt.after).to.equal(
           MIN_NET_DEBT + MUSD_GAS_COMPENSATION + emittedFee,
         )
       })
@@ -660,9 +644,9 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: carol.wallet,
         })
 
-        carol.debt.after = await getTroveEntireDebt(contracts, carol.wallet)
+        await updateTroveSnapshot(contracts, carol, "after")
         expect(await contracts.activePool.getMUSDDebt()).to.equal(
-          carol.debt.after + debtBefore,
+          carol.trove.debt.after + debtBefore,
         )
 
         await openTrove(contracts, {
@@ -670,9 +654,9 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: dennis.wallet,
         })
 
-        dennis.debt.after = await getTroveEntireDebt(contracts, dennis.wallet)
+        await updateTroveSnapshot(contracts, dennis, "after")
         expect(await contracts.activePool.getMUSDDebt()).to.equal(
-          dennis.debt.after + carol.debt.after + debtBefore,
+          dennis.trove.debt.after + carol.trove.debt.after + debtBefore,
         )
       })
     })
@@ -685,7 +669,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Fees", () => {
       it("openTrove(): Borrowing at non-zero base rate sends MUSD fee to PCV contract", async () => {
-        const pcvBefore = await contracts.musd.balanceOf(addresses.pcv)
+        state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
 
         const newRate = to1e18(5) / 100n
         await setNewRate(newRate)
@@ -697,8 +681,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: dennis.wallet,
         })
 
-        const pcvAfter = await contracts.musd.balanceOf(addresses.pcv)
-        expect(pcvAfter).is.greaterThan(pcvBefore)
+        state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
+        expect(state.pcv.musd.after).is.greaterThan(state.pcv.musd.before)
       })
 
       it("openTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
@@ -722,16 +706,20 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("openTrove(): Borrowing at zero base rate changes the PCV contract MUSD fees collected", async () => {
-        expect(await contracts.troveManager.baseRate()).to.be.equal(0)
-        const pcvBefore = await contracts.musd.balanceOf(addresses.pcv)
+        state.troveManager.baseRate.before =
+          await contracts.troveManager.baseRate()
+        expect(state.troveManager.baseRate.before).to.be.equal(0)
+        state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
 
         await openTrove(contracts, {
           musdAmount: "100,000",
           sender: carol.wallet,
         })
 
-        const pcvAfter = await contracts.musd.balanceOf(addresses.pcv)
-        expect(pcvAfter).to.be.equal(to1e18(500) + pcvBefore)
+        state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
+        expect(state.pcv.musd.after).to.be.equal(
+          to1e18(500) + state.pcv.musd.before,
+        )
       })
 
       it("openTrove(): Borrowing at zero base rate charges minimum fee", async () => {
@@ -768,37 +756,36 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("State change in other contracts", () => {
       it("openTrove(): Adds Trove owner to TroveOwners array", async () => {
-        const trovesBefore = await contracts.troveManager.getTroveOwnersCount()
-        expect(trovesBefore).to.equal(2n)
+        state.troveManager.troves.before =
+          await contracts.troveManager.getTroveOwnersCount()
+        expect(state.troveManager.troves.before).to.equal(2n)
 
         await openTrove(contracts, {
           musdAmount: MIN_NET_DEBT,
           sender: carol.wallet,
         })
 
-        const trovesAfter = await contracts.troveManager.getTroveOwnersCount()
-        expect(trovesAfter).to.equal(3n)
+        state.troveManager.troves.after =
+          await contracts.troveManager.getTroveOwnersCount()
+        expect(state.troveManager.troves.after).to.equal(3n)
       })
 
       it("openTrove(): Creates a stake and adds it to total stakes", async () => {
-        const totalStakesBefore = await contracts.troveManager.totalStakes()
+        state.troveManager.stakes.before =
+          await contracts.troveManager.totalStakes()
 
         await openTrove(contracts, {
           musdAmount: MIN_NET_DEBT,
           sender: carol.wallet,
         })
 
-        const carolTroveStake = await contracts.troveManager.getTroveStake(
-          carol.address,
-        )
-        carol.collateral.after = await getTroveEntireColl(
-          contracts,
-          carol.wallet,
-        )
-        expect(carolTroveStake).to.equal(carol.collateral.after)
+        await updateTroveSnapshot(contracts, carol, "after")
 
-        const totalStakesAfter = await contracts.troveManager.totalStakes()
-        expect(totalStakesAfter).to.equal(carolTroveStake + totalStakesBefore)
+        state.troveManager.stakes.after =
+          await contracts.troveManager.totalStakes()
+        expect(state.troveManager.stakes.after).to.equal(
+          carol.trove.stake.after + state.troveManager.stakes.before,
+        )
       })
 
       it("openTrove(): Inserts Trove to Sorted Troves list", async () => {
@@ -817,10 +804,14 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("openTrove(): Increases the activePool collateral and raw collateral balance by correct amount", async () => {
-        const activePoolCollateralBefore =
+        state.activePool.collateral.before =
           await contracts.activePool.getCollateralBalance()
-        expect(await ethers.provider.getBalance(addresses.activePool)).to.equal(
-          activePoolCollateralBefore,
+        state.activePool.btc.before = await ethers.provider.getBalance(
+          addresses.activePool,
+        )
+
+        expect(state.activePool.btc.before).to.equal(
+          state.activePool.collateral.before,
         )
 
         await openTrove(contracts, {
@@ -828,15 +819,18 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: carol.wallet,
         })
 
+        await updateTroveSnapshot(contracts, carol, "after")
+
         const expectedCollateral =
-          (await getTroveEntireColl(contracts, carol.wallet)) +
-          activePoolCollateralBefore
-        expect(await contracts.activePool.getCollateralBalance()).to.equal(
-          expectedCollateral,
+          carol.trove.collateral.after + state.activePool.collateral.before
+        state.activePool.collateral.after =
+          await contracts.activePool.getCollateralBalance()
+        state.activePool.btc.after = await ethers.provider.getBalance(
+          addresses.activePool,
         )
-        expect(await ethers.provider.getBalance(addresses.activePool)).to.equal(
-          expectedCollateral,
-        )
+
+        expect(state.activePool.collateral.after).to.equal(expectedCollateral)
+        expect(state.activePool.btc.after).to.equal(expectedCollateral)
       })
     })
   })
@@ -883,11 +877,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Individual Troves", () => {
       it("addColl(), active Trove: adds the correct collateral amount to the Trove", async () => {
-        let trove = await contracts.troveManager.Troves(alice.address)
-        const [, collateralBefore, , statusBefore] = trove // Destructuring the needed elements
-
-        expect(statusBefore).to.equal(1) // status
-        alice.collateral.before = collateralBefore // Accessing the collateral value
+        await updateTroveSnapshot(contracts, alice, "before")
+        expect(alice.trove.status.before).to.equal(1) // status
 
         const collateralTopUp = to1e18(1)
         await addColl(contracts, {
@@ -895,13 +886,10 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: alice.wallet,
         })
 
-        trove = await contracts.troveManager.Troves(alice.address)
-        const [, collateralAfter, , statusAfter] = trove // Destructuring the needed elements
-        expect(statusAfter).to.equal(1) // status
-        alice.collateral.after = collateralAfter
-
-        expect(alice.collateral.after).to.equal(
-          alice.collateral.before + collateralTopUp,
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.status.after).to.equal(1) // status
+        expect(alice.trove.collateral.after).to.equal(
+          alice.trove.collateral.before + collateralTopUp,
         )
       })
 
@@ -924,10 +912,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("addColl(), active Trove: updates the stake and updates the total stakes", async () => {
-        const aliceStakeBefore = (
-          await contracts.troveManager.Troves(alice.address)
-        )[2]
-        const totalStakesBefore = await contracts.troveManager.totalStakes()
+        await updateTroveSnapshot(contracts, alice, "before")
+        state.troveManager.stakes.before =
+          await contracts.troveManager.totalStakes()
 
         const collateralTopUp = to1e18(1)
         await addColl(contracts, {
@@ -935,14 +922,18 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: alice.wallet,
         })
 
-        const aliceStakeAfter = (
-          await contracts.troveManager.Troves(alice.address)
-        )[2]
-        const totalStakesAfter = await contracts.troveManager.totalStakes()
-        expect(totalStakesAfter).is.equal(
-          totalStakesBefore + aliceStakeAfter - aliceStakeBefore,
+        await updateTroveSnapshot(contracts, alice, "after")
+        state.troveManager.stakes.after =
+          await contracts.troveManager.totalStakes()
+
+        expect(state.troveManager.stakes.after).is.equal(
+          state.troveManager.stakes.before +
+            alice.trove.stake.after -
+            alice.trove.stake.before,
         )
-        expect(totalStakesAfter).to.equal(totalStakesBefore + collateralTopUp)
+        expect(state.troveManager.stakes.after).to.equal(
+          state.troveManager.stakes.before + collateralTopUp,
+        )
       })
     })
 
@@ -954,11 +945,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Balance changes", () => {
       it("addColl(): no mintlist, can add collateral", async () => {
-        const aliceCollBefore = await getTroveEntireColl(
-          contracts,
-          alice.wallet,
-        )
-
+        await updateTroveSnapshot(contracts, alice, "before")
         await removeMintlist(contracts, deployer.wallet)
 
         const collateralTopUp = to1e18(1)
@@ -967,8 +954,10 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: alice.wallet,
         })
 
-        const aliceCollAfter = await getTroveEntireColl(contracts, alice.wallet)
-        expect(aliceCollAfter).to.equal(aliceCollBefore + collateralTopUp)
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.collateral.after).to.equal(
+          alice.trove.collateral.before + collateralTopUp,
+        )
       })
     })
 
@@ -1008,6 +997,335 @@ describe("BorrowerOperations in Normal Mode", () => {
           await contracts.activePool.getCollateralBalance(),
         )
         expect(afterCollateral).to.equal(beforeCollateral + collateralTopUp)
+      })
+    })
+  })
+
+  describe("withdrawColl()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("withdrawColl(): reverts when withdrawal would leave trove with ICR < MCR", async () => {
+        const price = await contracts.priceFeed.fetchPrice()
+        await updateTroveSnapshot(contracts, alice, "before")
+        expect(
+          await contracts.troveManager.getCurrentICR(alice.wallet, price),
+        ).to.equal(to1e18(1.5))
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawColl(
+              alice.trove.collateral.before / 2n,
+              alice.wallet,
+              alice.wallet,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
+      it("withdrawColl(): no mintlist, reverts when withdrawal would leave trove with ICR < MCR", async () => {
+        await removeMintlist(contracts, deployer.wallet)
+
+        const price = await contracts.priceFeed.fetchPrice()
+        await updateTroveSnapshot(contracts, alice, "before")
+        expect(
+          await contracts.troveManager.getCurrentICR(alice.wallet, price),
+        ).to.equal(to1e18(1.5))
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawColl(
+              alice.trove.collateral.before / 2n,
+              alice.wallet,
+              alice.wallet,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
+      // reverts when calling address does not have active trove
+      it("withdrawColl(): reverts when calling address does not have active trove", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .withdrawColl(1n, carol.wallet, carol.wallet),
+        ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
+      })
+
+      it("withdrawColl(): reverts when requested collateral withdrawal is > the trove's collateral", async () => {
+        await updateTroveSnapshot(contracts, alice, "before")
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawColl(
+              alice.trove.collateral.before + 1n,
+              alice.wallet,
+              alice.wallet,
+            ),
+        ).to.be.revertedWithPanic()
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {
+      it("withdrawColl(): updates the stake and updates the total stakes", async () => {
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateTroveSnapshot(contracts, bob, "before")
+        await updateTroveSnapshot(contracts, carol, "before")
+
+        state.troveManager.stakes.before =
+          await contracts.troveManager.totalStakes()
+
+        expect(carol.trove.stake.before).to.equal(carol.trove.collateral.before)
+        expect(
+          alice.trove.stake.before +
+            bob.trove.stake.before +
+            carol.trove.stake.before,
+        ).to.equal(state.troveManager.stakes.before)
+
+        const withdrawalAmount = 1n
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet)
+        await updateTroveSnapshot(contracts, carol, "after")
+
+        state.troveManager.stakes.after =
+          await contracts.troveManager.totalStakes()
+        expect(
+          alice.trove.stake.before +
+            bob.trove.stake.before +
+            carol.trove.stake.after,
+        ).to.equal(state.troveManager.stakes.after)
+        expect(carol.trove.stake.after).to.equal(
+          carol.trove.stake.before - withdrawalAmount,
+        )
+        expect(carol.trove.collateral.after).to.equal(
+          carol.trove.collateral.before - withdrawalAmount,
+        )
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("withdrawColl(): leaves the Trove active when the user withdraws less than all the collateral", async () => {
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        const withdrawalAmount = 1n
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet)
+
+        await updateTroveSnapshot(contracts, carol, "after")
+
+        expect(carol.trove.status.after).to.equal(1)
+        expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
+          true,
+        )
+      })
+
+      it("withdrawColl(): reduces the Trove's collateral by the correct amount", async () => {
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        const withdrawalAmount = 1n
+        await updateTroveSnapshot(contracts, carol, "before")
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet)
+        await updateTroveSnapshot(contracts, carol, "after")
+
+        expect(carol.trove.collateral.after).to.equal(
+          carol.trove.collateral.before - withdrawalAmount,
+        )
+      })
+    })
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {
+      it("withdrawColl(): sends the correct amount of collateral to the user", async () => {
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "1000",
+          sender: carol.wallet,
+        })
+
+        const withdrawalAmount = to1e18("0.5")
+
+        carol.btc.before = await ethers.provider.getBalance(carol.address)
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, {
+            maxFeePerGas: 0,
+            maxPriorityFeePerGas: 0,
+          })
+        carol.btc.after = await ethers.provider.getBalance(carol.address)
+
+        expect(carol.btc.after).to.equal(carol.btc.before + withdrawalAmount)
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {
+      it("withdrawColl(): reduces ActivePool collateral and raw collateral by correct amount", async () => {
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "1000",
+          sender: carol.wallet,
+        })
+
+        const withdrawalAmount = to1e18("0.5")
+        const activePoolBalance =
+          await contracts.activePool.getCollateralBalance()
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet)
+        const newActivePoolBalance =
+          await contracts.activePool.getCollateralBalance()
+
+        expect(newActivePoolBalance).to.equal(
+          activePoolBalance - withdrawalAmount,
+        )
+      })
+
+      it("withdrawColl(): applies pending rewards and updates user's L_Collateral, L_THUSDDebt snapshots", async () => {
+        await openTrove(contracts, {
+          musdAmount: "50,000",
+          ICR: "1000",
+          sender: carol.wallet,
+        })
+
+        await openTrove(contracts, {
+          musdAmount: "15,000",
+          ICR: "1000",
+          sender: dennis.wallet,
+        })
+
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateTroveSnapshot(contracts, dennis, "before")
+
+        // Make Alice subject to liquidation
+        const price = to1e18("25,000")
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
+
+        // liquidate Alice
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .liquidate(alice.wallet)
+
+        state.troveManager.liquidation.collateral.before =
+          await contracts.troveManager.L_Collateral()
+        state.troveManager.liquidation.debt.before =
+          await contracts.troveManager.L_MUSDDebt()
+
+        await updateRewardSnapshot(contracts, carol, "before")
+        await updateRewardSnapshot(contracts, dennis, "before")
+        await updatePendingSnapshot(contracts, carol, "before")
+        await updatePendingSnapshot(contracts, dennis, "before")
+
+        // Check Bob and Carol have pending rewards from the liquidation
+        expect(carol.pending.collateral.before).to.greaterThan(0n)
+        expect(dennis.pending.collateral.before).to.greaterThan(0n)
+        expect(carol.pending.debt.before).to.greaterThan(0n)
+        expect(dennis.pending.debt.before).to.greaterThan(0n)
+
+        const withdrawalAmount = 1n
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, {
+            maxFeePerGas: 0,
+            maxPriorityFeePerGas: 0,
+          })
+        await contracts.borrowerOperations
+          .connect(dennis.wallet)
+          .withdrawColl(withdrawalAmount, dennis.wallet, dennis.wallet, {
+            maxFeePerGas: 0,
+            maxPriorityFeePerGas: 0,
+          })
+
+        await updateTroveSnapshot(contracts, carol, "after")
+        await updateTroveSnapshot(contracts, dennis, "after")
+
+        // Check rewards have been applied to troves
+        expect(carol.trove.collateral.after).to.equal(
+          carol.trove.collateral.before +
+            carol.pending.collateral.before -
+            withdrawalAmount,
+        )
+        expect(dennis.trove.collateral.after).to.equal(
+          dennis.trove.collateral.before +
+            dennis.pending.collateral.before -
+            withdrawalAmount,
+        )
+
+        await updateRewardSnapshot(contracts, carol, "after")
+        await updateRewardSnapshot(contracts, dennis, "after")
+
+        expect(carol.rewardSnapshot.collateral.after).to.equal(
+          state.troveManager.liquidation.collateral.before,
+        )
+        expect(dennis.rewardSnapshot.collateral.after).to.equal(
+          state.troveManager.liquidation.collateral.before,
+        )
+        expect(carol.rewardSnapshot.debt.after).to.equal(
+          state.troveManager.liquidation.debt.before,
+        )
+        expect(dennis.rewardSnapshot.debt.after).to.equal(
+          state.troveManager.liquidation.debt.before,
+        )
       })
     })
   })

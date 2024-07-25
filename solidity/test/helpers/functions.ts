@@ -1,7 +1,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { Contracts, OpenTroveParams, AddCollParams } from "./interfaces"
+import { Contracts, OpenTroveParams, AddCollParams, User } from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -34,6 +34,66 @@ export async function getOpenTroveTotalDebt(
     return compositeDebt
   }
   return compositeDebt + fee
+}
+
+export async function updateTroveSnapshot(
+  contracts: Contracts,
+  user: User,
+  type: string,
+) {
+  const [debt, collateral, stake, status] = await contracts.troveManager.Troves(
+    user.address,
+  )
+
+  if (type === "before") {
+    user.trove.debt.before = debt
+    user.trove.collateral.before = collateral
+    user.trove.stake.before = stake
+    user.trove.status.before = status
+  } else {
+    user.trove.debt.after = debt
+    user.trove.collateral.after = collateral
+    user.trove.stake.after = stake
+    user.trove.status.after = status
+  }
+}
+
+export async function updatePendingSnapshot(
+  contracts: Contracts,
+  user: User,
+  type: string,
+) {
+  const collateral = await contracts.troveManager.getPendingCollateralReward(
+    user.address,
+  )
+  const debt = await contracts.troveManager.getPendingMUSDDebtReward(
+    user.address,
+  )
+  if (type === "before") {
+    user.pending.collateral.before = collateral
+    user.pending.debt.before = debt
+  } else {
+    user.pending.collateral.after = collateral
+    user.pending.debt.after = debt
+  }
+}
+
+export async function updateRewardSnapshot(
+  contracts: Contracts,
+  user: User,
+  type: string,
+) {
+  const [collateral, debt] = await contracts.troveManager.rewardSnapshots(
+    user.address,
+  )
+
+  if (type === "before") {
+    user.rewardSnapshot.collateral.before = collateral
+    user.rewardSnapshot.debt.before = debt
+  } else {
+    user.rewardSnapshot.collateral.after = collateral
+    user.rewardSnapshot.debt.after = debt
+  }
 }
 
 export async function getTroveEntireColl(

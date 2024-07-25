@@ -239,7 +239,18 @@ contract BorrowerOperations is
         uint256 _amount,
         address _upperHint,
         address _lowerHint
-    ) external override {}
+    ) external override {
+        _adjustTrove(
+            msg.sender,
+            _amount,
+            0,
+            false,
+            0,
+            _upperHint,
+            _lowerHint,
+            0
+        );
+    }
 
     // Withdraw MUSD tokens from a trove: mint new MUSD tokens to the owner, and increase the trove's debt accordingly
     function withdrawMUSD(
