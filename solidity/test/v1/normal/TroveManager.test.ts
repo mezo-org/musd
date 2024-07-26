@@ -9,9 +9,8 @@ import {
   getLatestBlockTimestamp,
   openTrove,
 } from "../../helpers"
-import { to1e18 } from "../../utils"
 
-describe.only("TroveManager in Normal Mode", () => {
+describe("TroveManager in Normal Mode", () => {
   it("should return the current interest rate", async () => {
     const contracts = await deployment(["TroveManager"])
     expect(await contracts.troveManager.getInterestRate()).to.equal(0)

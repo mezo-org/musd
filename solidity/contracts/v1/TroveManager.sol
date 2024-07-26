@@ -308,6 +308,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[_borrower].interestRate = _rate;
     }
 
+    function getTroveInterestRate(
+        address _borrower
+    ) external view returns (uint256) {
+        return Troves[_borrower].interestRate;
+    }
+
     function setTroveLastInterestUpdateTime(
         address _borrower,
         uint256 _timestamp
