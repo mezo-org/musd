@@ -40,29 +40,22 @@ export async function getOpenTroveTotalDebt(
 export async function updateTroveSnapshot(
   contracts: Contracts,
   user: User,
-  type: "before" | "after",
+  checkPoint: "before" | "after",
 ) {
   const [debt, collateral, stake, status] = await contracts.troveManager.Troves(
     user.address,
   )
 
-  if (type === "before") {
-    user.trove.debt.before = debt
-    user.trove.collateral.before = collateral
-    user.trove.stake.before = stake
-    user.trove.status.before = status
-  } else {
-    user.trove.debt.after = debt
-    user.trove.collateral.after = collateral
-    user.trove.stake.after = stake
-    user.trove.status.after = status
-  }
+  user.trove.debt[checkPoint] = debt
+  user.trove.collateral[checkPoint] = collateral
+  user.trove.stake[checkPoint] = stake
+  user.trove.status[checkPoint] = status
 }
 
 export async function updatePendingSnapshot(
   contracts: Contracts,
   user: User,
-  type: "before" | "after",
+  checkPoint: "before" | "after",
 ) {
   const collateral = await contracts.troveManager.getPendingCollateralReward(
     user.address,
@@ -70,31 +63,21 @@ export async function updatePendingSnapshot(
   const debt = await contracts.troveManager.getPendingMUSDDebtReward(
     user.address,
   )
-  if (type === "before") {
-    user.pending.collateral.before = collateral
-    user.pending.debt.before = debt
-  } else {
-    user.pending.collateral.after = collateral
-    user.pending.debt.after = debt
-  }
+  user.pending.collateral[checkPoint] = collateral
+  user.pending.debt[checkPoint] = debt
 }
 
 export async function updateRewardSnapshot(
   contracts: Contracts,
   user: User,
-  type: "before" | "after",
+  checkPoint: "before" | "after",
 ) {
   const [collateral, debt] = await contracts.troveManager.rewardSnapshots(
     user.address,
   )
 
-  if (type === "before") {
-    user.rewardSnapshot.collateral.before = collateral
-    user.rewardSnapshot.debt.before = debt
-  } else {
-    user.rewardSnapshot.collateral.after = collateral
-    user.rewardSnapshot.debt.after = debt
-  }
+  user.rewardSnapshot.collateral[checkPoint] = collateral
+  user.rewardSnapshot.debt[checkPoint] = debt
 }
 
 export async function getTroveEntireColl(
