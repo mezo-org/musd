@@ -241,14 +241,21 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function calculateInterestOwed(address _borrower) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
+        uint256 interestRatePercentage = (_interestRate * DECIMAL_PRECISION) / 10000; // convert from basis points to percentage
+        uint256 interestRatePerSecond = interestRatePercentage / SECONDS_IN_A_YEAR;
+        uint256 interestOwedPerSecond = (trove.debt * interestRatePerSecond) / DECIMAL_PRECISION;
         uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        console.log(timeElapsed);
-        console.log(trove.debt);
-        console.log(_interestRate);
-        uint256 interestRateForElapsedPeriod = (_interestRate * DECIMAL_PRECISION * timeElapsed) / SECONDS_IN_A_YEAR;
-        uint256 interestRatePercentage = interestRateForElapsedPeriod / 10000; // Convert from basis points to percentage
-        uint256 interestOwed = (trove.debt * interestRatePercentage) / 100;
+        uint256 interestOwed = interestOwedPerSecond * timeElapsed;
         return interestOwed;
+    }
+
+    // Function to update the debt of a trove to include owed interest
+    // TODO Change access modifier to internal or limit to BorrowerOperations
+    function updateDebtWithInterest(address _borrower) public {
+        uint256 interestOwed = calculateInterestOwed(_borrower);
+        Troves[_borrower].debt += (interestOwed * DECIMAL_PRECISION);
+        // Update the last interest update time to the current timestamp
+        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 
     // Propose a new interest rate  to be approved by governance

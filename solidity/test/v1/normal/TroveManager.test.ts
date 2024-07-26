@@ -103,7 +103,10 @@ describe.only("TroveManager in Normal Mode", () => {
   })
 
   describe("Calculating interest owed", () => {
-    it("should calculate the interest owed for a trove", async () => {
+    async function setupTroveWithInterestRate(
+      interestRate: number,
+      daysToFastForward: number,
+    ) {
       // Deploy contracts
       const testSetup = await loadFixture(fixtureBorrowerOperations)
       await connectContracts(testSetup.contracts, testSetup.users)
@@ -111,12 +114,15 @@ describe.only("TroveManager in Normal Mode", () => {
 
       // Propose and approve 1% interest rate
       const { deployer } = await helpers.signers.getNamedSigners()
-      await contracts.troveManager.connect(deployer).proposeInterestRate(100)
+      await contracts.troveManager
+        .connect(deployer)
+        .proposeInterestRate(interestRate)
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
       await fastForwardTime(timeToIncrease)
       await contracts.troveManager.connect(deployer).approveInterestRate()
 
-      // Open a trove with 10000 musd in debt
+      // Open a trove with 10000 musd in debt.
+      // Initial debt will be 10250 musd due to the borrowing fee.
       const [alice] = await helpers.signers.getUnnamedSigners()
       await openTrove(contracts, {
         musdAmount: "10000",
@@ -124,12 +130,26 @@ describe.only("TroveManager in Normal Mode", () => {
       })
 
       // Fast-forward 30 days
-      const thirtyDays = 30 * 24 * 60 * 60
+      const thirtyDays = daysToFastForward * 24 * 60 * 60
       await fastForwardTime(thirtyDays)
 
-      // Calculate interest owed, should be roughly 8.22 musd
+      return { contracts, alice }
+    }
+
+    it("should calculate the interest owed for a trove after 30 days", async () => {
+      const { contracts, alice } = await setupTroveWithInterestRate(100, 30)
+
+      // Calculate interest owed, should be roughly 8.42 musd
       const interest = await contracts.troveManager.calculateInterestOwed(alice)
-      expect(interest).to.be.equal(to1e18(8.22))
+      expect(interest).to.be.equal(8424657511992000000n)
+    })
+
+    it("should calculate the interest owed for a trove after 15 days", async () => {
+      const { contracts, alice } = await setupTroveWithInterestRate(100, 15)
+
+      // Calculate interest owed, should be roughly 4.21 musd
+      const interest = await contracts.troveManager.calculateInterestOwed(alice)
+      expect(interest).to.be.equal(4212328755996000000n)
     })
   })
 })
