@@ -39,6 +39,61 @@ export interface TestingAddresses {
   deployer: string
 }
 
+export interface ContractsState {
+  troveManager: {
+    baseRate: {
+      before: bigint
+      after: bigint
+    }
+    troves: {
+      before: bigint
+      after: bigint
+    }
+    stakes: {
+      before: bigint
+      after: bigint
+    }
+    liquidation: {
+      collateral: {
+        before: bigint
+        after: bigint
+      }
+      debt: {
+        before: bigint
+        after: bigint
+      }
+    }
+  }
+  activePool: {
+    btc: {
+      before: bigint
+      after: bigint
+    }
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+  }
+  pcv: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+    musd: {
+      before: bigint
+      after: bigint
+    }
+  }
+}
+
 export interface Contracts {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
@@ -60,17 +115,47 @@ export interface User {
     before: bigint
     after: bigint
   }
-  collateral: {
-    before: bigint
-    after: bigint
-  }
-  debt: {
-    before: bigint
-    after: bigint
-  }
   musd: {
     before: bigint
     after: bigint
+  }
+  trove: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+    stake: {
+      before: bigint
+      after: bigint
+    }
+    status: {
+      before: bigint
+      after: bigint
+    }
+  }
+  rewardSnapshot: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+  }
+  pending: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
   }
   wallet: HardhatEthersSigner
 }
@@ -86,6 +171,7 @@ export interface Users {
 
 export interface TestSetup {
   contracts: Contracts
+  state: ContractsState
   users: Users
 }
 

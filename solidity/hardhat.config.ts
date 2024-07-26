@@ -60,6 +60,7 @@ const config: HardhatUserConfig = {
       tags: ["allowStubs", "etherscan"],
     },
     hardhat: {
+      initialBaseFeePerGas: 0,
       accounts: [
         {
           privateKey:

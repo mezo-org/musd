@@ -1,7 +1,8 @@
+/* eslint no-param-reassign: ["error", { "props": false }] */
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { Contracts, OpenTroveParams, AddCollParams } from "./interfaces"
+import { Contracts, OpenTroveParams, AddCollParams, User } from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -34,6 +35,49 @@ export async function getOpenTroveTotalDebt(
     return compositeDebt
   }
   return compositeDebt + fee
+}
+
+export async function updateTroveSnapshot(
+  contracts: Contracts,
+  user: User,
+  checkPoint: "before" | "after",
+) {
+  const [debt, collateral, stake, status] = await contracts.troveManager.Troves(
+    user.address,
+  )
+
+  user.trove.debt[checkPoint] = debt
+  user.trove.collateral[checkPoint] = collateral
+  user.trove.stake[checkPoint] = stake
+  user.trove.status[checkPoint] = status
+}
+
+export async function updatePendingSnapshot(
+  contracts: Contracts,
+  user: User,
+  checkPoint: "before" | "after",
+) {
+  const collateral = await contracts.troveManager.getPendingCollateralReward(
+    user.address,
+  )
+  const debt = await contracts.troveManager.getPendingMUSDDebtReward(
+    user.address,
+  )
+  user.pending.collateral[checkPoint] = collateral
+  user.pending.debt[checkPoint] = debt
+}
+
+export async function updateRewardSnapshot(
+  contracts: Contracts,
+  user: User,
+  checkPoint: "before" | "after",
+) {
+  const [collateral, debt] = await contracts.troveManager.rewardSnapshots(
+    user.address,
+  )
+
+  user.rewardSnapshot.collateral[checkPoint] = collateral
+  user.rewardSnapshot.debt[checkPoint] = debt
 }
 
 export async function getTroveEntireColl(

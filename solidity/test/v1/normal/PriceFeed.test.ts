@@ -29,7 +29,6 @@ describe("PriceFeed in Normal Mode", () => {
       log: true,
       waitConfirmations: 1,
     })
-    // console.log(retval)
     return getDeployedContract(name)
   }
 
@@ -53,9 +52,7 @@ describe("PriceFeed in Normal Mode", () => {
     await contracts.priceFeed
       .connect(deployer.wallet)
       .setOracle(await mockAggregator.getAddress())
-    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
-      50000n * 10n ** 18n,
-    )
+    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(to1e18("50,000"))
 
     const price = to1e18("25,000")
     await mockAggregator.connect(deployer.wallet).setPrice(price)
@@ -70,9 +67,7 @@ describe("PriceFeed in Normal Mode", () => {
     await contracts.priceFeed
       .connect(deployer.wallet)
       .setOracle(await contracts.mockAggregator.getAddress())
-    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
-      50000n * 10n ** 18n,
-    )
+    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(to1e18("50,000"))
 
     const price = to1e18("25,000")
     await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)

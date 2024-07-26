@@ -3,15 +3,17 @@ import { expect } from "chai"
 
 import {
   Contracts,
+  ContractsState,
   TestSetup,
   User,
   addColl,
   connectContracts,
   fixture,
-  getTroveEntireColl,
-  getTroveEntireDebt,
   openTrove,
   removeMintlist,
+  updatePendingSnapshot,
+  updateRewardSnapshot,
+  updateTroveSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -23,6 +25,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
+  let state: ContractsState
 
   async function recoveryModeSetup() {
     // data setup
@@ -52,6 +55,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
+    state = testSetup.state
 
     await connectContracts(contracts, testSetup.users)
     // users
@@ -186,7 +190,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
           .liquidate(alice.wallet)
 
         /* with total stakes = 10 ether/tokens, after liquidation, L_Collateral should equal 1/10 ether/token per-ether-staked/per-tokens-staked,
-        and L_THUSD should equal 18 MUSD per-ether-staked/per-tokens-staked. */
+        and L_MUSD should equal 18 MUSD per-ether-staked/per-tokens-staked. */
 
         const liquidatedCollateral = await contracts.troveManager.L_Collateral()
         const liquidatedDebt = await contracts.troveManager.L_MUSDDebt()
@@ -290,10 +294,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
     context("Individual Troves", () => {
       it("addColl(): can add collateral in Recovery Mode", async () => {
-        alice.collateral.before = await getTroveEntireColl(
-          contracts,
-          alice.wallet,
-        )
+        await updateTroveSnapshot(contracts, alice, "before")
 
         const collateralTopUp = to1e18(1)
         await addColl(contracts, {
@@ -301,28 +302,18 @@ describe("BorrowerOperations in Recovery Mode", () => {
           sender: alice.wallet,
         })
 
-        alice.collateral.after = await getTroveEntireColl(
-          contracts,
-          alice.wallet,
-        )
-        expect(alice.collateral.after).to.equal(
-          alice.collateral.before + collateralTopUp,
+        await updateTroveSnapshot(contracts, alice, "after")
+
+        expect(alice.trove.collateral.after).to.equal(
+          alice.trove.collateral.before + collateralTopUp,
         )
       })
 
-      it("addColl(), active Trove: applies pending rewards and updates user's L_Collateral, L_THUSDDebt snapshots", async () => {
+      it("addColl(), active Trove: applies pending rewards and updates user's L_Collateral, L_MUSDDebt snapshots", async () => {
         await openTrove(contracts, {
           musdAmount: "30,000",
           sender: carol.wallet,
         })
-
-        bob.collateral.before = await getTroveEntireColl(contracts, bob.wallet)
-        bob.debt.before = await getTroveEntireDebt(contracts, bob.wallet)
-        carol.collateral.before = await getTroveEntireColl(
-          contracts,
-          carol.wallet,
-        )
-        carol.debt.before = await getTroveEntireDebt(contracts, carol.wallet)
 
         // Liquidate Alice's Trove,
         await contracts.troveManager.liquidate(alice.address)
@@ -330,51 +321,29 @@ describe("BorrowerOperations in Recovery Mode", () => {
           false,
         )
 
-        const liquidationCollateral =
+        state.troveManager.liquidation.collateral.before =
           await contracts.troveManager.L_Collateral()
-        const liquidationDebt = await contracts.troveManager.L_MUSDDebt()
+        state.troveManager.liquidation.debt.before =
+          await contracts.troveManager.L_MUSDDebt()
 
-        const snapshots = {
-          bob: {
-            after: [0n, 0n],
-            before: await contracts.troveManager.rewardSnapshots(bob.address),
-          },
-          carol: {
-            after: [0n, 0n],
-            before: await contracts.troveManager.rewardSnapshots(carol.address),
-          },
-        }
+        await updateTroveSnapshot(contracts, bob, "before")
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateRewardSnapshot(contracts, bob, "before")
+        await updateRewardSnapshot(contracts, carol, "before")
+        await updatePendingSnapshot(contracts, bob, "before")
+        await updatePendingSnapshot(contracts, carol, "before")
 
-        // check Alice and Bob's reward snapshots are zero before they alter their Troves
-        expect(snapshots.bob.before[0]).is.equal(0n)
-        expect(snapshots.bob.before[1]).is.equal(0n)
-        expect(snapshots.carol.before[0]).is.equal(0n) // collateral
-        expect(snapshots.carol.before[1]).is.equal(0n) // debt
+        // check Bob and Carol's reward snapshots are zero before they alter their Troves
+        expect(bob.rewardSnapshot.collateral.before).is.equal(0n)
+        expect(bob.rewardSnapshot.debt.before).is.equal(0n)
+        expect(carol.rewardSnapshot.collateral.before).is.equal(0n)
+        expect(carol.rewardSnapshot.debt.before).is.equal(0n)
 
-        const pending = {
-          collateral: {
-            bob: await contracts.troveManager.getPendingCollateralReward(
-              bob.address,
-            ),
-            carol: await contracts.troveManager.getPendingCollateralReward(
-              carol.address,
-            ),
-          },
-          debt: {
-            bob: await contracts.troveManager.getPendingMUSDDebtReward(
-              bob.address,
-            ),
-            carol: await contracts.troveManager.getPendingMUSDDebtReward(
-              carol.address,
-            ),
-          },
-        }
-
-        // check Alice and Bob have pending reward and debt from the liquidation redistribution
-        expect(pending.collateral.carol).to.greaterThan(0n)
-        expect(pending.collateral.bob).to.greaterThan(0n)
-        expect(pending.debt.carol).to.greaterThan(0n)
-        expect(pending.debt.bob).to.greaterThan(0n)
+        // check Bob and Carol have pending reward and debt from the liquidation redistribution
+        expect(carol.pending.collateral.before).to.greaterThan(0n)
+        expect(bob.pending.collateral.before).to.greaterThan(0n)
+        expect(carol.pending.debt.before).to.greaterThan(0n)
+        expect(bob.pending.debt.before).to.greaterThan(0n)
 
         const bobTopUp = to1e18(5)
         await addColl(contracts, {
@@ -388,39 +357,44 @@ describe("BorrowerOperations in Recovery Mode", () => {
           sender: carol.wallet,
         })
 
-        bob.collateral.after = await getTroveEntireColl(contracts, bob.wallet)
-        bob.debt.after = await getTroveEntireDebt(contracts, bob.wallet)
-        carol.collateral.after = await getTroveEntireColl(
-          contracts,
-          carol.wallet,
-        )
-        carol.debt.after = await getTroveEntireDebt(contracts, carol.wallet)
+        await updateTroveSnapshot(contracts, bob, "after")
+        await updateTroveSnapshot(contracts, carol, "after")
 
-        expect(bob.collateral.after).to.equal(
-          bob.collateral.before + bobTopUp + pending.collateral.bob,
+        expect(bob.trove.collateral.after).to.equal(
+          bob.trove.collateral.before +
+            bobTopUp +
+            bob.pending.collateral.before,
         )
-        expect(bob.debt.after).to.equal(bob.debt.before + pending.debt.bob)
-        expect(carol.collateral.after).to.equal(
-          carol.collateral.before + carolTopUp + pending.collateral.carol,
+        expect(bob.trove.debt.after).to.equal(
+          bob.trove.debt.before + bob.pending.debt.before,
         )
-        expect(carol.debt.after).to.equal(
-          carol.debt.before + pending.debt.carol,
+        expect(carol.trove.collateral.after).to.equal(
+          carol.trove.collateral.before +
+            carolTopUp +
+            carol.pending.collateral.before,
+        )
+        expect(carol.trove.debt.after).to.equal(
+          carol.trove.debt.before + carol.pending.debt.before,
         )
 
         /* Check that both Bob and Carol's snapshots of the rewards-per-unit-staked metrics should be updated
-        to the latest values of L_Collateral and L_THUSDDebt */
+        to the latest values of L_Collateral and L_MUSDDebt */
 
-        snapshots.bob.after = await contracts.troveManager.rewardSnapshots(
-          bob.address,
-        )
-        snapshots.carol.after = await contracts.troveManager.rewardSnapshots(
-          carol.address,
-        )
+        await updateRewardSnapshot(contracts, bob, "after")
+        await updateRewardSnapshot(contracts, carol, "after")
 
-        expect(snapshots.bob.after[0]).is.equal(liquidationCollateral)
-        expect(snapshots.bob.after[1]).is.equal(liquidationDebt)
-        expect(snapshots.carol.after[0]).is.equal(liquidationCollateral)
-        expect(snapshots.carol.after[1]).is.equal(liquidationDebt)
+        expect(bob.rewardSnapshot.collateral.after).is.equal(
+          state.troveManager.liquidation.collateral.before,
+        )
+        expect(bob.rewardSnapshot.debt.after).is.equal(
+          state.troveManager.liquidation.debt.before,
+        )
+        expect(carol.rewardSnapshot.collateral.after).is.equal(
+          state.troveManager.liquidation.collateral.before,
+        )
+        expect(carol.rewardSnapshot.debt.after).is.equal(
+          state.troveManager.liquidation.debt.before,
+        )
       })
     })
 
@@ -432,11 +406,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
     context("Balance changes", () => {
       it("addColl(): no mintlist, can add collateral", async () => {
-        alice.collateral.before = await getTroveEntireColl(
-          contracts,
-          alice.wallet,
-        )
-
+        await updateTroveSnapshot(contracts, alice, "before")
         await removeMintlist(contracts, deployer.wallet)
 
         const collateralTopUp = to1e18(1)
@@ -445,15 +415,91 @@ describe("BorrowerOperations in Recovery Mode", () => {
           sender: alice.wallet,
         })
 
-        alice.collateral.after = await getTroveEntireColl(
-          contracts,
-          alice.wallet,
-        )
-        expect(alice.collateral.after).to.equal(
-          alice.collateral.before + collateralTopUp,
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.collateral.after).to.equal(
+          alice.trove.collateral.before + collateralTopUp,
         )
       })
     })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
+  })
+
+  describe("withdrawColl()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("withdrawColl(): reverts if system is in Recovery Mode", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawColl(1n, alice.wallet, alice.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: Collateral withdrawal not permitted Recovery Mode",
+        )
+      })
+
+      it("withdrawColl(): no mintlist, reverts if system is in Recovery Mode", async () => {
+        await removeMintlist(contracts, deployer.wallet)
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawColl(1n, alice.wallet, alice.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: Collateral withdrawal not permitted Recovery Mode",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
 
     /**
      *

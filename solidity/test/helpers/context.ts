@@ -1,7 +1,15 @@
 import { deployments, helpers } from "hardhat"
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { getDeployedContract } from "./contract"
 import { ZERO_ADDRESS } from "../utils"
-import { Contracts, Users, TestSetup, TestingAddresses } from "./interfaces"
+import {
+  Contracts,
+  Users,
+  TestSetup,
+  TestingAddresses,
+  User,
+  ContractsState,
+} from "./interfaces"
 import type {
   ActivePool,
   BorrowerOperations,
@@ -69,6 +77,119 @@ export async function deployment(overwrite: Array<string>) {
   return contracts
 }
 
+function initializeContractState(): ContractsState {
+  return {
+    troveManager: {
+      baseRate: {
+        before: 0n,
+        after: 0n,
+      },
+      troves: {
+        before: 0n,
+        after: 0n,
+      },
+      stakes: {
+        before: 0n,
+        after: 0n,
+      },
+      liquidation: {
+        collateral: {
+          before: 0n,
+          after: 0n,
+        },
+        debt: {
+          before: 0n,
+          after: 0n,
+        },
+      },
+    },
+    activePool: {
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+    },
+    pcv: {
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+    },
+  }
+}
+
+async function initializeUserObject(
+  wallet: HardhatEthersSigner,
+): Promise<User> {
+  const user: User = {
+    address: await wallet.getAddress(),
+    btc: {
+      before: 0n,
+      after: 0n,
+    },
+    musd: {
+      before: 0n,
+      after: 0n,
+    },
+    trove: {
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      stake: {
+        before: 0n,
+        after: 0n,
+      },
+      status: {
+        before: 0n,
+        after: 0n,
+      },
+    },
+    rewardSnapshot: {
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+    },
+    pending: {
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+    },
+    wallet,
+  }
+  return user
+}
+
 /*
  * For explanation on why each testcontract has its own fixture function
  * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
@@ -81,130 +202,19 @@ export async function fixture(): Promise<TestSetup> {
   const contracts = await deployment(["MUSD", "PriceFeed", "TroveManager"])
 
   const users: Users = {
-    alice: {
-      address: aliceWallet.address,
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
-      wallet: aliceWallet,
-    },
-    bob: {
-      address: bobWallet.address,
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
-      wallet: bobWallet,
-    },
-    carol: {
-      address: carolWallet.address,
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
-      wallet: carolWallet,
-    },
-    dennis: {
-      address: dennisWallet.address,
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
-      wallet: dennisWallet,
-    },
-    eric: {
-      address: ericWallet.address,
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
-      wallet: ericWallet,
-    },
-    deployer: {
-      address: deployer.address,
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
-      wallet: deployer,
-    },
+    alice: await initializeUserObject(aliceWallet),
+    bob: await initializeUserObject(bobWallet),
+    carol: await initializeUserObject(carolWallet),
+    dennis: await initializeUserObject(dennisWallet),
+    eric: await initializeUserObject(ericWallet),
+    deployer: await initializeUserObject(deployer),
   }
+
+  const state: ContractsState = initializeContractState()
 
   const testSetup: TestSetup = {
     users,
+    state,
     contracts,
   }
 
