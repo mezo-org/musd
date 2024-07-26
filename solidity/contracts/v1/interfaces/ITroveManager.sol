@@ -205,6 +205,10 @@ interface ITroveManager {
 
     function getTroveDebt(address _borrower) external view returns (uint);
 
+    function getTroveLastInterestUpdateTime(
+        address _borrower
+    ) external view returns (uint);
+
     function getTroveColl(address _borrower) external view returns (uint);
 
     function getTCR(uint256 _price) external view returns (uint);

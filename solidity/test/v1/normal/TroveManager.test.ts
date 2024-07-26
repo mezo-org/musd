@@ -6,6 +6,7 @@ import {
   deployment,
   fastForwardTime,
   fixtureBorrowerOperations,
+  getLatestBlockTimestamp,
   openTrove,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -150,6 +151,18 @@ describe.only("TroveManager in Normal Mode", () => {
       // Calculate interest owed, should be roughly 4.21 musd
       const interest = await contracts.troveManager.calculateInterestOwed(alice)
       expect(interest).to.be.equal(4212328755996000000n)
+    })
+    it("should update the trove with interest owed and set the lastInterestUpdatedTime", async () => {
+      const { contracts, alice } = await setupTroveWithInterestRate(100, 30)
+
+      await contracts.troveManager.updateDebtWithInterest(alice)
+      const debt = await contracts.troveManager.getTroveDebt(alice)
+      const getTroveLastInterestUpdateTime =
+        await contracts.troveManager.getTroveLastInterestUpdateTime(alice)
+      expect(debt).to.be.equal(10258424660762245669750n)
+      expect(getTroveLastInterestUpdateTime).to.be.equal(
+        await getLatestBlockTimestamp(),
+      )
     })
   })
 })

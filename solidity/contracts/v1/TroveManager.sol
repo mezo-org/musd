@@ -253,7 +253,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // TODO Change access modifier to internal or limit to BorrowerOperations
     function updateDebtWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);
-        Troves[_borrower].debt += (interestOwed * DECIMAL_PRECISION);
+        Troves[_borrower].debt += interestOwed;
         // Update the last interest update time to the current timestamp
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
@@ -485,6 +485,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _borrower
     ) external view override returns (uint) {
         return Troves[_borrower].debt;
+    }
+
+    function getTroveLastInterestUpdateTime(
+        address _borrower
+    ) external view returns (uint) {
+        return Troves[_borrower].lastInterestUpdateTime;
     }
 
     function getTroveColl(
