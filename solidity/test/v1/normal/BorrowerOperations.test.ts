@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect, assert } from "chai"
 import { ethers } from "hardhat"
 import {
-  Contracts,
+  ContractsV1,
   TestSetup,
   TestingAddresses,
   User,
@@ -23,7 +23,7 @@ import {
   updatePendingSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
+import { ContractsStateV1, OpenTroveParams } from "../../helpers/interfaces"
 
 describe("BorrowerOperations in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -34,9 +34,9 @@ describe("BorrowerOperations in Normal Mode", () => {
   let dennis: User
   let eric: User
   let deployer: User
-  let contracts: Contracts
+  let contracts: ContractsV1
   let cachedTestSetup: TestSetup
-  let state: ContractsState
+  let state: ContractsStateV1
   let testSetup: TestSetup
   let MIN_NET_DEBT: bigint
   let MUSD_GAS_COMPENSATION: bigint
@@ -99,8 +99,8 @@ describe("BorrowerOperations in Normal Mode", () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    state = testSetup.state
+    contracts = testSetup.contracts.v1
+    state = testSetup.state.v1
 
     await connectContracts(contracts, testSetup.users)
     // users

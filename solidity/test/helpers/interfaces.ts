@@ -1,22 +1,28 @@
 // interfaces.ts
 import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 
+import { MUSD } from "../../typechain/contracts/token"
+
 import {
   ActivePool,
   BorrowerOperations,
   CollSurplusPool,
   DefaultPool,
   GasPool,
-  MockAggregator,
-  MUSD,
-  MUSDTester,
   PCV,
   PriceFeed,
   SortedTroves,
   StabilityPool,
   TroveManager,
+} from "../../typechain/contracts/v1"
+
+import {
+  MockAggregator,
+  MUSDTester,
   TroveManagerTester,
-} from "../../typechain"
+} from "../../typechain/contracts/v1/tests"
+
+import { TroveManagerV2 } from "../../typechain/contracts/v2"
 
 export interface TestingAddresses {
   activePool: string
@@ -39,7 +45,34 @@ export interface TestingAddresses {
   deployer: string
 }
 
-export interface ContractsState {
+export interface ContractsStateV2 {
+  troveManager: {
+    baseRate: {
+      before: bigint
+      after: bigint
+    }
+    troves: {
+      before: bigint
+      after: bigint
+    }
+    stakes: {
+      before: bigint
+      after: bigint
+    }
+    liquidation: {
+      collateral: {
+        before: bigint
+        after: bigint
+      }
+      debt: {
+        before: bigint
+        after: bigint
+      }
+    }
+  }
+}
+
+export interface ContractsStateV1 {
   troveManager: {
     baseRate: {
       before: bigint
@@ -94,7 +127,7 @@ export interface ContractsState {
   }
 }
 
-export interface Contracts {
+export interface ContractsV1 {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
   collSurplusPool: CollSurplusPool
@@ -107,6 +140,10 @@ export interface Contracts {
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
   troveManager: TroveManager | TroveManagerTester
+}
+
+export interface ContractsV2 {
+  troveManager: TroveManagerV2
 }
 
 export interface User {
@@ -170,8 +207,14 @@ export interface Users {
 }
 
 export interface TestSetup {
-  contracts: Contracts
-  state: ContractsState
+  contracts: {
+    v1: ContractsV1
+    v2: ContractsV2
+  }
+  state: {
+    v1: ContractsStateV1
+    v2: ContractsStateV2
+  }
   users: Users
 }
 

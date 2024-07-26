@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { ethers } from "hardhat"
 import { expect, assert } from "chai"
 import {
-  Contracts,
+  ContractsV1,
   TestSetup,
   fixture,
   getLatestBlockTimestamp,
@@ -13,7 +13,8 @@ import {
   User,
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
-import { BorrowerOperations, TroveManager } from "../typechain"
+import { BorrowerOperations } from "../typechain"
+import { TroveManager } from "../typechain/contracts/v1"
 import { StabilityPool } from "../typechain/contracts/v1/StabilityPool"
 
 describe("MUSD", () => {
@@ -22,7 +23,7 @@ describe("MUSD", () => {
   let carol: User
   let dennis: User
   let deployer: User
-  let contracts: Contracts
+  let contracts: ContractsV1
   let testSetup: TestSetup
   let addresses: TestingAddresses
   let newBorrowerOperations: BorrowerOperations
@@ -31,7 +32,7 @@ describe("MUSD", () => {
 
   beforeEach(async () => {
     testSetup = await loadFixture(fixture)
-    contracts = testSetup.contracts
+    contracts = testSetup.contracts.v1
     await connectContracts(contracts, testSetup.users)
 
     // new contracts to add.
@@ -42,7 +43,9 @@ describe("MUSD", () => {
       await ethers.getContractFactory("StabilityPool")
     ).deploy()
     newTroveManager = await (
-      await ethers.getContractFactory("TroveManager")
+      await ethers.getContractFactory(
+        "contracts/v1/TroveManager.sol:TroveManager",
+      )
     ).deploy()
 
     // users

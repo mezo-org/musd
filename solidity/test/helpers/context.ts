@@ -3,12 +3,14 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { getDeployedContract } from "./contract"
 import { ZERO_ADDRESS } from "../utils"
 import {
-  Contracts,
+  ContractsStateV1,
+  ContractsStateV2,
+  ContractsV1,
+  ContractsV2,
   Users,
   TestSetup,
   TestingAddresses,
   User,
-  ContractsState,
 } from "./interfaces"
 import type {
   ActivePool,
@@ -22,6 +24,9 @@ import type {
   StabilityPool,
   TroveManager,
 } from "../../typechain/contracts/v1"
+
+import type { TroveManagerV2 } from "../../typechain/contracts/v2"
+
 import type { MUSD } from "../../typechain/contracts/token"
 
 import type {
@@ -32,10 +37,16 @@ import type {
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
-// eslint-disable-next-line import/prefer-default-export
-export async function deployment(overwrite: Array<string>) {
-  await deployments.fixture()
+export async function getDeploymentV2() {
+  const troveManager: TroveManagerV2 =
+    await getDeployedContract("TroveManagerV2")
+  const contracts: ContractsV2 = {
+    troveManager,
+  }
+  return contracts
+}
 
+export async function getDeploymentV1(overwrite: Array<string>) {
   const activePool: ActivePool = await getDeployedContract("ActivePool")
   const borrowerOperations: BorrowerOperations =
     await getDeployedContract("BorrowerOperations")
@@ -57,9 +68,9 @@ export async function deployment(overwrite: Array<string>) {
     "TroveManager",
   )
     ? await getDeployedContract("TroveManagerTester")
-    : await getDeployedContract("TroveManager")
+    : await getDeployedContract("TroveManagerV1")
 
-  const contracts: Contracts = {
+  const contracts: ContractsV1 = {
     activePool,
     borrowerOperations,
     collSurplusPool,
@@ -73,11 +84,51 @@ export async function deployment(overwrite: Array<string>) {
     stabilityPool,
     troveManager,
   }
-
   return contracts
 }
 
-function initializeContractState(): ContractsState {
+// eslint-disable-next-line import/prefer-default-export
+export async function deployment(overwrite: Array<string>) {
+  await deployments.fixture()
+
+  const data = {
+    v1: await getDeploymentV1(overwrite),
+    v2: await getDeploymentV2(),
+  }
+
+  return data
+}
+
+function initializeContractStateV2(): ContractsStateV2 {
+  return {
+    troveManager: {
+      baseRate: {
+        before: 0n,
+        after: 0n,
+      },
+      troves: {
+        before: 0n,
+        after: 0n,
+      },
+      stakes: {
+        before: 0n,
+        after: 0n,
+      },
+      liquidation: {
+        collateral: {
+          before: 0n,
+          after: 0n,
+        },
+        debt: {
+          before: 0n,
+          after: 0n,
+        },
+      },
+    },
+  }
+}
+
+function initializeContractStateV1(): ContractsStateV1 {
   return {
     troveManager: {
       baseRate: {
@@ -210,8 +261,10 @@ export async function fixture(): Promise<TestSetup> {
     deployer: await initializeUserObject(deployer),
   }
 
-  const state: ContractsState = initializeContractState()
-
+  const state = {
+    v1: initializeContractStateV1(),
+    v2: initializeContractStateV2(),
+  }
   const testSetup: TestSetup = {
     users,
     state,
@@ -221,7 +274,7 @@ export async function fixture(): Promise<TestSetup> {
   return testSetup
 }
 
-export async function getAddresses(contracts: Contracts, users: Users) {
+export async function getAddresses(contracts: ContractsV1, users: Users) {
   const addresses: TestingAddresses = {
     // contracts
     activePool: await contracts.activePool.getAddress(),
@@ -248,7 +301,7 @@ export async function getAddresses(contracts: Contracts, users: Users) {
   return addresses
 }
 
-export async function connectContracts(contracts: Contracts, users: Users) {
+export async function connectContracts(contracts: ContractsV1, users: Users) {
   //  connect contracts
 
   await contracts.pcv

@@ -4,7 +4,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { to1e18 } from "../../utils"
 
 import {
-  Contracts,
+  ContractsV1,
   TestSetup,
   User,
   fixture,
@@ -13,7 +13,7 @@ import {
 import { MockAggregator } from "../../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
-  let contracts: Contracts
+  let contracts: ContractsV1
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
   let deployer: User
@@ -36,7 +36,7 @@ describe("PriceFeed in Normal Mode", () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
+    contracts = testSetup.contracts.v1
     // users
     deployer = testSetup.users.deployer
   })

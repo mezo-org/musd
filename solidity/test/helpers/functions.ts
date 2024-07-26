@@ -2,12 +2,12 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { Contracts, OpenTroveParams, AddCollParams, User } from "./interfaces"
+import { ContractsV1, OpenTroveParams, AddCollParams, User } from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
 export async function removeMintlist(
-  contracts: Contracts,
+  contracts: ContractsV1,
   owner: HardhatEthersSigner,
 ) {
   await contracts.musd
@@ -22,7 +22,7 @@ export async function removeMintlist(
  * So, it adds the gas compensation and the borrowing fee
  */
 export async function getOpenTroveTotalDebt(
-  contracts: Contracts,
+  contracts: ContractsV1,
   musdAmount: bigint,
 ) {
   const fee = await contracts.troveManager.getBorrowingFee(musdAmount)
@@ -38,7 +38,7 @@ export async function getOpenTroveTotalDebt(
 }
 
 export async function updateTroveSnapshot(
-  contracts: Contracts,
+  contracts: ContractsV1,
   user: User,
   checkPoint: "before" | "after",
 ) {
@@ -53,7 +53,7 @@ export async function updateTroveSnapshot(
 }
 
 export async function updatePendingSnapshot(
-  contracts: Contracts,
+  contracts: ContractsV1,
   user: User,
   checkPoint: "before" | "after",
 ) {
@@ -68,7 +68,7 @@ export async function updatePendingSnapshot(
 }
 
 export async function updateRewardSnapshot(
-  contracts: Contracts,
+  contracts: ContractsV1,
   user: User,
   checkPoint: "before" | "after",
 ) {
@@ -81,14 +81,14 @@ export async function updateRewardSnapshot(
 }
 
 export async function getTroveEntireColl(
-  contracts: Contracts,
+  contracts: ContractsV1,
   address: HardhatEthersSigner,
 ) {
   return (await contracts.troveManager.getEntireDebtAndColl(address))[1]
 }
 
 export async function getTroveEntireDebt(
-  contracts: Contracts,
+  contracts: ContractsV1,
   address: HardhatEthersSigner,
 ) {
   return (await contracts.troveManager.getEntireDebtAndColl(address))[0]
@@ -121,7 +121,7 @@ export async function getEventArgByName(
   )
 }
 
-export async function addColl(contracts: Contracts, inputs: AddCollParams) {
+export async function addColl(contracts: ContractsV1, inputs: AddCollParams) {
   const params = inputs
 
   const amount =
@@ -144,7 +144,10 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   }
 }
 
-export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
+export async function openTrove(
+  contracts: ContractsV1,
+  inputs: OpenTroveParams,
+) {
   const params = inputs
 
   // fill in hints for searching trove list if not provided
@@ -196,7 +199,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   }
 }
 
-export async function getTCR(contracts: Contracts) {
+export async function getTCR(contracts: ContractsV1) {
   const price = await contracts.priceFeed.fetchPrice()
   return contracts.troveManager.getTCR(price)
 }
