@@ -162,11 +162,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Array of historical interest rate changes
     InterestRateChange[] public interestRateHistory;
 
-    // Current interest rate per year
+    // Current interest rate per year in basis points
     uint256 private _interestRate;
 
-    // Maximum interest rate that can be set, defaults to 100%
-    uint256 private _maxInterestRate = 100;
+    // Maximum interest rate that can be set, defaults to 100% (10000 bps)
+    uint256 private _maxInterestRate = 10000;
 
     // Proposed interest rate -- must be approved by governance after a minimum delay
     uint256 private _proposedInterestRate;
@@ -250,7 +250,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Function to update the debt of a trove to include owed interest
-    // TODO Change access modifier to internal or limit to BorrowerOperations
+    // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);
         Troves[_borrower].debt += interestOwed;

@@ -533,7 +533,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it.only("openTrove(): opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
+      it("openTrove(): opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
         // set the current interest rate to 100 bps
         await contracts.troveManager
           .connect(deployer.wallet)

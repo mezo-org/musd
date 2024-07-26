@@ -10,7 +10,7 @@ import {
   openTrove,
 } from "../../helpers"
 
-describe("TroveManager in Normal Mode", () => {
+describe.only("TroveManager in Normal Mode", () => {
   it("should return the current interest rate", async () => {
     const contracts = await deployment(["TroveManager"])
     expect(await contracts.troveManager.getInterestRate()).to.equal(0)
@@ -28,7 +28,7 @@ describe("TroveManager in Normal Mode", () => {
     const { deployer } = await helpers.signers.getNamedSigners()
 
     await expect(
-      contracts.troveManager.connect(deployer).proposeInterestRate(101),
+      contracts.troveManager.connect(deployer).proposeInterestRate(10001),
     ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
   })
 
@@ -54,20 +54,20 @@ describe("TroveManager in Normal Mode", () => {
   it("should require two transactions to change the interest rate with a 7 day time delay", async () => {
     const contracts = await deployment(["TroveManager"])
     const { deployer } = await helpers.signers.getNamedSigners()
-    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+    await contracts.troveManager.connect(deployer).proposeInterestRate(100)
 
     // Simulate 7 days passing
     const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(timeToIncrease)
 
     await contracts.troveManager.connect(deployer).approveInterestRate()
-    expect(await contracts.troveManager.getInterestRate()).to.equal(1)
+    expect(await contracts.troveManager.getInterestRate()).to.equal(100)
   })
 
   it("should revert if the time delay has not finished", async () => {
     const contracts = await deployment(["TroveManager"])
     const { deployer } = await helpers.signers.getNamedSigners()
-    await contracts.troveManager.connect(deployer).proposeInterestRate(1)
+    await contracts.troveManager.connect(deployer).proposeInterestRate(100)
 
     // Simulate 6 days passing
     const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
