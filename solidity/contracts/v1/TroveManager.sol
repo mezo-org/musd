@@ -234,6 +234,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit PCVAddressChanged(_pcvAddress);
 
+        // TODO Uncomment the following line once test fixtures are aligned and we can use the mock trove manager
         // renounceOwnership();
     }
 

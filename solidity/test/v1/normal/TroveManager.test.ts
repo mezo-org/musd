@@ -5,7 +5,7 @@ import {
   connectContracts,
   deployment,
   fastForwardTime,
-  fixtureBorrowerOperations,
+  fixture,
   getLatestBlockTimestamp,
   openTrove,
 } from "../../helpers"
@@ -108,7 +108,7 @@ describe.only("TroveManager in Normal Mode", () => {
       daysToFastForward: number,
     ) {
       // Deploy contracts
-      const testSetup = await loadFixture(fixtureBorrowerOperations)
+      const testSetup = await loadFixture(fixture)
       await connectContracts(testSetup.contracts, testSetup.users)
       const { contracts } = testSetup
 
