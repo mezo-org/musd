@@ -3,7 +3,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 
 import { ContractsV2, TestSetup, fixture } from "../../helpers"
 
-describe("TroveManager in Normal Mode", () => {
+describe.only("TroveManager in Normal Mode", () => {
   let contracts: ContractsV2
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
@@ -16,7 +16,12 @@ describe("TroveManager in Normal Mode", () => {
     // users
   })
 
-  it("should return expected value", async () => {
-    expect(await contracts.troveManager.hello()).to.equal(1n)
+  it("should return the current interest rate", async () => {
+    expect(await contracts.troveManager.getInterestRate()).to.equal(0n)
+  })
+
+  it("should allow for setting the maximum interest rate", async () => {
+    await contracts.troveManager.setMaxInterestRate(5n)
+    expect(await contracts.troveManager.getMaxInterestRate()).to.equal(5n)
   })
 })
