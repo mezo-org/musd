@@ -22,7 +22,11 @@ import {
   TroveManagerTester,
 } from "../../typechain/contracts/v1/tests"
 
-import { TroveManagerV2 } from "../../typechain/contracts/v2"
+import {
+  BorrowerOperationsV2,
+  PriceFeedV2,
+  TroveManagerV2,
+} from "../../typechain/contracts/v2"
 
 export interface TestingAddresses {
   activePool: string
@@ -143,6 +147,7 @@ export interface ContractsV1 {
 }
 
 export interface ContractsV2 {
+  borrowerOperations: BorrowerOperationsV2
   priceFeed: PriceFeedV2
   troveManager: TroveManagerV2
 }

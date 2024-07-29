@@ -6,6 +6,7 @@ import {
   fixture,
   getLatestBlockTimestamp,
   openTrove,
+  openTroveV2,
   TestSetup,
   User,
 } from "../../helpers"
@@ -36,7 +37,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     await contracts.troveManager.connect(deployer.wallet).approveInterestRate()
 
     // open a new trove
-    await openTrove(contracts, {
+    await openTroveV2(contracts, {
       musdAmount: "100,000",
       sender: alice.wallet,
     })
