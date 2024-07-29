@@ -272,7 +272,9 @@ contract TroveManagerV2 is
         _setInterestRate(_proposedInterestRate);
     }
 
-    function setMaxInterestRate(uint256 _newMaxInterestRate) external {
+    function setMaxInterestRate(
+        uint256 _newMaxInterestRate
+    ) external onlyOwnerOrGovernance {
         _maxInterestRate = _newMaxInterestRate;
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
