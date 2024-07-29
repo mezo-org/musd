@@ -38,7 +38,9 @@ describe("TroveManager in Normal Mode", () => {
 
   it("proposeInterestRate(): Reverts if the interest rate is above the maximum interest rate", async () => {
     await expect(
-      contracts.troveManager.connect(deployer.wallet).proposeInterestRate(101),
+      contracts.troveManager
+        .connect(deployer.wallet)
+        .proposeInterestRate(10001),
     ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
   })
 

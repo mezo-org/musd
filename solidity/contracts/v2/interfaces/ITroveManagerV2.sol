@@ -208,6 +208,10 @@ interface ITroveManagerV2 {
 
     function getTroveDebt(address _borrower) external view returns (uint);
 
+    function getTroveLastInterestUpdateTime(
+        address _borrower
+    ) external view returns (uint);
+
     function getTroveColl(address _borrower) external view returns (uint);
 
     function getTCR(uint256 _price) external view returns (uint);
@@ -215,4 +219,13 @@ interface ITroveManagerV2 {
     function checkRecoveryMode(uint256 _price) external view returns (bool);
 
     function getInterestRate() external view returns (uint256);
+
+    function getTroveInterestRate(
+        address _borrower
+    ) external view returns (uint256);
+
+    function setTroveLastInterestUpdateTime(
+        address _borrower,
+        uint256 _timestamp
+    ) external;
 }

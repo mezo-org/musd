@@ -2,7 +2,13 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { ContractsV1, OpenTroveParams, AddCollParams, User } from "./interfaces"
+import {
+  ContractsV1,
+  OpenTroveParams,
+  AddCollParams,
+  User,
+  ContractsV2,
+} from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -146,6 +152,61 @@ export async function addColl(contracts: ContractsV1, inputs: AddCollParams) {
 
 export async function openTrove(
   contracts: ContractsV1,
+  inputs: OpenTroveParams,
+) {
+  const params = inputs
+
+  // fill in hints for searching trove list if not provided
+  if (params.lowerHint === undefined) params.lowerHint = ZERO_ADDRESS
+  if (params.upperHint === undefined) params.upperHint = ZERO_ADDRESS
+
+  // open minimum debt amount unless extraMUSDAmount is specificed.
+  // if (!params.musdAmount) params.musdAmount = (await contracts.borrowerOperations.MIN_NET_DEBT()) + 1n // add 1 to avoid rounding issues
+
+  // max fee size cant exceed 100%
+  if (params.maxFeePercentage === undefined) params.maxFeePercentage = "100"
+  const maxFeePercentage = to1e18(params.maxFeePercentage) / 100n
+
+  // ICR default of 150%
+  if (params.ICR === undefined) params.ICR = "150"
+  const ICR = to1e18(params.ICR) / 100n // 1e18 = 100%
+
+  const musdAmount =
+    typeof params.musdAmount === "bigint"
+      ? params.musdAmount
+      : to1e18(params.musdAmount)
+
+  const price = await contracts.priceFeed.fetchPrice()
+
+  // amount of debt to take on
+  const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
+
+  // amount of assets required for the loan
+  const assetAmount = (ICR * totalDebt) / price
+
+  const tx = await contracts.borrowerOperations
+    .connect(params.sender)
+    .openTrove(
+      maxFeePercentage,
+      musdAmount,
+      assetAmount,
+      params.upperHint,
+      params.lowerHint,
+      {
+        value: assetAmount, // The amount of chain base asset to send
+      },
+    )
+
+  return {
+    musdAmount,
+    totalDebt,
+    collateral: assetAmount,
+    tx,
+  }
+}
+
+export async function openTroveV2(
+  contracts: ContractsV2,
   inputs: OpenTroveParams,
 ) {
   const params = inputs

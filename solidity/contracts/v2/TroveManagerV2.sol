@@ -169,8 +169,8 @@ contract TroveManagerV2 is
     // Current interest rate per year
     uint256 private _interestRate;
 
-    // Maximum interest rate that can be set, defaults to 100%
-    uint256 private _maxInterestRate = 100;
+    // Maximum interest rate that can be set, defaults to 100% (10000 bps)
+    uint256 private _maxInterestRate = 10000;
 
     // Proposed interest rate -- must be approved by governance after a minimum delay
     uint256 private _proposedInterestRate;
@@ -248,6 +248,26 @@ contract TroveManagerV2 is
         renounceOwnership();
     }
 
+    uint256 constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
+
+    function calculateInterestOwed(address _borrower) public view returns (uint256) {
+        Trove storage trove = Troves[_borrower];
+        uint256 interestRatePercentage = (_interestRate * DECIMAL_PRECISION) / 10000; // convert from basis points to percentage
+        uint256 interestRatePerSecond = interestRatePercentage / SECONDS_IN_A_YEAR;
+        uint256 interestOwedPerSecond = (trove.debt * interestRatePerSecond) / DECIMAL_PRECISION;
+        uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
+        uint256 interestOwed = interestOwedPerSecond * timeElapsed;
+        return interestOwed;
+    }
+
+    // Update the debt of a trove to include owed interest
+    // TODO Change access modifier to limit calls to the contracts that need to call this
+    function updateDebtWithInterest(address _borrower) public {
+        uint256 interestOwed = calculateInterestOwed(_borrower);
+        Troves[_borrower].debt += interestOwed;
+        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
+    }
+
     // Propose a new interest rate  to be approved by governance
     function proposeInterestRate(
         uint256 _newProposedInterestRate
@@ -282,6 +302,26 @@ contract TroveManagerV2 is
     function setTroveInterestRate(address _borrower, uint256 _rate) external {
         _requireCallerIsBorrowerOperations();
         Troves[_borrower].interestRate = _rate;
+    }
+
+    function getTroveInterestRate(
+        address _borrower
+    ) external view returns (uint256) {
+        return Troves[_borrower].interestRate;
+    }
+
+    function setTroveLastInterestUpdateTime(
+        address _borrower,
+        uint256 _timestamp
+    ) external {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].lastInterestUpdateTime = _timestamp;
+    }
+
+    function getTroveLastInterestUpdateTime(
+        address _borrower
+    ) external view returns (uint) {
+        return Troves[_borrower].lastInterestUpdateTime;
     }
 
     function liquidate(address _borrower) external override {

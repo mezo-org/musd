@@ -25,7 +25,7 @@ import type {
   TroveManager,
 } from "../../typechain/contracts/v1"
 
-import type { TroveManagerV2 } from "../../typechain/contracts/v2"
+import type { PriceFeedV2, TroveManagerV2 } from "../../typechain/contracts/v2"
 
 import type { MUSD } from "../../typechain/contracts/token"
 
@@ -38,9 +38,11 @@ import type {
 const maxBytes32 = `0x${"f".repeat(64)}`
 
 export async function getDeploymentV2() {
+  const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")
   const troveManager: TroveManagerV2 =
     await getDeployedContract("TroveManagerV2")
   const contracts: ContractsV2 = {
+    priceFeed,
     troveManager,
   }
   return contracts

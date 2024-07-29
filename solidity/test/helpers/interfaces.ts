@@ -143,6 +143,7 @@ export interface ContractsV1 {
 }
 
 export interface ContractsV2 {
+  priceFeed: PriceFeedV2
   troveManager: TroveManagerV2
 }
 
