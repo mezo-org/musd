@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-interface IGasPool {
+interface IGasPoolV2 {
     // --- Events ---
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event MUSDTokenAddressChanged(address _musdTokenAddress);

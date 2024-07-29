@@ -5,12 +5,13 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract SendCollateral {
+contract SendCollateralV2 {
     using SafeERC20 for IERC20;
 
     /**
      * Sends collateral to recipient
      */
+    // slither-disable-next-line dead-code
     function sendCollateral(
         IERC20 _collateralERC20,
         address _recipient,
@@ -30,6 +31,7 @@ contract SendCollateral {
     /**
      * Sends collateral to recipient
      */
+    // slither-disable-next-line dead-code
     function sendCollateralFrom(
         IERC20 _collateralERC20,
         address _from,

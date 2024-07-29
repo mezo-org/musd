@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 // Common interface for the SortedTroves Doubly Linked List.
-interface ISortedTroves {
+interface ISortedTrovesV2 {
     // --- Events ---
 
     event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);

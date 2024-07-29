@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import "./IPool.sol";
+import "./IPoolV2.sol";
 
-interface IDefaultPool is IPool {
+interface IDefaultPoolV2 is IPoolV2 {
     // --- Events ---
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event DefaultPoolMUSDDebtUpdated(uint256 _MUSDDebt);

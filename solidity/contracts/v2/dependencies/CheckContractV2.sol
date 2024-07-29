@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-contract CheckContract {
+contract CheckContractV2 {
     /**
      * Check that the account is an already deployed non-destroyed contract.
      * See: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol#L12

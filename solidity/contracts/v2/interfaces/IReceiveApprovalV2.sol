@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 /// @notice An interface that should be implemented by contracts supporting
 ///         `approveAndCall`/`receiveApproval` pattern.
-interface IReceiveApproval {
+interface IReceiveApprovalV2 {
     /// @notice Receives approval to spend tokens. Called as a result of
     ///         `approveAndCall` call on the token.
     function receiveApproval(

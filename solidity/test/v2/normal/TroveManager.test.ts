@@ -3,7 +3,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 
 import { ContractsV2, TestSetup, fixture } from "../../helpers"
 
-describe.only("TroveManager in Normal Mode", () => {
+describe("TroveManager in Normal Mode", () => {
   let contracts: ContractsV2
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
@@ -23,5 +23,11 @@ describe.only("TroveManager in Normal Mode", () => {
   it("should allow for setting the maximum interest rate", async () => {
     await contracts.troveManager.setMaxInterestRate(5n)
     expect(await contracts.troveManager.getMaxInterestRate()).to.equal(5n)
+  })
+
+  it("proposeInterestRate(): Reverts when called by  should revert when not called by owner or governance", async () => {
+    await expect(
+      contracts.troveManager.proposeInterestRate(5n),
+    ).to.be.revertedWith("TroveManager: Only governance can call this function")
   })
 })

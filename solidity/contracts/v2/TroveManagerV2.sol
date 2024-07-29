@@ -7,17 +7,22 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./dependencies/CheckContract.sol";
-import "./dependencies/LiquityBase.sol";
-import "./interfaces/ICollSurplusPool.sol";
-import "./interfaces/IGasPool.sol";
+import "./dependencies/CheckContractV2.sol";
+import "./dependencies/LiquityBaseV2.sol";
+import "./interfaces/ICollSurplusPoolV2.sol";
+import "./interfaces/IGasPoolV2.sol";
 import "../token/IMUSD.sol";
-import "./interfaces/IStabilityPool.sol";
-import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManager.sol";
-import "./interfaces/IPCV.sol";
+import "./interfaces/IStabilityPoolV2.sol";
+import "./interfaces/ISortedTrovesV2.sol";
+import "./interfaces/ITroveManagerV2.sol";
+import "./interfaces/IPCVV2.sol";
 
-contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
+contract TroveManagerV2 is
+    LiquityBaseV2,
+    Ownable,
+    CheckContractV2,
+    ITroveManagerV2
+{
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidateInNormalMode,
@@ -100,18 +105,18 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     address public borrowerOperationsAddress;
 
-    IStabilityPool public override stabilityPool;
+    IStabilityPoolV2 public override stabilityPool;
 
     address public gasPoolAddress;
 
-    ICollSurplusPool public collSurplusPool;
+    ICollSurplusPoolV2 public collSurplusPool;
 
     IMUSD public musdToken;
 
-    IPCV public override pcv;
+    IPCVV2 public override pcv;
 
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
-    ISortedTroves public sortedTroves;
+    ISortedTrovesV2 public sortedTroves;
 
     // --- Data structures ---
 
@@ -121,7 +126,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
      */
     uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
     uint256 public constant REDEMPTION_FEE_FLOOR =
-    (DECIMAL_PRECISION * 5) / 1000; // 0.5%
+        (DECIMAL_PRECISION * 5) / 1000; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
     uint256 public baseRate;
@@ -177,10 +182,14 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
+    // slither-disable-next-line constable-states
     address public council;
 
     modifier onlyOwnerOrGovernance() {
-        require(msg.sender == owner() || msg.sender == council, "TroveManager: Only governance can call this function");
+        require(
+            msg.sender == owner() || msg.sender == council,
+            "TroveManager: Only governance can call this function"
+        );
         _;
     }
 
@@ -196,7 +205,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _pcvAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _stabilityPoolAddress
+        address _stabilityPoolAddress,
+        address _council
     ) external override onlyOwner {
         checkContract(_activePoolAddress);
         checkContract(_borrowerOperationsAddress);
@@ -210,17 +220,19 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         checkContract(_stabilityPoolAddress);
 
         // slither-disable-next-line missing-zero-check
+        council = _council;
+        // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
-        activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
-        stabilityPool = IStabilityPool(_stabilityPoolAddress);
+        activePool = IActivePoolV2(_activePoolAddress);
+        defaultPool = IDefaultPoolV2(_defaultPoolAddress);
+        stabilityPool = IStabilityPoolV2(_stabilityPoolAddress);
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        priceFeed = IPriceFeed(_priceFeedAddress);
+        collSurplusPool = ICollSurplusPoolV2(_collSurplusPoolAddress);
+        priceFeed = IPriceFeedV2(_priceFeedAddress);
         musdToken = IMUSD(_musdTokenAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        pcv = IPCV(_pcvAddress);
+        sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
+        pcv = IPCVV2(_pcvAddress);
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -237,16 +249,26 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Propose a new interest rate  to be approved by governance
-    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwnerOrGovernance {
-        require(_newProposedInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
+    function proposeInterestRate(
+        uint256 _newProposedInterestRate
+    ) external onlyOwnerOrGovernance {
+        require(
+            _newProposedInterestRate <= _maxInterestRate,
+            "Interest rate exceeds the maximum interest rate"
+        );
         _proposedInterestRate = _newProposedInterestRate;
+        // solhint-disable-next-line not-rely-on-time
         _proposalTime = block.timestamp;
         emit InterestRateProposed(_proposedInterestRate, _proposalTime);
     }
 
     // Approve and update the interest rate after the delay
     function approveInterestRate() external onlyOwnerOrGovernance {
-        require(block.timestamp >= _proposalTime + MIN_DELAY, "Proposal delay not met");
+        require(
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp >= _proposalTime + MIN_DELAY,
+            "Proposal delay not met"
+        );
         _setInterestRate(_proposedInterestRate);
     }
 
@@ -255,33 +277,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
 
-    // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
-    function _setInterestRate(uint256 _newInterestRate) internal {
-        require(_newInterestRate <= _maxInterestRate, "Interest rate exceeds the maximum interest rate");
-        _interestRate = _newInterestRate;
-        interestRateHistory.push(InterestRateChange(_newInterestRate, block.number));
-        emit InterestRateUpdated(_newInterestRate);
-    }
-
-    // Get historical interest rates
-    function getInterestRateHistory() external view returns (InterestRateChange[] memory) {
-        return interestRateHistory;
-    }
-
-    // Get the current interest rate
-    function getInterestRate() external view returns (uint256) {
-        return _interestRate;
-    }
-
-    // Get the current max interest rate
-    function getMaxInterestRate() external view returns (uint256) {
-        return _maxInterestRate;
-    }
-
-    function setTroveInterestRate(
-        address _borrower,
-        uint256 _rate
-    ) external {
+    function setTroveInterestRate(address _borrower, uint256 _rate) external {
         _requireCallerIsBorrowerOperations();
         Troves[_borrower].interestRate = _rate;
     }
@@ -402,6 +398,25 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         return newDebt;
     }
 
+    // Get historical interest rates
+    function getInterestRateHistory()
+        external
+        view
+        returns (InterestRateChange[] memory)
+    {
+        return interestRateHistory;
+    }
+
+    // Get the current interest rate
+    function getInterestRate() external view returns (uint256) {
+        return _interestRate;
+    }
+
+    // Get the current max interest rate
+    function getMaxInterestRate() external view returns (uint256) {
+        return _maxInterestRate;
+    }
+
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -415,10 +430,10 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) external view override returns (uint) {}
 
     function getRedemptionRateWithDecay()
-    external
-    view
-    override
-    returns (uint)
+        external
+        view
+        override
+        returns (uint)
     {}
 
     function getRedemptionFeeWithDecay(
@@ -484,9 +499,9 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
             "TroveManager: Calldata address array must not be empty"
         );
 
-        IActivePool activePoolCached = activePool;
-        IDefaultPool defaultPoolCached = defaultPool;
-        IStabilityPool stabilityPoolCached = stabilityPool;
+        IActivePoolV2 activePoolCached = activePool;
+        IDefaultPoolV2 defaultPoolCached = defaultPool;
+        IStabilityPoolV2 stabilityPoolCached = stabilityPool;
 
         // slither-disable-next-line uninitialized-local
         LocalVariables_OuterLiquidationFunction memory vars;
@@ -575,7 +590,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 currentCollateral,
             uint256 currentMUSDDebt
         ) = _getCurrentTroveAmounts(_borrower);
-        uint256 ICR = LiquityMath._computeCR(
+        uint256 ICR = LiquityMathV2._computeCR(
             currentCollateral,
             currentMUSDDebt,
             _price
@@ -601,15 +616,15 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     function getEntireDebtAndColl(
         address _borrower
     )
-    public
-    view
-    override
-    returns (
-        uint256 debt,
-        uint256 coll,
-        uint256 pendingMUSDDebtReward,
-        uint256 pendingCollateralReward
-    )
+        public
+        view
+        override
+        returns (
+            uint256 debt,
+            uint256 coll,
+            uint256 pendingMUSDDebtReward,
+            uint256 pendingCollateralReward
+        )
     {
         debt = Troves[_borrower].debt;
         coll = Troves[_borrower].coll;
@@ -645,7 +660,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 stake = Troves[_borrower].stake;
 
         uint256 pendingCollateralReward = (stake * rewardPerUnitStaked) /
-                    DECIMAL_PRECISION;
+            DECIMAL_PRECISION;
 
         return pendingCollateralReward;
     }
@@ -666,7 +681,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 stake = Troves[_borrower].stake;
 
         uint256 pendingMUSDDebtReward = (stake * rewardPerUnitStaked) /
-                    DECIMAL_PRECISION;
+            DECIMAL_PRECISION;
 
         return pendingMUSDDebtReward;
     }
@@ -675,10 +690,23 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
+    // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
+    function _setInterestRate(uint256 _newInterestRate) internal {
+        require(
+            _newInterestRate <= _maxInterestRate,
+            "Interest rate exceeds the maximum interest rate"
+        );
+        _interestRate = _newInterestRate;
+        interestRateHistory.push(
+            InterestRateChange(_newInterestRate, block.number)
+        );
+        emit InterestRateUpdated(_newInterestRate);
+    }
+
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
     function _applyPendingRewards(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         address _borrower
     ) internal {
         if (hasPendingRewards(_borrower)) {
@@ -715,13 +743,13 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _sendGasCompensation(
-        IActivePool _activePool,
+        IActivePoolV2 _activePool,
         address _liquidator,
         uint256 _MUSD,
         uint256 _collateral
     ) internal {
         if (_MUSD > 0) {
-            IGasPool(gasPoolAddress).sendMUSD(_liquidator, _MUSD);
+            IGasPoolV2(gasPoolAddress).sendMUSD(_liquidator, _MUSD);
         }
 
         if (_collateral > 0) {
@@ -740,7 +768,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
      * The collateral as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
      */
     function _updateSystemSnapshotsExcludeCollRemainder(
-        IActivePool _activePool,
+        IActivePoolV2 _activePool,
         uint256 _collRemainder
     ) internal {
         totalStakesSnapshot = totalStakes;
@@ -756,8 +784,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _redistributeDebtAndColl(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         uint256 _debt,
         uint256 _coll
     ) internal {
@@ -777,16 +805,16 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
          * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
          */
         uint256 collateralNumerator = _coll *
-                    DECIMAL_PRECISION +
-                    lastCollateralError_Redistribution;
+            DECIMAL_PRECISION +
+            lastCollateralError_Redistribution;
         uint256 MUSDDebtNumerator = _debt *
-                    DECIMAL_PRECISION +
-                    lastMUSDDebtError_Redistribution;
+            DECIMAL_PRECISION +
+            lastMUSDDebtError_Redistribution;
 
         // Get the per-unit-staked terms
         // slither-disable-next-line divide-before-multiply
         uint256 collateralRewardPerUnitStaked = collateralNumerator /
-                    totalStakes;
+            totalStakes;
         // slither-disable-next-line divide-before-multiply
         uint256 MUSDDebtRewardPerUnitStaked = MUSDDebtNumerator / totalStakes;
 
@@ -811,8 +839,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Liquidate one trove, in Normal Mode.
     function _liquidateNormalMode(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         address _borrower,
         uint256 _MUSDInStabPool
     ) internal returns (LiquidationValues memory singleLiquidation) {
@@ -839,7 +867,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
         singleLiquidation.MUSDGasCompensation = MUSD_GAS_COMPENSATION;
         uint256 collToLiquidate = singleLiquidation.entireTroveColl -
-                        singleLiquidation.collGasCompensation;
+            singleLiquidation.collGasCompensation;
 
         (
             singleLiquidation.debtToOffset,
@@ -877,8 +905,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _getTotalsFromBatchLiquidateNormalMode(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
         address[] memory _troveArray
@@ -917,8 +945,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
      * handle the case where the system *leaves* Recovery Mode, part way through the liquidation sequence
      */
     function _getTotalFromBatchLiquidateRecoveryMode(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
         address[] memory _troveArray
@@ -947,7 +975,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
                     continue;
                 }
 
-                uint256 TCR = LiquityMath._computeCR(
+                uint256 TCR = LiquityMathV2._computeCR(
                     vars.entireSystemColl,
                     vars.entireSystemDebt,
                     _price
@@ -1002,8 +1030,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Liquidate one trove, in Recovery Mode.
     function _liquidateRecoveryMode(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         address _borrower,
         uint256 _ICR,
         uint256 _MUSDInStabPool,
@@ -1203,8 +1231,8 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Move a Trove's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
     function _movePendingTroveRewardsToActivePool(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
+        IActivePoolV2 _activePool,
+        IDefaultPoolV2 _defaultPool,
         uint256 _MUSD,
         uint256 _collateral
     ) internal {
@@ -1279,9 +1307,9 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
 
         uint256 currentCollateral = Troves[_borrower].coll +
-                    pendingCollateralReward;
+            pendingCollateralReward;
         uint256 currentMUSDDebt = Troves[_borrower].debt +
-                    pendingMUSDDebtReward;
+            pendingMUSDDebtReward;
 
         return (currentCollateral, currentMUSDDebt);
     }
@@ -1312,7 +1340,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _calcDecayedBaseRate() internal view returns (uint) {
         uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
-        uint256 decayFactor = LiquityMath._decPow(
+        uint256 decayFactor = LiquityMathV2._decPow(
             MINUTE_DECAY_FACTOR,
             minutesPassed
         );
@@ -1347,14 +1375,14 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _coll,
         uint256 _MUSDInStabPool
     )
-    internal
-    pure
-    returns (
-        uint256 debtToOffset,
-        uint256 collToSendToSP,
-        uint256 debtToRedistribute,
-        uint256 collToRedistribute
-    )
+        internal
+        pure
+        returns (
+            uint256 debtToOffset,
+            uint256 collToSendToSP,
+            uint256 debtToRedistribute,
+            uint256 collToRedistribute
+        )
     {
         if (_MUSDInStabPool > 0) {
             /*
@@ -1367,7 +1395,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            debtToOffset = LiquityMath._min(_debt, _MUSDInStabPool);
+            debtToOffset = LiquityMathV2._min(_debt, _MUSDInStabPool);
             collToSendToSP = (_coll * debtToOffset) / _debt;
             debtToRedistribute = _debt - debtToOffset;
             collToRedistribute = _coll - collToSendToSP;
@@ -1385,7 +1413,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _entireSystemDebt,
         uint256 _price
     ) internal pure returns (bool) {
-        uint256 TCR = LiquityMath._computeCR(
+        uint256 TCR = LiquityMathV2._computeCR(
             _entireSystemColl,
             _entireSystemDebt,
             _price
@@ -1467,10 +1495,10 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _baseRate
     ) internal pure returns (uint) {
         return
-            LiquityMath._min(
-            BORROWING_FEE_FLOOR + _baseRate,
-            MAX_BORROWING_FEE
-        );
+            LiquityMathV2._min(
+                BORROWING_FEE_FLOOR + _baseRate,
+                MAX_BORROWING_FEE
+            );
     }
 
     function _calcRedemptionFee(
@@ -1478,7 +1506,7 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _collateralDrawn
     ) internal pure returns (uint) {
         uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
-                    DECIMAL_PRECISION;
+            DECIMAL_PRECISION;
         require(
             redemptionFee < _collateralDrawn,
             "TroveManager: Fee would eat up all returned collateral"
@@ -1490,10 +1518,10 @@ contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _baseRate
     ) internal pure returns (uint) {
         return
-            LiquityMath._min(
-            REDEMPTION_FEE_FLOOR + _baseRate,
-            DECIMAL_PRECISION // cap at a maximum of 100%
-        );
+            LiquityMathV2._min(
+                REDEMPTION_FEE_FLOOR + _baseRate,
+                DECIMAL_PRECISION // cap at a maximum of 100%
+            );
     }
 }
 // slither-disable-end reentrancy-benign

@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.24;
 
-import "./IStabilityPool.sol";
+import "./IStabilityPoolV2.sol";
 import "../../token/IMUSD.sol";
-import "./IPCV.sol";
+import "./IPCVV2.sol";
 
 // Common interface for the Trove Manager.
-interface ITroveManager {
+interface ITroveManagerV2 {
     enum Status {
         nonExistent,
         active,
@@ -83,7 +83,8 @@ interface ITroveManager {
         address _pcvAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _stabilityPoolAddress
+        address _stabilityPoolAddress,
+        address _council
     ) external;
 
     function liquidate(address _borrower) external;
@@ -142,9 +143,11 @@ interface ITroveManager {
         uint256 _debtDecrease
     ) external returns (uint);
 
-    function stabilityPool() external view returns (IStabilityPool);
+    function setTroveInterestRate(address _borrower, uint256 _rate) external;
 
-    function pcv() external view returns (IPCV);
+    function stabilityPool() external view returns (IStabilityPoolV2);
+
+    function pcv() external view returns (IPCVV2);
 
     function getTroveOwnersCount() external view returns (uint);
 
@@ -172,14 +175,14 @@ interface ITroveManager {
     function getEntireDebtAndColl(
         address _borrower
     )
-    external
-    view
-    returns (
-        uint256 debt,
-        uint256 coll,
-        uint256 pendingMUSDDebtReward,
-        uint256 pendingCollateralReward
-    );
+        external
+        view
+        returns (
+            uint256 debt,
+            uint256 coll,
+            uint256 pendingMUSDDebtReward,
+            uint256 pendingCollateralReward
+        );
 
     function getRedemptionRate() external view returns (uint);
 
@@ -212,9 +215,4 @@ interface ITroveManager {
     function checkRecoveryMode(uint256 _price) external view returns (bool);
 
     function getInterestRate() external view returns (uint256);
-
-    function setTroveInterestRate(
-        address _borrower,
-        uint256 _rate
-    ) external;
 }

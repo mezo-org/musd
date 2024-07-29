@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../token/IMUSD.sol";
 
-interface IPCV {
+interface IPCVV2 {
     // --- Events --
     event MUSDTokenAddressSet(address _musdTokenAddress);
     event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);

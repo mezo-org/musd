@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-library LiquityMath {
+library LiquityMathV2 {
     uint256 internal constant DECIMAL_PRECISION = 1e18;
 
     /* Precision for Nominal ICR (independent of price). Rationale for the value:
@@ -85,6 +85,7 @@ library LiquityMath {
         return decMul(x, y);
     }
 
+    // slither-disable-next-line dead-code
     function _computeNominalCR(
         uint256 _coll,
         uint256 _debt

@@ -2,18 +2,18 @@
 
 pragma solidity ^0.8.24;
 
-import "./BaseMath.sol";
-import "./LiquityMath.sol";
-import "../interfaces/IActivePool.sol";
-import "../interfaces/IDefaultPool.sol";
-import "../interfaces/IPriceFeed.sol";
-import "../interfaces/ILiquityBase.sol";
+import "./BaseMathV2.sol";
+import "./LiquityMathV2.sol";
+import "../interfaces/IActivePoolV2.sol";
+import "../interfaces/IDefaultPoolV2.sol";
+import "../interfaces/IPriceFeedV2.sol";
+import "../interfaces/ILiquityBaseV2.sol";
 
 /*
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-abstract contract LiquityBase is BaseMath, ILiquityBase {
+abstract contract LiquityBaseV2 is BaseMathV2, ILiquityBaseV2 {
     uint256 public constant _100pct = 1e18; // 1e18 == 100%
 
     // Minimum collateral ratio for individual troves
@@ -35,13 +35,13 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         1000); // 0.5%
 
     // slither-disable-next-line uninitialized-state
-    IActivePool public activePool;
+    IActivePoolV2 public activePool;
 
     // slither-disable-next-line all
-    IDefaultPool public defaultPool;
+    IDefaultPoolV2 public defaultPool;
 
     // slither-disable-next-line uninitialized-state
-    IPriceFeed public override priceFeed;
+    IPriceFeedV2 public override priceFeed;
 
     // --- Gas compensation functions ---
 
@@ -71,7 +71,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         uint256 entireSystemColl = getEntireSystemColl();
         uint256 entireSystemDebt = getEntireSystemDebt();
 
-        TCR = LiquityMath._computeCR(
+        TCR = LiquityMathV2._computeCR(
             entireSystemColl,
             entireSystemDebt,
             _price
@@ -84,6 +84,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         return TCR < CCR;
     }
 
+    // slither-disable-next-line dead-code
     function _requireUserAcceptsFee(
         uint256 _fee,
         uint256 _amount,
