@@ -92,6 +92,24 @@ export interface ContractsState {
       after: bigint
     }
   }
+  stabilityPool: {
+    deposits: {
+      before: bigint
+      after: bigint
+    }
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+    musd: {
+      before: bigint
+      after: bigint
+    }
+  }
 }
 
 export interface Contracts {

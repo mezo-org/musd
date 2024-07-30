@@ -131,6 +131,24 @@ function initializeContractState(): ContractsState {
         after: 0n,
       },
     },
+    stabilityPool: {
+      deposits: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+      musd: {
+        before: 0n,
+        after: 0n,
+      },
+    },
   }
 }
 
@@ -250,6 +268,18 @@ export async function getAddresses(contracts: Contracts, users: Users) {
 
 export async function connectContracts(contracts: Contracts, users: Users) {
   //  connect contracts
+
+  await contracts.stabilityPool
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.borrowerOperations.getAddress(),
+      await contracts.troveManager.getAddress(),
+      await contracts.activePool.getAddress(),
+      await contracts.musd.getAddress(),
+      await contracts.sortedTroves.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      ZERO_ADDRESS,
+    )
 
   await contracts.pcv
     .connect(users.deployer.wallet)

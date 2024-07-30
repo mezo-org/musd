@@ -229,7 +229,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         address from,
         address to,
         uint256 amount
-    ) public virtual override(ERC20, IERC20) returns (bool) {
+    ) public override(ERC20, IERC20) returns (bool) {
         require(to != address(0), "ERC20: transfer to the zero address");
         require(to != address(this), "ERC20: transfer to the contract address");
         return super.transferFrom(from, to, amount);

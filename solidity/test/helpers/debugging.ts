@@ -116,7 +116,7 @@ async function debugBalances(
 
     await Promise.all(
       Object.entries(users).map(async ([key, user]) => {
-        const address = await user.getAddress()
+        const address = await user.wallet.getAddress()
         // console.log(`${key}: ${address}`);
         const temp = await getAddressBalances(contracts, address)
         if (key !== "deployer" && displayUsers.includes(key)) {
