@@ -24,9 +24,11 @@ import {
 
 import {
   BorrowerOperationsV2,
+  PCVV2,
   PriceFeedV2,
   TroveManagerV2,
 } from "../../typechain/contracts/v2"
+import { MockAggregatorV2 } from "../../typechain"
 
 export interface TestingAddresses {
   activePool: string
@@ -148,6 +150,9 @@ export interface ContractsV1 {
 
 export interface ContractsV2 {
   borrowerOperations: BorrowerOperationsV2
+  mockAggregator: MockAggregatorV2
+  musd: MUSD | MUSDTester
+  pcv: PCVV2
   priceFeed: PriceFeedV2
   troveManager: TroveManagerV2
 }

@@ -1,6 +1,8 @@
 import { expect } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import {
+  connectContracts,
+  connectContractsV2,
   ContractsV2,
   fastForwardTime,
   fixture,
@@ -25,6 +27,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     // users
     alice = testSetup.users.alice
     deployer = testSetup.users.deployer
+    await connectContractsV2(contracts, testSetup.users)
   })
 
   it("openTrove(): opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {

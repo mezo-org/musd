@@ -27,6 +27,7 @@ import type {
 
 import type {
   BorrowerOperationsV2,
+  PCVV2,
   PriceFeedV2,
   TroveManagerV2,
 } from "../../typechain/contracts/v2"
@@ -38,6 +39,7 @@ import type {
   MUSDTester,
   TroveManagerTester,
 } from "../../typechain/contracts/v1/tests"
+import { MockAggregatorV2 } from "../../typechain"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
@@ -48,8 +50,15 @@ export async function getDeploymentV2() {
   const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")
   const troveManager: TroveManagerV2 =
     await getDeployedContract("TroveManagerV2")
+  const mockAggregator: MockAggregatorV2 =
+    await getDeployedContract("MockAggregatorV2")
+  const musd: MUSD = await getDeployedContract("MUSD")
+  const pcv: PCVV2 = await getDeployedContract("PCVV2")
   const contracts: ContractsV2 = {
     borrowerOperations,
+    mockAggregator,
+    musd,
+    pcv,
     priceFeed,
     troveManager,
   }
@@ -309,6 +318,81 @@ export async function getAddresses(contracts: ContractsV1, users: Users) {
   }
 
   return addresses
+}
+
+export async function connectContractsV2(contracts: ContractsV2, users: Users) {
+  //  connect contracts
+
+  await contracts.pcv
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.musd.getAddress(),
+      await contracts.borrowerOperations.getAddress(),
+      ZERO_ADDRESS,
+    )
+
+  // await contracts.defaultPool
+  //   .connect(users.deployer.wallet)
+  //   .setAddresses(
+  //     await contracts.troveManager.getAddress(),
+  //     await contracts.activePool.getAddress(),
+  //     ZERO_ADDRESS,
+  //   )
+
+  // await contracts.activePool
+  //   .connect(users.deployer.wallet)
+  //   .setAddresses(
+  //     await contracts.borrowerOperations.getAddress(),
+  //     ZERO_ADDRESS,
+  //     await contracts.collSurplusPool.getAddress(),
+  //     await contracts.defaultPool.getAddress(),
+  //     await contracts.troveManager.getAddress(),
+  //     await contracts.stabilityPool.getAddress(),
+  //   )
+
+  await contracts.borrowerOperations
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.priceFeed.getAddress(),
+      ZERO_ADDRESS,
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.musd.getAddress(),
+      await contracts.pcv.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.troveManager.getAddress(),
+    )
+
+  await contracts.troveManager
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.priceFeed.getAddress(),
+      await contracts.borrowerOperations.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+      await contracts.priceFeed.getAddress(),
+    )
+
+  // await contracts.sortedTroves
+  //   .connect(users.deployer.wallet)
+  //   .setParams(
+  //     maxBytes32,
+  //     await contracts.troveManager.getAddress(),
+  //     await contracts.borrowerOperations.getAddress(),
+  //   )
+
+  await contracts.priceFeed
+    .connect(users.deployer.wallet)
+    .setOracle(await contracts.mockAggregator.getAddress())
 }
 
 export async function connectContracts(contracts: ContractsV1, users: Users) {

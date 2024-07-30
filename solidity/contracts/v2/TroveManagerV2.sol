@@ -271,7 +271,7 @@ contract TroveManagerV2 is
     // Propose a new interest rate  to be approved by governance
     function proposeInterestRate(
         uint256 _newProposedInterestRate
-    ) external onlyOwnerOrGovernance {
+    ) external {
         require(
             _newProposedInterestRate <= _maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
@@ -283,7 +283,7 @@ contract TroveManagerV2 is
     }
 
     // Approve and update the interest rate after the delay
-    function approveInterestRate() external onlyOwnerOrGovernance {
+    function approveInterestRate() external {
         require(
             // solhint-disable-next-line not-rely-on-time
             block.timestamp >= _proposalTime + MIN_DELAY,
