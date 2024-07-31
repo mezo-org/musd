@@ -7,7 +7,7 @@ import {
   OpenTroveParams,
   AddCollParams,
   User,
-  WithdrawTHUSDParams,
+  WithdrawMUSDParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
 
@@ -150,23 +150,16 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   }
 }
 
-// take out musd in order to make collat / musd = target
-// either provide target or musd
-// collat = coll * price
-// collat / target = musd
-// targetDebt - debt = additional
+// Withdraw MUSD from a trove to make ICR equal to the target ICR
+// TODO Current implementation is slightly off -- perhaps we're not accounting for fees?
 export async function withdrawMUSD(
   contracts: Contracts,
-  inputs: WithdrawTHUSDParams,
+  inputs: WithdrawMUSDParams,
 ) {
   const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(
     inputs.from,
   )
-  console.log(`debt: ${debt}`)
-  console.log(`coll: ${coll}`)
   const price = await contracts.priceFeed.fetchPrice()
-  console.log(`price: ${price}`)
-  console.log(`numerator: ${coll * price}`)
   const targetDebt = (coll * price) / inputs.ICR
   const increasedTotalDebt = targetDebt - debt
 
