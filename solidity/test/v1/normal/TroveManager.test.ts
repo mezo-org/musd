@@ -3,7 +3,7 @@ import { expect } from "chai"
 import {
   connectContracts,
   Contracts,
-  ContractsState,
+  // ContractsState,
   fixture,
   getAddresses,
   openTrove,
@@ -18,7 +18,7 @@ describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User
-  let state: ContractsState
+  // let state: ContractsState
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
@@ -28,7 +28,7 @@ describe("TroveManager in Normal Mode", () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
-    state = testSetup.state
+    // state = testSetup.state
 
     await connectContracts(contracts, testSetup.users)
     // users
@@ -107,6 +107,8 @@ describe("TroveManager in Normal Mode", () => {
     const aliceTroveIsInSortedList = await contracts.sortedTroves.contains(
       alice.wallet.address,
     )
+    // Unclear why this expect is being flagged by eslint, disabling for now
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     expect(aliceTroveIsInSortedList).to.be.false
   })
 })
