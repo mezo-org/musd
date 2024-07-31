@@ -125,8 +125,6 @@ contract StabilityPool is
     function provideToSP(uint256 _amount) external override {
         _requireNonZeroAmount(_amount);
 
-        _sendMUSDtoStabilityPool(msg.sender, _amount);
-
         uint256 initialDeposit = deposits[msg.sender];
 
         uint256 depositorCollateralGain = getDepositorCollateralGain(
@@ -145,6 +143,8 @@ contract StabilityPool is
             depositorCollateralGain,
             MUSDLoss
         ); // MUSD Loss required for event log
+
+        _sendMUSDtoStabilityPool(msg.sender, _amount);
 
         _sendCollateralGainToDepositor(depositorCollateralGain);
     }
@@ -293,10 +293,17 @@ contract StabilityPool is
         address _address,
         uint256 _amount
     ) internal {
-        musd.transferFrom(_address, address(this), _amount);
         uint256 newTotalMUSDDeposits = totalMUSDDeposits + _amount;
         totalMUSDDeposits = newTotalMUSDDeposits;
+
         emit StabilityPoolMUSDBalanceUpdated(newTotalMUSDDeposits);
+
+        bool transferSuccess = musd.transferFrom(
+            _address,
+            address(this),
+            _amount
+        );
+        require(transferSuccess, "MUSD was not transferred successfully.");
     }
 
     function _updateDepositAndSnapshots(
@@ -339,6 +346,71 @@ contract StabilityPool is
 
         sendCollateral(IERC20(collateralAddress), msg.sender, _amount);
     }
+
+    // Update the Stability Pool reward sum S and product P
+
+    // slither-disable-start dead-code
+    function _updateRewardSumAndProduct(
+        uint256 _collateralGainPerUnitStaked,
+        uint256 _MUSDLossPerUnitStaked
+    ) internal {
+        uint256 currentP = P;
+        uint256 newP;
+
+        assert(_MUSDLossPerUnitStaked <= DECIMAL_PRECISION);
+        /*
+         * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool MUSD in the liquidation.
+         * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - MUSDLossPerUnitStaked)
+         */
+        uint256 newProductFactor = DECIMAL_PRECISION - _MUSDLossPerUnitStaked;
+
+        uint128 currentScaleCached = currentScale;
+        uint128 currentEpochCached = currentEpoch;
+        uint256 currentS = epochToScaleToSum[currentEpochCached][
+            currentScaleCached
+        ];
+
+        /*
+         * Calculate the new S first, before we update P.
+         * The collateral gain for any given depositor from a liquidation depends on the value of their deposit
+         * (and the value of totalDeposits) prior to the Stability being depleted by the debt in the liquidation.
+         *
+         * Since S corresponds to collateral gain, and P to deposit loss, we update S first.
+         */
+        uint256 marginalCollateralGain = _collateralGainPerUnitStaked *
+            currentP;
+        uint256 newS = currentS + marginalCollateralGain;
+        epochToScaleToSum[currentEpochCached][currentScaleCached] = newS;
+        emit SUpdated(newS, currentEpochCached, currentScaleCached);
+
+        // If the Stability Pool was emptied, increment the epoch, and reset the scale and product P
+        if (newProductFactor == 0) {
+            currentEpoch = currentEpochCached + 1;
+            emit EpochUpdated(currentEpoch);
+            currentScale = 0;
+            emit ScaleUpdated(currentScale);
+            newP = DECIMAL_PRECISION;
+
+            // If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
+        } else if (
+            (currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR
+        ) {
+            newP =
+                (currentP * newProductFactor * SCALE_FACTOR) /
+                DECIMAL_PRECISION;
+            currentScale = currentScaleCached + 1;
+            emit ScaleUpdated(currentScale);
+        } else {
+            newP = (currentP * newProductFactor) / DECIMAL_PRECISION;
+        }
+
+        assert(newP > 0);
+        P = newP;
+
+        emit PUpdated(newP);
+    }
+
+    // slither-disable-end dead-code
 
     function _getCollateralGainFromSnapshots(
         uint256 initialDeposit,
