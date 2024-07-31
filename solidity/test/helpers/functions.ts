@@ -2,7 +2,13 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { Contracts, OpenTroveParams, AddCollParams, User } from "./interfaces"
+import {
+  Contracts,
+  OpenTroveParams,
+  AddCollParams,
+  User,
+  WithdrawTHUSDParams,
+} from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -142,6 +148,36 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   return {
     tx,
   }
+}
+
+// take out musd in order to make collat / musd = target
+// either provide target or musd
+// collat = coll * price
+// collat / target = musd
+// targetDebt - debt = additional
+export async function withdrawMUSD(
+  contracts: Contracts,
+  inputs: WithdrawTHUSDParams,
+) {
+  const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(
+    inputs.from,
+  )
+  console.log(`debt: ${debt}`)
+  console.log(`coll: ${coll}`)
+  const price = await contracts.priceFeed.fetchPrice()
+  console.log(`price: ${price}`)
+  console.log(`numerator: ${coll * price}`)
+  const targetDebt = (coll * price) / inputs.ICR
+  const increasedTotalDebt = targetDebt - debt
+
+  await contracts.borrowerOperations
+    .connect(inputs.from)
+    .withdrawMUSD(
+      to1e18("100") / 100n,
+      increasedTotalDebt,
+      ZERO_ADDRESS,
+      ZERO_ADDRESS,
+    )
 }
 
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
