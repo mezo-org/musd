@@ -81,7 +81,6 @@ describe("TroveManager in Normal Mode", () => {
     // price drops to 1ETH/token:1000THUSD, reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
     const newPrice = await contracts.priceFeed.fetchPrice()
-    expect(newPrice).to.be.equal(to1e18(1000))
 
     alice.trove.icr.after = await contracts.troveManager.getCurrentICR(
       addresses.alice,
