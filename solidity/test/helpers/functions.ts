@@ -2,13 +2,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, ethers } from "ethers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import {
-  Contracts,
-  OpenTroveParams,
-  AddCollParams,
-  User,
-  WithdrawMUSDParams,
-} from "./interfaces"
+import { Contracts, OpenTroveParams, AddCollParams, User } from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -154,15 +148,14 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
 // TODO Current implementation is slightly off -- perhaps we're not accounting for fees?
 export async function adjustTroveToICR(
   contracts: Contracts,
-  inputs: WithdrawMUSDParams,
+  from: HardhatEthersSigner,
+  targetICR: bigint,
 ) {
-  const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(
-    inputs.from,
-  )
+  const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(from)
   const price = await contracts.priceFeed.fetchPrice()
 
   // Calculate the debt required to read the target ICR
-  const targetDebt = (coll * price) / inputs.ICR
+  const targetDebt = (coll * price) / targetICR
 
   // Calculate the additional debt needed, accounting for borrowing fee
   // TODO Fix this fee calculation, it's not right but unclear why
@@ -170,7 +163,7 @@ export async function adjustTroveToICR(
   const increasedTotalDebt = targetDebt - debt + fee
 
   await contracts.borrowerOperations
-    .connect(inputs.from)
+    .connect(from)
     .withdrawMUSD(
       to1e18("100") / 100n,
       increasedTotalDebt,

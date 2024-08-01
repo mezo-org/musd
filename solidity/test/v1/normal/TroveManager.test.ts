@@ -56,7 +56,7 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  it.only("liquidate(): closes a Trove that has ICR < MCR", async () => {
+  it("liquidate(): closes a Trove that has ICR < MCR", async () => {
     const price = await contracts.priceFeed.fetchPrice()
     alice.trove.icr.before = await contracts.troveManager.getCurrentICR(
       addresses.alice,
@@ -68,7 +68,7 @@ describe("TroveManager in Normal Mode", () => {
     expect(mcr).to.be.equal(to1e18(1.1))
 
     const targetICR = 1111111111111111111n
-    await adjustTroveToICR(contracts, { from: alice.wallet, ICR: targetICR })
+    await adjustTroveToICR(contracts, alice.wallet, targetICR)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const icrAfterWithdrawal = await contracts.troveManager.getCurrentICR(
       alice.wallet,
@@ -86,8 +86,7 @@ describe("TroveManager in Normal Mode", () => {
       addresses.alice,
       newPrice,
     )
-    const mcrAfterPriceDrop = await contracts.troveManager.MCR()
-    expect(alice.trove.icr.after).to.be.lt(mcrAfterPriceDrop)
+    expect(alice.trove.icr.after).to.be.lt(mcr)
 
     // close trove
     await contracts.troveManager.liquidate(alice.wallet.address)
@@ -101,8 +100,7 @@ describe("TroveManager in Normal Mode", () => {
     const aliceTroveIsInSortedList = await contracts.sortedTroves.contains(
       alice.wallet.address,
     )
-    // Unclear why this expect is being flagged by eslint, disabling for now
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    expect(aliceTroveIsInSortedList).to.be.false
+
+    expect(aliceTroveIsInSortedList).to.equal(false)
   })
 })

@@ -194,8 +194,3 @@ export interface OpenTroveParams {
   sender: HardhatEthersSigner
   upperHint?: string
 }
-
-export interface WithdrawMUSDParams {
-  from: HardhatEthersSigner
-  ICR: bigint
-}
