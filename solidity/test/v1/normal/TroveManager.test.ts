@@ -10,7 +10,7 @@ import {
   TestingAddresses,
   TestSetup,
   User,
-  withdrawMUSD,
+  adjustTroveToICR,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -68,7 +68,7 @@ describe("TroveManager in Normal Mode", () => {
     expect(mcr).to.be.equal(to1e18(1.1))
 
     const targetICR = 1111111111111111111n
-    await withdrawMUSD(contracts, { from: alice.wallet, ICR: targetICR })
+    await adjustTroveToICR(contracts, { from: alice.wallet, ICR: targetICR })
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const icrAfterWithdrawal = await contracts.troveManager.getCurrentICR(
       alice.wallet,

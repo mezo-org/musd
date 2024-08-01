@@ -152,7 +152,7 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
 
 // Withdraw MUSD from a trove to make ICR equal to the target ICR
 // TODO Current implementation is slightly off -- perhaps we're not accounting for fees?
-export async function withdrawMUSD(
+export async function adjustTroveToICR(
   contracts: Contracts,
   inputs: WithdrawMUSDParams,
 ) {
