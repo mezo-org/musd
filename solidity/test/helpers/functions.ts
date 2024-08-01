@@ -160,8 +160,14 @@ export async function withdrawMUSD(
     inputs.from,
   )
   const price = await contracts.priceFeed.fetchPrice()
+
+  // Calculate the debt required to read the target ICR
   const targetDebt = (coll * price) / inputs.ICR
-  const increasedTotalDebt = targetDebt - debt
+
+  // Calculate the additional debt needed, accounting for borrowing fee
+  // TODO Fix this fee calculation, it's not right but unclear why
+  const fee = await contracts.troveManager.getBorrowingFee(targetDebt)
+  const increasedTotalDebt = targetDebt - debt + fee
 
   await contracts.borrowerOperations
     .connect(inputs.from)

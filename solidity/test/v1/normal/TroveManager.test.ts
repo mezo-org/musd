@@ -79,7 +79,7 @@ describe("TroveManager in Normal Mode", () => {
       alice.wallet,
       price,
     )
-    // TODO Fix this expectation, our ICR is off by quite a bit - 1107113202324937724n
+    // TODO Fix this expectation, our ICR is off by quite a bit - 1101597591907664089
     // const tolerance = 100n
     // expect(icrAfterWithdrawal).to.be.closeTo(targetICR, tolerance)
 
