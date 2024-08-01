@@ -41,9 +41,7 @@ describe("TroveManager in Normal Mode", () => {
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
-  })
 
-  it("liquidate(): closes a Trove that has ICR < MCR", async () => {
     // open two troves so that we don't go into recovery mode
     await openTrove(contracts, {
       musdAmount: "5000",
@@ -56,7 +54,9 @@ describe("TroveManager in Normal Mode", () => {
       ICR: "5000",
       sender: bob.wallet,
     })
+  })
 
+  it.only("liquidate(): closes a Trove that has ICR < MCR", async () => {
     const price = await contracts.priceFeed.fetchPrice()
     const icrBefore = await contracts.troveManager.getCurrentICR(
       addresses.alice,
@@ -66,11 +66,6 @@ describe("TroveManager in Normal Mode", () => {
 
     const mcr = (await contracts.troveManager.MCR()).toString()
     expect(mcr).to.be.equal(to1e18(1.1))
-
-    // TODO Unclear why this was in the original tests -- remove if not needed
-    // const borrowingRate =
-    //   await contracts.troveManager.getBorrowingRateWithDecay()
-    // const A_THUSDWithdrawal = to1e18(5000) / (to1e18(1) + borrowingRate)
 
     const targetICR = 1111111111111111111n
     await withdrawMUSD(contracts, { from: alice.wallet, ICR: targetICR })
