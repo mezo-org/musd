@@ -58,11 +58,11 @@ describe("TroveManager in Normal Mode", () => {
 
   it.only("liquidate(): closes a Trove that has ICR < MCR", async () => {
     const price = await contracts.priceFeed.fetchPrice()
-    const icrBefore = await contracts.troveManager.getCurrentICR(
+    alice.trove.icr.before = await contracts.troveManager.getCurrentICR(
       addresses.alice,
       price,
     )
-    expect(icrBefore).to.be.equal(to1e18(4))
+    expect(alice.trove.icr.before).to.be.equal(to1e18(4))
 
     const mcr = (await contracts.troveManager.MCR()).toString()
     expect(mcr).to.be.equal(to1e18(1.1))
@@ -83,12 +83,12 @@ describe("TroveManager in Normal Mode", () => {
     const newPrice = await contracts.priceFeed.fetchPrice()
     expect(newPrice).to.be.equal(to1e18(1000))
 
-    const icrAfterPriceDrop = await contracts.troveManager.getCurrentICR(
+    alice.trove.icr.after = await contracts.troveManager.getCurrentICR(
       addresses.alice,
       newPrice,
     )
     const mcrAfterPriceDrop = await contracts.troveManager.MCR()
-    expect(icrAfterPriceDrop).to.be.lt(mcrAfterPriceDrop)
+    expect(alice.trove.icr.after).to.be.lt(mcrAfterPriceDrop)
 
     // close trove
     await contracts.troveManager.liquidate(alice.wallet.address)
