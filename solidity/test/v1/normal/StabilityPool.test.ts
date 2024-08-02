@@ -22,7 +22,6 @@ describe("StabilityPool in Normal Mode", () => {
   let testSetup: TestSetup
 
   beforeEach(async () => {
-    // fixtureBorrowerOperations has a mock trove manager so we can change rates
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
