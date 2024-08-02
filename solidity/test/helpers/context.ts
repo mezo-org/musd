@@ -174,6 +174,10 @@ async function initializeUserObject(
         before: 0n,
         after: 0n,
       },
+      icr: {
+        before: 0n,
+        after: 0n,
+      },
       stake: {
         before: 0n,
         after: 0n,

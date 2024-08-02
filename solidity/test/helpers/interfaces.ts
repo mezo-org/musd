@@ -146,6 +146,10 @@ export interface User {
       before: bigint
       after: bigint
     }
+    icr: {
+      before: bigint
+      after: bigint
+    }
     stake: {
       before: bigint
       after: bigint

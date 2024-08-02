@@ -46,10 +46,14 @@ export async function updateTroveSnapshot(
     user.address,
   )
 
+  const price = await contracts.priceFeed.fetchPrice()
+  const icr = await contracts.troveManager.getCurrentICR(user.address, price)
+
   user.trove.debt[checkPoint] = debt
   user.trove.collateral[checkPoint] = collateral
   user.trove.stake[checkPoint] = stake
   user.trove.status[checkPoint] = status
+  user.trove.icr[checkPoint] = icr
 }
 
 export async function updatePendingSnapshot(
@@ -142,6 +146,35 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   return {
     tx,
   }
+}
+
+// Withdraw MUSD from a trove to make ICR equal to the target ICR
+export async function adjustTroveToICR(
+  contracts: Contracts,
+  from: HardhatEthersSigner,
+  targetICR: bigint,
+) {
+  const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(from)
+  const price = await contracts.priceFeed.fetchPrice()
+
+  // Calculate the debt required to reach the target ICR
+  const targetDebt = (coll * price) / targetICR
+  const borrowingRate = await contracts.troveManager.getBorrowingRate()
+
+  /* Total increase in debt after the call = targetDebt - debt
+   * Requested increase in debt factors in the borrow fee, note you must multiply by to1e18(1) before the division to avoid rounding errors
+   */
+  const requestedDebtIncrease =
+    ((targetDebt - debt) * to1e18(1)) / (to1e18(1) + borrowingRate)
+
+  await contracts.borrowerOperations
+    .connect(from)
+    .withdrawMUSD(
+      to1e18("100") / 100n,
+      requestedDebtIncrease,
+      ZERO_ADDRESS,
+      ZERO_ADDRESS,
+    )
 }
 
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
