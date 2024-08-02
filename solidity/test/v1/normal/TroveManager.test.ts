@@ -3,7 +3,6 @@ import { expect } from "chai"
 import {
   connectContracts,
   Contracts,
-  // ContractsState,
   fixture,
   getAddresses,
   openTrove,
@@ -19,26 +18,20 @@ describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User
-  // let state: ContractsState
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
   beforeEach(async () => {
-    // fixtureBorrowerOperations has a mock trove manager so we can change rates
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
-    // state = testSetup.state
 
     await connectContracts(contracts, testSetup.users)
+
     // users
     alice = testSetup.users.alice
     bob = testSetup.users.bob
-    // carol = testSetup.users.carol
-    // dennis = testSetup.users.dennis
-    // eric = testSetup.users.eric
-    // deployer = testSetup.users.deployer
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
@@ -57,7 +50,7 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  it.only("liquidate(): closes a Trove that has ICR < MCR", async () => {
+  it("liquidate(): closes a Trove that has ICR < MCR", async () => {
     // Alice's Trove has ICR = 4, which is above the MCR
     await updateTroveSnapshot(contracts, alice, "before")
     expect(alice.trove.icr.before).to.be.equal(to1e18(4))
@@ -73,7 +66,7 @@ describe("TroveManager in Normal Mode", () => {
     await updateTroveSnapshot(contracts, alice, "after")
     expect(alice.trove.icr.after).to.equal(targetICR)
 
-    // price drops to 1ETH/token:1000THUSD, reducing Alice's ICR below MCR
+    // price drops to 1ETH/token:1000MUSD, reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
     const newPrice = await contracts.priceFeed.fetchPrice()
 
