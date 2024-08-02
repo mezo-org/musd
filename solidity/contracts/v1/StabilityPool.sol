@@ -26,6 +26,10 @@ contract StabilityPool is
         uint128 scale;
         uint128 epoch;
     }
+
+    // The Product 'P' is an ever-decreasing number, though it never reaches 0. In order to handle it
+    // becoming smaller and smaller without losing precision, whenever it becomes too small (< 1e9),
+    // we multiply it by SCALE_FACTOR and record how many times we've done this in `currentScale`.
     uint256 public constant SCALE_FACTOR = 1e9;
 
     // --- State ---
