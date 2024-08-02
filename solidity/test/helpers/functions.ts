@@ -145,7 +145,6 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
 }
 
 // Withdraw MUSD from a trove to make ICR equal to the target ICR
-// TODO Current implementation is slightly off -- perhaps we're not accounting for fees?
 export async function adjustTroveToICR(
   contracts: Contracts,
   from: HardhatEthersSigner,
@@ -153,14 +152,16 @@ export async function adjustTroveToICR(
 ) {
   const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(from)
   const price = await contracts.priceFeed.fetchPrice()
-  // Calculate the debt required to read the target ICR
+
+  // Calculate the debt required to reach the target ICR
   const targetDebt = (coll * price) / targetICR
   const borrowingRate = await contracts.troveManager.getBorrowingRate()
 
   // total increase in debt after the call = targetDebt - debt
-  // requested increase in debt factors in the borrow fee, note you must multiple by to1e18(1) before the division to avoid rounding errors
+  // requested increase in debt factors in the borrow fee, note you must multiply by to1e18(1) before the division to avoid rounding errors
   const requestedDebtIncrease =
     ((targetDebt - debt) * to1e18(1)) / (to1e18(1) + borrowingRate)
+
   await contracts.borrowerOperations
     .connect(from)
     .withdrawMUSD(
