@@ -153,20 +153,19 @@ export async function adjustTroveToICR(
 ) {
   const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(from)
   const price = await contracts.priceFeed.fetchPrice()
-
   // Calculate the debt required to read the target ICR
   const targetDebt = (coll * price) / targetICR
+  const borrowingRate = await contracts.troveManager.getBorrowingRate()
 
-  // Calculate the additional debt needed, accounting for borrowing fee
-  // TODO Fix this fee calculation, it's not right but unclear why
-  const fee = await contracts.troveManager.getBorrowingFee(targetDebt)
-  const increasedTotalDebt = targetDebt - debt + fee
-
+  // total increase in debt after the call = targetDebt - debt
+  // requested increase in debt factors in the borrow fee, note you must multiple by to1e18(1) before the division to avoid rounding errors
+  const requestedDebtIncrease =
+    ((targetDebt - debt) * to1e18(1)) / (to1e18(1) + borrowingRate)
   await contracts.borrowerOperations
     .connect(from)
     .withdrawMUSD(
       to1e18("100") / 100n,
-      increasedTotalDebt,
+      requestedDebtIncrease,
       ZERO_ADDRESS,
       ZERO_ADDRESS,
     )

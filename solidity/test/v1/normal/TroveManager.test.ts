@@ -68,15 +68,15 @@ describe("TroveManager in Normal Mode", () => {
     expect(mcr).to.be.equal(to1e18(1.1))
 
     const targetICR = 1111111111111111111n
+
     await adjustTroveToICR(contracts, alice.wallet, targetICR)
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const icrAfterWithdrawal = await contracts.troveManager.getCurrentICR(
+    alice.trove.icr.after = await contracts.troveManager.getCurrentICR(
       alice.wallet,
       price,
     )
-    // TODO Fix this expectation, our ICR is off by quite a bit - 1101597591907664089
-    // const tolerance = 100n
-    // expect(icrAfterWithdrawal).to.be.closeTo(targetICR, tolerance)
+    expect(alice.trove.icr.after).to.equal(targetICR)
 
     // price drops to 1ETH/token:1000THUSD, reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
