@@ -52,3 +52,17 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 `cancelRevokeBurnList()`: It cancels the existing revoking mint process. The function first validates whether the `pendingRevokedBurnAddress` is non-zero to confirm the presence of an ongoing pending revoking process. Once verified, it resets both `revokeBurnListInitiated` and `pendingRevokedBurnAddress` to zero and `address(0)` respectively. Effectively finalizing the existing revoking process.
 
 `finalizeRevokeBurnList()`: This function revokes the minting capability to the borrower operations contract, previously designated in the `pendingRevokedBurnAddress`. It executes only after the governance delay has elapsed following the `revokeBurnListInitiated` timestamp. By finalizing the revoke mint process it resets the `pendingRevokedBurnAddress` and `revokeBurnListInitiated`.
+
+## Definitions
+
+_**Trove:**_ a collateralized debt position, bound to a single Ethereum address. Also referred to as a “CDP” in similar protocols.
+
+_**Individual collateralization ratio (ICR):**_ a Trove's ICR is the ratio of the dollar value of its entire collateral at the current collateral:USD price, to its entire debt
+
+_**Total collateralization ratio (TCR):**_ the ratio of the dollar value of the entire system collateral at the current collateral:USD price, to the entire system debt
+
+_**Critical collateralization ratio (CCR):**_ 150%. When the TCR is below the CCR, the system enters Recovery Mode.
+
+_**Gas compensation:**_ A refund, in MUSD and collateral, automatically paid to the caller of a liquidation function, intended to at least cover the gas cost of the transaction. Designed to ensure that liquidators are not dissuaded by potentially high gas costs.
+
+
