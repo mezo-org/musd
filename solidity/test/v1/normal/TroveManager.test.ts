@@ -11,6 +11,7 @@ import {
   TestSetup,
   User,
   adjustTroveToICR,
+  updateTroveSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -56,12 +57,9 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  it("liquidate(): closes a Trove that has ICR < MCR", async () => {
-    const price = await contracts.priceFeed.fetchPrice()
-    alice.trove.icr.before = await contracts.troveManager.getCurrentICR(
-      addresses.alice,
-      price,
-    )
+  it.only("liquidate(): closes a Trove that has ICR < MCR", async () => {
+    // Alice's Trove has ICR = 4, which is above the MCR
+    await updateTroveSnapshot(contracts, alice, "before")
     expect(alice.trove.icr.before).to.be.equal(to1e18(4))
 
     const mcr = (await contracts.troveManager.MCR()).toString()
@@ -69,13 +67,10 @@ describe("TroveManager in Normal Mode", () => {
 
     const targetICR = 1111111111111111111n
 
+    // Alice increases debt to lower her ICR to 1.111111111111111111
     await adjustTroveToICR(contracts, alice.wallet, targetICR)
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    alice.trove.icr.after = await contracts.troveManager.getCurrentICR(
-      alice.wallet,
-      price,
-    )
+    await updateTroveSnapshot(contracts, alice, "after")
     expect(alice.trove.icr.after).to.equal(targetICR)
 
     // price drops to 1ETH/token:1000THUSD, reducing Alice's ICR below MCR
