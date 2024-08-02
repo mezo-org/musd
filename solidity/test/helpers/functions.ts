@@ -161,8 +161,9 @@ export async function adjustTroveToICR(
   const targetDebt = (coll * price) / targetICR
   const borrowingRate = await contracts.troveManager.getBorrowingRate()
 
-  // total increase in debt after the call = targetDebt - debt
-  // requested increase in debt factors in the borrow fee, note you must multiply by to1e18(1) before the division to avoid rounding errors
+  /* Total increase in debt after the call = targetDebt - debt
+   * Requested increase in debt factors in the borrow fee, note you must multiply by to1e18(1) before the division to avoid rounding errors
+   */
   const requestedDebtIncrease =
     ((targetDebt - debt) * to1e18(1)) / (to1e18(1) + borrowingRate)
 
