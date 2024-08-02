@@ -3,7 +3,7 @@
 In the `beforeEach` of each test file the contracts should be loaded from a cached snapshot.
 
 ```
-cachedTestSetup = await loadFixture(fixtureBorrowerOperations)
+cachedTestSetup = await loadFixture(fixture)
 testSetup = { ...cachedTestSetup }
 contracts = testSetup.contracts
 ```
@@ -94,7 +94,7 @@ export interface OpenTroveParams {
 
 Calls to BorrowerOperations functions have wrappers with default values to reduce the overall size of tests.
 
-Tests should be optmised for readability so helper functions should accept both amounts with bigint and string inputs. Strings should be able include comma's for readability and be converted into bigints in the helper function.
+Tests should be optimised for readability so helper functions should accept both amounts with bigint and string inputs. Strings should be able to include commas for readability and be converted into bigints in the helper function.
 
 ```
 await openTrove(contracts, {
@@ -119,31 +119,62 @@ await expect(
 
 State related to users is grouped together for improve readability.
 
+The user in tests conform to the following interface:
+
 ```
 export interface User {
-  wallet: HardhatEthersSigner,
+  address: string
   btc: {
-    before: bigint,
-    after: bigint,
+    before: bigint
+    after: bigint
   }
-  collateral: {
-    before: bigint,
-    after: bigint,
-  },
-  debt: {
-    before: bigint,
-    after: bigint,
-  },
   musd: {
-    before: bigint,
-    after: bigint,
+    before: bigint
+    after: bigint
   }
+  trove: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+    stake: {
+      before: bigint
+      after: bigint
+    }
+    status: {
+      before: bigint
+      after: bigint
+    }
+  }
+  rewardSnapshot: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+  }
+  pending: {
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+  }
+  wallet: HardhatEthersSigner
 }
 ```
 
-The user in tests conform to the following interface.
-
-This enables more human readable unit tests like
+This enables more human-readable unit tests like
 
 ```
 expect(alice.collateral.after).to.equal(alice.collateral.before + collateralTopUp)
@@ -154,7 +185,7 @@ expect(alice.btc.after).to.equal(alice.btc.before - collateralTopUp)
 
 Each test file should have a unique before each function to set the state of the users and contracts before the test occurs. This is to reduce the amount of code required for each test.
 
-For example in the BorrowerOperations tests for recovery mode we want there to be atleast two troves in the system, since different behaviour occurs when there is only one trove in the system.
+For example in the BorrowerOperations tests for recovery mode we want there to be at least two troves in the system, since different behaviour occurs when there is only one trove in the system.
 
 ```
 async function recoveryModeSetup() {
@@ -201,7 +232,7 @@ After the initial troves are opened the price of BTC is dropped from $50,000 to 
 
 ## Temporary Variables
 
-When the state being read from a contract is only being tested once storing it in a temporary variable doesnt improve the readability for the first example below
+When the state being read from a contract is only being tested once storing it in a temporary variable doesn't improve the readability for the first example below
 
 ```
 const baseRate2 = await contracts.troveManager.baseRate()
@@ -212,7 +243,7 @@ vs
 expect(await contracts.troveManager.baseRate()).to.equal(0)
 ```
 
-In this second example the
+In this second example the temporary variable makes the test more readable by having a meaningful name:
 
 ```
 const expectedCollateral = (await getTroveEntireColl(contracts, carol.wallet)) + activePoolCollateralBefore
