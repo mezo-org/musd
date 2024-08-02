@@ -278,9 +278,9 @@ contract StabilityPool is
         /*
          * If compounded deposit is less than a billionth of the initial deposit, return 0.
          *
-         * NOTE: originally, this line was in place to stop rounding errors making the deposit too large. However, the error
-         * corrections should ensure the error in P "favors the Pool", i.e. any given compounded deposit should slightly less
-         * than it's theoretical value.
+         * NOTE: originally, this line was in place to stop rounding errors making the deposit
+         * too large. However, the error corrections should ensure the error in P "favors the Pool",
+         * i.e. any given compounded deposit should be slightly less than its theoretical value.
          *
          * Thus it's unclear whether this line is still really needed.
          */
