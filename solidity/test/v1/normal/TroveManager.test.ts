@@ -1,5 +1,6 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
+import { ethers } from "hardhat"
 import {
   connectContracts,
   Contracts,
@@ -107,6 +108,12 @@ describe("TroveManager in Normal Mode", () => {
     expect(state.activePool.collateral.before).to.be.equal(
       alice.trove.collateral.before + bob.trove.collateral.before,
     )
+    state.activePool.btc.before = await ethers.provider.getBalance(
+      addresses.activePool,
+    )
+    expect(state.activePool.btc.before).to.be.equal(
+      alice.trove.collateral.before + bob.trove.collateral.before,
+    )
 
     // check MUSD Debt
     state.activePool.debt.before = await contracts.activePool.getMUSDDebt()
@@ -126,14 +133,12 @@ describe("TroveManager in Normal Mode", () => {
     expect(state.activePool.collateral.after).to.be.equal(
       bob.trove.collateral.before,
     )
-
-    state.activePool.collateral.after =
-      await contracts.activePool.getCollateralBalance()
-    expect(state.activePool.collateral.after).to.be.equal(
-      bob.trove.collateral.before,
+    state.activePool.btc.after = await ethers.provider.getBalance(
+      addresses.activePool,
     )
+    expect(state.activePool.btc.after).to.be.equal(bob.trove.collateral.before)
 
-    // check ActivePool collateral and MUSD debt
+    // check ActivePool MUSD debt
     state.activePool.debt.after = await contracts.activePool.getMUSDDebt()
     expect(state.activePool.debt.after).to.be.equal(bob.trove.debt.before)
   })
@@ -147,6 +152,10 @@ describe("TroveManager in Normal Mode", () => {
     state.defaultPool.collateral.before =
       await contracts.defaultPool.getCollateralBalance()
     expect(state.defaultPool.collateral.before).to.be.equal(0n)
+    state.defaultPool.btc.before = await ethers.provider.getBalance(
+      addresses.defaultPool,
+    )
+    expect(state.defaultPool.btc.before).to.be.equal(0n)
 
     // check MUSD Debt
     state.defaultPool.debt.before = await contracts.defaultPool.getMUSDDebt()
@@ -165,6 +174,12 @@ describe("TroveManager in Normal Mode", () => {
     state.defaultPool.collateral.after =
       await contracts.defaultPool.getCollateralBalance()
     expect(state.defaultPool.collateral.after).to.be.equal(
+      expectedDefaultPoolCollateral,
+    )
+    state.defaultPool.btc.after = await ethers.provider.getBalance(
+      addresses.defaultPool,
+    )
+    expect(state.defaultPool.btc.after).to.be.equal(
       expectedDefaultPoolCollateral,
     )
 
