@@ -11,6 +11,7 @@ import {
   User,
   adjustTroveToICR,
   updateTroveSnapshot,
+  ContractsState,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -18,6 +19,7 @@ describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User
+  let state: ContractsState
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
@@ -26,6 +28,7 @@ describe("TroveManager in Normal Mode", () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
+    state = testSetup.state
 
     await connectContracts(contracts, testSetup.users)
 
@@ -90,5 +93,47 @@ describe("TroveManager in Normal Mode", () => {
     )
 
     expect(aliceTroveIsInSortedList).to.equal(false)
+  })
+
+  it("liquidate(): decreases ActivePool collateral and MUSDDebt by correct amounts", async () => {
+    // --- SETUP ---
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+
+    // check ActivePool collateral
+    state.activePool.collateral.before =
+      await contracts.activePool.getCollateralBalance()
+    expect(state.activePool.collateral.before).to.be.equal(
+      alice.trove.collateral.before + bob.trove.collateral.before,
+    )
+
+    // check MUSD Debt
+    state.activePool.debt.before = await contracts.activePool.getMUSDDebt()
+    expect(state.activePool.debt.before).to.be.equal(
+      alice.trove.debt.before + bob.trove.debt.before,
+    )
+
+    // price drops to 1ETH/token:100THUSD, reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    /* Close Alice's Trove. Should liquidate her collateral and MUSD,
+     * leaving Bob’s collateral and MUSD debt in the ActivePool. */
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    state.activePool.collateral.after =
+      await contracts.activePool.getCollateralBalance()
+    expect(state.activePool.collateral.after).to.be.equal(
+      bob.trove.collateral.before,
+    )
+
+    state.activePool.collateral.after =
+      await contracts.activePool.getCollateralBalance()
+    expect(state.activePool.collateral.after).to.be.equal(
+      bob.trove.collateral.before,
+    )
+
+    // check ActivePool collateral and MUSD debt
+    state.activePool.debt.after = await contracts.activePool.getMUSDDebt()
+    expect(state.activePool.debt.after).to.be.equal(bob.trove.debt.before)
   })
 })
