@@ -77,7 +77,7 @@ describe("TroveManager in Normal Mode", () => {
     await updateTroveSnapshot(contracts, alice, "after")
     expect(alice.trove.icr.after).to.equal(targetICR)
 
-    // price drops to 1ETH/token:1000MUSD, reducing Alice's ICR below MCR
+    // price drops reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
     const newPrice = await contracts.priceFeed.fetchPrice()
 
@@ -104,22 +104,21 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): decreases ActivePool collateral and MUSDDebt by correct amounts", async () => {
-    // --- SETUP ---
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
 
     // check ActivePool collateral
+    const expectedCollateralBefore =
+      alice.trove.collateral.before + bob.trove.collateral.before
     state.activePool.collateral.before =
       await contracts.activePool.getCollateralBalance()
     expect(state.activePool.collateral.before).to.be.equal(
-      alice.trove.collateral.before + bob.trove.collateral.before,
+      expectedCollateralBefore,
     )
     state.activePool.btc.before = await ethers.provider.getBalance(
       addresses.activePool,
     )
-    expect(state.activePool.btc.before).to.be.equal(
-      alice.trove.collateral.before + bob.trove.collateral.before,
-    )
+    expect(state.activePool.btc.before).to.be.equal(expectedCollateralBefore)
 
     // check MUSD Debt
     state.activePool.debt.before = await contracts.activePool.getMUSDDebt()
@@ -127,7 +126,7 @@ describe("TroveManager in Normal Mode", () => {
       alice.trove.debt.before + bob.trove.debt.before,
     )
 
-    // price drops to 1ETH/token:100THUSD, reducing Alice's ICR below MCR
+    // price drops reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
 
     /* Close Alice's Trove. Should liquidate her collateral and MUSD,
@@ -150,7 +149,6 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): increases DefaultPool collateral and MUSD debt by correct amounts", async () => {
-    // --- SETUP ---
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
 
@@ -204,7 +202,7 @@ describe("TroveManager in Normal Mode", () => {
       alice.trove.stake.before + bob.trove.stake.before,
     )
 
-    // price drops to 1ETH/token:1000MUSD, reducing Alice's ICR below MCR
+    // price drops reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
 
     // Close Alice's Trove
@@ -216,6 +214,7 @@ describe("TroveManager in Normal Mode", () => {
 
   it("liquidate(): Removes the correct trove from the TroveOwners array, and moves the last array element to the new empty slot", async () => {
     // Open additional troves with decreasing collateral ratio
+    // TODO Original test made a point of the CR decreasing but it is unclear why that would matter here.  Remove comment if superfluous
     await openTrove(contracts, {
       musdAmount: "5000",
       ICR: "218",
@@ -240,9 +239,8 @@ describe("TroveManager in Normal Mode", () => {
       await contracts.troveManager.getTroveOwnersCount()
     expect(state.troveManager.troves.before).to.be.equal(5)
 
-    // Drop the price to lower ICRs below MCR
+    // Drop the price to lower ICRs below MCR and close Carol's trove
     await contracts.mockAggregator.setPrice(to1e18(1000))
-
     await contracts.troveManager.liquidate(carol.wallet.address)
 
     // Check that carol no longer has an active trove
