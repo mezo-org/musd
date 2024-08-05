@@ -233,3 +233,8 @@ export async function getTCR(contracts: Contracts) {
   const price = await contracts.priceFeed.fetchPrice()
   return contracts.troveManager.getTCR(price)
 }
+
+export function applyLiquidationFee(collateralAmount: bigint) {
+  const liquidationFee = to1e18(99.5) / 100n // 0.5% liquidation fee
+  return (collateralAmount * liquidationFee) / to1e18(1)
+}

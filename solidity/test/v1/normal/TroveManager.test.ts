@@ -12,6 +12,7 @@ import {
   adjustTroveToICR,
   updateTroveSnapshot,
   ContractsState,
+  applyLiquidationFee,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -135,5 +136,40 @@ describe("TroveManager in Normal Mode", () => {
     // check ActivePool collateral and MUSD debt
     state.activePool.debt.after = await contracts.activePool.getMUSDDebt()
     expect(state.activePool.debt.after).to.be.equal(bob.trove.debt.before)
+  })
+
+  it("liquidate(): increases DefaultPool collateral and MUSD debt by correct amounts", async () => {
+    // --- SETUP ---
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+
+    // check DefaultPool collateral
+    state.defaultPool.collateral.before =
+      await contracts.defaultPool.getCollateralBalance()
+    expect(state.defaultPool.collateral.before).to.be.equal(0n)
+
+    // check MUSD Debt
+    state.defaultPool.debt.before = await contracts.defaultPool.getMUSDDebt()
+    expect(state.defaultPool.debt.before).to.be.equal(0n)
+
+    // price drops to 1ETH/token:1000MUSD, reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    // Close Alice's Trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // DefaultPool collateral should increase by Alice's collateral less the liquidation fee
+    const expectedDefaultPoolCollateral = applyLiquidationFee(
+      alice.trove.collateral.before,
+    )
+    state.defaultPool.collateral.after =
+      await contracts.defaultPool.getCollateralBalance()
+    expect(state.defaultPool.collateral.after).to.be.equal(
+      expectedDefaultPoolCollateral,
+    )
+
+    // DefaultPool total debt after should increase by Alice's total debt
+    state.defaultPool.debt.after = await contracts.defaultPool.getMUSDDebt()
+    expect(state.defaultPool.debt.after).to.be.equal(alice.trove.debt.before)
   })
 })
