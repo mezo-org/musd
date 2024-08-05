@@ -187,4 +187,24 @@ describe("TroveManager in Normal Mode", () => {
     state.defaultPool.debt.after = await contracts.defaultPool.getMUSDDebt()
     expect(state.defaultPool.debt.after).to.be.equal(alice.trove.debt.before)
   })
+
+  it("liquidate(): removes the Trove's stake from the total stakes", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+
+    state.troveManager.stakes.before =
+      await contracts.troveManager.totalStakes()
+    expect(state.troveManager.stakes.before).to.be.equal(
+      alice.trove.stake.before + bob.trove.stake.before,
+    )
+
+    // price drops to 1ETH/token:1000MUSD, reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    // Close Alice's Trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    state.troveManager.stakes.after = await contracts.troveManager.totalStakes()
+    expect(state.troveManager.stakes.after).to.be.equal(bob.trove.stake.before)
+  })
 })
