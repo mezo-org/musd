@@ -285,4 +285,35 @@ describe("TroveManager in Normal Mode", () => {
     expect(troveStructs[2][4]).to.be.equal(2)
     expect(troveStructs[3][4]).to.be.equal(3)
   })
+
+  it("liquidate(): updates the snapshots of total stakes and total collateral", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before") // not strictly necessary but for completeness
+
+    expect(await contracts.troveManager.totalStakesSnapshot()).to.be.equal(0n)
+    expect(await contracts.troveManager.totalCollateralSnapshot()).to.be.equal(
+      0n,
+    )
+
+    // Drop the price to lower ICRs below MCR and close Alice's trove
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Total stakes should be equal to Bob's stake
+    await updateTroveSnapshot(contracts, bob, "after")
+    expect(await contracts.troveManager.totalStakesSnapshot()).to.be.equal(
+      bob.trove.stake.after,
+    )
+
+    /*
+     Total collateral should be equal to Bob's collateral plus his pending collateral reward (Alice's collateral less liquidation fee)
+     earned from the liquidation of Alice's trove
+    */
+    const expectedCollateral =
+      bob.trove.collateral.after +
+      applyLiquidationFee(alice.trove.collateral.before)
+    expect(await contracts.troveManager.totalCollateralSnapshot()).to.be.equal(
+      expectedCollateral,
+    )
+  })
 })
