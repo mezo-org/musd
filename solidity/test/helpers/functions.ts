@@ -45,6 +45,20 @@ export async function getOpenTroveTotalDebt(
   return compositeDebt + fee
 }
 
+// Helper function for printing values in 1e18 precision
+export function printIn1e18Precision(value: bigint) {
+  const valueStr = value.toString()
+  const { length } = valueStr
+
+  if (length <= 18) {
+    return `0.${"0".repeat(18 - length)}${valueStr}`
+  }
+
+  const integerPart = valueStr.slice(0, length - 18)
+  const fractionalPart = valueStr.slice(length - 18)
+  return `${integerPart}.${fractionalPart}`
+}
+
 export async function updateTroveSnapshot(
   contracts: Contracts,
   user: User,
@@ -184,6 +198,7 @@ export async function adjustTroveToICR(
 
   // Calculate the debt required to reach the target ICR
   const targetDebt = (coll * price) / targetICR
+  const increasedTotalDebt = targetDebt - debt
   const borrowingRate = await contracts.troveManager.getBorrowingRate()
 
   /* Total increase in debt after the call = targetDebt - debt
@@ -200,6 +215,8 @@ export async function adjustTroveToICR(
       ZERO_ADDRESS,
       ZERO_ADDRESS,
     )
+
+  return { requestedDebtIncrease, increasedTotalDebt }
 }
 
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {

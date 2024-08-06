@@ -9,6 +9,7 @@ import {
   fixture,
   getAddresses,
   openTrove,
+  printIn1e18Precision,
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
@@ -314,6 +315,94 @@ describe("TroveManager in Normal Mode", () => {
       applyLiquidationFee(alice.trove.collateral.before)
     expect(await contracts.troveManager.totalCollateralSnapshot()).to.be.equal(
       expectedCollateral,
+    )
+  })
+
+  it("liquidate(): updates the L_Collateral and L_MUSDDebt reward-per-unit-staked totals", async () => {
+    await openTrove(contracts, {
+      musdAmount: "5000",
+      ICR: "111",
+      sender: carol.wallet,
+    })
+
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+    await updateTroveSnapshot(contracts, carol, "before")
+
+    // Drop the price to lower Carol's ICR below MCR and close Carol's trove
+    await contracts.mockAggregator.setPrice(to1e18(49000))
+    await contracts.troveManager.liquidate(carol.wallet.address)
+    expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(false)
+
+    // Carol's collateral less the liquidation fee and MUSD should be added to the default pool
+    const liquidatedColl = to1e18(
+      applyLiquidationFee(carol.trove.collateral.before),
+    )
+    const remainingColl =
+      bob.trove.collateral.before + alice.trove.collateral.before
+    const expectedLCollateralAfterCarolLiquidated =
+      liquidatedColl / remainingColl
+    expect(await contracts.troveManager.L_Collateral()).to.be.equal(
+      expectedLCollateralAfterCarolLiquidated,
+    )
+
+    const expectedLMUSDDebtAfterCarolLiquidated =
+      to1e18(carol.trove.debt.before) / remainingColl
+    expect(await contracts.troveManager.L_MUSDDebt()).to.be.equal(
+      expectedLMUSDDebtAfterCarolLiquidated,
+    )
+
+    // Alice now withdraws MUSD, bring her ICR to 1.11
+    const { increasedTotalDebt } = await adjustTroveToICR(
+      contracts,
+      alice.wallet,
+      1111111111111111111n,
+    )
+
+    // price drops again, reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(40000))
+
+    // Close Alice's Trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+    expect(await contracts.sortedTroves.contains(alice.wallet)).to.equal(false)
+
+    /*
+     * Alice's pending reward was applied to her trove before liquidation.  We account for that here using the previous
+     * L_Collateral value computed after Carol's liquidation.
+     */
+    const aliceCollWithReward = to1e18(
+      applyLiquidationFee(
+        alice.trove.collateral.before +
+          (alice.trove.collateral.before *
+            expectedLCollateralAfterCarolLiquidated) /
+            to1e18(1),
+      ),
+    )
+
+    // Bob now has all the active stake.  We now add the reward-per-unit-staked from Alice's liquidation to the L_Collateral.
+    const expectedLCollateralAfterAliceLiquidated =
+      expectedLCollateralAfterCarolLiquidated +
+      aliceCollWithReward / bob.trove.collateral.before
+
+    expect(await contracts.troveManager.L_Collateral()).to.be.equal(
+      expectedLCollateralAfterAliceLiquidated,
+    )
+
+    // Apply Alice's pending debt rewards and calculate the new LMUSDDebt
+    const expectedLMUSDDebtAfterAliceLiquidated =
+      expectedLMUSDDebtAfterCarolLiquidated +
+      ((alice.trove.debt.before +
+        increasedTotalDebt +
+        (alice.trove.collateral.before *
+          expectedLMUSDDebtAfterCarolLiquidated) /
+          to1e18(1)) *
+        to1e18(1)) /
+        bob.trove.collateral.before
+
+    const tolerance = 100n
+    expect(await contracts.troveManager.L_MUSDDebt()).to.be.closeTo(
+      expectedLMUSDDebtAfterAliceLiquidated,
+      tolerance,
     )
   })
 })
