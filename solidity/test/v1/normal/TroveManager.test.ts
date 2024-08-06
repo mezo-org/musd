@@ -1,19 +1,19 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
-import { ethers } from "hardhat"
 import {
+  adjustTroveToICR,
+  applyLiquidationFee,
   connectContracts,
   Contracts,
+  ContractsState,
   fixture,
   getAddresses,
   openTrove,
   TestingAddresses,
   TestSetup,
-  User,
-  adjustTroveToICR,
+  updateContractsSnapshot,
   updateTroveSnapshot,
-  ContractsState,
-  applyLiquidationFee,
+  User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -108,15 +108,17 @@ describe("TroveManager in Normal Mode", () => {
     await updateTroveSnapshot(contracts, bob, "before")
 
     // check ActivePool collateral
+    await updateContractsSnapshot(
+      contracts,
+      state,
+      "activePool",
+      "before",
+      addresses,
+    )
     const expectedCollateralBefore =
       alice.trove.collateral.before + bob.trove.collateral.before
-    state.activePool.collateral.before =
-      await contracts.activePool.getCollateralBalance()
     expect(state.activePool.collateral.before).to.be.equal(
       expectedCollateralBefore,
-    )
-    state.activePool.btc.before = await ethers.provider.getBalance(
-      addresses.activePool,
     )
     expect(state.activePool.btc.before).to.be.equal(expectedCollateralBefore)
 
@@ -133,13 +135,16 @@ describe("TroveManager in Normal Mode", () => {
      * leaving Bob’s collateral and MUSD debt in the ActivePool. */
     await contracts.troveManager.liquidate(alice.wallet.address)
 
-    state.activePool.collateral.after =
-      await contracts.activePool.getCollateralBalance()
+    await updateContractsSnapshot(
+      contracts,
+      state,
+      "activePool",
+      "after",
+      addresses,
+    )
+
     expect(state.activePool.collateral.after).to.be.equal(
       bob.trove.collateral.before,
-    )
-    state.activePool.btc.after = await ethers.provider.getBalance(
-      addresses.activePool,
     )
     expect(state.activePool.btc.after).to.be.equal(bob.trove.collateral.before)
 
@@ -151,14 +156,16 @@ describe("TroveManager in Normal Mode", () => {
   it("liquidate(): increases DefaultPool collateral and MUSD debt by correct amounts", async () => {
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
+    await updateContractsSnapshot(
+      contracts,
+      state,
+      "defaultPool",
+      "before",
+      addresses,
+    )
 
     // check DefaultPool collateral
-    state.defaultPool.collateral.before =
-      await contracts.defaultPool.getCollateralBalance()
     expect(state.defaultPool.collateral.before).to.be.equal(0n)
-    state.defaultPool.btc.before = await ethers.provider.getBalance(
-      addresses.defaultPool,
-    )
     expect(state.defaultPool.btc.before).to.be.equal(0n)
 
     // check MUSD Debt
@@ -172,16 +179,18 @@ describe("TroveManager in Normal Mode", () => {
     await contracts.troveManager.liquidate(alice.wallet.address)
 
     // DefaultPool collateral should increase by Alice's collateral less the liquidation fee
+    await updateContractsSnapshot(
+      contracts,
+      state,
+      "defaultPool",
+      "after",
+      addresses,
+    )
     const expectedDefaultPoolCollateral = applyLiquidationFee(
       alice.trove.collateral.before,
     )
-    state.defaultPool.collateral.after =
-      await contracts.defaultPool.getCollateralBalance()
     expect(state.defaultPool.collateral.after).to.be.equal(
       expectedDefaultPoolCollateral,
-    )
-    state.defaultPool.btc.after = await ethers.provider.getBalance(
-      addresses.defaultPool,
     )
     expect(state.defaultPool.btc.after).to.be.equal(
       expectedDefaultPoolCollateral,
