@@ -213,8 +213,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): Removes the correct trove from the TroveOwners array, and moves the last array element to the new empty slot", async () => {
-    // Open additional troves with decreasing collateral ratio
-    // TODO Original test made a point of the CR decreasing but it is unclear why that would matter here.  Remove comment if superfluous
+    // Open additional troves
     await openTrove(contracts, {
       musdAmount: "5000",
       ICR: "218",
