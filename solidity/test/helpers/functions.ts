@@ -1,8 +1,16 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
-import { ContractTransactionResponse, ethers } from "ethers"
+import { ContractTransactionResponse } from "ethers"
+import { ethers } from "hardhat"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
-import { Contracts, OpenTroveParams, AddCollParams, User } from "./interfaces"
+import {
+  Contracts,
+  OpenTroveParams,
+  AddCollParams,
+  User,
+  TestingAddresses,
+  ContractsState,
+} from "./interfaces"
 import { fastForwardTime } from "./time"
 
 // Contract specific helper functions
@@ -54,6 +62,23 @@ export async function updateTroveSnapshot(
   user.trove.stake[checkPoint] = stake
   user.trove.status[checkPoint] = status
   user.trove.icr[checkPoint] = icr
+}
+
+/* Updates the snapshot of collateral and btc for either active pool or default pool.
+ * In the future we can potentially include more state updates to contracts but want to avoid too much coupling for now.
+ */
+export async function updateContractsSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  pool: "activePool" | "defaultPool",
+  checkPoint: "before" | "after",
+  addresses: TestingAddresses,
+) {
+  state[pool].collateral[checkPoint] =
+    await contracts[pool].getCollateralBalance()
+  state[pool].btc[checkPoint] = await ethers.provider.getBalance(
+    addresses[pool],
+  )
 }
 
 export async function updatePendingSnapshot(
@@ -232,4 +257,9 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 export async function getTCR(contracts: Contracts) {
   const price = await contracts.priceFeed.fetchPrice()
   return contracts.troveManager.getTCR(price)
+}
+
+export function applyLiquidationFee(collateralAmount: bigint) {
+  const liquidationFee = to1e18(99.5) / 100n // 0.5% liquidation fee
+  return (collateralAmount * liquidationFee) / to1e18(1)
 }

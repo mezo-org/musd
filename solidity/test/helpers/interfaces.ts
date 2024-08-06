@@ -78,6 +78,20 @@ export interface ContractsState {
       after: bigint
     }
   }
+  defaultPool: {
+    btc: {
+      before: bigint
+      after: bigint
+    }
+    collateral: {
+      before: bigint
+      after: bigint
+    }
+    debt: {
+      before: bigint
+      after: bigint
+    }
+  }
   pcv: {
     collateral: {
       before: bigint

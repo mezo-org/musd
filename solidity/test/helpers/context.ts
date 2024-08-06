@@ -117,6 +117,20 @@ function initializeContractState(): ContractsState {
         after: 0n,
       },
     },
+    defaultPool: {
+      btc: {
+        before: 0n,
+        after: 0n,
+      },
+      collateral: {
+        before: 0n,
+        after: 0n,
+      },
+      debt: {
+        before: 0n,
+        after: 0n,
+      },
+    },
     pcv: {
       collateral: {
         before: 0n,
