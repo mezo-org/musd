@@ -280,15 +280,3 @@ export function applyLiquidationFee(collateralAmount: bigint) {
   const liquidationFee = to1e18(99.5) / 100n // 0.5% liquidation fee
   return (collateralAmount * liquidationFee) / to1e18(1)
 }
-
-export async function provideToSP(
-  contracts: Contracts,
-  amount: bigint,
-  sender: HardhatEthersSigner,
-) {
-  await contracts.musd.approve(
-    await contracts.stabilityPool.getAddress(),
-    amount,
-  )
-  await contracts.stabilityPool.connect(sender).provideToSP(amount)
-}
