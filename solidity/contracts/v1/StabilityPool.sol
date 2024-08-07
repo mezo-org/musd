@@ -79,6 +79,10 @@ contract StabilityPool is
     constructor() Ownable(msg.sender) {}
 
     receive() external payable {
+        _updateCollateral();
+    }
+
+    function _updateCollateral() internal {
         _requireCallerIsActivePool();
         collateral += msg.value;
         emit StabilityPoolCollateralBalanceUpdated(collateral);
