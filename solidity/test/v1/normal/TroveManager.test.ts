@@ -8,9 +8,8 @@ import {
   ContractsState,
   fixture,
   getAddresses,
+  getTCR,
   openTrove,
-  printIn1e18Precision,
-  provideToSP,
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
@@ -18,7 +17,6 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import debugBalances from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -486,7 +484,7 @@ describe("TroveManager in Normal Mode", () => {
     expect(tcrBefore).to.be.equal(tcrAfter)
   })
 
-  it.only(
+  it(
     "liquidate(): Given the same price and no other trove changes, " +
       "complete Pool offsets restore the TCR to its value prior to the defaulters opening troves",
     async () => {
@@ -499,18 +497,7 @@ describe("TroveManager in Normal Mode", () => {
         .connect(bob.wallet)
         .provideToSP(to1e18(10000))
 
-      const price = await contracts.priceFeed.fetchPrice()
-      const tcrBefore = await contracts.troveManager.getTCR(price)
-
-      await debugBalances(contracts, testSetup.users, [
-        "alice",
-        "bob",
-        "carol",
-        "dennis",
-        "eric",
-      ])
-      console.log(`debt: ${await contracts.troveManager.getEntireSystemDebt()}`)
-      console.log(`coll: ${await contracts.troveManager.getEntireSystemColl()}`)
+      const tcrBefore = await getTCR(contracts)
 
       // Open additional troves with low enough ICRs that they will default on a small price drop
       await openTrove(contracts, {
@@ -540,6 +527,7 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       // price drops reducing ICRs below MCR
+      const price = await contracts.priceFeed.fetchPrice()
       await contracts.mockAggregator.setPrice((price * 80n) / 100n)
 
       // liquidate defaulters
@@ -561,19 +549,8 @@ describe("TroveManager in Normal Mode", () => {
       // Price bounces back
       await contracts.mockAggregator.setPrice(price)
 
-      await debugBalances(contracts, testSetup.users, [
-        "alice",
-        "bob",
-        "carol",
-        "dennis",
-        "eric",
-      ])
-
-      console.log(`debt: ${await contracts.troveManager.getEntireSystemDebt()}`)
-      console.log(`coll: ${await contracts.troveManager.getEntireSystemColl()}`)
-
       // Check TCR is restored
-      const tcrAfter = await contracts.troveManager.getTCR(price)
+      const tcrAfter = await getTCR(contracts)
       expect(tcrAfter).to.be.equal(tcrBefore)
     },
   )

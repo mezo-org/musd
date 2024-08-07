@@ -45,20 +45,6 @@ export async function getOpenTroveTotalDebt(
   return compositeDebt + fee
 }
 
-// Helper function for printing values in 1e18 precision
-export function printIn1e18Precision(value: bigint) {
-  const valueStr = value.toString()
-  const { length } = valueStr
-
-  if (length <= 18) {
-    return `0.${"0".repeat(18 - length)}${valueStr}`
-  }
-
-  const integerPart = valueStr.slice(0, length - 18)
-  const fractionalPart = valueStr.slice(length - 18)
-  return `${integerPart}.${fractionalPart}`
-}
-
 export async function updateTroveSnapshot(
   contracts: Contracts,
   user: User,
