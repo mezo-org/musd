@@ -405,4 +405,32 @@ describe("TroveManager in Normal Mode", () => {
       tolerance,
     )
   })
+
+  it("liquidate(): Liquidates undercollateralized trove if there are two troves in the system", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+
+    // TODO Original test had Alice provide some funds to the stability pool, unclear why
+
+    // price drops reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    await updateTroveSnapshot(contracts, alice, "after")
+    await updateTroveSnapshot(contracts, bob, "after")
+    expect(alice.trove.icr.after).to.be.lt(to1e18(1.1))
+
+    expect(await contracts.troveManager.getTroveOwnersCount()).to.be.equal(2)
+
+    // Close trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Check Alice's trove is removed, and bob remains
+    expect(await contracts.troveManager.getTroveOwnersCount()).to.be.equal(1)
+    expect(
+      await contracts.sortedTroves.contains(alice.wallet.address),
+    ).to.be.equal(false)
+    expect(
+      await contracts.sortedTroves.contains(bob.wallet.address),
+    ).to.be.equal(true)
+  })
 })
