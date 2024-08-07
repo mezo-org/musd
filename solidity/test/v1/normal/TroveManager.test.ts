@@ -433,4 +433,24 @@ describe("TroveManager in Normal Mode", () => {
       await contracts.sortedTroves.contains(bob.wallet.address),
     ).to.be.equal(true)
   })
+
+  it("liquidate(): reverts if trove has been closed", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+
+    // price drops reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    // Close trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Check Alice's trove is removed
+    expect(
+      await contracts.sortedTroves.contains(alice.wallet.address),
+    ).to.be.equal(false)
+
+    // Try to close the trove again
+    await expect(
+      contracts.troveManager.liquidate(alice.wallet.address),
+    ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
+  })
 })
