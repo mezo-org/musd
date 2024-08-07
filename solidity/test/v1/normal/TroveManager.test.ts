@@ -453,4 +453,34 @@ describe("TroveManager in Normal Mode", () => {
       contracts.troveManager.liquidate(alice.wallet.address),
     ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
   })
+
+  it("liquidate(): does nothing if trove has >= 110% ICR", async () => {
+    state.troveManager.troves.before =
+      await contracts.troveManager.getTroveOwnersCount()
+
+    const price = await contracts.priceFeed.fetchPrice()
+    const tcrBefore = await contracts.troveManager.getTCR(price)
+
+    // Attempt to liquidate Alice
+    await expect(
+      contracts.troveManager.liquidate(alice.wallet.address),
+    ).to.be.revertedWith("TroveManager: nothing to liquidate")
+
+    // Check Alice and Bob are still active
+    expect(
+      await contracts.sortedTroves.contains(alice.wallet.address),
+    ).to.be.equal(true)
+    expect(
+      await contracts.sortedTroves.contains(bob.wallet.address),
+    ).to.be.equal(true)
+
+    state.troveManager.troves.after =
+      await contracts.troveManager.getTroveOwnersCount()
+    expect(state.troveManager.troves.before).to.be.equal(
+      state.troveManager.troves.after,
+    )
+
+    const tcrAfter = await contracts.troveManager.getTCR(price)
+    expect(tcrBefore).to.be.equal(tcrAfter)
+  })
 })
