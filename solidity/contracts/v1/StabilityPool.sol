@@ -13,11 +13,11 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";
 
 contract StabilityPool is
-LiquityBase,
-Ownable,
-CheckContract,
-SendCollateral,
-IStabilityPool
+    LiquityBase,
+    Ownable,
+    CheckContract,
+    SendCollateral,
+    IStabilityPool
 {
     // --- Type Declarations ---
     struct Snapshots {
@@ -116,8 +116,8 @@ IStabilityPool
         require(
             (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
                 borrowerOperations.collateralAddress() == _collateralAddress) &&
-            (Ownable(_activePoolAddress).owner() != address(0) ||
-                activePool.collateralAddress() == _collateralAddress),
+                (Ownable(_activePoolAddress).owner() != address(0) ||
+                    activePool.collateralAddress() == _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"
         );
 
@@ -241,8 +241,8 @@ IStabilityPool
 
         if (collateralAddress == address(0)) {
             borrowerOperations.moveCollateralGainToTrove{
-                    value: depositorCollateralGain
-                }(msg.sender, 0, _upperHint, _lowerHint);
+                value: depositorCollateralGain
+            }(msg.sender, 0, _upperHint, _lowerHint);
         } else {
             borrowerOperations.moveCollateralGainToTrove{value: 0}(
                 msg.sender,
@@ -442,8 +442,8 @@ IStabilityPool
 
         // Get S and G for the current epoch and current scale
         uint256 currentS = epochToScaleToSum[currentEpochCached][
-                    currentScaleCached
-            ];
+            currentScaleCached
+        ];
 
         // Record new snapshots of the latest running product P, sum S, and sum G, for the depositor
         depositSnapshots[_depositor].P = currentP;
@@ -471,11 +471,11 @@ IStabilityPool
         uint256 _debtToOffset,
         uint256 _totalMUSDDeposits
     )
-    internal
-    returns (
-        uint256 collateralGainPerUnitStaked,
-        uint256 MUSDLossPerUnitStaked
-    )
+        internal
+        returns (
+            uint256 collateralGainPerUnitStaked,
+            uint256 MUSDLossPerUnitStaked
+        )
     {
         /*
          * Compute the MUSD and collateral rewards. Uses a "feedback" error correction, to keep
@@ -489,8 +489,8 @@ IStabilityPool
          * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
          */
         uint256 collateralNumerator = _collToAdd *
-                    DECIMAL_PRECISION +
-                    lastCollateralError_Offset;
+            DECIMAL_PRECISION +
+            lastCollateralError_Offset;
 
         assert(_debtToOffset <= _totalMUSDDeposits);
         if (_debtToOffset == _totalMUSDDeposits) {
@@ -498,8 +498,8 @@ IStabilityPool
             lastMUSDLossError_Offset = 0;
         } else {
             uint256 MUSDLossNumerator = _debtToOffset *
-                        DECIMAL_PRECISION -
-                        lastMUSDLossError_Offset;
+                DECIMAL_PRECISION -
+                lastMUSDLossError_Offset;
             /*
              * Add 1 to make error in quotient positive. We want "slightly too much" MUSD loss,
              * which ensures the error in any given compoundedMUSDDeposit favors the Stability Pool.
@@ -561,8 +561,8 @@ IStabilityPool
         uint128 currentScaleCached = currentScale;
         uint128 currentEpochCached = currentEpoch;
         uint256 currentS = epochToScaleToSum[currentEpochCached][
-                    currentScaleCached
-            ];
+            currentScaleCached
+        ];
 
         /*
          * Calculate the new S first, before we update P.
@@ -572,7 +572,7 @@ IStabilityPool
          * Since S corresponds to collateral gain, and P to deposit loss, we update S first.
          */
         uint256 marginalCollateralGain = _collateralGainPerUnitStaked *
-                    currentP;
+            currentP;
         uint256 newS = currentS + marginalCollateralGain;
         epochToScaleToSum[currentEpochCached][currentScaleCached] = newS;
         emit SUpdated(newS, currentEpochCached, currentScaleCached);
@@ -621,15 +621,15 @@ IStabilityPool
         uint256 P_Snapshot = snapshots.P;
 
         uint256 firstPortion = epochToScaleToSum[epochSnapshot][scaleSnapshot] -
-                    S_Snapshot;
+            S_Snapshot;
         uint256 secondPortion = epochToScaleToSum[epochSnapshot][
             scaleSnapshot + 1
-            ] / SCALE_FACTOR;
+        ] / SCALE_FACTOR;
 
         uint256 collateralGain = (initialDeposit *
             (firstPortion + secondPortion)) /
-                    P_Snapshot /
-                    DECIMAL_PRECISION;
+            P_Snapshot /
+            DECIMAL_PRECISION;
 
         return collateralGain;
     }
@@ -668,7 +668,7 @@ IStabilityPool
     function _requireUserHasTrove(address _depositor) internal view {
         require(
             troveManager.getTroveStatus(_depositor) ==
-            ITroveManager.Status.active,
+                ITroveManager.Status.active,
             "StabilityPool: caller must have an active trove to withdraw collateralGain to"
         );
     }
