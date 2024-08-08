@@ -552,4 +552,47 @@ describe("TroveManager in Normal Mode", () => {
       expect(tcrAfter).to.be.equal(tcrBefore)
     },
   )
+  it("liquidate(): Pool offsets increase the TCR", async () => {
+    // Approve up to $10k to be sent to the stability pool for Bob.
+    await contracts.musd
+      .connect(bob.wallet)
+      .approve(addresses.stabilityPool, to1e18(10000))
+
+    await contracts.stabilityPool.connect(bob.wallet).provideToSP(to1e18(10000))
+
+    // Open additional troves with low enough ICRs that they will default on a small price drop
+    await openTrove(contracts, {
+      musdAmount: "1800",
+      ICR: "120",
+      sender: carol.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "120",
+      sender: dennis.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "3000",
+      ICR: "120",
+      sender: eric.wallet,
+    })
+
+    // price drops reducing ICRs below MCR
+    const price = await contracts.priceFeed.fetchPrice()
+    await contracts.mockAggregator.setPrice((price * 80n) / 100n)
+
+    // Check TCR improves with each liquidation that is offset with Pool
+    const tcrBefore = await getTCR(contracts)
+    await contracts.troveManager.liquidate(carol.wallet.address)
+    const tcr2 = await getTCR(contracts)
+    expect(tcr2).to.be.greaterThan(tcrBefore)
+
+    await contracts.troveManager.liquidate(dennis.wallet.address)
+    const tcr3 = await getTCR(contracts)
+    expect(tcr3).to.be.greaterThan(tcr2)
+
+    await contracts.troveManager.liquidate(eric.wallet.address)
+    const tcr4 = await getTCR(contracts)
+    expect(tcr4).to.be.greaterThan(tcr3)
+  })
 })
