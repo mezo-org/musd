@@ -410,8 +410,6 @@ describe("TroveManager in Normal Mode", () => {
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
 
-    // TODO Original test had Alice provide some funds to the stability pool, unclear why
-
     // price drops reducing Alice's ICR below MCR
     await contracts.mockAggregator.setPrice(to1e18(1000))
 
