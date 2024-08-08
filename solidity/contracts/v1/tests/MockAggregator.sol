@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "../interfaces/ChainlinkAggregatorV3Interface.sol";
-import "../interfaces/IPriceFeed.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
