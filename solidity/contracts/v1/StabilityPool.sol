@@ -175,6 +175,7 @@ contract StabilityPool is
      */
     function withdrawFromSP(uint256 _amount) external override {
         if (_amount != 0) {
+            // slither-disable-next-line reentrancy-events
             _requireNoUnderCollateralizedTroves();
         }
         uint256 initialDeposit = deposits[msg.sender];
@@ -191,6 +192,7 @@ contract StabilityPool is
         );
         uint256 MUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
 
+        // slither-disable-next-line reentrancy-events
         _sendMUSDToDepositor(msg.sender, MUSDtoWithdraw);
 
         // Update deposit
@@ -406,6 +408,7 @@ contract StabilityPool is
             return;
         }
 
+        // slither-disable-next-line unchecked-transfer
         musd.transfer(_depositor, MUSDWithdrawal);
         _decreaseMUSD(MUSDWithdrawal);
     }
@@ -515,6 +518,7 @@ contract StabilityPool is
                 MUSDLossNumerator;
         }
 
+        // slither-disable-next-line divide-before-multiply
         collateralGainPerUnitStaked = collateralNumerator / _totalMUSDDeposits;
         lastCollateralError_Offset =
             collateralNumerator -
