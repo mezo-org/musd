@@ -79,6 +79,7 @@ export async function updateContractsSnapshot(
   state[pool].btc[checkPoint] = await ethers.provider.getBalance(
     addresses[pool],
   )
+  state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
 }
 
 export async function updatePendingSnapshot(
