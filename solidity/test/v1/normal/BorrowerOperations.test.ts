@@ -21,6 +21,7 @@ import {
   updateTroveSnapshot,
   updateRewardSnapshot,
   updatePendingSnapshot,
+  updateContractsSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
@@ -85,6 +86,14 @@ describe("BorrowerOperations in Normal Mode", () => {
     }
   }
 
+  async function setupCarolsTrove() {
+    await openTrove(contracts, {
+      musdAmount: "20,000",
+      ICR: "500",
+      sender: carol.wallet,
+    })
+  }
+
   async function setNewRate(rate: bigint) {
     if ("setBaseRate" in contracts.troveManager) {
       // Artificially make baseRate 5%
@@ -93,6 +102,18 @@ describe("BorrowerOperations in Normal Mode", () => {
     } else {
       assert.fail("TroveManagerTester not loaded")
     }
+  }
+
+  async function setupCarolsTroveAndAdjustRate() {
+    await openTrove(contracts, {
+      musdAmount: "20,000",
+      ICR: "500",
+      sender: carol.wallet,
+    })
+
+    // Artificially make baseRate 5%
+    const newRate = to1e18(5) / 100n
+    await setNewRate(newRate)
   }
 
   beforeEach(async () => {
@@ -126,6 +147,18 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(await contracts.borrowerOperations.name()).to.equal(
         "BorrowerOperations",
       )
+    })
+  })
+
+  describe("Helper functions", () => {
+    it("setNewRate(): Changes the base", async () => {
+      const baseRateBefore = await contracts.troveManager.baseRate()
+      const newRate = to1e18(5) / 100n
+      await setNewRate(newRate)
+      expect(await contracts.troveManager.baseRate()).to.be.greaterThan(
+        baseRateBefore,
+      )
+      expect(await contracts.troveManager.baseRate()).to.equal(newRate)
     })
   })
 
@@ -287,12 +320,8 @@ describe("BorrowerOperations in Normal Mode", () => {
         ]
 
         // system state change via Tester functionality
-        const baseRateBefore = await contracts.troveManager.baseRate()
         const newRate = to1e18(5) / 100n
         await setNewRate(newRate)
-        expect(await contracts.troveManager.baseRate()).to.be.greaterThan(
-          baseRateBefore,
-        )
 
         // data setup
         const transactions = [
@@ -545,7 +574,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: carol.wallet,
         })
 
-        // Get the expected debt based on the THUSD request (adding fee and liq. reserve on top)
+        // Get the expected debt based on the MUSD request (adding fee and liq. reserve on top)
         const expectedDebt =
           MIN_NET_DEBT +
           (await contracts.troveManager.getBorrowingFee(MIN_NET_DEBT)) +
@@ -1088,11 +1117,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("System State Changes", () => {
       it("withdrawColl(): updates the stake and updates the total stakes", async () => {
-        await openTrove(contracts, {
-          musdAmount: "5,000",
-          ICR: "200",
-          sender: carol.wallet,
-        })
+        await setupCarolsTrove()
         await updateTroveSnapshot(contracts, alice, "before")
         await updateTroveSnapshot(contracts, bob, "before")
         await updateTroveSnapshot(contracts, carol, "before")
@@ -1137,13 +1162,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Individual Troves", () => {
       it("withdrawColl(): leaves the Trove active when the user withdraws less than all the collateral", async () => {
-        await openTrove(contracts, {
-          musdAmount: "5,000",
-          ICR: "200",
-          sender: carol.wallet,
-        })
-
         const withdrawalAmount = 1n
+        await setupCarolsTrove()
+
         await contracts.borrowerOperations
           .connect(carol.wallet)
           .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet)
@@ -1157,13 +1178,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("withdrawColl(): reduces the Trove's collateral by the correct amount", async () => {
-        await openTrove(contracts, {
-          musdAmount: "5,000",
-          ICR: "200",
-          sender: carol.wallet,
-        })
-
         const withdrawalAmount = 1n
+        await setupCarolsTrove()
+
         await updateTroveSnapshot(contracts, carol, "before")
         await contracts.borrowerOperations
           .connect(carol.wallet)
@@ -1184,13 +1201,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Balance changes", () => {
       it("withdrawColl(): sends the correct amount of collateral to the user", async () => {
-        await openTrove(contracts, {
-          musdAmount: "5,000",
-          ICR: "1000",
-          sender: carol.wallet,
-        })
-
         const withdrawalAmount = to1e18("0.5")
+        await setupCarolsTrove()
 
         carol.btc.before = await ethers.provider.getBalance(carol.address)
         await contracts.borrowerOperations
@@ -1221,13 +1233,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("State change in other contracts", () => {
       it("withdrawColl(): reduces ActivePool collateral and raw collateral by correct amount", async () => {
-        await openTrove(contracts, {
-          musdAmount: "5,000",
-          ICR: "1000",
-          sender: carol.wallet,
-        })
-
         const withdrawalAmount = to1e18("0.5")
+        await setupCarolsTrove()
+
         const activePoolBalance =
           await contracts.activePool.getCollateralBalance()
         await contracts.borrowerOperations
@@ -1241,7 +1249,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("withdrawColl(): applies pending rewards and updates user's L_Collateral, L_THUSDDebt snapshots", async () => {
+      it("withdrawColl(): applies pending rewards and updates user's L_Collateral, L_MUSDDebt snapshots", async () => {
         await openTrove(contracts, {
           musdAmount: "50,000",
           ICR: "1000",
@@ -1325,6 +1333,431 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
         expect(dennis.rewardSnapshot.debt.after).to.equal(
           state.troveManager.liquidation.debt.before,
+        )
+      })
+    })
+  })
+
+  describe("withdrawMUSD", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("withdrawMUSD(): reverts if BorrowerOperations removed from mintlist", async () => {
+        await removeMintlist(contracts, deployer.wallet)
+        await expect(
+          contracts.borrowerOperations.withdrawMUSD(
+            to1e18(1),
+            1n,
+            alice.wallet,
+            alice.wallet,
+          ),
+        ).to.revertedWith("MUSD: Caller not allowed to mint")
+      })
+
+      it("withdrawMUSD(): reverts when withdrawal would leave trove with ICR < MCR", async () => {
+        await setupCarolsTrove() // add extra trove so we can drop Bob's c-ratio below the MCR without putting the system into recovery mode
+
+        // Price drops 50,000 --> 30,000
+        const price = to1e18("30,000")
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
+
+        expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
+          false,
+        )
+
+        const maxFeePercentage = to1e18(1)
+        const amount = 1n
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
+      it("withdrawMUSD(): reverts if max fee > 100%", async () => {
+        const maxFeePercentage = to1e18(1) + 1n
+        const amount = 1n
+        await expect(
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
+      })
+
+      it("withdrawMUSD(): reverts if max fee < 0.5% in Normal mode", async () => {
+        const maxFeePercentage = to1e18(0.005) - 1n
+        const amount = 1n
+        await expect(
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
+      })
+
+      it("withdrawMUSD(): reverts if fee exceeds max fee percentage", async () => {
+        const newRate = to1e18(5) / 100n
+        await setupCarolsTroveAndAdjustRate()
+
+        // Set max fee percentage to 4.999999999999999999
+        const maxFeePercentage = newRate - 1n
+        const amount = to1e18(1)
+        await expect(
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+        ).to.be.revertedWith("Fee exceeded provided maximum")
+      })
+
+      it("withdrawMUSD(): reverts when calling address does not have active trove", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet),
+        ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
+      })
+
+      it("withdrawMUSD(): reverts when requested withdrawal amount is zero MUSD", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = 0
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, alice.wallet, alice.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: Debt increase requires non-zero debtChange",
+        )
+      })
+
+      it("withdrawMUSD(): reverts when a withdrawal would cause the TCR of the system to fall below the CCR", async () => {
+        const price = await contracts.priceFeed.fetchPrice()
+        const tcr = await contracts.troveManager.getTCR(price)
+
+        expect(tcr).to.equal(to1e18(1.5))
+
+        // Bob attempts to withdraw 1 MUSD.
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, alice.wallet, alice.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {
+      it("withdrawMUSD(): decays a non-zero base rate", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        const newRate = to1e18(5) / 100n
+        await setupCarolsTroveAndAdjustRate()
+
+        await fastForwardTime(7200)
+        // first withdrawal
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+
+        const baseRate2 = await contracts.troveManager.baseRate()
+        expect(newRate).is.greaterThan(baseRate2)
+
+        await fastForwardTime(3600)
+        // second withdrawal
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+
+        const baseRate3 = await contracts.troveManager.baseRate()
+        expect(baseRate2).is.greaterThan(baseRate3)
+      })
+
+      it("withdrawMUSD(): doesn't change base rate if it is already zero", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await setupCarolsTrove()
+
+        // first withdrawal
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+
+        expect(await contracts.troveManager.baseRate()).is.equal(0n)
+
+        await fastForwardTime(3600)
+
+        // second withdrawal
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+
+        expect(await contracts.troveManager.baseRate()).is.equal(0n)
+      })
+
+      it("withdrawMUSD(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await setupCarolsTrove()
+
+        // Artificially make baseRate 5%
+        const newRate = to1e18(5) / 100n
+        await setNewRate(newRate)
+
+        const lastFeeOpTime1 =
+          await contracts.troveManager.lastFeeOperationTime()
+        await fastForwardTime(10)
+
+        // trigger a fee
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+
+        await expect(lastFeeOpTime1).to.equal(
+          await contracts.troveManager.lastFeeOperationTime(),
+        )
+        await fastForwardTime(60)
+
+        // trigger second fee
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+
+        expect(lastFeeOpTime1).to.be.lessThan(
+          await contracts.troveManager.lastFeeOperationTime(),
+        )
+      })
+
+      it("withdrawMUSD(): borrowing at zero base rate changes MUSD fees", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await setupCarolsTrove()
+
+        state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+        state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
+
+        expect(state.pcv.musd.after).is.greaterThan(state.pcv.musd.before)
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      // it("withdrawMUSD(): succeeds when fee is less than max fee percentage", async () => {})
+
+      it("withdrawMUSD(): increases the Trove's MUSD debt by the correct amount", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        const borrowingRate = await contracts.troveManager.getBorrowingRate()
+        await setupCarolsTrove()
+
+        await updateTroveSnapshot(contracts, carol, "before")
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        await updateTroveSnapshot(contracts, carol, "after")
+
+        expect(carol.trove.debt.after).to.equal(
+          carol.trove.debt.before +
+            (amount * (to1e18(1) + borrowingRate)) / to1e18(1),
+        )
+      })
+    })
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {
+      it("withdrawMUSD(): borrowing at zero base rate sends debt request to user", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await setupCarolsTrove()
+
+        // Check baseRate is zero
+        expect(await contracts.troveManager.baseRate()).to.equal(0)
+
+        await fastForwardTime(7200)
+
+        carol.musd.before = await contracts.musd.balanceOf(carol.wallet)
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        carol.musd.after = await contracts.musd.balanceOf(carol.wallet)
+
+        expect(carol.musd.after).to.equal(carol.musd.before + amount)
+      })
+
+      it("withdrawMUSD(): borrowing at non-zero base rate sends requested amount to the user", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await setupCarolsTroveAndAdjustRate()
+
+        carol.musd.before = await contracts.musd.balanceOf(carol.wallet)
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        carol.musd.after = await contracts.musd.balanceOf(carol.wallet)
+
+        expect(carol.musd.after).to.equal(carol.musd.before + amount)
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {
+      it("withdrawMUSD(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+
+        await openTrove(contracts, {
+          musdAmount: "20,000",
+          ICR: "500",
+          sender: carol.wallet,
+        })
+
+        const newRate = to1e18(5) / 100n
+        await setNewRate(newRate)
+
+        // 30 seconds
+        fastForwardTime(30)
+
+        // Borrower triggers a fee, before 60 minute decay interval has passed
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+
+        // 1 minute pass
+        fastForwardTime(60)
+
+        // Borrower triggers another fee
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+
+        // Check base rate has decreased even though Borrower tried to stop it decaying
+        expect(await contracts.troveManager.baseRate()).is.lessThan(newRate)
+      })
+
+      it("withdrawMUSD(): borrowing at non-zero base rate sends MUSD fee to PCV contract", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await setupCarolsTroveAndAdjustRate()
+
+        state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
+        expect(state.pcv.musd.after).to.greaterThan(state.pcv.musd.before)
+      })
+    })
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {
+      it("withdrawMUSD(): borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        const abi = [
+          // Add your contract ABI here
+          "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
+        ]
+        await setupCarolsTroveAndAdjustRate()
+
+        await updateTroveSnapshot(contracts, carol, "before")
+        const tx = await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+
+        const emittedFee = await getEventArgByName(
+          tx,
+          abi,
+          "MUSDBorrowingFeePaid",
+          1,
+        )
+        expect(emittedFee).to.greaterThan(0)
+
+        await updateTroveSnapshot(contracts, carol, "after")
+
+        expect(carol.trove.debt.after).to.equal(
+          carol.trove.debt.before + emittedFee + amount,
+        )
+      })
+
+      it("withdrawMUSD(): increases MUSD debt in ActivePool by correct amount", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+
+        await setupCarolsTrove()
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+
+        expect(state.activePool.debt.after).to.equal(
+          state.activePool.debt.before +
+            alice.trove.debt.after -
+            alice.trove.debt.before,
         )
       })
     })

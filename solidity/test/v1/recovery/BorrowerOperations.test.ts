@@ -517,4 +517,75 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
     context("State change in other contracts", () => {})
   })
+
+  describe("withdrawMUSD", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("withdrawMUSD(): reverts when system is in Recovery Mode", async () => {
+        const maxFeePercentage = to1e18(1)
+        const amount = 1n
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: Operation must leave trove with ICR >= CCR",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
+  })
 })
