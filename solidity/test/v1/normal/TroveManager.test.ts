@@ -8,6 +8,7 @@ import {
   ContractsState,
   fixture,
   getAddresses,
+  getEventArgByName,
   getTCR,
   openTrove,
   TestingAddresses,
@@ -594,5 +595,59 @@ describe("TroveManager in Normal Mode", () => {
     await contracts.troveManager.liquidate(eric.wallet.address)
     const tcr4 = await getTCR(contracts)
     expect(tcr4).to.be.greaterThan(tcr3)
+  })
+
+  it("liquidate(): a pure redistribution reduces the TCR only as a result of compensation", async () => {
+    await openTrove(contracts, {
+      musdAmount: "1800",
+      ICR: "120",
+      sender: carol.wallet,
+    })
+
+    // price drops reducing ICR below MCR
+    const price = await contracts.priceFeed.fetchPrice()
+    const newPrice = (price * 80n) / 100n
+    await contracts.mockAggregator.setPrice(newPrice)
+
+    const tcrBefore = await getTCR(contracts)
+    const entireSystemCollBefore =
+      await contracts.troveManager.getEntireSystemColl()
+    const entireSystemDebtBefore =
+      await contracts.troveManager.getEntireSystemDebt()
+
+    expect(
+      (entireSystemCollBefore * newPrice) / entireSystemDebtBefore,
+    ).to.be.equal(tcrBefore)
+
+    // Check TCR does not decrease with each liquidation
+    const abi = [
+      "event Liquidation(uint256 _liquidatedDebt, uint256 _liquidatedColl, uint256 _collGasCompensation, uint256 _MUSDGasCompensation)",
+    ]
+
+    const liquidationTx = await contracts.troveManager.liquidate(
+      carol.wallet.address,
+    )
+    const emittedGasCompensation = await getEventArgByName(
+      liquidationTx,
+      abi,
+      "Liquidation",
+      2,
+    )
+
+    const tcrAfter = await getTCR(contracts)
+
+    const remainingColl =
+      (entireSystemCollBefore - emittedGasCompensation) * newPrice
+
+    expect(remainingColl).to.be.equal(
+      (await contracts.troveManager.getEntireSystemColl()) * newPrice,
+    )
+
+    const remainingDebt = entireSystemDebtBefore
+    expect(remainingDebt).to.be.equal(
+      await contracts.troveManager.getEntireSystemDebt(),
+    )
+
+    expect(tcrAfter).to.be.equal(remainingColl / remainingDebt)
   })
 })
