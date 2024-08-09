@@ -8,12 +8,15 @@ import {
   ContractsState,
   fixture,
   getAddresses,
+  getEmittedLiquidationValues,
   getEventArgByName,
   getTCR,
   openTrove,
+  provideToSP,
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
+  updateStabilityPoolSnapshot,
   updateTroveSnapshot,
   User,
 } from "../../helpers"
@@ -620,24 +623,16 @@ describe("TroveManager in Normal Mode", () => {
     ).to.be.equal(tcrBefore)
 
     // Check TCR does not decrease with each liquidation
-    const abi = [
-      "event Liquidation(uint256 _liquidatedDebt, uint256 _liquidatedColl, uint256 _collGasCompensation, uint256 _MUSDGasCompensation)",
-    ]
-
     const liquidationTx = await contracts.troveManager.liquidate(
       carol.wallet.address,
     )
-    const emittedGasCompensation = await getEventArgByName(
-      liquidationTx,
-      abi,
-      "Liquidation",
-      2,
-    )
+    const { collGasCompensation } =
+      await getEmittedLiquidationValues(liquidationTx)
 
     const tcrAfter = await getTCR(contracts)
 
     const remainingColl =
-      (entireSystemCollBefore - emittedGasCompensation) * newPrice
+      (entireSystemCollBefore - collGasCompensation) * newPrice
 
     expect(remainingColl).to.be.equal(
       (await contracts.troveManager.getEntireSystemColl()) * newPrice,
@@ -649,5 +644,80 @@ describe("TroveManager in Normal Mode", () => {
     )
 
     expect(tcrAfter).to.be.equal(remainingColl / remainingDebt)
+  })
+
+  it("liquidate(): does not affect the SP deposit or collateral gain when called on an SP depositor's address that has no trove", async () => {
+    const spDeposit = to1e18(10000)
+
+    // Bob sends tokens to Dennis, who has no trove
+    await contracts.musd.connect(bob.wallet).approve(dennis.wallet, spDeposit)
+    const allowance = await contracts.musd.allowance(
+      bob.wallet.address,
+      dennis.wallet.address,
+    )
+    expect(allowance).to.be.equal(spDeposit)
+    await contracts.musd
+      .connect(bob.wallet)
+      .transfer(dennis.wallet, spDeposit, { from: bob.wallet })
+
+    // Dennis provides MUSD to SP
+    await contracts.musd
+      .connect(dennis.wallet)
+      .approve(addresses.stabilityPool, spDeposit)
+
+    await contracts.stabilityPool.connect(dennis.wallet).provideToSP(spDeposit)
+
+    // Alice gets liquidated
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated collateral
+    await updateStabilityPoolSnapshot(contracts, dennis, "before")
+
+    // Attempt to liquidate Dennis
+    await expect(
+      contracts.troveManager.liquidate(dennis.wallet.address),
+    ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
+
+    // Check Dennis' SP deposit does not change after liquidation attempt
+    await updateStabilityPoolSnapshot(contracts, dennis, "after")
+    expect(dennis.stabilityPool.deposit.after).to.be.equal(
+      dennis.stabilityPool.deposit.before,
+    )
+    expect(dennis.stabilityPool.collateralGain.after).to.be.equal(
+      dennis.stabilityPool.collateralGain.before,
+    )
+  })
+
+  it("liquidate(): does not liquidate a SP depositor's trove with ICR > 110%, and does not affect their SP deposit or collateral gain", async () => {
+    const spDeposit = to1e18(10000)
+    await provideToSP(contracts, addresses, bob.wallet, spDeposit)
+
+    // liquidate Alice
+    await contracts.mockAggregator.setPrice(to1e18(10000))
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // check Bob's ICR > MCR
+    expect(
+      await contracts.troveManager.getCurrentICR(bob.address, to1e18(10000)),
+    ).to.be.greaterThan(await contracts.troveManager.MCR())
+
+    // check Bob's SP deposit and collateral gain before liquidation
+    await updateStabilityPoolSnapshot(contracts, bob, "before")
+
+    // Attempt to liquidate Bob
+    await expect(
+      contracts.troveManager.liquidate(bob.wallet.address),
+    ).to.be.revertedWith("TroveManager: nothing to liquidate")
+
+    // Check that Bob's SP deposit and collateral gain have not changed
+    await updateStabilityPoolSnapshot(contracts, bob, "after")
+
+    expect(bob.stabilityPool.deposit.after).to.be.equal(
+      bob.stabilityPool.deposit.before,
+    )
+    expect(bob.stabilityPool.collateralGain.after).to.be.equal(
+      bob.stabilityPool.collateralGain.before,
+    )
   })
 })

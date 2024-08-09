@@ -228,6 +228,49 @@ export async function getEventArgByName(
   )
 }
 
+export async function getEmittedLiquidationValues(
+  liquidationTx: ContractTransactionResponse,
+) {
+  const abi = [
+    "event Liquidation(uint256 _liquidatedDebt, uint256 _liquidatedColl, uint256 _collGasCompensation, uint256 _MUSDGasCompensation)",
+  ]
+
+  const liquidatedDebt = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    0,
+  )
+
+  const liquidatedColl = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    1,
+  )
+
+  const collGasCompensation = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    2,
+  )
+
+  const MUSDGasCompensation = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    3,
+  )
+
+  return {
+    liquidatedDebt,
+    liquidatedColl,
+    collGasCompensation,
+    MUSDGasCompensation,
+  }
+}
+
 export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   const params = inputs
 
@@ -360,4 +403,14 @@ export async function createLiquidationEvent(
 export function applyLiquidationFee(collateralAmount: bigint) {
   const liquidationFee = to1e18(99.5) / 100n // 0.5% liquidation fee
   return (collateralAmount * liquidationFee) / to1e18(1)
+}
+
+export async function provideToSP(
+  contracts: Contracts,
+  addresses: TestingAddresses,
+  user: HardhatEthersSigner,
+  amount: bigint,
+) {
+  await contracts.musd.connect(user).approve(addresses.stabilityPool, amount)
+  await contracts.stabilityPool.connect(user).provideToSP(amount)
 }
