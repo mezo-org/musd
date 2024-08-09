@@ -233,8 +233,15 @@ async function initializeUserObject(
 
 export async function fixture(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
-  const [aliceWallet, bobWallet, carolWallet, dennisWallet, ericWallet] =
-    await helpers.signers.getUnnamedSigners()
+  const [
+    aliceWallet,
+    bobWallet,
+    carolWallet,
+    dennisWallet,
+    ericWallet,
+    frankWallet,
+    whaleWallet,
+  ] = await helpers.signers.getUnnamedSigners()
   const contracts = await deployment(["MUSD", "PriceFeed", "TroveManager"])
 
   const users: Users = {
@@ -243,6 +250,8 @@ export async function fixture(): Promise<TestSetup> {
     carol: await initializeUserObject(carolWallet),
     dennis: await initializeUserObject(dennisWallet),
     eric: await initializeUserObject(ericWallet),
+    frank: await initializeUserObject(frankWallet),
+    whale: await initializeUserObject(whaleWallet),
     deployer: await initializeUserObject(deployer),
   }
 
@@ -278,6 +287,8 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     carol: users.carol.wallet.address,
     dennis: users.dennis.wallet.address,
     eric: users.eric.wallet.address,
+    frank: users.frank.wallet.address,
+    whale: users.whale.wallet.address,
     deployer: users.deployer.wallet.address,
   }
 

@@ -36,6 +36,8 @@ export interface TestingAddresses {
   carol: string
   dennis: string
   eric: string
+  frank: string
+  whale: string
   deployer: string
 }
 
@@ -202,6 +204,8 @@ export interface Users {
   carol: User
   dennis: User
   eric: User
+  frank: User
+  whale: User
   deployer: User
 }
 
