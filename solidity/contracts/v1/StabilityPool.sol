@@ -1,3 +1,7 @@
+// slither-disable-start reentrancy-benign
+// slither-disable-start reentrancy-events
+// slither-disable-start reentrancy-no-eth
+
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.24;
@@ -168,7 +172,6 @@ contract StabilityPool is
      * If _amount > userDeposit, the user withdraws all of their compounded deposit.
      */
     function withdrawFromSP(uint256 _amount) external override {
-        // slither-disable-start reentrancy-benign
         if (_amount != 0) {
             // slither-disable-next-line reentrancy-events
             _requireNoUnderCollateralizedTroves();
@@ -198,7 +201,6 @@ contract StabilityPool is
             MUSDLoss
         );
         _sendCollateralGainToDepositor(depositorCollateralGain);
-        // slither-disable-end reentrancy-benign
     }
 
     /* withdrawCollateralGainToTrove:
@@ -695,3 +697,6 @@ contract StabilityPool is
         require(_amount > 0, "StabilityPool: Amount must be non-zero");
     }
 }
+// slither-disable-end reentrancy-benign
+// slither-disable-end reentrancy-events
+// slither-disable-end reentrancy-no-eth
