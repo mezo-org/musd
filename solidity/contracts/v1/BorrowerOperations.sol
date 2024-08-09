@@ -276,7 +276,18 @@ contract BorrowerOperations is
         uint256 _amount,
         address _upperHint,
         address _lowerHint
-    ) external override {}
+    ) external override {
+        _adjustTrove(
+            msg.sender,
+            0,
+            _amount,
+            false,
+            0,
+            _upperHint,
+            _lowerHint,
+            0
+        );
+    }
 
     function closeTrove() external override {
         ITroveManager troveManagerCached = troveManager;

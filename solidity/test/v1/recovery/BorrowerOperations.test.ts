@@ -588,4 +588,86 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
     context("State change in other contracts", () => {})
   })
+
+  describe("repayMUSD", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("repayTHUSD(): can repay debt in Recovery Mode", async () => {
+        const amount = to1e18("1,000")
+        await updateTroveSnapshot(contracts, bob, "before")
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .repayMUSD(amount, bob.wallet, bob.wallet)
+        await updateTroveSnapshot(contracts, bob, "after")
+
+        expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
+      })
+
+      it("repayTHUSD(): no mintlist, can repay debt in Recovery Mode", async () => {
+        await removeMintlist(contracts, deployer.wallet)
+
+        const amount = to1e18("1,000")
+        await updateTroveSnapshot(contracts, bob, "before")
+        await contracts.borrowerOperations
+          .connect(bob.wallet)
+          .repayMUSD(amount, bob.wallet, bob.wallet)
+        await updateTroveSnapshot(contracts, bob, "after")
+
+        expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
+      })
+    })
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
+  })
 })
