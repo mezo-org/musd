@@ -15,6 +15,7 @@ import "../token/IMUSD.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";
+import "../debugging/console.sol";
 
 contract StabilityPool is
     LiquityBase,

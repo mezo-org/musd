@@ -414,3 +414,20 @@ export async function provideToSP(
   await contracts.musd.connect(user).approve(addresses.stabilityPool, amount)
   await contracts.stabilityPool.connect(user).provideToSP(amount)
 }
+
+export async function dropPriceAndLiquidate(contracts: Contracts, user: User) {
+  const currentPrice = await contracts.priceFeed.fetchPrice()
+  const icr = await contracts.troveManager.getCurrentICR(
+    user.wallet,
+    currentPrice,
+  )
+
+  // Set target ICR to just slightly less than MCR
+  const targetICR = (await contracts.troveManager.MCR()) - 1n
+
+  const newPrice = (targetICR * currentPrice) / icr
+  await contracts.mockAggregator.setPrice(newPrice)
+  const liquidationTx = await contracts.troveManager.liquidate(user.address)
+
+  return { newPrice, liquidationTx }
+}
