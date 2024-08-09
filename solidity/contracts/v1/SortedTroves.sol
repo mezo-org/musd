@@ -105,32 +105,90 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         _remove(_id);
     }
 
+    /*
+     * @dev Re-insert the node at a new position, based on its new NICR
+     * @param _id Node's id
+     * @param _newNICR Node's new NICR
+     * @param _prevId Id of previous node for the new insert position
+     * @param _nextId Id of next node for the new insert position
+     */
     function reInsert(
         address _id,
-        uint256 _newICR,
+        uint256 _newNICR,
         address _prevId,
         address _nextId
-    ) external override {}
+    ) external override {
+        ITroveManager troveManagerCached = troveManager;
 
+        _requireCallerIsBOorTroveM(troveManagerCached);
+        // List must contain the node
+        require(contains(_id), "SortedTroves: List does not contain the id");
+        // NICR must be non-zero
+        require(_newNICR > 0, "SortedTroves: NICR must be positive");
+
+        // Remove node from the list
+        _remove(_id);
+
+        _insert(troveManagerCached, _id, _newNICR, _prevId, _nextId);
+    }
+
+    /*
+     * @dev Returns the current size of the list
+     */
     function getSize() external view override returns (uint256) {
         return data.size;
     }
 
-    function getMaxSize() external view override returns (uint256) {}
+    /*
+     * @dev Returns the maximum size of the list
+     */
+    function getMaxSize() external view override returns (uint256) {
+        return data.maxSize;
+    }
 
-    function getFirst() external view override returns (address) {}
+    /*
+     * @dev Returns the first node in the list (node with the largest NICR)
+     */
+    function getFirst() external view override returns (address) {
+        return data.head;
+    }
 
-    function getLast() external view override returns (address) {}
+    /*
+     * @dev Returns the last node in the list (node with the smallest NICR)
+     */
+    function getLast() external view override returns (address) {
+        return data.tail;
+    }
 
-    function getNext(address _id) external view override returns (address) {}
+    /*
+     * @dev Returns the next node (with a smaller NICR) in the list for a given node
+     * @param _id Node's id
+     */
+    function getNext(address _id) external view override returns (address) {
+        return data.nodes[_id].nextId;
+    }
 
-    function getPrev(address _id) external view override returns (address) {}
+    /*
+     * @dev Returns the previous node (with a larger NICR) in the list for a given node
+     * @param _id Node's id
+     */
+    function getPrev(address _id) external view override returns (address) {
+        return data.nodes[_id].prevId;
+    }
 
+    /*
+     * @dev Find the insert position for a new node with the given NICR
+     * @param _NICR Node's NICR
+     * @param _prevId Id of previous node for the insert position
+     * @param _nextId Id of next node for the insert position
+     */
     function findInsertPosition(
-        uint256 _ICR,
+        uint256 _NICR,
         address _prevId,
         address _nextId
-    ) external view override returns (address, address) {}
+    ) external view override returns (address, address) {
+        return _findInsertPosition(troveManager, _NICR, _prevId, _nextId);
+    }
 
     /*
      * @dev Check if a pair of nodes is a valid insertion point for a new node with the given NICR
