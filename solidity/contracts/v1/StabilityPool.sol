@@ -1,3 +1,7 @@
+// slither-disable-start reentrancy-benign
+// slither-disable-start reentrancy-events
+// slither-disable-start reentrancy-no-eth
+
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.24;
@@ -70,9 +74,17 @@ contract StabilityPool is
      */
     mapping(uint128 => mapping(uint128 => uint)) public epochToScaleToSum;
 
+    // Error trackers for the error correction in the offset calculation
+    uint256 public lastCollateralError_Offset;
+    uint256 public lastMUSDLossError_Offset;
+
     // --- Functions --
 
     constructor() Ownable(msg.sender) {}
+
+    receive() external payable {
+        _updateCollateral();
+    }
 
     // --- External ---
 
@@ -159,7 +171,37 @@ contract StabilityPool is
      *
      * If _amount > userDeposit, the user withdraws all of their compounded deposit.
      */
-    function withdrawFromSP(uint256 _amount) external override {}
+    function withdrawFromSP(uint256 _amount) external override {
+        if (_amount != 0) {
+            // slither-disable-next-line reentrancy-events
+            _requireNoUnderCollateralizedTroves();
+        }
+        uint256 initialDeposit = deposits[msg.sender];
+        _requireUserHasDeposit(initialDeposit);
+
+        uint256 depositorCollateralGain = getDepositorCollateralGain(
+            msg.sender
+        );
+        uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
+        uint256 MUSDtoWithdraw = LiquityMath._min(
+            _amount,
+            compoundedMUSDDeposit
+        );
+        uint256 MUSDLoss = initialDeposit - compoundedMUSDDeposit;
+
+        uint256 newDeposit = compoundedMUSDDeposit - MUSDtoWithdraw;
+        _updateDepositAndSnapshots(msg.sender, newDeposit);
+        emit UserDepositChanged(msg.sender, newDeposit);
+
+        // slither-disable-next-line reentrancy-events
+        _sendMUSDToDepositor(msg.sender, MUSDtoWithdraw);
+        emit CollateralGainWithdrawn(
+            msg.sender,
+            depositorCollateralGain,
+            MUSDLoss
+        );
+        _sendCollateralGainToDepositor(depositorCollateralGain);
+    }
 
     /* withdrawCollateralGainToTrove:
      * - Transfers the depositor's entire collateral gain from the Stability Pool to the caller's trove
@@ -168,7 +210,48 @@ contract StabilityPool is
     function withdrawCollateralGainToTrove(
         address _upperHint,
         address _lowerHint
-    ) external override {}
+    ) external override {
+        uint256 initialDeposit = deposits[msg.sender];
+        _requireUserHasDeposit(initialDeposit);
+        _requireUserHasTrove(msg.sender);
+        _requireUserHasCollateralGain(msg.sender);
+
+        uint256 depositorCollateralGain = getDepositorCollateralGain(
+            msg.sender
+        );
+
+        uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
+        uint256 MUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+
+        _updateDepositAndSnapshots(msg.sender, compoundedMUSDDeposit);
+
+        /* Emit events before transferring collateral gain to Trove.
+              This lets the event log make more sense (i.e. so it appears that first the collateral gain is withdrawn
+             and then it is deposited into the Trove, not the other way around). */
+        emit CollateralGainWithdrawn(
+            msg.sender,
+            depositorCollateralGain,
+            MUSDLoss
+        );
+        emit UserDepositChanged(msg.sender, compoundedMUSDDeposit);
+
+        collateral -= depositorCollateralGain;
+        emit StabilityPoolCollateralBalanceUpdated(collateral);
+        emit CollateralSent(msg.sender, depositorCollateralGain);
+
+        if (collateralAddress == address(0)) {
+            borrowerOperations.moveCollateralGainToTrove{
+                value: depositorCollateralGain
+            }(msg.sender, 0, _upperHint, _lowerHint);
+        } else {
+            borrowerOperations.moveCollateralGainToTrove{value: 0}(
+                msg.sender,
+                depositorCollateralGain,
+                _upperHint,
+                _lowerHint
+            );
+        }
+    }
 
     /*
      * Cancels out the specified debt against the MUSD contained in the Stability Pool (as far as possible)
@@ -178,21 +261,41 @@ contract StabilityPool is
     function offset(
         uint256 _debtToOffset,
         uint256 _collToAdd
-    ) external override {}
+    ) external override {
+        _requireCallerIsTroveManager();
+        uint256 totalMUSD = totalMUSDDeposits; // cached to save an SLOAD
+        if (totalMUSD == 0 || _debtToOffset == 0) {
+            return;
+        }
+
+        (
+            uint256 collateralGainPerUnitStaked,
+            uint256 MUSDLossPerUnitStaked
+        ) = _computeRewardsPerUnitStaked(_collToAdd, _debtToOffset, totalMUSD);
+
+        _updateRewardSumAndProduct(
+            collateralGainPerUnitStaked,
+            MUSDLossPerUnitStaked
+        ); // updates S and P
+
+        _moveOffsetCollAndDebt(_collToAdd, _debtToOffset);
+    }
 
     // When ERC20 token collateral is received this function needs to be called
-    function updateCollateralBalance(uint256 _amount) external override {}
+    function updateCollateralBalance(uint256 _amount) external override {
+        _requireCallerIsActivePool();
+        collateral += _amount;
+        emit StabilityPoolCollateralBalanceUpdated(collateral);
+    }
 
     // --- Getters for public variables. Required by IPool interface ---
 
-    function getCollateralBalance() external view override returns (uint) {}
+    function getCollateralBalance() external view override returns (uint) {
+        return collateral;
+    }
 
     function getTotalMUSDDeposits() external view override returns (uint) {
         return totalMUSDDeposits;
-    }
-
-    function _requireNonZeroAmount(uint256 _amount) internal pure {
-        require(_amount > 0, "StabilityPool: Amount must be non-zero");
     }
 
     // -- Public ---
@@ -245,50 +348,23 @@ contract StabilityPool is
 
     // -- Internal ---
 
-    // Used to calculcate compounded deposits.
-    function _getCompoundedStakeFromSnapshots(
-        uint256 initialStake,
-        Snapshots memory snapshots
-    ) internal view returns (uint) {
-        uint256 snapshot_P = snapshots.P;
-        uint128 scaleSnapshot = snapshots.scale;
-        uint128 epochSnapshot = snapshots.epoch;
+    function _updateCollateral() internal {
+        _requireCallerIsActivePool();
+        collateral += msg.value;
+        emit StabilityPoolCollateralBalanceUpdated(collateral);
+    }
 
-        // If stake was made before a pool-emptying event, then it has been fully cancelled with debt -- so, return 0
-        if (epochSnapshot < currentEpoch) {
-            return 0;
+    function _sendMUSDToDepositor(
+        address _depositor,
+        uint256 MUSDWithdrawal
+    ) internal {
+        if (MUSDWithdrawal == 0) {
+            return;
         }
 
-        uint256 compoundedStake;
-        uint128 scaleDiff = currentScale - scaleSnapshot;
-
-        /* Compute the compounded stake. If a scale change in P was made during the stake's lifetime,
-         * account for it. If more than one scale change was made, then the stake has decreased by a factor of
-         * at least 1e-9 -- so return 0.
-         */
-        if (scaleDiff == 0) {
-            compoundedStake = (initialStake * P) / snapshot_P;
-        } else if (scaleDiff == 1) {
-            compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;
-        } else {
-            // if scaleDiff >= 2
-            compoundedStake = 0;
-        }
-
-        /*
-         * If compounded deposit is less than a billionth of the initial deposit, return 0.
-         *
-         * NOTE: originally, this line was in place to stop rounding errors making the deposit
-         * too large. However, the error corrections should ensure the error in P "favors the Pool",
-         * i.e. any given compounded deposit should be slightly less than its theoretical value.
-         *
-         * Thus it's unclear whether this line is still really needed.
-         */
-        if (compoundedStake < initialStake / 1e9) {
-            return 0;
-        }
-
-        return compoundedStake;
+        _decreaseMUSD(MUSDWithdrawal);
+        bool transferSuccess = musd.transfer(_depositor, MUSDWithdrawal);
+        require(transferSuccess, "MUSD transfer failed");
     }
 
     // Transfer the MUSD tokens from the user to the Stability Pool's address,
@@ -349,6 +425,86 @@ contract StabilityPool is
         emit CollateralSent(msg.sender, _amount);
 
         sendCollateral(IERC20(collateralAddress), msg.sender, _amount);
+    }
+
+    function _computeRewardsPerUnitStaked(
+        uint256 _collToAdd,
+        uint256 _debtToOffset,
+        uint256 _totalMUSDDeposits
+    )
+        internal
+        returns (
+            uint256 collateralGainPerUnitStaked,
+            uint256 MUSDLossPerUnitStaked
+        )
+    {
+        /*
+         * Compute the MUSD and collateral rewards. Uses a "feedback" error correction, to keep
+         * the cumulative error in the P and S state variables low:
+         *
+         * 1) Form numerators which compensate for the floor division errors that occurred the last time this
+         * function was called.
+         * 2) Calculate "per-unit-staked" ratios.
+         * 3) Multiply each ratio back by its denominator, to reveal the current floor division error.
+         * 4) Store these errors for use in the next correction when this function is called.
+         * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
+         */
+        uint256 collateralNumerator = _collToAdd *
+            DECIMAL_PRECISION +
+            lastCollateralError_Offset;
+
+        assert(_debtToOffset <= _totalMUSDDeposits);
+        if (_debtToOffset == _totalMUSDDeposits) {
+            MUSDLossPerUnitStaked = DECIMAL_PRECISION; // When the Pool depletes to 0, so does each deposit
+            lastMUSDLossError_Offset = 0;
+        } else {
+            uint256 MUSDLossNumerator = _debtToOffset *
+                DECIMAL_PRECISION -
+                lastMUSDLossError_Offset;
+            /*
+             * Add 1 to make error in quotient positive. We want "slightly too much" MUSD loss,
+             * which ensures the error in any given compoundedMUSDDeposit favors the Stability Pool.
+             */
+            MUSDLossPerUnitStaked = MUSDLossNumerator / _totalMUSDDeposits + 1;
+            lastMUSDLossError_Offset =
+                MUSDLossPerUnitStaked *
+                _totalMUSDDeposits -
+                MUSDLossNumerator;
+        }
+
+        // slither-disable-start divide-before-multiply
+        collateralGainPerUnitStaked =
+            (collateralNumerator * DECIMAL_PRECISION) /
+            _totalMUSDDeposits;
+        lastCollateralError_Offset =
+            collateralNumerator -
+            ((collateralGainPerUnitStaked * _totalMUSDDeposits) /
+                DECIMAL_PRECISION);
+        // slither-disable-end divide-before-multiply
+
+        return (collateralGainPerUnitStaked, MUSDLossPerUnitStaked);
+    }
+
+    function _moveOffsetCollAndDebt(
+        uint256 _collToAdd,
+        uint256 _debtToOffset
+    ) internal {
+        IActivePool activePoolCached = activePool;
+
+        // Cancel the liquidated MUSD debt with the MUSD in the stability pool
+        _decreaseMUSD(_debtToOffset);
+        activePoolCached.decreaseMUSDDebt(_debtToOffset);
+
+        // Burn the debt that was successfully offset
+        musd.burn(address(this), _debtToOffset);
+
+        activePoolCached.sendCollateral(address(this), _collToAdd);
+    }
+
+    function _decreaseMUSD(uint256 _amount) internal {
+        uint256 newTotalMUSDDeposits = totalMUSDDeposits - _amount;
+        totalMUSDDeposits = newTotalMUSDDeposits;
+        emit StabilityPoolMUSDBalanceUpdated(newTotalMUSDDeposits);
     }
 
     // Update the Stability Pool reward sum S and product P
@@ -416,6 +572,16 @@ contract StabilityPool is
 
     // slither-disable-end dead-code
 
+    function _requireNoUnderCollateralizedTroves() internal {
+        uint256 price = priceFeed.fetchPrice();
+        address lowestTrove = sortedTroves.getLast();
+        uint256 ICR = troveManager.getCurrentICR(lowestTrove, price);
+        require(
+            ICR >= MCR,
+            "StabilityPool: Cannot withdraw while there are troves with ICR < MCR"
+        );
+    }
+
     function _getCollateralGainFromSnapshots(
         uint256 initialDeposit,
         Snapshots memory snapshots
@@ -443,4 +609,94 @@ contract StabilityPool is
 
         return collateralGain;
     }
+
+    // Used to calculcate compounded deposits.
+    function _getCompoundedStakeFromSnapshots(
+        uint256 initialStake,
+        Snapshots memory snapshots
+    ) internal view returns (uint) {
+        uint256 snapshot_P = snapshots.P;
+        uint128 scaleSnapshot = snapshots.scale;
+        uint128 epochSnapshot = snapshots.epoch;
+
+        // If stake was made before a pool-emptying event, then it has been fully cancelled with debt -- so, return 0
+        if (epochSnapshot < currentEpoch) {
+            return 0;
+        }
+
+        uint256 compoundedStake;
+        uint128 scaleDiff = currentScale - scaleSnapshot;
+
+        /* Compute the compounded stake. If a scale change in P was made during the stake's lifetime,
+         * account for it. If more than one scale change was made, then the stake has decreased by a factor of
+         * at least 1e-9 -- so return 0.
+         */
+        if (scaleDiff == 0) {
+            compoundedStake = (initialStake * P) / snapshot_P;
+        } else if (scaleDiff == 1) {
+            compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;
+        } else {
+            // if scaleDiff >= 2
+            compoundedStake = 0;
+        }
+
+        /*
+         * If compounded deposit is less than a billionth of the initial deposit, return 0.
+         *
+         * NOTE: originally, this line was in place to stop rounding errors making the deposit
+         * too large. However, the error corrections should ensure the error in P "favors the Pool",
+         * i.e. any given compounded deposit should be slightly less than its theoretical value.
+         *
+         * Thus it's unclear whether this line is still really needed.
+         */
+        if (compoundedStake < initialStake / 1e9) {
+            return 0;
+        }
+
+        return compoundedStake;
+    }
+
+    function _requireCallerIsActivePool() internal view {
+        require(
+            msg.sender == address(activePool),
+            "StabilityPool: Caller is not ActivePool"
+        );
+    }
+
+    function _requireCallerIsTroveManager() internal view {
+        require(
+            msg.sender == address(troveManager),
+            "StabilityPool: Caller is not TroveManager"
+        );
+    }
+
+    function _requireUserHasTrove(address _depositor) internal view {
+        require(
+            troveManager.getTroveStatus(_depositor) ==
+                ITroveManager.Status.active,
+            "StabilityPool: caller must have an active trove to withdraw collateralGain to"
+        );
+    }
+
+    function _requireUserHasCollateralGain(address _depositor) internal view {
+        uint256 collateralGain = getDepositorCollateralGain(_depositor);
+        require(
+            collateralGain > 0,
+            "StabilityPool: caller must have non-zero collateral Gain"
+        );
+    }
+
+    function _requireUserHasDeposit(uint256 _initialDeposit) internal pure {
+        require(
+            _initialDeposit > 0,
+            "StabilityPool: User must have a non-zero deposit"
+        );
+    }
+
+    function _requireNonZeroAmount(uint256 _amount) internal pure {
+        require(_amount > 0, "StabilityPool: Amount must be non-zero");
+    }
 }
+// slither-disable-end reentrancy-benign
+// slither-disable-end reentrancy-events
+// slither-disable-end reentrancy-no-eth

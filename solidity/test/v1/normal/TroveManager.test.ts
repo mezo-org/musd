@@ -8,6 +8,7 @@ import {
   ContractsState,
   fixture,
   getAddresses,
+  getTCR,
   openTrove,
   TestingAddresses,
   TestSetup,
@@ -284,5 +285,314 @@ describe("TroveManager in Normal Mode", () => {
     expect(troveStructs[1][4]).to.be.equal(1)
     expect(troveStructs[2][4]).to.be.equal(2)
     expect(troveStructs[3][4]).to.be.equal(3)
+  })
+
+  it("liquidate(): updates the snapshots of total stakes and total collateral", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before") // not strictly necessary but for completeness
+
+    expect(await contracts.troveManager.totalStakesSnapshot()).to.be.equal(0n)
+    expect(await contracts.troveManager.totalCollateralSnapshot()).to.be.equal(
+      0n,
+    )
+
+    // Drop the price to lower ICRs below MCR and close Alice's trove
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Total stakes should be equal to Bob's stake
+    await updateTroveSnapshot(contracts, bob, "after")
+    expect(await contracts.troveManager.totalStakesSnapshot()).to.be.equal(
+      bob.trove.stake.after,
+    )
+
+    /*
+     Total collateral should be equal to Bob's collateral plus his pending collateral reward (Alice's collateral less liquidation fee)
+     earned from the liquidation of Alice's trove
+    */
+    const expectedCollateral =
+      bob.trove.collateral.after +
+      applyLiquidationFee(alice.trove.collateral.before)
+    expect(await contracts.troveManager.totalCollateralSnapshot()).to.be.equal(
+      expectedCollateral,
+    )
+  })
+
+  it("liquidate(): updates the L_Collateral and L_MUSDDebt reward-per-unit-staked totals", async () => {
+    await openTrove(contracts, {
+      musdAmount: "5000",
+      ICR: "111",
+      sender: carol.wallet,
+    })
+
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+    await updateTroveSnapshot(contracts, carol, "before")
+
+    // Drop the price to lower Carol's ICR below MCR and close Carol's trove
+    await contracts.mockAggregator.setPrice(to1e18(49000))
+    await contracts.troveManager.liquidate(carol.wallet.address)
+    expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(false)
+
+    // Carol's collateral less the liquidation fee and MUSD should be added to the default pool
+    const liquidatedColl = to1e18(
+      applyLiquidationFee(carol.trove.collateral.before),
+    )
+    const remainingColl =
+      bob.trove.collateral.before + alice.trove.collateral.before
+    const expectedLCollateralAfterCarolLiquidated =
+      liquidatedColl / remainingColl
+    expect(await contracts.troveManager.L_Collateral()).to.be.equal(
+      expectedLCollateralAfterCarolLiquidated,
+    )
+
+    const expectedLMUSDDebtAfterCarolLiquidated =
+      to1e18(carol.trove.debt.before) / remainingColl
+    expect(await contracts.troveManager.L_MUSDDebt()).to.be.equal(
+      expectedLMUSDDebtAfterCarolLiquidated,
+    )
+
+    // Alice now withdraws MUSD, bring her ICR to 1.11
+    const { increasedTotalDebt } = await adjustTroveToICR(
+      contracts,
+      alice.wallet,
+      1111111111111111111n,
+    )
+
+    // price drops again, reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(40000))
+
+    // Close Alice's Trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+    expect(await contracts.sortedTroves.contains(alice.wallet)).to.equal(false)
+
+    /*
+     * Alice's pending reward was applied to her trove before liquidation.  We account for that here using the previous
+     * L_Collateral value computed after Carol's liquidation.
+     */
+    const aliceCollWithReward = to1e18(
+      applyLiquidationFee(
+        alice.trove.collateral.before +
+          (alice.trove.collateral.before *
+            expectedLCollateralAfterCarolLiquidated) /
+            to1e18(1),
+      ),
+    )
+
+    // Bob now has all the active stake.  We now add the reward-per-unit-staked from Alice's liquidation to the L_Collateral.
+    const expectedLCollateralAfterAliceLiquidated =
+      expectedLCollateralAfterCarolLiquidated +
+      aliceCollWithReward / bob.trove.collateral.before
+
+    expect(await contracts.troveManager.L_Collateral()).to.be.equal(
+      expectedLCollateralAfterAliceLiquidated,
+    )
+
+    // Apply Alice's pending debt rewards and calculate the new LMUSDDebt
+    const expectedLMUSDDebtAfterAliceLiquidated =
+      expectedLMUSDDebtAfterCarolLiquidated +
+      ((alice.trove.debt.before +
+        increasedTotalDebt +
+        (alice.trove.collateral.before *
+          expectedLMUSDDebtAfterCarolLiquidated) /
+          to1e18(1)) *
+        to1e18(1)) /
+        bob.trove.collateral.before
+
+    const tolerance = 100n
+    expect(await contracts.troveManager.L_MUSDDebt()).to.be.closeTo(
+      expectedLMUSDDebtAfterAliceLiquidated,
+      tolerance,
+    )
+  })
+
+  it("liquidate(): Liquidates undercollateralized trove if there are two troves in the system", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+
+    // price drops reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    await updateTroveSnapshot(contracts, alice, "after")
+    await updateTroveSnapshot(contracts, bob, "after")
+    expect(alice.trove.icr.after).to.be.lt(to1e18(1.1))
+
+    expect(await contracts.troveManager.getTroveOwnersCount()).to.be.equal(2)
+
+    // Close trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Check Alice's trove is removed, and bob remains
+    expect(await contracts.troveManager.getTroveOwnersCount()).to.be.equal(1)
+    expect(
+      await contracts.sortedTroves.contains(alice.wallet.address),
+    ).to.be.equal(false)
+    expect(
+      await contracts.sortedTroves.contains(bob.wallet.address),
+    ).to.be.equal(true)
+  })
+
+  it("liquidate(): reverts if trove has been closed", async () => {
+    await updateTroveSnapshot(contracts, alice, "before")
+
+    // price drops reducing Alice's ICR below MCR
+    await contracts.mockAggregator.setPrice(to1e18(1000))
+
+    // Close trove
+    await contracts.troveManager.liquidate(alice.wallet.address)
+
+    // Check Alice's trove is removed
+    expect(
+      await contracts.sortedTroves.contains(alice.wallet.address),
+    ).to.be.equal(false)
+
+    // Try to close the trove again
+    await expect(
+      contracts.troveManager.liquidate(alice.wallet.address),
+    ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
+  })
+
+  it("liquidate(): does nothing if trove has >= 110% ICR", async () => {
+    state.troveManager.troves.before =
+      await contracts.troveManager.getTroveOwnersCount()
+
+    const price = await contracts.priceFeed.fetchPrice()
+    const tcrBefore = await contracts.troveManager.getTCR(price)
+
+    // Attempt to liquidate Alice
+    await expect(
+      contracts.troveManager.liquidate(alice.wallet.address),
+    ).to.be.revertedWith("TroveManager: nothing to liquidate")
+
+    // Check Alice and Bob are still active
+    expect(
+      await contracts.sortedTroves.contains(alice.wallet.address),
+    ).to.be.equal(true)
+    expect(
+      await contracts.sortedTroves.contains(bob.wallet.address),
+    ).to.be.equal(true)
+
+    state.troveManager.troves.after =
+      await contracts.troveManager.getTroveOwnersCount()
+    expect(state.troveManager.troves.before).to.be.equal(
+      state.troveManager.troves.after,
+    )
+
+    const tcrAfter = await contracts.troveManager.getTCR(price)
+    expect(tcrBefore).to.be.equal(tcrAfter)
+  })
+
+  it(
+    "liquidate(): Given the same price and no other trove changes, " +
+      "complete Pool offsets restore the TCR to its value prior to the defaulters opening troves",
+    async () => {
+      // Approve up to $10k to be sent to the stability pool for Bob.
+      await contracts.musd
+        .connect(bob.wallet)
+        .approve(addresses.stabilityPool, to1e18(10000))
+
+      await contracts.stabilityPool
+        .connect(bob.wallet)
+        .provideToSP(to1e18(10000))
+
+      const tcrBefore = await getTCR(contracts)
+
+      // Open additional troves with low enough ICRs that they will default on a small price drop
+      await openTrove(contracts, {
+        musdAmount: "1800",
+        ICR: "120",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "120",
+        sender: dennis.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "3000",
+        ICR: "120",
+        sender: eric.wallet,
+      })
+
+      expect(await contracts.sortedTroves.contains(carol.wallet)).to.be.equal(
+        true,
+      )
+      expect(await contracts.sortedTroves.contains(dennis.wallet)).to.be.equal(
+        true,
+      )
+      expect(await contracts.sortedTroves.contains(eric.wallet)).to.be.equal(
+        true,
+      )
+
+      // price drops reducing ICRs below MCR
+      const price = await contracts.priceFeed.fetchPrice()
+      await contracts.mockAggregator.setPrice((price * 80n) / 100n)
+
+      // liquidate defaulters
+      await contracts.troveManager.liquidate(carol.wallet.address)
+      await contracts.troveManager.liquidate(dennis.wallet.address)
+      await contracts.troveManager.liquidate(eric.wallet.address)
+
+      // Check defaulters are removed
+      expect(await contracts.sortedTroves.contains(carol.wallet)).to.be.equal(
+        false,
+      )
+      expect(await contracts.sortedTroves.contains(dennis.wallet)).to.be.equal(
+        false,
+      )
+      expect(await contracts.sortedTroves.contains(eric.wallet)).to.be.equal(
+        false,
+      )
+
+      // Price bounces back
+      await contracts.mockAggregator.setPrice(price)
+
+      // Check TCR is restored
+      const tcrAfter = await getTCR(contracts)
+      expect(tcrAfter).to.be.equal(tcrBefore)
+    },
+  )
+  it("liquidate(): Pool offsets increase the TCR", async () => {
+    // Approve up to $10k to be sent to the stability pool for Bob.
+    await contracts.musd
+      .connect(bob.wallet)
+      .approve(addresses.stabilityPool, to1e18(10000))
+
+    await contracts.stabilityPool.connect(bob.wallet).provideToSP(to1e18(10000))
+
+    // Open additional troves with low enough ICRs that they will default on a small price drop
+    await openTrove(contracts, {
+      musdAmount: "1800",
+      ICR: "120",
+      sender: carol.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "120",
+      sender: dennis.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "3000",
+      ICR: "120",
+      sender: eric.wallet,
+    })
+
+    // price drops reducing ICRs below MCR
+    const price = await contracts.priceFeed.fetchPrice()
+    await contracts.mockAggregator.setPrice((price * 80n) / 100n)
+
+    // Check TCR improves with each liquidation that is offset with Pool
+    const tcrBefore = await getTCR(contracts)
+    await contracts.troveManager.liquidate(carol.wallet.address)
+    const tcr2 = await getTCR(contracts)
+    expect(tcr2).to.be.greaterThan(tcrBefore)
+
+    await contracts.troveManager.liquidate(dennis.wallet.address)
+    const tcr3 = await getTCR(contracts)
+    expect(tcr3).to.be.greaterThan(tcr2)
+
+    await contracts.troveManager.liquidate(eric.wallet.address)
+    const tcr4 = await getTCR(contracts)
+    expect(tcr4).to.be.greaterThan(tcr3)
   })
 })
