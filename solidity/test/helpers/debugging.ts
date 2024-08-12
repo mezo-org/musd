@@ -10,7 +10,7 @@ interface Data {
   [address: string]: bigint
 }
 
-function formatBigIntWithCommas(value: bigint): string {
+export function formatBigIntWithCommas(value: bigint): string {
   const temp = value / 10000000000000000n
   // Convert bigint to string
   const str = temp.toString()

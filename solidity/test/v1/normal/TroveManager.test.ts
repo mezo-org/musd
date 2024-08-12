@@ -17,12 +17,15 @@ import {
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
+  updatePendingSnapshot,
   updateStabilityPoolSnapshot,
   updateTroveSnapshot,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import debugBalances from "../../helpers/debugging.ts"
+import debugBalances, {
+  formatBigIntWithCommas,
+} from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -797,7 +800,7 @@ describe("TroveManager in Normal Mode", () => {
     )
   })
 
-  it("liquidate(): liquidates based on entire collateral debt (including pending rewards), not raw collateral/debt", async () => {
+  it("liquidate(): liquidates based on entire collateral/debt (including pending rewards), not raw collateral/debt", async () => {
     await openTrove(contracts, {
       musdAmount: "2000",
       ICR: "400",
@@ -819,27 +822,68 @@ describe("TroveManager in Normal Mode", () => {
       sender: dennis.wallet,
     })
 
-    // Drop the price so that carol and dennis are both below MCR
+    // Drop the price
     const currentPrice = await contracts.priceFeed.fetchPrice()
-    const icr = await contracts.troveManager.getCurrentICR(
-      dennis.wallet,
-      currentPrice,
-    )
+    await contracts.mockAggregator.setPrice(currentPrice / 2n)
 
-    // Set target ICR to just slightly less than MCR
-    const targetICR = to1e18(1n)
+    // Before liquidation, Alice and Bob are above MCR, Carol is below
+    await updateTroveSnapshot(contracts, alice, "before")
+    await updateTroveSnapshot(contracts, bob, "before")
+    await updateTroveSnapshot(contracts, carol, "before")
 
-    const newPrice = (targetICR * currentPrice) / icr
-    await contracts.mockAggregator.setPrice(newPrice)
+    const mcr = await contracts.troveManager.MCR()
+    expect(alice.trove.icr.before).to.be.above(mcr)
+    expect(bob.trove.icr.before).to.be.above(mcr)
+    expect(carol.trove.icr.before).to.be.below(mcr)
 
-    // Liquidate Carol
+    // Liquidate Dennis, his collateral and debt should be distributed between the others
+    await contracts.troveManager.liquidate(dennis.address)
+
+    await updateTroveSnapshot(contracts, alice, "after")
+    await updateTroveSnapshot(contracts, bob, "after")
+    await updateTroveSnapshot(contracts, carol, "after")
+    expect(alice.trove.icr.after).to.be.above(mcr)
+    expect(bob.trove.icr.after).to.be.below(mcr)
+    expect(carol.trove.icr.after).to.be.below(mcr)
+
+    // Bob's ICR including pending rewards is below the MCR, but his raw coll and debt have not changed
+    expect(bob.trove.debt.after).to.be.equal(bob.trove.debt.before)
+    expect(bob.trove.debt.after).to.be.equal(bob.trove.debt.before)
+
+    // Whale (Eric) enters the system, ensuring we don't go into recovery mode
+    await openTrove(contracts, {
+      musdAmount: "10,000",
+      ICR: "1000",
+      sender: eric.wallet,
+    })
+
+    // Attempt to Liquidate Alice, Bob, and Carol
+    await expect(
+      contracts.troveManager.liquidate(alice.wallet.address),
+    ).to.be.revertedWith("TroveManager: nothing to liquidate")
+    await contracts.troveManager.liquidate(bob.address)
     await contracts.troveManager.liquidate(carol.address)
 
-    // Dennis's true ICR (including pending rewards) is below the MCR.  Check that his "raw" ICR is above the MCR.
-    expect(
-      await contracts.troveManager.getCurrentICR(dennis.wallet, newPrice),
-    ).to.be.greaterThan(await contracts.troveManager.MCR())
+    // Check Alice stays active, Bob and Carol get liquidated
+    expect(await contracts.sortedTroves.contains(alice.address)).to.be.equal(
+      true,
+    )
+    expect(await contracts.sortedTroves.contains(bob.address)).to.be.equal(
+      false,
+    )
+    expect(await contracts.sortedTroves.contains(carol.address)).to.be.equal(
+      false,
+    )
 
-    // Liquidate Dennis
+    // Check Trove statuses - Alice should be active (1), B and C are closed by liquidation (3)
+    expect(
+      await contracts.troveManager.getTroveStatus(alice.address),
+    ).to.be.equal(1)
+    expect(
+      await contracts.troveManager.getTroveStatus(bob.address),
+    ).to.be.equal(3)
+    expect(
+      await contracts.troveManager.getTroveStatus(carol.address),
+    ).to.be.equal(3)
   })
 })
