@@ -10,22 +10,18 @@ import {
   fixture,
   getAddresses,
   getEmittedLiquidationValues,
-  getEventArgByName,
   getTCR,
   openTrove,
   provideToSP,
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
-  updatePendingSnapshot,
   updateStabilityPoolSnapshot,
   updateTroveSnapshot,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import debugBalances, {
-  formatBigIntWithCommas,
-} from "../../helpers/debugging.ts"
+import debugBalances from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -702,7 +698,6 @@ describe("TroveManager in Normal Mode", () => {
 
     // Check Dennis' SP deposit does not change after liquidation attempt
     await updateStabilityPoolSnapshot(contracts, dennis, "after")
-    console.log(dennis)
     expect(dennis.stabilityPool.deposit.after).to.be.equal(
       dennis.stabilityPool.deposit.before,
     )
@@ -744,51 +739,98 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): liquidates a SP depositor's trove with ICR < 110%, and the liquidation correctly impacts their SP deposit and collateral gain", async () => {
-    await setupTroves()
-    // Dennis provides MUSD to SP
+    // Open three troves: Alice, Bob, Carol (defaulter)
     await openTrove(contracts, {
       musdAmount: "50000",
-      ICR: "200",
-      sender: dennis.wallet,
+      ICR: "800",
+      sender: alice.wallet,
     })
-    const dennisSPDeposit = to1e18(3000)
-    await provideToSP(contracts, addresses, dennis.wallet, dennisSPDeposit)
-
-    // Open trove for Carol
-    const carolDebt = "1800"
     await openTrove(contracts, {
-      musdAmount: carolDebt,
-      ICR: "120",
+      musdAmount: "1000000",
+      ICR: "2000",
+      sender: bob.wallet,
+    })
+
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "200",
       sender: carol.wallet,
     })
 
-    // Carol gets liquidated
+    await updateTroveSnapshot(contracts, carol, "before")
+    await updateTroveSnapshot(contracts, alice, "before")
+
+    // Alice deposits into the stability pool
+    const aliceSPDeposit = to1e18(25000)
+    await provideToSP(contracts, addresses, alice.wallet, aliceSPDeposit)
+    await updateStabilityPoolSnapshot(contracts, alice, "before")
+
+    // Price drops, carol gets liquidated
     await dropPriceAndLiquidate(contracts, carol)
 
-    // Check Dennis's SP deposit has absorbed Carol's debt, and he has received her liquidated collateral
-    await updateStabilityPoolSnapshot(contracts, dennis, "before")
-    // TODO Add expectations to check that updates are correct
+    // Alice's deposit should decrease by Carol's debt
+    await updateStabilityPoolSnapshot(contracts, alice, "after")
+    expect(alice.stabilityPool.deposit.after).to.be.closeTo(
+      aliceSPDeposit - carol.trove.debt.before,
+      1000000n,
+    )
 
-    // Bob provides MUSD to SP
-    const bobSPDeposit = to1e18(10000)
+    // Alice's collateral gain should increase by Carol's collateral less the liquidation fee
+    expect(alice.stabilityPool.collateralGain.after).to.be.closeTo(
+      applyLiquidationFee(carol.trove.collateral.before),
+      1000n,
+    )
+
+    // Bob deposits into the stability pool
+    const bobSPDeposit = to1e18(50000)
     await provideToSP(contracts, addresses, bob.wallet, bobSPDeposit)
 
-    // Liquidate Dennis
-    const { newPrice } = await dropPriceAndLiquidate(contracts, dennis)
+    // Price drops, Alice gets liquidated
+    await updateTroveSnapshot(contracts, alice, "after")
+    await dropPriceAndLiquidate(contracts, alice)
 
-    // Confirm system is not in recovery mode
-    expect(
-      await contracts.troveManager.checkRecoveryMode(newPrice),
-    ).to.be.equal(false)
+    // Alice's new deposit should decrease by her share of her own debt
+    const totalDeposits = alice.stabilityPool.deposit.after + bobSPDeposit
+    const aliceShareOfDebt =
+      (alice.trove.debt.after * alice.stabilityPool.deposit.after) /
+      totalDeposits
+    const aliceExpectedDeposit =
+      alice.stabilityPool.deposit.after - aliceShareOfDebt
+    const aliceDepositFinal =
+      await contracts.stabilityPool.getCompoundedMUSDDeposit(alice.wallet)
+    expect(aliceDepositFinal).to.be.closeTo(aliceExpectedDeposit, 1000000n)
 
-    // Check Dennis's SP deposit has been reduced to X MUSD and his collateral gain has increased to X BTC/token
-    await updateStabilityPoolSnapshot(contracts, dennis, "after")
+    // Alice's new collateral gain should increase by her share of her own collateral less the liquidation fee
+    const aliceCollateralShare =
+      (applyLiquidationFee(alice.trove.collateral.after) *
+        alice.stabilityPool.deposit.after) /
+      totalDeposits
+    const aliceExpectedCollateralGain =
+      alice.stabilityPool.collateralGain.after + aliceCollateralShare
+    const aliceCollateralGainFinal =
+      await contracts.stabilityPool.getDepositorCollateralGain(alice.wallet)
+    expect(aliceCollateralGainFinal).to.be.closeTo(
+      aliceExpectedCollateralGain,
+      1000000n,
+    )
+
+    // Bob's new deposit should decrease by his share of Alice's debt
+    const bobShareOfDebt =
+      (alice.trove.debt.after * bobSPDeposit) / totalDeposits
+    const bobExpectedDeposit = bobSPDeposit - bobShareOfDebt
     await updateStabilityPoolSnapshot(contracts, bob, "after")
-
-    // TODO Finish expectations once stability pool is fixed
-    // const totalDeposits = dennis.stabilityPool.deposit.before + bobSPDeposit
-    // const expectedDeposit = bobSPDeposit -
-    // expect(bob.stabilityPool.deposit.after)
+    expect(bobExpectedDeposit).to.be.closeTo(
+      bob.stabilityPool.deposit.after,
+      1000000n,
+    )
+    // Bob's new collateral gain should increase by his share of Alice's collateral less the liquidation fee
+    const bobCollateralShare =
+      (applyLiquidationFee(alice.trove.collateral.after) * bobSPDeposit) /
+      totalDeposits
+    expect(bob.stabilityPool.collateralGain.after).to.be.closeTo(
+      bobCollateralShare,
+      1000000n,
+    )
   })
 
   it("liquidate(): does not alter the liquidated user's token balance", async () => {
