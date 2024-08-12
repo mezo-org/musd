@@ -140,8 +140,8 @@ describe("StabilityPool in Normal Mode", () => {
       const pBefore = await contracts.stabilityPool.P()
       const sBefore = await contracts.stabilityPool.epochToScaleToSum(0, 0)
 
-      expect(pBefore > 0n).to.equal(true)
-      expect(sBefore > 0n).to.equal(true)
+      expect(pBefore).to.be.greaterThan(0n)
+      expect(sBefore).to.be.greaterThan(0n)
 
       // Check 'Before' snapshots
       const aliceSnapshotBefore =
