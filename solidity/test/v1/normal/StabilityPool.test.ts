@@ -39,7 +39,7 @@ describe("StabilityPool in Normal Mode", () => {
   const liquidate = async (): Promise<void> => {
     const priceBefore = await contracts.priceFeed.fetchPrice()
     await openTrove(contracts, {
-      musdAmount: "2000", // slightly over the minimum of $1800
+      musdAmount: "2,000", // slightly over the minimum of $1800
       ICR: "120", // 120%
       sender: frank,
     })
@@ -72,32 +72,32 @@ describe("StabilityPool in Normal Mode", () => {
     addresses = await getAddresses(contracts, testSetup.users)
 
     // Approve each user to deposit 100k to the stability pool.
-    const tenThousandMusd = to1e18(100000)
+    const amount = to1e18(100_000)
     await Promise.all(
       [alice, bob, carol, dennis, eric, whale].map(async (user) => {
         await contracts.musd
           .connect(user.wallet)
-          .approve(addresses.stabilityPool, tenThousandMusd)
+          .approve(addresses.stabilityPool, amount)
       }),
     )
 
     // set 1 BTC = $1000 for ease of math
-    await contracts.mockAggregator.setPrice(to1e18(1000))
+    await contracts.mockAggregator.setPrice(to1e18(1_000))
 
     // Open a trove for $5k for alice backed by $10k worth of BTC (10 BTC)
     await openTrove(contracts, {
-      musdAmount: "5000",
+      musdAmount: "5,000",
       ICR: "200",
       sender: alice,
     })
 
     await openTrove(contracts, {
-      musdAmount: "30000",
+      musdAmount: "30,000",
       ICR: "200",
       sender: whale,
     })
 
-    await provideToSP(to1e18(20000), whale)
+    await provideToSP(to1e18(20_000), whale)
   })
 
   describe("provideToSP()", () => {
@@ -168,8 +168,8 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): multiple deposits: updates user's deposit and snapshots", async () => {
-      // Alice makes deposit #1: $1000
-      await provideToSP(to1e18(1000), alice)
+      // Alice makes deposit #1: $1,000
+      await provideToSP(to1e18(1_000), alice)
 
       const aliceSnapshot0 = await contracts.stabilityPool.depositSnapshots(
         alice.wallet,
@@ -215,7 +215,7 @@ describe("StabilityPool in Normal Mode", () => {
       // Bob withdraws MUSD and deposits to StabilityPool
 
       await openTrove(contracts, {
-        musdAmount: "3000",
+        musdAmount: "3,000",
         ICR: "200",
         sender: bob,
       })
@@ -263,7 +263,7 @@ describe("StabilityPool in Normal Mode", () => {
         // Bob and Carol open troves and make Stability Pool deposits
         await Promise.all(
           [bob, carol].map(async (user) => {
-            const amount = to1e18(5000)
+            const amount = to1e18(5_000)
             await openTrove(contracts, {
               musdAmount: amount,
               ICR: "200",
@@ -276,7 +276,7 @@ describe("StabilityPool in Normal Mode", () => {
 
         // Dennis opens a trove but does not make a Stability Pool deposit
         await openTrove(contracts, {
-          musdAmount: "2000",
+          musdAmount: "2,000",
           ICR: "200",
           sender: dennis,
         })
@@ -301,15 +301,15 @@ describe("StabilityPool in Normal Mode", () => {
 
         const beforeState = await fetchState()
 
-        // Dennis provides $1000 to the stability pool.
-        await provideToSP(to1e18(1000), dennis)
+        // Dennis provides $1,000 to the stability pool.
+        await provideToSP(to1e18(1_000), dennis)
         expect(
           (
             await contracts.stabilityPool.getCompoundedMUSDDeposit(
               dennis.wallet,
             )
           ).toString(),
-        ).to.equal(to1e18(1000))
+        ).to.equal(to1e18(1_000))
 
         const afterState = await fetchState()
 
@@ -335,15 +335,15 @@ describe("StabilityPool in Normal Mode", () => {
 
         const beforeState = await fetchState()
 
-        // Dennis provides $1000 to the stability pool.
-        await provideToSP(to1e18(1000), dennis)
+        // Dennis provides $1,000 to the stability pool.
+        await provideToSP(to1e18(1_000), dennis)
         expect(
           (
             await contracts.stabilityPool.getCompoundedMUSDDeposit(
               dennis.wallet,
             )
           ).toString(),
-        ).to.equal(to1e18(1000))
+        ).to.equal(to1e18(1_000))
 
         const afterState = await fetchState()
 
@@ -379,11 +379,11 @@ describe("StabilityPool in Normal Mode", () => {
           )
         const beforeState = await fetchState()
 
-        // Dennis provides $1000 to the stability pool.
-        await provideToSP(to1e18(1000), dennis)
+        // Dennis provides $1,000 to the stability pool.
+        await provideToSP(to1e18(1_000), dennis)
         expect(
           await contracts.stabilityPool.getCompoundedMUSDDeposit(dennis.wallet),
-        ).to.equal(to1e18(1000))
+        ).to.equal(to1e18(1_000))
 
         const afterState = await fetchState()
 
@@ -398,13 +398,13 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("provideToSP(): doesn't protect the depositor's trove from liquidation", async () => {
       await openTrove(contracts, {
-        musdAmount: "2000",
+        musdAmount: "2,000",
         ICR: "120",
         sender: bob,
       })
-      await provideToSP(to1e18(2000), bob)
+      await provideToSP(to1e18(2_000), bob)
 
-      // Price drops from $1000 to $900
+      // Price drops from $1,000 to $900
       await contracts.mockAggregator.setPrice(to1e18(900))
 
       // Liquidate bob
@@ -427,7 +427,7 @@ describe("StabilityPool in Normal Mode", () => {
       await liquidate()
 
       // Alice deposits to the Pool
-      await provideToSP(to1e18(2000), alice)
+      await provideToSP(to1e18(2_000), alice)
 
       expect(
         await contracts.stabilityPool.getDepositorCollateralGain(alice.wallet),
@@ -436,7 +436,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("provideToSP(): new deposit after past full withdrawal; depositor does not receive collateral gains", async () => {
       // Alice enters and then exits the pool
-      const amount = to1e18(2000)
+      const amount = to1e18(2_000)
       await provideToSP(amount, alice)
       await withdrawFromSP(amount, alice)
 
