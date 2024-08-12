@@ -36,6 +36,21 @@ describe("TroveManager in Normal Mode", () => {
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
+  async function setupTroves() {
+    // open two troves so that we don't go into recovery mode
+    await openTrove(contracts, {
+      musdAmount: "5000",
+      ICR: "400",
+      sender: alice.wallet,
+    })
+
+    await openTrove(contracts, {
+      musdAmount: "50000",
+      ICR: "5000",
+      sender: bob.wallet,
+    })
+  }
+
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
@@ -53,22 +68,10 @@ describe("TroveManager in Normal Mode", () => {
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
-
-    // open two troves so that we don't go into recovery mode
-    await openTrove(contracts, {
-      musdAmount: "5000",
-      ICR: "400",
-      sender: alice.wallet,
-    })
-
-    await openTrove(contracts, {
-      musdAmount: "50000",
-      ICR: "5000",
-      sender: bob.wallet,
-    })
   })
 
   it("liquidate(): closes a Trove that has ICR < MCR", async () => {
+    await setupTroves()
     // Alice's Trove has ICR = 4, which is above the MCR
     await updateTroveSnapshot(contracts, alice, "before")
     expect(alice.trove.icr.before).to.be.equal(to1e18(4))
@@ -111,6 +114,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): decreases ActivePool collateral and MUSDDebt by correct amounts", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
 
@@ -161,6 +165,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): increases DefaultPool collateral and MUSD debt by correct amounts", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
     await updateContractsSnapshot(
@@ -209,6 +214,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): removes the Trove's stake from the total stakes", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
 
@@ -229,6 +235,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): Removes the correct trove from the TroveOwners array, and moves the last array element to the new empty slot", async () => {
+    await setupTroves()
     // Open additional troves
     await openTrove(contracts, {
       musdAmount: "5000",
@@ -294,6 +301,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): updates the snapshots of total stakes and total collateral", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before") // not strictly necessary but for completeness
 
@@ -325,6 +333,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): updates the L_Collateral and L_MUSDDebt reward-per-unit-staked totals", async () => {
+    await setupTroves()
     await openTrove(contracts, {
       musdAmount: "5000",
       ICR: "111",
@@ -413,6 +422,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): Liquidates undercollateralized trove if there are two troves in the system", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
     await updateTroveSnapshot(contracts, bob, "before")
 
@@ -439,6 +449,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): reverts if trove has been closed", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
 
     // price drops reducing Alice's ICR below MCR
@@ -459,6 +470,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): does nothing if trove has >= 110% ICR", async () => {
+    await setupTroves()
     state.troveManager.troves.before =
       await contracts.troveManager.getTroveOwnersCount()
 
@@ -492,6 +504,7 @@ describe("TroveManager in Normal Mode", () => {
     "liquidate(): Given the same price and no other trove changes, " +
       "complete Pool offsets restore the TCR to its value prior to the defaulters opening troves",
     async () => {
+      await setupTroves()
       // Approve up to $10k to be sent to the stability pool for Bob.
       await contracts.musd
         .connect(bob.wallet)
@@ -559,6 +572,7 @@ describe("TroveManager in Normal Mode", () => {
     },
   )
   it("liquidate(): Pool offsets increase the TCR", async () => {
+    await setupTroves()
     // Approve up to $10k to be sent to the stability pool for Bob.
     await contracts.musd
       .connect(bob.wallet)
@@ -603,6 +617,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): a pure redistribution reduces the TCR only as a result of compensation", async () => {
+    await setupTroves()
     await openTrove(contracts, {
       musdAmount: "1800",
       ICR: "120",
@@ -649,6 +664,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): does not affect the SP deposit or collateral gain when called on an SP depositor's address that has no trove", async () => {
+    await setupTroves()
     const spDeposit = to1e18(10000)
 
     // Bob sends tokens to Dennis, who has no trove
@@ -693,6 +709,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): does not liquidate a SP depositor's trove with ICR > 110%, and does not affect their SP deposit or collateral gain", async () => {
+    await setupTroves()
     const spDeposit = to1e18(10000)
     await provideToSP(contracts, addresses, bob.wallet, spDeposit)
 
@@ -724,6 +741,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): liquidates a SP depositor's trove with ICR < 110%, and the liquidation correctly impacts their SP deposit and collateral gain", async () => {
+    await setupTroves()
     // Dennis provides MUSD to SP
     await openTrove(contracts, {
       musdAmount: "50000",
@@ -771,10 +789,57 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): does not alter the liquidated user's token balance", async () => {
+    await setupTroves()
     await updateTroveSnapshot(contracts, alice, "before")
     await dropPriceAndLiquidate(contracts, alice)
     expect(await contracts.musd.balanceOf(alice.wallet)).to.be.equal(
       to1e18("5000"),
     )
+  })
+
+  it("liquidate(): liquidates based on entire collateral debt (including pending rewards), not raw collateral/debt", async () => {
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "400",
+      sender: alice.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "221",
+      sender: bob.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "200",
+      sender: carol.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "200",
+      sender: dennis.wallet,
+    })
+
+    // Drop the price so that carol and dennis are both below MCR
+    const currentPrice = await contracts.priceFeed.fetchPrice()
+    const icr = await contracts.troveManager.getCurrentICR(
+      dennis.wallet,
+      currentPrice,
+    )
+
+    // Set target ICR to just slightly less than MCR
+    const targetICR = to1e18(1n)
+
+    const newPrice = (targetICR * currentPrice) / icr
+    await contracts.mockAggregator.setPrice(newPrice)
+
+    // Liquidate Carol
+    await contracts.troveManager.liquidate(carol.address)
+
+    // Dennis's true ICR (including pending rewards) is below the MCR.  Check that his "raw" ICR is above the MCR.
+    expect(
+      await contracts.troveManager.getCurrentICR(dennis.wallet, newPrice),
+    ).to.be.greaterThan(await contracts.troveManager.MCR())
+
+    // Liquidate Dennis
   })
 })
