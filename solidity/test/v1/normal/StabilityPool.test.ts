@@ -214,12 +214,12 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): reverts if user tries to provide more than their MUSD balance", async () => {
-      const aliceMUSDbal = await contracts.musd.balanceOf(alice.wallet)
+      await updateMUSDUserSnapshot(contracts, alice, "before")
 
       await expect(
         contracts.stabilityPool
           .connect(alice.wallet)
-          .provideToSP(aliceMUSDbal + 1n),
+          .provideToSP(alice.musd.before + 1n),
       ).to.be.reverted
     })
 
