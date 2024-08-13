@@ -18,7 +18,7 @@ import {
   updateTrovesSnapshot,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshot,
-  updateStabilityPoolUsersSnapshot,
+  updateStabilityPoolUserSnapshots,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -264,7 +264,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       it("provideToSP(): doesn't impact other users' deposits or collateral gains", async () => {
         const users = [alice, bob, carol]
-        await updateStabilityPoolUsersSnapshot(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
 
         // Dennis provides $1,000 to the stability pool.
         await contracts.stabilityPool
@@ -279,7 +279,7 @@ describe("StabilityPool in Normal Mode", () => {
           ).toString(),
         ).to.equal(to1e18(1_000))
 
-        await updateStabilityPoolUsersSnapshot(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
 
         users.forEach((user) => {
           expect(user.stabilityPool.compoundedDeposit.before).to.equal(

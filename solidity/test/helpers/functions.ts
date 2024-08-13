@@ -157,7 +157,7 @@ export async function updateStabilityPoolUserSnapshot(
   user.stabilityPool.S[checkPoint] = S
 }
 
-export async function updateStabilityPoolUsersSnapshot(
+export async function updateStabilityPoolUserSnapshots(
   contracts: Contracts,
   users: User[],
   checkPoint: CheckPoint,
