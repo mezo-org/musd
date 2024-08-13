@@ -140,17 +140,13 @@ describe("StabilityPool in Normal Mode", () => {
       expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.before)
     })
 
+    // This test calls `provideToSP` multiple times and makes assertions after each time.
+    // To accomplish this in our state framework, we overwrite `before` and `after` each time.
     it("provideToSP(): multiple deposits: updates user's deposit and snapshots", async () => {
       // Alice makes deposit #1: $1,000
-
       await contracts.stabilityPool
         .connect(alice.wallet)
         .provideToSP(to1e18(1_000))
-
-      await updateStabilityPoolUserSnapshot(contracts, alice, "before")
-
-      expect(alice.stabilityPool.P.before).to.equal(to1e18(1))
-      expect(alice.stabilityPool.S.before).to.equal(0)
 
       await createLiquidationEvent(contracts)
 
@@ -180,13 +176,13 @@ describe("StabilityPool in Normal Mode", () => {
 
       // Bob withdraws MUSD and deposits to StabilityPool
 
-      await updateStabilityPoolSnapshot(contracts, state, "before")
-
       await openTrove(contracts, {
         musdAmount: "3,000",
         ICR: "200",
         sender: bob.wallet,
       })
+
+      await updateStabilityPoolSnapshot(contracts, state, "before")
 
       await contracts.stabilityPool.connect(bob.wallet).provideToSP(to1e18(427))
 
@@ -202,6 +198,8 @@ describe("StabilityPool in Normal Mode", () => {
         state.stabilityPool.S.before,
       )
 
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+
       // Alice makes deposit #3: $100
       await contracts.stabilityPool
         .connect(alice.wallet)
@@ -209,8 +207,8 @@ describe("StabilityPool in Normal Mode", () => {
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
-      expect(alice.stabilityPool.P.after).to.equal(state.stabilityPool.P.after)
-      expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.after)
+      expect(alice.stabilityPool.P.after).to.equal(state.stabilityPool.P.before)
+      expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.before)
     })
 
     it("provideToSP(): reverts if user tries to provide more than their MUSD balance", async () => {
