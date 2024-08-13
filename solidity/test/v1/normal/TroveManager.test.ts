@@ -21,7 +21,6 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import debugBalances from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -87,8 +86,8 @@ describe("TroveManager in Normal Mode", () => {
     expect(alice.trove.icr.after).to.equal(targetICR)
 
     // price drops reducing Alice's ICR below MCR
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-    const newPrice = await contracts.priceFeed.fetchPrice()
+    const newPrice = to1e18(1000)
+    await contracts.mockAggregator.setPrice(newPrice)
 
     alice.trove.icr.after = await contracts.troveManager.getCurrentICR(
       addresses.alice,
@@ -138,12 +137,9 @@ describe("TroveManager in Normal Mode", () => {
       alice.trove.debt.before + bob.trove.debt.before,
     )
 
-    // price drops reducing Alice's ICR below MCR
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-
     /* Close Alice's Trove. Should liquidate her collateral and MUSD,
      * leaving Bob’s collateral and MUSD debt in the ActivePool. */
-    await contracts.troveManager.liquidate(alice.wallet.address)
+    await dropPriceAndLiquidate(contracts, alice)
 
     await updateContractsSnapshot(
       contracts,
@@ -183,11 +179,7 @@ describe("TroveManager in Normal Mode", () => {
     state.defaultPool.debt.before = await contracts.defaultPool.getMUSDDebt()
     expect(state.defaultPool.debt.before).to.be.equal(0n)
 
-    // price drops to 1ETH/token:1000MUSD, reducing Alice's ICR below MCR
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-
-    // Close Alice's Trove
-    await contracts.troveManager.liquidate(alice.wallet.address)
+    await dropPriceAndLiquidate(contracts, alice)
 
     // DefaultPool collateral should increase by Alice's collateral less the liquidation fee
     await updateContractsSnapshot(
@@ -224,10 +216,7 @@ describe("TroveManager in Normal Mode", () => {
     )
 
     // price drops reducing Alice's ICR below MCR
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-
-    // Close Alice's Trove
-    await contracts.troveManager.liquidate(alice.wallet.address)
+    await dropPriceAndLiquidate(contracts, alice)
 
     state.troveManager.stakes.after = await contracts.troveManager.totalStakes()
     expect(state.troveManager.stakes.after).to.be.equal(bob.trove.stake.before)
@@ -261,8 +250,7 @@ describe("TroveManager in Normal Mode", () => {
     expect(state.troveManager.troves.before).to.be.equal(5)
 
     // Drop the price to lower ICRs below MCR and close Carol's trove
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-    await contracts.troveManager.liquidate(carol.wallet.address)
+    await dropPriceAndLiquidate(contracts, carol)
 
     // Check that carol no longer has an active trove
     expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(false)
@@ -310,8 +298,7 @@ describe("TroveManager in Normal Mode", () => {
     )
 
     // Drop the price to lower ICRs below MCR and close Alice's trove
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-    await contracts.troveManager.liquidate(alice.wallet.address)
+    await dropPriceAndLiquidate(contracts, alice)
 
     // Total stakes should be equal to Bob's stake
     await updateTroveSnapshot(contracts, bob, "after")
@@ -452,10 +439,7 @@ describe("TroveManager in Normal Mode", () => {
     await updateTroveSnapshot(contracts, alice, "before")
 
     // price drops reducing Alice's ICR below MCR
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-
-    // Close trove
-    await contracts.troveManager.liquidate(alice.wallet.address)
+    await dropPriceAndLiquidate(contracts, alice)
 
     // Check Alice's trove is removed
     expect(
@@ -685,8 +669,7 @@ describe("TroveManager in Normal Mode", () => {
     await contracts.stabilityPool.connect(dennis.wallet).provideToSP(spDeposit)
 
     // Alice gets liquidated
-    await contracts.mockAggregator.setPrice(to1e18(1000))
-    await contracts.troveManager.liquidate(alice.wallet.address)
+    await dropPriceAndLiquidate(contracts, alice)
 
     // Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated collateral
     await updateStabilityPoolSnapshot(contracts, dennis, "before")
@@ -739,7 +722,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   it("liquidate(): liquidates a SP depositor's trove with ICR < 110%, and the liquidation correctly impacts their SP deposit and collateral gain", async () => {
-    // Open three troves: Alice, Bob, Carol (defaulter)
+    // Open three troves: Alice, Bob, Carol
     await openTrove(contracts, {
       musdAmount: "50000",
       ICR: "800",
