@@ -132,6 +132,8 @@ export async function updateStabilityPoolSnapshot(
   state: ContractsState,
   checkPoint: CheckPoint,
 ) {
+  state.stabilityPool.collateral[checkPoint] =
+    await contracts.stabilityPool.getCollateralBalance()
   state.stabilityPool.musd[checkPoint] =
     await contracts.stabilityPool.getTotalMUSDDeposits()
   state.stabilityPool.P[checkPoint] = await contracts.stabilityPool.P()
