@@ -1,6 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
+  CheckPoint,
   Contracts,
   ContractsState,
   TestSetup,
@@ -10,8 +11,14 @@ import {
   createLiquidationEvent,
   fixture,
   getAddresses,
-  getTCR,
   openTrove,
+  updateContractsSnapshot,
+  updateMUSDUserSnapshot,
+  updateTroveManagerSnapshot,
+  updateTrovesSnapshot,
+  updateStabilityPoolSnapshot,
+  updateStabilityPoolUserSnapshot,
+  updateStabilityPoolUsersSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -84,11 +91,12 @@ describe("StabilityPool in Normal Mode", () => {
     it("provideToSP(): increases the Stability Pool MUSD balance", async () => {
       const amount = to1e18(30)
 
-      const before = await contracts.stabilityPool.getTotalMUSDDeposits()
+      await updateStabilityPoolSnapshot(contracts, state, "before")
       await provideToSP(amount, alice)
+      await updateStabilityPoolSnapshot(contracts, state, "after")
 
-      expect(await contracts.stabilityPool.getTotalMUSDDeposits()).to.equal(
-        before + amount,
+      expect(state.stabilityPool.musd.after).to.equal(
+        state.stabilityPool.musd.before + amount,
       )
     })
 
@@ -96,103 +104,81 @@ describe("StabilityPool in Normal Mode", () => {
       const amount = to1e18(200)
       await provideToSP(amount, alice)
 
-      state.stabilityPool.deposits.after =
-        await contracts.stabilityPool.deposits(alice.address)
+      await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
-      expect(state.stabilityPool.deposits.after).to.be.equal(amount)
+      expect(alice.stabilityPool.deposit.after).to.be.equal(amount)
     })
 
     it("provideToSP(): reduces the user's MUSD balance", async () => {
-      const beforeBalance = await contracts.musd.balanceOf(alice.wallet)
+      await updateMUSDUserSnapshot(contracts, alice, "before")
 
       const amount = to1e18(200)
       await provideToSP(amount, alice)
 
-      // check user's MUSD balance change
-      const afterBalance = await contracts.musd.balanceOf(alice.wallet)
+      await updateMUSDUserSnapshot(contracts, alice, "after")
 
-      expect(afterBalance).to.be.equal(beforeBalance - amount)
+      expect(alice.musd.after).to.equal(alice.musd.before - amount)
     })
 
     it("provideToSP(): Correctly updates user snapshots of accumulated rewards per unit staked", async () => {
       await createLiquidationEvent(contracts)
 
-      const pBefore = await contracts.stabilityPool.P()
-      const sBefore = await contracts.stabilityPool.epochToScaleToSum(0, 0)
+      await updateStabilityPoolSnapshot(contracts, state, "before")
 
-      expect(pBefore).to.be.greaterThan(0n)
-      expect(sBefore).to.be.greaterThan(0n)
+      expect(state.stabilityPool.P.before).to.be.greaterThan(0n)
+      expect(state.stabilityPool.S.before).to.be.greaterThan(0n)
 
-      // Check 'Before' snapshots
-      const aliceSnapshotBefore =
-        await contracts.stabilityPool.depositSnapshots(alice.wallet)
+      await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
-      const aliceSnapshotSBefore = aliceSnapshotBefore[0]
-      const aliceSnapshotPBefore = aliceSnapshotBefore[1]
-
-      expect(aliceSnapshotSBefore).to.equal(0n)
-      expect(aliceSnapshotPBefore).to.equal(0n)
+      expect(alice.stabilityPool.P.before).to.equal(0n)
+      expect(alice.stabilityPool.S.before).to.equal(0n)
 
       // Make deposit
       await provideToSP(to1e18(100), alice)
 
       // Check 'After' snapshots
-      const aliceSnapshotAfter = await contracts.stabilityPool.depositSnapshots(
-        alice.wallet,
-      )
-      const aliceSnapshotSAfter = aliceSnapshotAfter[0]
-      const aliceSnapshotPAfter = aliceSnapshotAfter[1]
+      await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
-      expect(aliceSnapshotSAfter).to.equal(sBefore)
-      expect(aliceSnapshotPAfter).to.equal(pBefore)
+      expect(alice.stabilityPool.P.after).to.equal(state.stabilityPool.P.before)
+      expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.before)
     })
 
     it("provideToSP(): multiple deposits: updates user's deposit and snapshots", async () => {
       // Alice makes deposit #1: $1,000
       await provideToSP(to1e18(1_000), alice)
 
-      const aliceSnapshot0 = await contracts.stabilityPool.depositSnapshots(
-        alice.wallet,
-      )
-      const aliceSnapshotS0 = aliceSnapshot0[0]
-      const aliceSnapshotP0 = aliceSnapshot0[1]
+      await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
-      expect(aliceSnapshotS0).to.equal(0)
-      expect(aliceSnapshotP0).to.equal(to1e18(1))
+      expect(alice.stabilityPool.P.before).to.equal(to1e18(1))
+      expect(alice.stabilityPool.S.before).to.equal(0)
 
       await createLiquidationEvent(contracts)
 
-      const aliceCompoundedDeposit1 =
-        await contracts.stabilityPool.getCompoundedMUSDDeposit(alice.wallet)
+      await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
       // Alice makes deposit #2
-      const aliceTopUp1 = to1e18(100)
-      await provideToSP(aliceTopUp1, alice)
+      const firstDepositAmount = to1e18(100)
+      await provideToSP(firstDepositAmount, alice)
 
-      const aliceNewDeposit1 = await contracts.stabilityPool.deposits(
-        alice.wallet,
-      )
-      expect(aliceCompoundedDeposit1 + aliceTopUp1).to.equal(aliceNewDeposit1)
+      await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
-      // get system reward terms
-      const p1 = await contracts.stabilityPool.P()
-      const s1 = await contracts.stabilityPool.epochToScaleToSum(0, 0)
+      expect(
+        alice.stabilityPool.compoundedDeposit.before + firstDepositAmount,
+      ).to.equal(alice.stabilityPool.deposit.after)
 
-      expect(p1).to.be.lessThan(to1e18(1))
-      expect(s1).to.be.greaterThan(0n)
+      await updateStabilityPoolSnapshot(contracts, state, "after")
 
-      // check that Alice's new snapshot is correct
-      const aliceSnapshot1 = await contracts.stabilityPool.depositSnapshots(
-        alice.wallet,
-      )
+      // System rewards should change
 
-      const aliceSnapshotS1 = aliceSnapshot1[0]
-      const aliceSnapshotP1 = aliceSnapshot1[1]
+      expect(state.stabilityPool.P.after).to.be.lessThan(to1e18(1))
+      expect(state.stabilityPool.S.after).to.be.greaterThan(0n)
 
-      expect(aliceSnapshotS1).to.equal(s1)
-      expect(aliceSnapshotP1).to.equal(p1)
+      expect(alice.stabilityPool.P.after).to.equal(state.stabilityPool.P.after)
+      expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.after)
 
       // Bob withdraws MUSD and deposits to StabilityPool
+
+      await updateStabilityPoolSnapshot(contracts, state, "before")
 
       await openTrove(contracts, {
         musdAmount: "3,000",
@@ -204,25 +190,22 @@ describe("StabilityPool in Normal Mode", () => {
       // Trigger another liquidation
       await createLiquidationEvent(contracts)
 
-      const p2 = await contracts.stabilityPool.P()
-      const s2 = await contracts.stabilityPool.epochToScaleToSum(0, 0)
+      await updateStabilityPoolSnapshot(contracts, state, "after")
 
-      expect(p2).to.be.lessThan(p1)
-      expect(s2).to.be.greaterThan(s1)
+      expect(state.stabilityPool.P.after).to.be.lessThan(
+        state.stabilityPool.P.before,
+      )
+      expect(state.stabilityPool.S.after).to.be.greaterThan(
+        state.stabilityPool.S.before,
+      )
 
       // Alice makes deposit #3: $100
       await provideToSP(to1e18(100), alice)
 
-      // check Alice's new snapshot is correct
-      const aliceSnapshot2 = await contracts.stabilityPool.depositSnapshots(
-        alice.wallet,
-      )
+      await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
-      const aliceSnapshotS2 = aliceSnapshot2[0]
-      const aliceSnapshotP2 = aliceSnapshot2[1]
-
-      expect(aliceSnapshotS2).to.equal(s2)
-      expect(aliceSnapshotP2).to.equal(p2)
+      expect(alice.stabilityPool.P.after).to.equal(state.stabilityPool.P.after)
+      expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.after)
     })
 
     it("provideToSP(): reverts if user tries to provide more than their MUSD balance", async () => {
@@ -266,20 +249,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       it("provideToSP(): doesn't impact other users' deposits or collateral gains", async () => {
         const users = [alice, bob, carol]
-        const fetchState = async () =>
-          Promise.all(
-            users.map(async (user) => ({
-              musd: await contracts.stabilityPool.getCompoundedMUSDDeposit(
-                user.wallet,
-              ),
-              collateralGain:
-                await contracts.stabilityPool.getDepositorCollateralGain(
-                  user.wallet,
-                ),
-            })),
-          )
-
-        const beforeState = await fetchState()
+        await updateStabilityPoolUsersSnapshot(contracts, users, "before")
 
         // Dennis provides $1,000 to the stability pool.
         await provideToSP(to1e18(1_000), dennis)
@@ -291,87 +261,71 @@ describe("StabilityPool in Normal Mode", () => {
           ).toString(),
         ).to.equal(to1e18(1_000))
 
-        const afterState = await fetchState()
+        await updateStabilityPoolUsersSnapshot(contracts, users, "after")
 
-        afterState.forEach(async (afterUserState, index) => {
-          const beforeUserState = beforeState[index]
-
-          expect(beforeUserState.musd).to.equal(afterUserState.musd)
-          expect(beforeUserState.collateralGain).to.equal(
-            afterUserState.collateralGain,
+        users.forEach((user) => {
+          expect(user.stabilityPool.compoundedDeposit.before).to.equal(
+            user.stabilityPool.compoundedDeposit.after,
+          )
+          expect(user.stabilityPool.collateralGain.before).to.equal(
+            user.stabilityPool.collateralGain.after,
           )
         })
       })
 
       it("provideToSP(): doesn't impact system debt, collateral or TCR", async () => {
-        const fetchState = async () => ({
-          activeDebt: await contracts.activePool.getMUSDDebt(),
-          defaultedDebt: await contracts.defaultPool.getMUSDDebt(),
-          activeCollateral: await contracts.activePool.getCollateralBalance(),
-          defaultedCollateral:
-            await contracts.defaultPool.getCollateralBalance(),
-          TCR: await getTCR(contracts),
-        })
+        type Pool = "activePool" | "defaultPool"
+        const pools: Pool[] = ["activePool", "defaultPool"]
+        const fetchState = async (checkPoint: CheckPoint) => {
+          await Promise.all(
+            pools.map((pool) =>
+              updateContractsSnapshot(
+                contracts,
+                state,
+                pool,
+                checkPoint,
+                addresses,
+              ),
+            ),
+          )
+          await updateTroveManagerSnapshot(contracts, state, checkPoint)
+        }
 
-        const beforeState = await fetchState()
+        await fetchState("before")
 
         // Dennis provides $1,000 to the stability pool.
         await provideToSP(to1e18(1_000), dennis)
-        expect(
-          (
-            await contracts.stabilityPool.getCompoundedMUSDDeposit(
-              dennis.wallet,
-            )
-          ).toString(),
-        ).to.equal(to1e18(1_000))
 
-        const afterState = await fetchState()
+        await fetchState("after")
 
-        expect(beforeState.activeDebt).to.equal(afterState.activeDebt)
-        expect(beforeState.defaultedDebt).to.equal(afterState.defaultedDebt)
-        expect(beforeState.activeCollateral).to.equal(
-          afterState.activeCollateral,
+        pools.forEach((pool) => {
+          expect(state[pool].debt.before).to.equal(state[pool].debt.after)
+          expect(state[pool].collateral.before).to.equal(
+            state[pool].collateral.after,
+          )
+        })
+
+        expect(state.troveManager.TCR.before).to.equal(
+          state.troveManager.TCR.after,
         )
-        expect(beforeState.defaultedCollateral).to.equal(
-          afterState.defaultedCollateral,
-        )
-        expect(beforeState.TCR).to.equal(afterState.TCR)
       })
 
       it("provideToSP(): doesn't impact any troves, including the caller's trove", async () => {
         const users = [whale, alice, bob, carol, dennis]
-        const price = await contracts.priceFeed.fetchPrice()
-        const fetchState = async () =>
-          Promise.all(
-            users.map(async (user) => {
-              const [debt, collateral] = await contracts.troveManager.Troves(
-                user.wallet,
-              )
-              return {
-                debt,
-                collateral,
-                ICR: await contracts.troveManager.getCurrentICR(
-                  whale.wallet,
-                  price,
-                ),
-              }
-            }),
-          )
-        const beforeState = await fetchState()
+
+        await updateTrovesSnapshot(contracts, users, "before")
 
         // Dennis provides $1,000 to the stability pool.
         await provideToSP(to1e18(1_000), dennis)
-        expect(
-          await contracts.stabilityPool.getCompoundedMUSDDeposit(dennis.wallet),
-        ).to.equal(to1e18(1_000))
 
-        const afterState = await fetchState()
+        await updateTrovesSnapshot(contracts, users, "after")
 
-        afterState.forEach((afterUserState, index) => {
-          const beforeUserState = beforeState[index]
-          expect(beforeUserState.debt).to.equal(afterUserState.debt)
-          expect(beforeUserState.collateral).to.equal(afterUserState.collateral)
-          expect(beforeUserState.ICR).to.equal(afterUserState.ICR)
+        users.forEach((user) => {
+          expect(user.trove.collateral.before).to.equal(
+            user.trove.collateral.after,
+          )
+          expect(user.trove.debt.before).to.equal(user.trove.debt.after)
+          expect(user.trove.icr.before).to.equal(user.trove.icr.after)
         })
       })
     })
@@ -409,9 +363,9 @@ describe("StabilityPool in Normal Mode", () => {
       // Alice deposits to the Pool
       await provideToSP(to1e18(2_000), alice)
 
-      expect(
-        await contracts.stabilityPool.getDepositorCollateralGain(alice.wallet),
-      ).to.equal(0n)
+      await updateStabilityPoolUserSnapshot(contracts, alice, "after")
+
+      expect(alice.stabilityPool.collateralGain.after).to.equal(0n)
     })
 
     it("provideToSP(): new deposit after past full withdrawal; depositor does not receive collateral gains", async () => {
@@ -425,9 +379,9 @@ describe("StabilityPool in Normal Mode", () => {
       // Alice deposits to the Pool
       await provideToSP(amount, alice)
 
-      expect(
-        await contracts.stabilityPool.getDepositorCollateralGain(alice.wallet),
-      ).to.equal(0n)
+      await updateStabilityPoolUserSnapshot(contracts, alice, "after")
+
+      expect(alice.stabilityPool.collateralGain.after).to.equal(0n)
     })
   })
 })

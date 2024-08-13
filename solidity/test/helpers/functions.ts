@@ -45,10 +45,17 @@ export async function getOpenTroveTotalDebt(
   return compositeDebt + fee
 }
 
+export async function getTCR(contracts: Contracts) {
+  const price = await contracts.priceFeed.fetchPrice()
+  return contracts.troveManager.getTCR(price)
+}
+
+export type CheckPoint = "before" | "after"
+
 export async function updateTroveSnapshot(
   contracts: Contracts,
   user: User,
-  checkPoint: "before" | "after",
+  checkPoint: CheckPoint,
 ) {
   const [debt, collateral, stake, status] = await contracts.troveManager.Troves(
     user.address,
@@ -64,6 +71,16 @@ export async function updateTroveSnapshot(
   user.trove.icr[checkPoint] = icr
 }
 
+export async function updateTrovesSnapshot(
+  contracts: Contracts,
+  users: User[],
+  checkPoint: CheckPoint,
+) {
+  await Promise.all(
+    users.map((user) => updateTroveSnapshot(contracts, user, checkPoint)),
+  )
+}
+
 /* Updates the snapshot of collateral and btc for either active pool or default pool.
  * In the future we can potentially include more state updates to contracts but want to avoid too much coupling for now.
  */
@@ -71,7 +88,7 @@ export async function updateContractsSnapshot(
   contracts: Contracts,
   state: ContractsState,
   pool: "activePool" | "defaultPool",
-  checkPoint: "before" | "after",
+  checkPoint: CheckPoint,
   addresses: TestingAddresses,
 ) {
   state[pool].collateral[checkPoint] =
@@ -85,7 +102,7 @@ export async function updateContractsSnapshot(
 export async function updatePendingSnapshot(
   contracts: Contracts,
   user: User,
-  checkPoint: "before" | "after",
+  checkPoint: CheckPoint,
 ) {
   const collateral = await contracts.troveManager.getPendingCollateralReward(
     user.address,
@@ -100,7 +117,7 @@ export async function updatePendingSnapshot(
 export async function updateRewardSnapshot(
   contracts: Contracts,
   user: User,
-  checkPoint: "before" | "after",
+  checkPoint: CheckPoint,
 ) {
   const [collateral, debt] = await contracts.troveManager.rewardSnapshots(
     user.address,
@@ -108,6 +125,64 @@ export async function updateRewardSnapshot(
 
   user.rewardSnapshot.collateral[checkPoint] = collateral
   user.rewardSnapshot.debt[checkPoint] = debt
+}
+
+export async function updateStabilityPoolSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  checkPoint: CheckPoint,
+) {
+  state.stabilityPool.musd[checkPoint] =
+    await contracts.stabilityPool.getTotalMUSDDeposits()
+  state.stabilityPool.P[checkPoint] = await contracts.stabilityPool.P()
+  state.stabilityPool.S[checkPoint] =
+    await contracts.stabilityPool.epochToScaleToSum(0, 0)
+}
+
+export async function updateStabilityPoolUserSnapshot(
+  contracts: Contracts,
+  user: User,
+  checkPoint: CheckPoint,
+) {
+  user.stabilityPool.compoundedDeposit[checkPoint] =
+    await contracts.stabilityPool.getCompoundedMUSDDeposit(user.wallet)
+  user.stabilityPool.deposit[checkPoint] =
+    await contracts.stabilityPool.deposits(user.wallet)
+  user.stabilityPool.collateralGain[checkPoint] =
+    await contracts.stabilityPool.getDepositorCollateralGain(user.wallet)
+
+  const [S, P] = await contracts.stabilityPool.depositSnapshots(user.wallet)
+
+  user.stabilityPool.P[checkPoint] = P
+  user.stabilityPool.S[checkPoint] = S
+}
+
+export async function updateStabilityPoolUsersSnapshot(
+  contracts: Contracts,
+  users: User[],
+  checkPoint: CheckPoint,
+) {
+  await Promise.all(
+    users.map((user) =>
+      updateStabilityPoolUserSnapshot(contracts, user, checkPoint),
+    ),
+  )
+}
+
+export async function updateMUSDUserSnapshot(
+  contracts: Contracts,
+  user: User,
+  checkPoint: CheckPoint,
+) {
+  user.musd[checkPoint] = await contracts.musd.balanceOf(user.wallet)
+}
+
+export async function updateTroveManagerSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  checkPoint: CheckPoint,
+) {
+  state.troveManager.TCR[checkPoint] = await getTCR(contracts)
 }
 
 export async function getTroveEntireColl(
@@ -285,11 +360,6 @@ export async function createLiquidationEvent(
 
   // Reset the price
   await contracts.mockAggregator.setPrice(priceBefore)
-}
-
-export async function getTCR(contracts: Contracts) {
-  const price = await contracts.priceFeed.fetchPrice()
-  return contracts.troveManager.getTCR(price)
 }
 
 export function applyLiquidationFee(collateralAmount: bigint) {
