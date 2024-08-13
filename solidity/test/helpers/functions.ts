@@ -312,15 +312,8 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   // amount of assets required for the loan
   const assetAmount = (ICR * totalDebt) / price
 
-  let sender: HardhatEthersSigner
-  if (params.sender instanceof HardhatEthersSigner) {
-    sender = params.sender
-  } else {
-    sender = params.sender.wallet
-  }
-
   const tx = await contracts.borrowerOperations
-    .connect(sender)
+    .connect(params.sender)
     .openTrove(
       maxFeePercentage,
       musdAmount,

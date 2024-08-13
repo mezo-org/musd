@@ -67,13 +67,13 @@ describe("StabilityPool in Normal Mode", () => {
     await openTrove(contracts, {
       musdAmount: "5,000",
       ICR: "200",
-      sender: alice,
+      sender: alice.wallet,
     })
 
     await openTrove(contracts, {
       musdAmount: "30,000",
       ICR: "200",
-      sender: whale,
+      sender: whale.wallet,
     })
 
     await contracts.stabilityPool
@@ -185,7 +185,7 @@ describe("StabilityPool in Normal Mode", () => {
       await openTrove(contracts, {
         musdAmount: "3,000",
         ICR: "200",
-        sender: bob,
+        sender: bob.wallet,
       })
 
       await contracts.stabilityPool.connect(bob.wallet).provideToSP(to1e18(427))
@@ -243,7 +243,7 @@ describe("StabilityPool in Normal Mode", () => {
             await openTrove(contracts, {
               musdAmount: amount,
               ICR: "200",
-              sender: user,
+              sender: user.wallet,
             })
 
             await contracts.stabilityPool
@@ -256,7 +256,7 @@ describe("StabilityPool in Normal Mode", () => {
         await openTrove(contracts, {
           musdAmount: "2,000",
           ICR: "200",
-          sender: dennis,
+          sender: dennis.wallet,
         })
 
         await createLiquidationEvent(contracts)
@@ -356,7 +356,7 @@ describe("StabilityPool in Normal Mode", () => {
       await openTrove(contracts, {
         musdAmount: "2,000",
         ICR: "120",
-        sender: bob,
+        sender: bob.wallet,
       })
 
       await contracts.stabilityPool

@@ -153,6 +153,6 @@ export interface OpenTroveParams {
   ICR?: string
   lowerHint?: string
   maxFeePercentage?: string
-  sender: HardhatEthersSigner | User
+  sender: HardhatEthersSigner
   upperHint?: string
 }
