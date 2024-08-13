@@ -71,7 +71,7 @@ export async function updateTroveSnapshot(
   user.trove.icr[checkPoint] = icr
 }
 
-export async function updateTrovesSnapshot(
+export async function updateTroveSnapshots(
   contracts: Contracts,
   users: User[],
   checkPoint: CheckPoint,

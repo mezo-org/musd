@@ -15,7 +15,7 @@ import {
   updateContractsSnapshot,
   updateMUSDUserSnapshot,
   updateTroveManagerSnapshot,
-  updateTrovesSnapshot,
+  updateTroveSnapshots,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
@@ -333,14 +333,14 @@ describe("StabilityPool in Normal Mode", () => {
       it("provideToSP(): doesn't impact any troves, including the caller's trove", async () => {
         const users = [whale, alice, bob, carol, dennis]
 
-        await updateTrovesSnapshot(contracts, users, "before")
+        await updateTroveSnapshots(contracts, users, "before")
 
         // Dennis provides $1,000 to the stability pool.
         await contracts.stabilityPool
           .connect(dennis.wallet)
           .provideToSP(to1e18(1_000))
 
-        await updateTrovesSnapshot(contracts, users, "after")
+        await updateTroveSnapshots(contracts, users, "after")
 
         users.forEach((user) => {
           expect(user.trove.collateral.before).to.equal(
