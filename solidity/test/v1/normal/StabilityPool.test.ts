@@ -35,10 +35,6 @@ describe("StabilityPool in Normal Mode", () => {
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
-  const withdrawFromSP = async (amount: bigint, user: User): Promise<void> => {
-    await contracts.stabilityPool.connect(user.wallet).withdrawFromSP(amount)
-  }
-
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
@@ -407,7 +403,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await contracts.stabilityPool.connect(alice.wallet).provideToSP(amount)
 
-      await withdrawFromSP(amount, alice)
+      await contracts.stabilityPool.connect(alice.wallet).withdrawFromSP(amount)
 
       await createLiquidationEvent(contracts)
 
