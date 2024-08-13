@@ -7,6 +7,7 @@ import {
   TestingAddresses,
   User,
   connectContracts,
+  createLiquidationEvent,
   fixture,
   getAddresses,
   getTCR,
@@ -21,7 +22,6 @@ describe("StabilityPool in Normal Mode", () => {
   let carol: User
   let dennis: User
   let eric: User
-  let frank: User
   let whale: User
   let state: ContractsState
   let contracts: Contracts
@@ -36,25 +36,6 @@ describe("StabilityPool in Normal Mode", () => {
     await contracts.stabilityPool.connect(user.wallet).withdrawFromSP(amount)
   }
 
-  const liquidate = async (): Promise<void> => {
-    const priceBefore = await contracts.priceFeed.fetchPrice()
-    await openTrove(contracts, {
-      musdAmount: "2,000", // slightly over the minimum of $1800
-      ICR: "120", // 120%
-      sender: frank,
-    })
-
-    // Drop price to 90% of prior. This makes Frank's ICR equal to 108%
-    // which is below the MCR of 110%
-    await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
-
-    // Liquidate Frank
-    await contracts.troveManager.liquidate(frank.wallet)
-
-    // Reset the price
-    await contracts.mockAggregator.setPrice(priceBefore)
-  }
-
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
@@ -67,7 +48,6 @@ describe("StabilityPool in Normal Mode", () => {
     carol = testSetup.users.carol
     dennis = testSetup.users.dennis
     eric = testSetup.users.eric
-    frank = testSetup.users.frank
     whale = testSetup.users.whale
     addresses = await getAddresses(contracts, testSetup.users)
 
@@ -135,7 +115,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): Correctly updates user snapshots of accumulated rewards per unit staked", async () => {
-      await liquidate()
+      await createLiquidationEvent(contracts)
 
       const pBefore = await contracts.stabilityPool.P()
       const sBefore = await contracts.stabilityPool.epochToScaleToSum(0, 0)
@@ -180,7 +160,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(aliceSnapshotS0).to.equal(0)
       expect(aliceSnapshotP0).to.equal(to1e18(1))
 
-      await liquidate()
+      await createLiquidationEvent(contracts)
 
       const aliceCompoundedDeposit1 =
         await contracts.stabilityPool.getCompoundedMUSDDeposit(alice.wallet)
@@ -222,7 +202,7 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(to1e18(427), bob)
 
       // Trigger another liquidation
-      await liquidate()
+      await createLiquidationEvent(contracts)
 
       const p2 = await contracts.stabilityPool.P()
       const s2 = await contracts.stabilityPool.epochToScaleToSum(0, 0)
@@ -281,7 +261,7 @@ describe("StabilityPool in Normal Mode", () => {
           sender: dennis,
         })
 
-        await liquidate()
+        await createLiquidationEvent(contracts)
       })
 
       it("provideToSP(): doesn't impact other users' deposits or collateral gains", async () => {
@@ -424,7 +404,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): new deposit; depositor does not receive collateral gains", async () => {
-      await liquidate()
+      await createLiquidationEvent(contracts)
 
       // Alice deposits to the Pool
       await provideToSP(to1e18(2_000), alice)
@@ -440,7 +420,7 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(amount, alice)
       await withdrawFromSP(amount, alice)
 
-      await liquidate()
+      await createLiquidationEvent(contracts)
 
       // Alice deposits to the Pool
       await provideToSP(amount, alice)

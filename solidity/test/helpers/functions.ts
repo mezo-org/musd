@@ -1,7 +1,7 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse } from "ethers"
-import { ethers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
 import {
   Contracts,
@@ -263,6 +263,28 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
     collateral: assetAmount,
     tx,
   }
+}
+
+export async function createLiquidationEvent(
+  contracts: Contracts,
+): Promise<void> {
+  const priceBefore = await contracts.priceFeed.fetchPrice()
+  const defaulter = (await helpers.signers.getUnnamedSigners())[8]
+  await openTrove(contracts, {
+    musdAmount: "2,000", // slightly over the minimum of $1800
+    ICR: "120", // 120%
+    sender: defaulter,
+  })
+
+  // Drop price to 90% of prior. This makes the defaulter's ICR equal to 108%
+  // which is below the MCR of 110%
+  await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
+
+  // Liquidate Frank
+  await contracts.troveManager.liquidate(defaulter)
+
+  // Reset the price
+  await contracts.mockAggregator.setPrice(priceBefore)
 }
 
 export async function getTCR(contracts: Contracts) {
