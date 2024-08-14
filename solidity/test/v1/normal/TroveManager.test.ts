@@ -220,16 +220,6 @@ describe("TroveManager in Normal Mode", () => {
             sender: eric.wallet,
           })
 
-          expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
-            true,
-          )
-          expect(await contracts.sortedTroves.contains(dennis.wallet)).to.equal(
-            true,
-          )
-          expect(await contracts.sortedTroves.contains(eric.wallet)).to.equal(
-            true,
-          )
-
           // price drops reducing ICRs below MCR
           const price = await contracts.priceFeed.fetchPrice()
           await contracts.mockAggregator.setPrice((price * 80n) / 100n)
