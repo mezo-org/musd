@@ -86,7 +86,7 @@ describe("TroveManager in Normal Mode", () => {
         // Check Alice's trove is removed
         expect(
           await contracts.sortedTroves.contains(alice.wallet.address),
-        ).to.be.equal(false)
+        ).to.equal(false)
 
         // Try to close the trove again
         await expect(
@@ -117,7 +117,7 @@ describe("TroveManager in Normal Mode", () => {
 
         state.troveManager.stakes.before =
           await contracts.troveManager.totalStakes()
-        expect(state.troveManager.stakes.before).to.be.equal(
+        expect(state.troveManager.stakes.before).to.equal(
           alice.trove.stake.before + bob.trove.stake.before,
         )
 
@@ -126,9 +126,7 @@ describe("TroveManager in Normal Mode", () => {
 
         state.troveManager.stakes.after =
           await contracts.troveManager.totalStakes()
-        expect(state.troveManager.stakes.after).to.be.equal(
-          bob.trove.stake.before,
-        )
+        expect(state.troveManager.stakes.after).to.equal(bob.trove.stake.before)
       })
 
       it("liquidate(): Removes the correct trove from the TroveOwners array, and moves the last array element to the new empty slot", async () => {
@@ -156,7 +154,7 @@ describe("TroveManager in Normal Mode", () => {
         */
         state.troveManager.troves.before =
           await contracts.troveManager.getTroveOwnersCount()
-        expect(state.troveManager.troves.before).to.be.equal(5)
+        expect(state.troveManager.troves.before).to.equal(5)
 
         // Drop the price to lower ICRs below MCR and close Carol's trove
         await dropPriceAndLiquidate(contracts, carol)
@@ -169,7 +167,7 @@ describe("TroveManager in Normal Mode", () => {
         // Check that the TroveOwners array has been updated correctly
         state.troveManager.troves.after =
           await contracts.troveManager.getTroveOwnersCount()
-        expect(state.troveManager.troves.after).to.be.equal(4)
+        expect(state.troveManager.troves.after).to.equal(4)
 
         /* After Carol is removed from the array, the last element (Eric's address) should have been moved to fill the
          * empty slot left by Carol. The TroveOwners array should now be: [Bob, Alice, Eric, Dennis] */
@@ -180,10 +178,10 @@ describe("TroveManager in Normal Mode", () => {
           contracts.troveManager.TroveOwners(3),
         ])
 
-        expect(troveOwners[0]).to.be.equal(addresses.alice)
-        expect(troveOwners[1]).to.be.equal(addresses.bob)
-        expect(troveOwners[2]).to.be.equal(addresses.eric)
-        expect(troveOwners[3]).to.be.equal(addresses.dennis)
+        expect(troveOwners[0]).to.equal(addresses.alice)
+        expect(troveOwners[1]).to.equal(addresses.bob)
+        expect(troveOwners[2]).to.equal(addresses.eric)
+        expect(troveOwners[3]).to.equal(addresses.dennis)
 
         // Check that the correct indices are recorded on the active trove structs
         const troveStructs = await Promise.all([
@@ -192,10 +190,10 @@ describe("TroveManager in Normal Mode", () => {
           contracts.troveManager.Troves(addresses.eric),
           contracts.troveManager.Troves(addresses.dennis),
         ])
-        expect(troveStructs[0][4]).to.be.equal(0)
-        expect(troveStructs[1][4]).to.be.equal(1)
-        expect(troveStructs[2][4]).to.be.equal(2)
-        expect(troveStructs[3][4]).to.be.equal(3)
+        expect(troveStructs[0][4]).to.equal(0)
+        expect(troveStructs[1][4]).to.equal(1)
+        expect(troveStructs[2][4]).to.equal(2)
+        expect(troveStructs[3][4]).to.equal(3)
       })
 
       it(
@@ -231,15 +229,15 @@ describe("TroveManager in Normal Mode", () => {
             sender: eric.wallet,
           })
 
-          expect(
-            await contracts.sortedTroves.contains(carol.wallet),
-          ).to.be.equal(true)
-          expect(
-            await contracts.sortedTroves.contains(dennis.wallet),
-          ).to.be.equal(true)
-          expect(
-            await contracts.sortedTroves.contains(eric.wallet),
-          ).to.be.equal(true)
+          expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
+            true,
+          )
+          expect(await contracts.sortedTroves.contains(dennis.wallet)).to.equal(
+            true,
+          )
+          expect(await contracts.sortedTroves.contains(eric.wallet)).to.equal(
+            true,
+          )
 
           // price drops reducing ICRs below MCR
           const price = await contracts.priceFeed.fetchPrice()
@@ -251,22 +249,22 @@ describe("TroveManager in Normal Mode", () => {
           await contracts.troveManager.liquidate(eric.wallet.address)
 
           // Check defaulters are removed
-          expect(
-            await contracts.sortedTroves.contains(carol.wallet),
-          ).to.be.equal(false)
-          expect(
-            await contracts.sortedTroves.contains(dennis.wallet),
-          ).to.be.equal(false)
-          expect(
-            await contracts.sortedTroves.contains(eric.wallet),
-          ).to.be.equal(false)
+          expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
+            false,
+          )
+          expect(await contracts.sortedTroves.contains(dennis.wallet)).to.equal(
+            false,
+          )
+          expect(await contracts.sortedTroves.contains(eric.wallet)).to.equal(
+            false,
+          )
 
           // Price bounces back
           await contracts.mockAggregator.setPrice(price)
 
           // Check TCR is restored
           const tcrAfter = await getTCR(contracts)
-          expect(tcrAfter).to.be.equal(tcrBefore)
+          expect(tcrAfter).to.equal(tcrBefore)
         },
       )
 
@@ -338,7 +336,7 @@ describe("TroveManager in Normal Mode", () => {
 
         expect(
           (entireSystemCollBefore * newPrice) / entireSystemDebtBefore,
-        ).to.be.equal(tcrBefore)
+        ).to.equal(tcrBefore)
 
         // Check TCR does not decrease with each liquidation
         const liquidationTx = await contracts.troveManager.liquidate(
@@ -352,16 +350,16 @@ describe("TroveManager in Normal Mode", () => {
         const remainingColl =
           (entireSystemCollBefore - collGasCompensation) * newPrice
 
-        expect(remainingColl).to.be.equal(
+        expect(remainingColl).to.equal(
           (await contracts.troveManager.getEntireSystemColl()) * newPrice,
         )
 
         const remainingDebt = entireSystemDebtBefore
-        expect(remainingDebt).to.be.equal(
+        expect(remainingDebt).to.equal(
           await contracts.troveManager.getEntireSystemDebt(),
         )
 
-        expect(tcrAfter).to.be.equal(remainingColl / remainingDebt)
+        expect(tcrAfter).to.equal(remainingColl / remainingDebt)
       })
 
       it("liquidate(): does not affect the SP deposit or collateral gain when called on an SP depositor's address that has no trove", async () => {
@@ -376,7 +374,7 @@ describe("TroveManager in Normal Mode", () => {
           bob.wallet.address,
           dennis.wallet.address,
         )
-        expect(allowance).to.be.equal(spDeposit)
+        expect(allowance).to.equal(spDeposit)
         await contracts.musd
           .connect(bob.wallet)
           .transfer(dennis.wallet, spDeposit, { from: bob.wallet })
@@ -403,10 +401,10 @@ describe("TroveManager in Normal Mode", () => {
 
         // Check Dennis' SP deposit does not change after liquidation attempt
         await updateStabilityPoolUserSnapshot(contracts, dennis, "after")
-        expect(dennis.stabilityPool.compoundedDeposit.after).to.be.equal(
+        expect(dennis.stabilityPool.compoundedDeposit.after).to.equal(
           dennis.stabilityPool.compoundedDeposit.before,
         )
-        expect(dennis.stabilityPool.collateralGain.after).to.be.equal(
+        expect(dennis.stabilityPool.collateralGain.after).to.equal(
           dennis.stabilityPool.collateralGain.before,
         )
       })
@@ -435,10 +433,10 @@ describe("TroveManager in Normal Mode", () => {
         // Check that Bob's SP deposit and collateral gain have not changed
         await updateStabilityPoolUserSnapshot(contracts, bob, "after")
 
-        expect(bob.stabilityPool.compoundedDeposit.after).to.be.equal(
+        expect(bob.stabilityPool.compoundedDeposit.after).to.equal(
           bob.stabilityPool.compoundedDeposit.before,
         )
-        expect(bob.stabilityPool.collateralGain.after).to.be.equal(
+        expect(bob.stabilityPool.collateralGain.after).to.equal(
           bob.stabilityPool.collateralGain.before,
         )
       })
@@ -545,19 +543,17 @@ describe("TroveManager in Normal Mode", () => {
         await updateTroveSnapshot(contracts, alice, "before")
         await updateTroveSnapshot(contracts, bob, "before") // not strictly necessary but for completeness
 
-        expect(await contracts.troveManager.totalStakesSnapshot()).to.be.equal(
+        expect(await contracts.troveManager.totalStakesSnapshot()).to.equal(0n)
+        expect(await contracts.troveManager.totalCollateralSnapshot()).to.equal(
           0n,
         )
-        expect(
-          await contracts.troveManager.totalCollateralSnapshot(),
-        ).to.be.equal(0n)
 
         // Drop the price to lower ICRs below MCR and close Alice's trove
         await dropPriceAndLiquidate(contracts, alice)
 
         // Total stakes should be equal to Bob's stake
         await updateTroveSnapshot(contracts, bob, "after")
-        expect(await contracts.troveManager.totalStakesSnapshot()).to.be.equal(
+        expect(await contracts.troveManager.totalStakesSnapshot()).to.equal(
           bob.trove.stake.after,
         )
 
@@ -568,9 +564,9 @@ describe("TroveManager in Normal Mode", () => {
         const expectedCollateral =
           bob.trove.collateral.after +
           applyLiquidationFee(alice.trove.collateral.before)
-        expect(
-          await contracts.troveManager.totalCollateralSnapshot(),
-        ).to.be.equal(expectedCollateral)
+        expect(await contracts.troveManager.totalCollateralSnapshot()).to.equal(
+          expectedCollateral,
+        )
       })
 
       it("liquidate(): updates the L_Collateral and L_MUSDDebt reward-per-unit-staked totals", async () => {
@@ -600,13 +596,13 @@ describe("TroveManager in Normal Mode", () => {
           bob.trove.collateral.before + alice.trove.collateral.before
         const expectedLCollateralAfterCarolLiquidated =
           liquidatedColl / remainingColl
-        expect(await contracts.troveManager.L_Collateral()).to.be.equal(
+        expect(await contracts.troveManager.L_Collateral()).to.equal(
           expectedLCollateralAfterCarolLiquidated,
         )
 
         const expectedLMUSDDebtAfterCarolLiquidated =
           to1e18(carol.trove.debt.before) / remainingColl
-        expect(await contracts.troveManager.L_MUSDDebt()).to.be.equal(
+        expect(await contracts.troveManager.L_MUSDDebt()).to.equal(
           expectedLMUSDDebtAfterCarolLiquidated,
         )
 
@@ -644,7 +640,7 @@ describe("TroveManager in Normal Mode", () => {
           expectedLCollateralAfterCarolLiquidated +
           aliceCollWithReward / bob.trove.collateral.before
 
-        expect(await contracts.troveManager.L_Collateral()).to.be.equal(
+        expect(await contracts.troveManager.L_Collateral()).to.equal(
           expectedLCollateralAfterAliceLiquidated,
         )
 
@@ -677,10 +673,10 @@ describe("TroveManager in Normal Mode", () => {
         await setupTroves()
         // Alice's Trove has ICR = 4, which is above the MCR
         await updateTroveSnapshot(contracts, alice, "before")
-        expect(alice.trove.icr.before).to.be.equal(to1e18(4))
+        expect(alice.trove.icr.before).to.equal(to1e18(4))
 
         const mcr = (await contracts.troveManager.MCR()).toString()
-        expect(mcr).to.be.equal(to1e18(1.1))
+        expect(mcr).to.equal(to1e18(1.1))
 
         const targetICR = 1111111111111111111n
 
@@ -707,7 +703,7 @@ describe("TroveManager in Normal Mode", () => {
         const status = (
           await contracts.troveManager.Troves(alice.wallet.address)
         )[3]
-        expect(status).to.be.equal(3) // status enum 3 corresponds to "Closed by liquidation"
+        expect(status).to.equal(3) // status enum 3 corresponds to "Closed by liquidation"
 
         const aliceTroveIsInSortedList = await contracts.sortedTroves.contains(
           alice.wallet.address,
@@ -728,23 +724,19 @@ describe("TroveManager in Normal Mode", () => {
         await updateTroveSnapshot(contracts, bob, "after")
         expect(alice.trove.icr.after).to.be.lt(to1e18(1.1))
 
-        expect(await contracts.troveManager.getTroveOwnersCount()).to.be.equal(
-          2,
-        )
+        expect(await contracts.troveManager.getTroveOwnersCount()).to.equal(2)
 
         // Close trove
         await contracts.troveManager.liquidate(alice.wallet.address)
 
         // Check Alice's trove is removed, and bob remains
-        expect(await contracts.troveManager.getTroveOwnersCount()).to.be.equal(
-          1,
-        )
+        expect(await contracts.troveManager.getTroveOwnersCount()).to.equal(1)
         expect(
           await contracts.sortedTroves.contains(alice.wallet.address),
-        ).to.be.equal(false)
+        ).to.equal(false)
         expect(
           await contracts.sortedTroves.contains(bob.wallet.address),
-        ).to.be.equal(true)
+        ).to.equal(true)
       })
 
       it("liquidate(): does nothing if trove has >= 110% ICR", async () => {
@@ -763,19 +755,19 @@ describe("TroveManager in Normal Mode", () => {
         // Check Alice and Bob are still active
         expect(
           await contracts.sortedTroves.contains(alice.wallet.address),
-        ).to.be.equal(true)
+        ).to.equal(true)
         expect(
           await contracts.sortedTroves.contains(bob.wallet.address),
-        ).to.be.equal(true)
+        ).to.equal(true)
 
         state.troveManager.troves.after =
           await contracts.troveManager.getTroveOwnersCount()
-        expect(state.troveManager.troves.before).to.be.equal(
+        expect(state.troveManager.troves.before).to.equal(
           state.troveManager.troves.after,
         )
 
         const tcrAfter = await contracts.troveManager.getTCR(price)
-        expect(tcrBefore).to.be.equal(tcrAfter)
+        expect(tcrBefore).to.equal(tcrAfter)
       })
 
       it("liquidate(): liquidates based on entire collateral/debt (including pending rewards), not raw collateral/debt", async () => {
@@ -825,8 +817,8 @@ describe("TroveManager in Normal Mode", () => {
         expect(carol.trove.icr.after).to.be.below(mcr)
 
         // Bob's ICR including pending rewards is below the MCR, but his raw coll and debt have not changed
-        expect(bob.trove.debt.after).to.be.equal(bob.trove.debt.before)
-        expect(bob.trove.debt.after).to.be.equal(bob.trove.debt.before)
+        expect(bob.trove.debt.after).to.equal(bob.trove.debt.before)
+        expect(bob.trove.debt.after).to.equal(bob.trove.debt.before)
 
         // Whale (Eric) enters the system, ensuring we don't go into recovery mode
         await openTrove(contracts, {
@@ -843,26 +835,26 @@ describe("TroveManager in Normal Mode", () => {
         await contracts.troveManager.liquidate(carol.address)
 
         // Check Alice stays active, Bob and Carol get liquidated
-        expect(
-          await contracts.sortedTroves.contains(alice.address),
-        ).to.be.equal(true)
-        expect(await contracts.sortedTroves.contains(bob.address)).to.be.equal(
+        expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
+          true,
+        )
+        expect(await contracts.sortedTroves.contains(bob.address)).to.equal(
           false,
         )
-        expect(
-          await contracts.sortedTroves.contains(carol.address),
-        ).to.be.equal(false)
+        expect(await contracts.sortedTroves.contains(carol.address)).to.equal(
+          false,
+        )
 
         // Check Trove statuses - Alice should be active (1), B and C are closed by liquidation (3)
         expect(
           await contracts.troveManager.getTroveStatus(alice.address),
-        ).to.be.equal(1)
+        ).to.equal(1)
         expect(
           await contracts.troveManager.getTroveStatus(bob.address),
-        ).to.be.equal(3)
+        ).to.equal(3)
         expect(
           await contracts.troveManager.getTroveStatus(carol.address),
-        ).to.be.equal(3)
+        ).to.equal(3)
       })
     })
 
@@ -877,7 +869,7 @@ describe("TroveManager in Normal Mode", () => {
         await setupTroves()
         await updateTroveSnapshot(contracts, alice, "before")
         await dropPriceAndLiquidate(contracts, alice)
-        expect(await contracts.musd.balanceOf(alice.wallet)).to.be.equal(
+        expect(await contracts.musd.balanceOf(alice.wallet)).to.equal(
           to1e18("5000"),
         )
       })
@@ -913,16 +905,14 @@ describe("TroveManager in Normal Mode", () => {
         )
         const expectedCollateralBefore =
           alice.trove.collateral.before + bob.trove.collateral.before
-        expect(state.activePool.collateral.before).to.be.equal(
+        expect(state.activePool.collateral.before).to.equal(
           expectedCollateralBefore,
         )
-        expect(state.activePool.btc.before).to.be.equal(
-          expectedCollateralBefore,
-        )
+        expect(state.activePool.btc.before).to.equal(expectedCollateralBefore)
 
         // check MUSD Debt
         state.activePool.debt.before = await contracts.activePool.getMUSDDebt()
-        expect(state.activePool.debt.before).to.be.equal(
+        expect(state.activePool.debt.before).to.equal(
           alice.trove.debt.before + bob.trove.debt.before,
         )
 
@@ -938,16 +928,14 @@ describe("TroveManager in Normal Mode", () => {
           addresses,
         )
 
-        expect(state.activePool.collateral.after).to.be.equal(
+        expect(state.activePool.collateral.after).to.equal(
           bob.trove.collateral.before,
         )
-        expect(state.activePool.btc.after).to.be.equal(
-          bob.trove.collateral.before,
-        )
+        expect(state.activePool.btc.after).to.equal(bob.trove.collateral.before)
 
         // check ActivePool MUSD debt
         state.activePool.debt.after = await contracts.activePool.getMUSDDebt()
-        expect(state.activePool.debt.after).to.be.equal(bob.trove.debt.before)
+        expect(state.activePool.debt.after).to.equal(bob.trove.debt.before)
       })
 
       it("liquidate(): increases DefaultPool collateral and MUSD debt by correct amounts", async () => {
@@ -963,13 +951,13 @@ describe("TroveManager in Normal Mode", () => {
         )
 
         // check DefaultPool collateral
-        expect(state.defaultPool.collateral.before).to.be.equal(0n)
-        expect(state.defaultPool.btc.before).to.be.equal(0n)
+        expect(state.defaultPool.collateral.before).to.equal(0n)
+        expect(state.defaultPool.btc.before).to.equal(0n)
 
         // check MUSD Debt
         state.defaultPool.debt.before =
           await contracts.defaultPool.getMUSDDebt()
-        expect(state.defaultPool.debt.before).to.be.equal(0n)
+        expect(state.defaultPool.debt.before).to.equal(0n)
 
         await dropPriceAndLiquidate(contracts, alice)
 
@@ -984,18 +972,16 @@ describe("TroveManager in Normal Mode", () => {
         const expectedDefaultPoolCollateral = applyLiquidationFee(
           alice.trove.collateral.before,
         )
-        expect(state.defaultPool.collateral.after).to.be.equal(
+        expect(state.defaultPool.collateral.after).to.equal(
           expectedDefaultPoolCollateral,
         )
-        expect(state.defaultPool.btc.after).to.be.equal(
+        expect(state.defaultPool.btc.after).to.equal(
           expectedDefaultPoolCollateral,
         )
 
         // DefaultPool total debt after should increase by Alice's total debt
         state.defaultPool.debt.after = await contracts.defaultPool.getMUSDDebt()
-        expect(state.defaultPool.debt.after).to.be.equal(
-          alice.trove.debt.before,
-        )
+        expect(state.defaultPool.debt.after).to.equal(alice.trove.debt.before)
       })
     })
   })
