@@ -201,7 +201,7 @@ describe("TroveManager in Normal Mode", () => {
           // Approve up to $10k to be sent to the stability pool for Bob.
           await provideToSP(contracts, addresses, bob.wallet, to1e18("10000"))
 
-          const tcrBefore = await getTCR(contracts)
+          await updateTroveManagerSnapshot(contracts, state, "before")
 
           // Open additional troves with low enough ICRs that they will default on a small price drop
           await openTrove(contracts, {
@@ -254,8 +254,10 @@ describe("TroveManager in Normal Mode", () => {
           await contracts.mockAggregator.setPrice(price)
 
           // Check TCR is restored
-          const tcrAfter = await getTCR(contracts)
-          expect(tcrAfter).to.equal(tcrBefore)
+          await updateTroveManagerSnapshot(contracts, state, "before")
+          expect(state.troveManager.TCR.after).to.equal(
+            state.troveManager.TCR.before,
+          )
         },
       )
 
