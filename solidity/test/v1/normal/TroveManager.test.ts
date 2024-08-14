@@ -704,9 +704,6 @@ describe("TroveManager in Normal Mode", () => {
         await setupTroves()
         await updateTroveManagerSnapshot(contracts, state, "before")
 
-        const price = await contracts.priceFeed.fetchPrice()
-        const tcrBefore = await contracts.troveManager.getTCR(price)
-
         // Attempt to liquidate Alice
         await expect(
           contracts.troveManager.liquidate(alice.wallet.address),
@@ -725,8 +722,9 @@ describe("TroveManager in Normal Mode", () => {
           state.troveManager.troves.after,
         )
 
-        const tcrAfter = await contracts.troveManager.getTCR(price)
-        expect(tcrBefore).to.equal(tcrAfter)
+        expect(state.troveManager.TCR.before).to.equal(
+          state.troveManager.TCR.after,
+        )
       })
 
       it("liquidate(): liquidates based on entire collateral/debt (including pending rewards), not raw collateral/debt", async () => {
@@ -870,7 +868,6 @@ describe("TroveManager in Normal Mode", () => {
         expect(state.activePool.btc.before).to.equal(expectedCollateralBefore)
 
         // check MUSD Debt
-        state.activePool.debt.before = await contracts.activePool.getMUSDDebt()
         expect(state.activePool.debt.before).to.equal(
           alice.trove.debt.before + bob.trove.debt.before,
         )
