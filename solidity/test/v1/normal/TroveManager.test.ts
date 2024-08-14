@@ -175,10 +175,12 @@ describe("TroveManager in Normal Mode", () => {
           contracts.troveManager.TroveOwners(3),
         ])
 
-        expect(troveOwners[0]).to.equal(addresses.alice)
-        expect(troveOwners[1]).to.equal(addresses.bob)
-        expect(troveOwners[2]).to.equal(addresses.eric)
-        expect(troveOwners[3]).to.equal(addresses.dennis)
+        expect(troveOwners).to.deep.equal([
+          addresses.alice,
+          addresses.bob,
+          addresses.eric,
+          addresses.dennis,
+        ])
 
         // Check that the correct indices are recorded on the active trove structs
         const troveStructs = await Promise.all([
