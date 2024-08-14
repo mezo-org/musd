@@ -168,12 +168,11 @@ describe("TroveManager in Normal Mode", () => {
 
         /* After Carol is removed from the array, the last element (Eric's address) should have been moved to fill the
          * empty slot left by Carol. The TroveOwners array should now be: [Bob, Alice, Eric, Dennis] */
-        const troveOwners = await Promise.all([
-          contracts.troveManager.TroveOwners(0),
-          contracts.troveManager.TroveOwners(1),
-          contracts.troveManager.TroveOwners(2),
-          contracts.troveManager.TroveOwners(3),
-        ])
+        const troveOwners = await Promise.all(
+          [0, 1, 2, 3].map((index) =>
+            contracts.troveManager.TroveOwners(index),
+          ),
+        )
 
         expect(troveOwners).to.deep.equal([
           addresses.alice,
@@ -183,12 +182,11 @@ describe("TroveManager in Normal Mode", () => {
         ])
 
         // Check that the correct indices are recorded on the active trove structs
-        const troveStructs = await Promise.all([
-          contracts.troveManager.Troves(addresses.alice),
-          contracts.troveManager.Troves(addresses.bob),
-          contracts.troveManager.Troves(addresses.eric),
-          contracts.troveManager.Troves(addresses.dennis),
-        ])
+        const troveStructs = await Promise.all(
+          [alice, bob, eric, dennis].map((user) =>
+            contracts.troveManager.Troves(user.address),
+          ),
+        )
         expect(troveStructs[0][4]).to.equal(0)
         expect(troveStructs[1][4]).to.equal(1)
         expect(troveStructs[2][4]).to.equal(2)
