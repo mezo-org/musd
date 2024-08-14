@@ -185,6 +185,10 @@ export async function updateTroveManagerSnapshot(
   checkPoint: CheckPoint,
 ) {
   state.troveManager.TCR[checkPoint] = await getTCR(contracts)
+  state.troveManager.stakes[checkPoint] =
+    await contracts.troveManager.totalStakes()
+  state.troveManager.troves[checkPoint] =
+    await contracts.troveManager.getTroveOwnersCount()
 }
 
 export async function getTroveEntireColl(
@@ -226,6 +230,49 @@ export async function getEventArgByName(
   throw new Error(
     `The transaction logs do not contain event ${eventName} and arg ${argIndex}`,
   )
+}
+
+export async function getEmittedLiquidationValues(
+  liquidationTx: ContractTransactionResponse,
+) {
+  const abi = [
+    "event Liquidation(uint256 _liquidatedDebt, uint256 _liquidatedColl, uint256 _collGasCompensation, uint256 _MUSDGasCompensation)",
+  ]
+
+  const liquidatedDebt = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    0,
+  )
+
+  const liquidatedColl = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    1,
+  )
+
+  const collGasCompensation = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    2,
+  )
+
+  const MUSDGasCompensation = await getEventArgByName(
+    liquidationTx,
+    abi,
+    "Liquidation",
+    3,
+  )
+
+  return {
+    liquidatedDebt,
+    liquidatedColl,
+    collGasCompensation,
+    MUSDGasCompensation,
+  }
 }
 
 export async function addColl(contracts: Contracts, inputs: AddCollParams) {
@@ -360,4 +407,33 @@ export async function createLiquidationEvent(
 export function applyLiquidationFee(collateralAmount: bigint) {
   const liquidationFee = to1e18(99.5) / 100n // 0.5% liquidation fee
   return (collateralAmount * liquidationFee) / to1e18(1)
+}
+
+export async function provideToSP(
+  contracts: Contracts,
+  addresses: TestingAddresses,
+  user: User,
+  amount: bigint,
+) {
+  await contracts.musd
+    .connect(user.wallet)
+    .approve(addresses.stabilityPool, amount)
+  await contracts.stabilityPool.connect(user.wallet).provideToSP(amount)
+}
+
+export async function dropPriceAndLiquidate(contracts: Contracts, user: User) {
+  const currentPrice = await contracts.priceFeed.fetchPrice()
+  const icr = await contracts.troveManager.getCurrentICR(
+    user.wallet,
+    currentPrice,
+  )
+
+  // Set target ICR to just slightly less than MCR
+  const targetICR = (await contracts.troveManager.MCR()) - 1n
+
+  const newPrice = (targetICR * currentPrice) / icr
+  await contracts.mockAggregator.setPrice(newPrice)
+  const liquidationTx = await contracts.troveManager.liquidate(user.address)
+
+  return { newPrice, liquidationTx }
 }
