@@ -937,4 +937,167 @@ describe("TroveManager in Normal Mode", () => {
       })
     })
   })
+
+  describe("liquidateTroves()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("liquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
+        await setupTroves()
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "120",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "500",
+          sender: dennis.wallet,
+        })
+
+        // Liquidate Carol, creating pending rewards for everyone
+        await dropPriceAndLiquidate(contracts, carol)
+
+        // Drop price and attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
+        await dropPriceAndLiquidate(contracts, alice, false)
+        await contracts.troveManager.liquidateTroves(3)
+        expect(
+          await contracts.sortedTroves.contains(alice.wallet.address),
+        ).to.equal(false)
+        expect(
+          await contracts.sortedTroves.contains(bob.wallet.address),
+        ).to.equal(true)
+        expect(
+          await contracts.sortedTroves.contains(dennis.wallet.address),
+        ).to.equal(true)
+
+        // Drop the price so that Dennis is at risk for liquidation
+        await dropPriceAndLiquidate(contracts, dennis, false)
+        await updateTroveSnapshot(contracts, dennis, "after")
+        await updateTroveSnapshot(contracts, bob, "after")
+
+        // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
+        await contracts.troveManager.liquidateTroves(2)
+        expect(
+          await contracts.sortedTroves.contains(dennis.wallet.address),
+        ).to.equal(false)
+        expect(
+          await contracts.sortedTroves.contains(bob.wallet.address),
+        ).to.equal(true)
+      })
+
+      it("liquidateTroves(): closes every Trove with ICR < MCR, when n > number of undercollateralized troves", async () => {
+        // Open 2 troves with high ICRs
+        await setupTroves()
+
+        // Create 3 more troves with varying ICRs
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "150",
+          sender: dennis.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "450",
+          sender: eric.wallet,
+        })
+
+        await provideToSP(contracts, addresses, bob, to1e18("50,000"))
+
+        // Drop the price such that everyone with an ICR less than Alice (inclusive) can be liquidated
+        await dropPriceAndLiquidate(contracts, alice, false)
+
+        // Confirm we have the correct ICR expectations
+        const eligibleUsers = [alice, carol, dennis]
+        const ineligibleUsers = [bob, eric]
+        await Promise.all(
+          eligibleUsers.concat(ineligibleUsers).map(async (user) => {
+            await updateTroveSnapshot(contracts, user, "after")
+          }),
+        )
+        const mcr = await contracts.troveManager.MCR()
+        expect(
+          eligibleUsers.every((user) => user.trove.icr.after < mcr),
+        ).to.equal(true)
+        expect(
+          ineligibleUsers.every((user) => user.trove.icr.after > mcr),
+        ).to.equal(true)
+
+        await contracts.troveManager.liquidateTroves(5)
+
+        // Check that eligible troves have been closed by liquidation
+        const troveStructs = await Promise.all(
+          eligibleUsers.map((user) =>
+            contracts.troveManager.Troves(user.address),
+          ),
+        )
+        expect(troveStructs.every((trove) => trove[3] === 3n)).to.equal(true)
+      })
+    })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
+  })
 })

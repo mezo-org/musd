@@ -421,7 +421,14 @@ export async function provideToSP(
   await contracts.stabilityPool.connect(user.wallet).provideToSP(amount)
 }
 
-export async function dropPriceAndLiquidate(contracts: Contracts, user: User) {
+/* Drop the price enough to liquidate the provided user.  If `performLiquidation` is true, liquidate the user.
+ * Returns the new price and the liquidation transaction (if performed).
+ */
+export async function dropPriceAndLiquidate(
+  contracts: Contracts,
+  user: User,
+  performLiquidation: boolean = true,
+) {
   const currentPrice = await contracts.priceFeed.fetchPrice()
   const icr = await contracts.troveManager.getCurrentICR(
     user.wallet,
@@ -433,7 +440,9 @@ export async function dropPriceAndLiquidate(contracts: Contracts, user: User) {
 
   const newPrice = (targetICR * currentPrice) / icr
   await contracts.mockAggregator.setPrice(newPrice)
-  const liquidationTx = await contracts.troveManager.liquidate(user.address)
+  const liquidationTx = performLiquidation
+    ? await contracts.troveManager.liquidate(user.address)
+    : null
 
   return { newPrice, liquidationTx }
 }
