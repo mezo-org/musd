@@ -36,93 +36,47 @@ export interface TestingAddresses {
   carol: string
   dennis: string
   eric: string
+  frank: string
+  whale: string
   deployer: string
+}
+
+type BeforeAndAfter = {
+  before: bigint
+  after: bigint
 }
 
 export interface ContractsState {
   troveManager: {
-    baseRate: {
-      before: bigint
-      after: bigint
-    }
-    troves: {
-      before: bigint
-      after: bigint
-    }
-    stakes: {
-      before: bigint
-      after: bigint
-    }
+    baseRate: BeforeAndAfter
+    troves: BeforeAndAfter
+    stakes: BeforeAndAfter
     liquidation: {
-      collateral: {
-        before: bigint
-        after: bigint
-      }
-      debt: {
-        before: bigint
-        after: bigint
-      }
+      collateral: BeforeAndAfter
+      debt: BeforeAndAfter
     }
+    TCR: BeforeAndAfter
   }
   activePool: {
-    btc: {
-      before: bigint
-      after: bigint
-    }
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
+    btc: BeforeAndAfter
+    collateral: BeforeAndAfter
+    debt: BeforeAndAfter
   }
   defaultPool: {
-    btc: {
-      before: bigint
-      after: bigint
-    }
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
+    btc: BeforeAndAfter
+    collateral: BeforeAndAfter
+    debt: BeforeAndAfter
   }
   pcv: {
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
-    musd: {
-      before: bigint
-      after: bigint
-    }
+    collateral: BeforeAndAfter
+    debt: BeforeAndAfter
+    musd: BeforeAndAfter
   }
   stabilityPool: {
-    deposits: {
-      before: bigint
-      after: bigint
-    }
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
-    musd: {
-      before: bigint
-      after: bigint
-    }
+    collateral: BeforeAndAfter
+    musd: BeforeAndAfter
+    P: BeforeAndAfter
+    S: BeforeAndAfter
   }
 }
 
@@ -143,55 +97,29 @@ export interface Contracts {
 
 export interface User {
   address: string
-  btc: {
-    before: bigint
-    after: bigint
-  }
-  musd: {
-    before: bigint
-    after: bigint
-  }
+  btc: BeforeAndAfter
+  musd: BeforeAndAfter
   trove: {
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
-    icr: {
-      before: bigint
-      after: bigint
-    }
-    stake: {
-      before: bigint
-      after: bigint
-    }
-    status: {
-      before: bigint
-      after: bigint
-    }
+    collateral: BeforeAndAfter
+    debt: BeforeAndAfter
+    icr: BeforeAndAfter
+    stake: BeforeAndAfter
+    status: BeforeAndAfter
   }
   rewardSnapshot: {
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
+    collateral: BeforeAndAfter
+    debt: BeforeAndAfter
   }
   pending: {
-    collateral: {
-      before: bigint
-      after: bigint
-    }
-    debt: {
-      before: bigint
-      after: bigint
-    }
+    collateral: BeforeAndAfter
+    debt: BeforeAndAfter
+  }
+  stabilityPool: {
+    compoundedDeposit: BeforeAndAfter
+    deposit: BeforeAndAfter
+    collateralGain: BeforeAndAfter
+    P: BeforeAndAfter
+    S: BeforeAndAfter
   }
   wallet: HardhatEthersSigner
 }
@@ -202,6 +130,8 @@ export interface Users {
   carol: User
   dennis: User
   eric: User
+  frank: User
+  whale: User
   deployer: User
 }
 

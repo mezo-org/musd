@@ -21,7 +21,7 @@ interface ISortedTroves {
 
     function insert(
         address _id,
-        uint256 _ICR,
+        uint256 _NICR,
         address _prevId,
         address _nextId
     ) external;
@@ -30,7 +30,7 @@ interface ISortedTroves {
 
     function reInsert(
         address _id,
-        uint256 _newICR,
+        uint256 _newNICR,
         address _prevId,
         address _nextId
     ) external;
@@ -54,13 +54,13 @@ interface ISortedTroves {
     function getPrev(address _id) external view returns (address);
 
     function validInsertPosition(
-        uint256 _ICR,
+        uint256 _NICR,
         address _prevId,
         address _nextId
     ) external view returns (bool);
 
     function findInsertPosition(
-        uint256 _ICR,
+        uint256 _NICR,
         address _prevId,
         address _nextId
     ) external view returns (address, address);

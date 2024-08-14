@@ -77,91 +77,40 @@ export async function deployment(overwrite: Array<string>) {
   return contracts
 }
 
+const beforeAndAfter = () => ({ before: 0n, after: 0n })
+
 function initializeContractState(): ContractsState {
   return {
     troveManager: {
-      baseRate: {
-        before: 0n,
-        after: 0n,
-      },
-      troves: {
-        before: 0n,
-        after: 0n,
-      },
-      stakes: {
-        before: 0n,
-        after: 0n,
-      },
+      baseRate: beforeAndAfter(),
+      troves: beforeAndAfter(),
+      stakes: beforeAndAfter(),
       liquidation: {
-        collateral: {
-          before: 0n,
-          after: 0n,
-        },
-        debt: {
-          before: 0n,
-          after: 0n,
-        },
+        collateral: beforeAndAfter(),
+        debt: beforeAndAfter(),
       },
+      TCR: beforeAndAfter(),
     },
     activePool: {
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
+      btc: beforeAndAfter(),
+      collateral: beforeAndAfter(),
+      debt: beforeAndAfter(),
     },
     defaultPool: {
-      btc: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
+      btc: beforeAndAfter(),
+      collateral: beforeAndAfter(),
+      debt: beforeAndAfter(),
     },
     pcv: {
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
+      collateral: beforeAndAfter(),
+      debt: beforeAndAfter(),
+      musd: beforeAndAfter(),
     },
     stabilityPool: {
-      deposits: {
-        before: 0n,
-        after: 0n,
-      },
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      musd: {
-        before: 0n,
-        after: 0n,
-      },
+      collateral: beforeAndAfter(),
+      musd: beforeAndAfter(),
+      P: beforeAndAfter(),
+      S: beforeAndAfter(),
     },
   }
 }
@@ -171,55 +120,29 @@ async function initializeUserObject(
 ): Promise<User> {
   const user: User = {
     address: await wallet.getAddress(),
-    btc: {
-      before: 0n,
-      after: 0n,
-    },
-    musd: {
-      before: 0n,
-      after: 0n,
-    },
-    trove: {
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
-      icr: {
-        before: 0n,
-        after: 0n,
-      },
-      stake: {
-        before: 0n,
-        after: 0n,
-      },
-      status: {
-        before: 0n,
-        after: 0n,
-      },
-    },
+    btc: beforeAndAfter(),
+    musd: beforeAndAfter(),
     rewardSnapshot: {
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
+      collateral: beforeAndAfter(),
+      debt: beforeAndAfter(),
     },
     pending: {
-      collateral: {
-        before: 0n,
-        after: 0n,
-      },
-      debt: {
-        before: 0n,
-        after: 0n,
-      },
+      collateral: beforeAndAfter(),
+      debt: beforeAndAfter(),
+    },
+    stabilityPool: {
+      compoundedDeposit: beforeAndAfter(),
+      deposit: beforeAndAfter(),
+      collateralGain: beforeAndAfter(),
+      P: beforeAndAfter(),
+      S: beforeAndAfter(),
+    },
+    trove: {
+      collateral: beforeAndAfter(),
+      debt: beforeAndAfter(),
+      icr: beforeAndAfter(),
+      stake: beforeAndAfter(),
+      status: beforeAndAfter(),
     },
     wallet,
   }
@@ -233,8 +156,15 @@ async function initializeUserObject(
 
 export async function fixture(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
-  const [aliceWallet, bobWallet, carolWallet, dennisWallet, ericWallet] =
-    await helpers.signers.getUnnamedSigners()
+  const [
+    aliceWallet,
+    bobWallet,
+    carolWallet,
+    dennisWallet,
+    ericWallet,
+    frankWallet,
+    whaleWallet,
+  ] = await helpers.signers.getUnnamedSigners()
   const contracts = await deployment(["MUSD", "PriceFeed", "TroveManager"])
 
   const users: Users = {
@@ -243,6 +173,8 @@ export async function fixture(): Promise<TestSetup> {
     carol: await initializeUserObject(carolWallet),
     dennis: await initializeUserObject(dennisWallet),
     eric: await initializeUserObject(ericWallet),
+    frank: await initializeUserObject(frankWallet),
+    whale: await initializeUserObject(whaleWallet),
     deployer: await initializeUserObject(deployer),
   }
 
@@ -278,6 +210,8 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     carol: users.carol.wallet.address,
     dennis: users.dennis.wallet.address,
     eric: users.eric.wallet.address,
+    frank: users.frank.wallet.address,
+    whale: users.whale.wallet.address,
     deployer: users.deployer.wallet.address,
   }
 
