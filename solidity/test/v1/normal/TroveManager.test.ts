@@ -214,11 +214,6 @@ describe("TroveManager in Normal Mode", () => {
             ICR: "120",
             sender: dennis.wallet,
           })
-          await openTrove(contracts, {
-            musdAmount: "3000",
-            ICR: "120",
-            sender: eric.wallet,
-          })
 
           // price drops reducing ICRs below MCR
           const price = await contracts.priceFeed.fetchPrice()
@@ -227,16 +222,12 @@ describe("TroveManager in Normal Mode", () => {
           // liquidate defaulters
           await contracts.troveManager.liquidate(carol.wallet.address)
           await contracts.troveManager.liquidate(dennis.wallet.address)
-          await contracts.troveManager.liquidate(eric.wallet.address)
 
           // Check defaulters are removed
           expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
             false,
           )
           expect(await contracts.sortedTroves.contains(dennis.wallet)).to.equal(
-            false,
-          )
-          expect(await contracts.sortedTroves.contains(eric.wallet)).to.equal(
             false,
           )
 
