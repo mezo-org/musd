@@ -199,13 +199,7 @@ describe("TroveManager in Normal Mode", () => {
         async () => {
           await setupTroves()
           // Approve up to $10k to be sent to the stability pool for Bob.
-          await contracts.musd
-            .connect(bob.wallet)
-            .approve(addresses.stabilityPool, to1e18(10000))
-
-          await contracts.stabilityPool
-            .connect(bob.wallet)
-            .provideToSP(to1e18(10000))
+          await provideToSP(contracts, addresses, bob.wallet, to1e18("10000"))
 
           const tcrBefore = await getTCR(contracts)
 
