@@ -412,11 +412,13 @@ export function applyLiquidationFee(collateralAmount: bigint) {
 export async function provideToSP(
   contracts: Contracts,
   addresses: TestingAddresses,
-  user: HardhatEthersSigner,
+  user: User,
   amount: bigint,
 ) {
-  await contracts.musd.connect(user).approve(addresses.stabilityPool, amount)
-  await contracts.stabilityPool.connect(user).provideToSP(amount)
+  await contracts.musd
+    .connect(user.wallet)
+    .approve(addresses.stabilityPool, amount)
+  await contracts.stabilityPool.connect(user.wallet).provideToSP(amount)
 }
 
 export async function dropPriceAndLiquidate(contracts: Contracts, user: User) {
