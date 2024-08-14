@@ -195,7 +195,7 @@ describe("TroveManager in Normal Mode", () => {
 
       it(
         "liquidate(): Given the same price and no other trove changes, " +
-          "complete Pool offsets restore the TCR to its value prior to the defaulters opening troves",
+          "complete Pool offsets restore the TCR to its prior value after liquidation of multiple defaulters",
         async () => {
           await setupTroves()
           // Approve up to $10k to be sent to the stability pool for Bob.
