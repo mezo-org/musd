@@ -17,6 +17,7 @@ import {
   TestSetup,
   updateContractsSnapshot,
   updateStabilityPoolUserSnapshot,
+  updateTroveManagerSnapshot,
   updateTroveSnapshot,
   User,
 } from "../../helpers"
@@ -114,9 +115,8 @@ describe("TroveManager in Normal Mode", () => {
         await setupTroves()
         await updateTroveSnapshot(contracts, alice, "before")
         await updateTroveSnapshot(contracts, bob, "before")
+        await updateTroveManagerSnapshot(contracts, state, "before")
 
-        state.troveManager.stakes.before =
-          await contracts.troveManager.totalStakes()
         expect(state.troveManager.stakes.before).to.equal(
           alice.trove.stake.before + bob.trove.stake.before,
         )
@@ -124,8 +124,7 @@ describe("TroveManager in Normal Mode", () => {
         // price drops reducing Alice's ICR below MCR
         await dropPriceAndLiquidate(contracts, alice)
 
-        state.troveManager.stakes.after =
-          await contracts.troveManager.totalStakes()
+        await updateTroveManagerSnapshot(contracts, state, "after")
         expect(state.troveManager.stakes.after).to.equal(bob.trove.stake.before)
       })
 
@@ -152,8 +151,7 @@ describe("TroveManager in Normal Mode", () => {
          Our TroveOwners array should now be: [Alice, Bob, Carol, Dennis, Eric].
          Note they are not sorted by ICR but by insertion order.
         */
-        state.troveManager.troves.before =
-          await contracts.troveManager.getTroveOwnersCount()
+        await updateTroveManagerSnapshot(contracts, state, "before")
         expect(state.troveManager.troves.before).to.equal(5)
 
         // Drop the price to lower ICRs below MCR and close Carol's trove
@@ -165,8 +163,7 @@ describe("TroveManager in Normal Mode", () => {
         )
 
         // Check that the TroveOwners array has been updated correctly
-        state.troveManager.troves.after =
-          await contracts.troveManager.getTroveOwnersCount()
+        await updateTroveManagerSnapshot(contracts, state, "after")
         expect(state.troveManager.troves.after).to.equal(4)
 
         /* After Carol is removed from the array, the last element (Eric's address) should have been moved to fill the
@@ -741,8 +738,7 @@ describe("TroveManager in Normal Mode", () => {
 
       it("liquidate(): does nothing if trove has >= 110% ICR", async () => {
         await setupTroves()
-        state.troveManager.troves.before =
-          await contracts.troveManager.getTroveOwnersCount()
+        await updateTroveManagerSnapshot(contracts, state, "before")
 
         const price = await contracts.priceFeed.fetchPrice()
         const tcrBefore = await contracts.troveManager.getTCR(price)
@@ -760,8 +756,7 @@ describe("TroveManager in Normal Mode", () => {
           await contracts.sortedTroves.contains(bob.wallet.address),
         ).to.equal(true)
 
-        state.troveManager.troves.after =
-          await contracts.troveManager.getTroveOwnersCount()
+        await updateTroveManagerSnapshot(contracts, state, "after")
         expect(state.troveManager.troves.before).to.equal(
           state.troveManager.troves.after,
         )
@@ -934,7 +929,6 @@ describe("TroveManager in Normal Mode", () => {
         expect(state.activePool.btc.after).to.equal(bob.trove.collateral.before)
 
         // check ActivePool MUSD debt
-        state.activePool.debt.after = await contracts.activePool.getMUSDDebt()
         expect(state.activePool.debt.after).to.equal(bob.trove.debt.before)
       })
 
@@ -955,8 +949,6 @@ describe("TroveManager in Normal Mode", () => {
         expect(state.defaultPool.btc.before).to.equal(0n)
 
         // check MUSD Debt
-        state.defaultPool.debt.before =
-          await contracts.defaultPool.getMUSDDebt()
         expect(state.defaultPool.debt.before).to.equal(0n)
 
         await dropPriceAndLiquidate(contracts, alice)
@@ -980,7 +972,6 @@ describe("TroveManager in Normal Mode", () => {
         )
 
         // DefaultPool total debt after should increase by Alice's total debt
-        state.defaultPool.debt.after = await contracts.defaultPool.getMUSDDebt()
         expect(state.defaultPool.debt.after).to.equal(alice.trove.debt.before)
       })
     })
