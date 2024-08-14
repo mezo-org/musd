@@ -144,16 +144,6 @@ async function initializeUserObject(
       stake: beforeAndAfter(),
       status: beforeAndAfter(),
     },
-    stabilityPool: {
-      deposit: {
-        before: 0n,
-        after: 0n,
-      },
-      collateralGain: {
-        before: 0n,
-        after: 0n,
-      },
-    },
     wallet,
   }
   return user

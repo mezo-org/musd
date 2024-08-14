@@ -16,7 +16,7 @@ import {
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
-  updateStabilityPoolSnapshot,
+  updateStabilityPoolUserSnapshot,
   updateTroveSnapshot,
   User,
 } from "../../helpers"
@@ -394,7 +394,7 @@ describe("TroveManager in Normal Mode", () => {
         await dropPriceAndLiquidate(contracts, alice)
 
         // Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated collateral
-        await updateStabilityPoolSnapshot(contracts, dennis, "before")
+        await updateStabilityPoolUserSnapshot(contracts, dennis, "before")
 
         // Attempt to liquidate Dennis
         await expect(
@@ -402,9 +402,9 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
 
         // Check Dennis' SP deposit does not change after liquidation attempt
-        await updateStabilityPoolSnapshot(contracts, dennis, "after")
-        expect(dennis.stabilityPool.deposit.after).to.be.equal(
-          dennis.stabilityPool.deposit.before,
+        await updateStabilityPoolUserSnapshot(contracts, dennis, "after")
+        expect(dennis.stabilityPool.compoundedDeposit.after).to.be.equal(
+          dennis.stabilityPool.compoundedDeposit.before,
         )
         expect(dennis.stabilityPool.collateralGain.after).to.be.equal(
           dennis.stabilityPool.collateralGain.before,
@@ -425,7 +425,7 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.greaterThan(await contracts.troveManager.MCR())
 
         // check Bob's SP deposit and collateral gain before liquidation
-        await updateStabilityPoolSnapshot(contracts, bob, "before")
+        await updateStabilityPoolUserSnapshot(contracts, bob, "before")
 
         // Attempt to liquidate Bob
         await expect(
@@ -433,10 +433,10 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.revertedWith("TroveManager: nothing to liquidate")
 
         // Check that Bob's SP deposit and collateral gain have not changed
-        await updateStabilityPoolSnapshot(contracts, bob, "after")
+        await updateStabilityPoolUserSnapshot(contracts, bob, "after")
 
-        expect(bob.stabilityPool.deposit.after).to.be.equal(
-          bob.stabilityPool.deposit.before,
+        expect(bob.stabilityPool.compoundedDeposit.after).to.be.equal(
+          bob.stabilityPool.compoundedDeposit.before,
         )
         expect(bob.stabilityPool.collateralGain.after).to.be.equal(
           bob.stabilityPool.collateralGain.before,
@@ -468,14 +468,14 @@ describe("TroveManager in Normal Mode", () => {
         // Alice deposits into the stability pool
         const aliceSPDeposit = to1e18(25000)
         await provideToSP(contracts, addresses, alice.wallet, aliceSPDeposit)
-        await updateStabilityPoolSnapshot(contracts, alice, "before")
+        await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
         // Price drops, carol gets liquidated
         await dropPriceAndLiquidate(contracts, carol)
 
         // Alice's deposit should decrease by Carol's debt
-        await updateStabilityPoolSnapshot(contracts, alice, "after")
-        expect(alice.stabilityPool.deposit.after).to.be.closeTo(
+        await updateStabilityPoolUserSnapshot(contracts, alice, "after")
+        expect(alice.stabilityPool.compoundedDeposit.after).to.be.closeTo(
           aliceSPDeposit - carol.trove.debt.before,
           1000000n,
         )
@@ -495,12 +495,14 @@ describe("TroveManager in Normal Mode", () => {
         await dropPriceAndLiquidate(contracts, alice)
 
         // Alice's new deposit should decrease by her share of her own debt
-        const totalDeposits = alice.stabilityPool.deposit.after + bobSPDeposit
+        const totalDeposits =
+          alice.stabilityPool.compoundedDeposit.after + bobSPDeposit
         const aliceShareOfDebt =
-          (alice.trove.debt.after * alice.stabilityPool.deposit.after) /
+          (alice.trove.debt.after *
+            alice.stabilityPool.compoundedDeposit.after) /
           totalDeposits
         const aliceExpectedDeposit =
-          alice.stabilityPool.deposit.after - aliceShareOfDebt
+          alice.stabilityPool.compoundedDeposit.after - aliceShareOfDebt
         const aliceDepositFinal =
           await contracts.stabilityPool.getCompoundedMUSDDeposit(alice.wallet)
         expect(aliceDepositFinal).to.be.closeTo(aliceExpectedDeposit, 1000000n)
@@ -508,7 +510,7 @@ describe("TroveManager in Normal Mode", () => {
         // Alice's new collateral gain should increase by her share of her own collateral less the liquidation fee
         const aliceCollateralShare =
           (applyLiquidationFee(alice.trove.collateral.after) *
-            alice.stabilityPool.deposit.after) /
+            alice.stabilityPool.compoundedDeposit.after) /
           totalDeposits
         const aliceExpectedCollateralGain =
           alice.stabilityPool.collateralGain.after + aliceCollateralShare
@@ -523,9 +525,9 @@ describe("TroveManager in Normal Mode", () => {
         const bobShareOfDebt =
           (alice.trove.debt.after * bobSPDeposit) / totalDeposits
         const bobExpectedDeposit = bobSPDeposit - bobShareOfDebt
-        await updateStabilityPoolSnapshot(contracts, bob, "after")
+        await updateStabilityPoolUserSnapshot(contracts, bob, "after")
         expect(bobExpectedDeposit).to.be.closeTo(
-          bob.stabilityPool.deposit.after,
+          bob.stabilityPool.compoundedDeposit.after,
           1000000n,
         )
         // Bob's new collateral gain should increase by his share of Alice's collateral less the liquidation fee

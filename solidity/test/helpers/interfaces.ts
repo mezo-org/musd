@@ -121,16 +121,6 @@ export interface User {
     P: BeforeAndAfter
     S: BeforeAndAfter
   }
-  stabilityPool: {
-    deposit: {
-      before: bigint
-      after: bigint
-    }
-    collateralGain: {
-      before: bigint
-      after: bigint
-    }
-  }
   wallet: HardhatEthersSigner
 }
 
