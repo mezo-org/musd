@@ -199,7 +199,7 @@ describe("TroveManager in Normal Mode", () => {
         async () => {
           await setupTroves()
           // Approve up to $10k to be sent to the stability pool for Bob.
-          await provideToSP(contracts, addresses, bob, to1e18("10000"))
+          await provideToSP(contracts, bob, to1e18("10000"))
 
           await updateTroveManagerSnapshot(contracts, state, "before")
 
@@ -244,7 +244,7 @@ describe("TroveManager in Normal Mode", () => {
 
       it("liquidate(): Pool offsets increase the TCR", async () => {
         await setupTroves()
-        await provideToSP(contracts, addresses, bob, to1e18("10000"))
+        await provideToSP(contracts, bob, to1e18("10000"))
 
         // Open additional troves with low enough ICRs that they will default on a small price drop
         await openTrove(contracts, {
@@ -347,7 +347,7 @@ describe("TroveManager in Normal Mode", () => {
           .transfer(dennis.wallet, spDeposit, { from: bob.wallet })
 
         // Dennis provides MUSD to SP
-        await provideToSP(contracts, addresses, dennis, spDeposit)
+        await provideToSP(contracts, dennis, spDeposit)
 
         // Alice gets liquidated
         await dropPriceAndLiquidate(contracts, alice)
@@ -373,7 +373,7 @@ describe("TroveManager in Normal Mode", () => {
       it("liquidate(): does not liquidate a SP depositor's trove with ICR > 110%, and does not affect their SP deposit or collateral gain", async () => {
         await setupTroves()
         const spDeposit = to1e18(10000)
-        await provideToSP(contracts, addresses, bob, spDeposit)
+        await provideToSP(contracts, bob, spDeposit)
 
         // liquidate Alice
         const { newPrice } = await dropPriceAndLiquidate(contracts, alice)
@@ -426,7 +426,7 @@ describe("TroveManager in Normal Mode", () => {
 
         // Alice deposits into the stability pool
         const aliceSPDeposit = to1e18(25000)
-        await provideToSP(contracts, addresses, alice, aliceSPDeposit)
+        await provideToSP(contracts, alice, aliceSPDeposit)
         await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
         // Price drops, carol gets liquidated
@@ -447,7 +447,7 @@ describe("TroveManager in Normal Mode", () => {
 
         // Bob deposits into the stability pool
         const bobSPDeposit = to1e18(50000)
-        await provideToSP(contracts, addresses, bob, bobSPDeposit)
+        await provideToSP(contracts, bob, bobSPDeposit)
 
         // Price drops, Alice gets liquidated
         await updateTroveSnapshot(contracts, alice, "after")
