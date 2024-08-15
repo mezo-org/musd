@@ -12,6 +12,7 @@ import {
   fixture,
   getAddresses,
   openTrove,
+  provideToSP,
   updateContractsSnapshot,
   updateMUSDUserSnapshot,
   updateTroveManagerSnapshot,
@@ -28,7 +29,6 @@ describe("StabilityPool in Normal Mode", () => {
   let bob: User
   let carol: User
   let dennis: User
-  let eric: User
   let whale: User
   let state: ContractsState
   let contracts: Contracts
@@ -46,19 +46,8 @@ describe("StabilityPool in Normal Mode", () => {
     bob = testSetup.users.bob
     carol = testSetup.users.carol
     dennis = testSetup.users.dennis
-    eric = testSetup.users.eric
     whale = testSetup.users.whale
     addresses = await getAddresses(contracts, testSetup.users)
-
-    // Approve each user to deposit 100k to the stability pool.
-    const amount = to1e18(100_000)
-    await Promise.all(
-      [alice, bob, carol, dennis, eric, whale].map(async (user) => {
-        await contracts.musd
-          .connect(user.wallet)
-          .approve(addresses.stabilityPool, amount)
-      }),
-    )
 
     // set 1 BTC = $1000 for ease of math
     await contracts.mockAggregator.setPrice(to1e18(1_000))
@@ -76,9 +65,7 @@ describe("StabilityPool in Normal Mode", () => {
       sender: whale.wallet,
     })
 
-    await contracts.stabilityPool
-      .connect(whale.wallet)
-      .provideToSP(to1e18(20_000))
+    await provideToSP(contracts, whale, to1e18(20_000))
   })
 
   describe("provideToSP()", () => {
@@ -86,7 +73,7 @@ describe("StabilityPool in Normal Mode", () => {
       const amount = to1e18(30)
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
-      await contracts.stabilityPool.connect(alice.wallet).provideToSP(amount)
+      await provideToSP(contracts, alice, amount)
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(state.stabilityPool.musd.after).to.equal(
@@ -96,7 +83,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("provideToSP(): updates the user's deposit record in StabilityPool", async () => {
       const amount = to1e18(200)
-      await contracts.stabilityPool.connect(alice.wallet).provideToSP(amount)
+      await provideToSP(contracts, alice, amount)
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
@@ -108,7 +95,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       const amount = to1e18(200)
 
-      await contracts.stabilityPool.connect(alice.wallet).provideToSP(amount)
+      await provideToSP(contracts, alice, amount)
 
       await updateMUSDUserSnapshot(contracts, alice, "after")
 
@@ -129,9 +116,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(alice.stabilityPool.S.before).to.equal(0n)
 
       // Make deposit
-      await contracts.stabilityPool
-        .connect(alice.wallet)
-        .provideToSP(to1e18(100))
+      await provideToSP(contracts, alice, to1e18(100))
 
       // Check 'After' snapshots
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
@@ -144,9 +129,7 @@ describe("StabilityPool in Normal Mode", () => {
     // To accomplish this in our state framework, we overwrite `before` and `after` each time.
     it("provideToSP(): multiple deposits: updates user's deposit and snapshots", async () => {
       // Alice makes deposit #1: $1,000
-      await contracts.stabilityPool
-        .connect(alice.wallet)
-        .provideToSP(to1e18(1_000))
+      await provideToSP(contracts, alice, to1e18(1_000))
 
       await createLiquidationEvent(contracts)
 
@@ -154,9 +137,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       // Alice makes deposit #2
       const firstDepositAmount = to1e18(100)
-      await contracts.stabilityPool
-        .connect(alice.wallet)
-        .provideToSP(firstDepositAmount)
+      await provideToSP(contracts, alice, firstDepositAmount)
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
@@ -184,7 +165,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
-      await contracts.stabilityPool.connect(bob.wallet).provideToSP(to1e18(427))
+      await provideToSP(contracts, bob, to1e18(427))
 
       // Trigger another liquidation
       await createLiquidationEvent(contracts)
@@ -201,9 +182,7 @@ describe("StabilityPool in Normal Mode", () => {
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
       // Alice makes deposit #3: $100
-      await contracts.stabilityPool
-        .connect(alice.wallet)
-        .provideToSP(to1e18(100))
+      await provideToSP(contracts, alice, to1e18(100))
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
@@ -214,11 +193,8 @@ describe("StabilityPool in Normal Mode", () => {
     it("provideToSP(): reverts if user tries to provide more than their MUSD balance", async () => {
       await updateMUSDUserSnapshot(contracts, alice, "before")
 
-      await expect(
-        contracts.stabilityPool
-          .connect(alice.wallet)
-          .provideToSP(alice.musd.before + 1n),
-      ).to.be.reverted
+      await expect(provideToSP(contracts, alice, alice.musd.before + 1n)).to.be
+        .reverted
     })
 
     it("provideToSP(): reverts if user tries to provide 2^256-1 MUSD, which exceeds their balance", async () => {
@@ -227,9 +203,7 @@ describe("StabilityPool in Normal Mode", () => {
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       )
 
-      await expect(
-        contracts.stabilityPool.connect(alice.wallet).provideToSP(maxBytes32),
-      ).to.be.reverted
+      await expect(provideToSP(contracts, alice, maxBytes32)).to.be.reverted
     })
 
     context("No unexpected state changes", async () => {
@@ -244,9 +218,7 @@ describe("StabilityPool in Normal Mode", () => {
               sender: user.wallet,
             })
 
-            await contracts.stabilityPool
-              .connect(user.wallet)
-              .provideToSP(amount)
+            await provideToSP(contracts, user, amount)
           }),
         )
 
@@ -265,9 +237,7 @@ describe("StabilityPool in Normal Mode", () => {
         await updateStabilityPoolUserSnapshots(contracts, users, "before")
 
         // Dennis provides $1,000 to the stability pool.
-        await contracts.stabilityPool
-          .connect(dennis.wallet)
-          .provideToSP(to1e18(1_000))
+        await provideToSP(contracts, dennis, to1e18(1_000))
 
         expect(
           (
@@ -310,9 +280,7 @@ describe("StabilityPool in Normal Mode", () => {
         await fetchState("before")
 
         // Dennis provides $1,000 to the stability pool.
-        await contracts.stabilityPool
-          .connect(dennis.wallet)
-          .provideToSP(to1e18(1_000))
+        await provideToSP(contracts, dennis, to1e18(1_000))
 
         await fetchState("after")
 
@@ -334,9 +302,7 @@ describe("StabilityPool in Normal Mode", () => {
         await updateTroveSnapshots(contracts, users, "before")
 
         // Dennis provides $1,000 to the stability pool.
-        await contracts.stabilityPool
-          .connect(dennis.wallet)
-          .provideToSP(to1e18(1_000))
+        await provideToSP(contracts, dennis, to1e18(1_000))
 
         await updateTroveSnapshots(contracts, users, "after")
 
@@ -357,9 +323,7 @@ describe("StabilityPool in Normal Mode", () => {
         sender: bob.wallet,
       })
 
-      await contracts.stabilityPool
-        .connect(bob.wallet)
-        .provideToSP(to1e18(2_000))
+      await provideToSP(contracts, bob, to1e18(2_000))
 
       // Price drops from $1,000 to $900
       await contracts.mockAggregator.setPrice(to1e18(900))
@@ -377,8 +341,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): providing $0 reverts", async () => {
-      await expect(contracts.stabilityPool.connect(bob.wallet).provideToSP(0n))
-        .to.be.reverted
+      await expect(provideToSP(contracts, bob, 0n)).to.be.reverted
     })
 
     it("provideToSP(): new deposit; depositor does not receive collateral gains", async () => {
@@ -386,9 +349,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       // Alice deposits to the Pool
 
-      await contracts.stabilityPool
-        .connect(alice.wallet)
-        .provideToSP(to1e18(2_000))
+      await provideToSP(contracts, alice, to1e18(2_000))
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
@@ -399,14 +360,14 @@ describe("StabilityPool in Normal Mode", () => {
       // Alice enters and then exits the pool
       const amount = to1e18(2_000)
 
-      await contracts.stabilityPool.connect(alice.wallet).provideToSP(amount)
+      await provideToSP(contracts, alice, amount)
 
       await contracts.stabilityPool.connect(alice.wallet).withdrawFromSP(amount)
 
       await createLiquidationEvent(contracts)
 
       // Alice deposits to the Pool
-      await contracts.stabilityPool.connect(alice.wallet).provideToSP(amount)
+      await provideToSP(contracts, alice, amount)
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
 
