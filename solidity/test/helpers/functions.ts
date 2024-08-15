@@ -446,3 +446,18 @@ export async function dropPriceAndLiquidate(
 
   return { newPrice, liquidationTx }
 }
+
+/*
+ * Check if the trove for the given user has the provided status and whether or not it is in the sorted list.
+ * Defaults to the values for checking if a trove has been closed by liquidation.
+ * */
+export async function checkTroveStatus(
+  contracts: Contracts,
+  user: User,
+  statusToCheck: bigint = 3n,
+  isInSortedList: boolean = false,
+) {
+  const status = await contracts.troveManager.getTroveStatus(user.wallet)
+  const inSortedList = await contracts.sortedTroves.contains(user.wallet)
+  return status === statusToCheck && isInSortedList === inSortedList
+}

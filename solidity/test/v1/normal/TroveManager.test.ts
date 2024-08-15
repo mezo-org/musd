@@ -3,6 +3,7 @@ import { expect } from "chai"
 import {
   adjustTroveToICR,
   applyLiquidationFee,
+  checkTroveStatus,
   connectContracts,
   Contracts,
   ContractsState,
@@ -1094,6 +1095,44 @@ describe("TroveManager in Normal Mode", () => {
           ),
         )
         expect(troveStructs.every((trove) => trove[3] === 3n)).to.equal(true)
+      })
+
+      it("liquidateTroves(): liquidates up to (but no more than) the requested number of undercollateralized troves", async () => {
+        await setupTroves()
+
+        // Open 3 more troves with lower ICRs
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "210",
+          sender: dennis.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "220",
+          sender: eric.wallet,
+        })
+
+        // Drop price so that all 3 troves are eligible for liquidation
+        await dropPriceAndLiquidate(contracts, eric, false)
+
+        // Attempt to liquidate 2 troves
+        await contracts.troveManager.liquidateTroves(2)
+
+        // Check that Carol and Dennis troves have been closed and are no longer in the sorted list
+        expect(await checkTroveStatus(contracts, carol)).to.equal(true)
+        expect(await checkTroveStatus(contracts, dennis)).to.equal(true)
+
+        // Check that Alice, Bob, and Eric still have active troves
+        expect(await checkTroveStatus(contracts, alice, 1n, true)).to.equal(
+          true,
+        )
+        expect(await checkTroveStatus(contracts, bob, 1n, true)).to.equal(true)
+        expect(await checkTroveStatus(contracts, eric)).to.equal(false)
       })
     })
 
