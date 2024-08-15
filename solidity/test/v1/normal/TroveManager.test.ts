@@ -1064,7 +1064,28 @@ describe("TroveManager in Normal Mode", () => {
           ineligibleUsers.every((user) => user.trove.icr.after > mcr),
         ).to.equal(true)
 
+        // Attempt to liquidate all 5 troves
         await contracts.troveManager.liquidateTroves(5)
+
+        // Check that eligible troves have been removed from the system
+        const closedTroves = await Promise.all(
+          eligibleUsers.map((user) =>
+            contracts.sortedTroves.contains(user.wallet),
+          ),
+        )
+        expect(closedTroves).to.satisfy((troves: boolean[]) =>
+          troves.every((trove: boolean) => !trove),
+        )
+
+        // Check that ineligible troves remain
+        const remainingTroves = await Promise.all(
+          ineligibleUsers.map((user) =>
+            contracts.sortedTroves.contains(user.wallet),
+          ),
+        )
+        expect(remainingTroves).to.satisfy((troves: boolean[]) =>
+          troves.every((trove: boolean) => trove),
+        )
 
         // Check that eligible troves have been closed by liquidation
         const troveStructs = await Promise.all(
