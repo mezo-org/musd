@@ -16,6 +16,12 @@ export function formatBigIntWithCommas(value: bigint): string {
   const str = temp.toString()
   // Ensure the string has at least 3 characters
   if (str.length < 3) {
+    if (str.length === 2) {
+      return `0.${str}`
+    }
+    if (str.length === 1) {
+      return `0.0${str}`
+    }
     return str
   }
 

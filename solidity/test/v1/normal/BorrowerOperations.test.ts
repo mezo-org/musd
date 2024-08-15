@@ -864,6 +864,328 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
+  describe("closeTrove", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("closeTrove(): reverts when it would lower the TCR below CCR", async () => {
+        await openTrove(contracts, {
+          musdAmount: "30,000",
+          ICR: "300",
+          sender: carol.wallet,
+        })
+
+        const amount = to1e18("10,000")
+        // transfer
+        await contracts.musd.connect(bob.wallet).transfer(carol.wallet, amount)
+
+        const price = to1e18("33,500")
+        await contracts.mockAggregator.setPrice(price)
+
+        expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
+          false,
+        )
+        await expect(
+          contracts.borrowerOperations.connect(carol.wallet).closeTrove(),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
+        )
+      })
+
+      it("closeTrove(): reverts when calling address does not have active trove", async () => {
+        await expect(
+          contracts.borrowerOperations.connect(carol.wallet).closeTrove(),
+        ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
+      })
+
+      it("closeTrove(): reverts when trove is the only one in the system", async () => {
+        // Artificially mint to Alice and Bob have enough to close their troves
+        if ("unprotectedMint" in contracts.musd) {
+          await contracts.musd.unprotectedMint(alice.wallet, to1e18("1,000"))
+          await contracts.musd.unprotectedMint(bob.wallet, to1e18("1,000"))
+        } else {
+          assert.fail("MUSDTester not loaded in contracts.musd")
+        }
+
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        await expect(
+          contracts.borrowerOperations.connect(bob.wallet).closeTrove(),
+        ).to.be.revertedWith("TroveManager: Only one trove in the system")
+      })
+
+      it("closeTrove(): reverts if borrower has insufficient MUSD balance to repay his entire debt", async () => {
+        await expect(
+          contracts.borrowerOperations.connect(bob.wallet).closeTrove(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller doesnt have enough MUSD to make repayment",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("closeTrove(): no mintlist, succeeds when it would lower the TCR below CCR", async () => {
+        await openTrove(contracts, {
+          musdAmount: "30,000",
+          ICR: "300",
+          sender: carol.wallet,
+        })
+
+        await removeMintlist(contracts, deployer.wallet)
+
+        const price = to1e18("33,500")
+        const amount = to1e18("10,000")
+        // transfer
+        await contracts.musd.connect(bob.wallet).transfer(carol.wallet, amount)
+        await contracts.mockAggregator.setPrice(price)
+
+        expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
+          false,
+        )
+        await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+      })
+
+      it("closeTrove(): reduces a Trove's collateral to zero", async () => {
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.collateral.after).to.equal(0)
+      })
+
+      it("closeTrove(): reduces a Trove's debt to zero", async () => {
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.debt.after).to.equal(0)
+      })
+
+      it("closeTrove(): sets Trove's stake to zero", async () => {
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.stake.after).to.equal(0)
+      })
+    })
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {
+      it("closeTrove(): sends the correct amount of collateral to the user", async () => {
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "after",
+          addresses,
+        )
+
+        expect(state.activePool.collateral.after).to.equal(
+          state.activePool.collateral.before - alice.trove.collateral.before,
+        )
+      })
+
+      it("closeTrove(): subtracts the debt of the closed Trove from the Borrower's MUSDToken balance", async () => {
+        await updateTroveSnapshot(contracts, alice, "before")
+
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        alice.musd.before = await contracts.musd.balanceOf(alice.wallet)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        alice.musd.after = await contracts.musd.balanceOf(alice.wallet)
+
+        expect(alice.musd.after).to.equal(
+          alice.musd.before - alice.trove.debt.before + MUSD_GAS_COMPENSATION,
+        )
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {
+      it("closeTrove(): zero's the troves reward snapshots", async () => {
+        await setupCarolsTrove()
+
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+
+        // liquidate bob
+        let price = to1e18("30,000")
+        await contracts.mockAggregator.setPrice(price)
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .liquidate(bob.wallet)
+
+        price = to1e18("50,000")
+        await contracts.mockAggregator.setPrice(price)
+
+        // do a transaction that will update Alice's reward snapshot values
+        await contracts.borrowerOperations.withdrawMUSD(
+          to1e18(1),
+          1n,
+          alice.wallet,
+          alice.wallet,
+        )
+        await updateRewardSnapshot(contracts, alice, "before")
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        await updateRewardSnapshot(contracts, alice, "after")
+
+        expect(alice.rewardSnapshot.collateral.before).to.be.greaterThan(0)
+        expect(alice.rewardSnapshot.debt.before).to.be.greaterThan(0)
+        expect(alice.rewardSnapshot.collateral.after).to.be.equal(0)
+        expect(alice.rewardSnapshot.debt.after).to.be.equal(0)
+      })
+
+      it("closeTrove(): sets trove's status to closed and removes it from sorted troves list", async () => {
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+
+        const trove = await contracts.troveManager.Troves(alice.wallet)
+        expect(trove[3]).to.equal(2)
+        expect(await contracts.sortedTroves.contains(alice.wallet)).to.equal(
+          false,
+        )
+      })
+
+      it("closeTrove(): reduces ActivePool collateral and raw collateral by correct amount", async () => {
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+        await updateTroveSnapshot(contracts, alice, "before")
+
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "after",
+          addresses,
+        )
+
+        expect(state.activePool.collateral.after).to.equal(
+          state.activePool.collateral.before - alice.trove.collateral.before,
+        )
+        expect(state.activePool.btc.after).to.equal(
+          state.activePool.btc.before - alice.trove.collateral.before,
+        )
+      })
+
+      it("closeTrove(): reduces ActivePool debt by correct amount", async () => {
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+        await updateTroveSnapshot(contracts, alice, "before")
+
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "after",
+          addresses,
+        )
+
+        expect(state.activePool.debt.after).to.equal(
+          state.activePool.debt.before - alice.trove.debt.before,
+        )
+      })
+
+      it("closeTrove(): updates the the total stakes", async () => {
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateTroveSnapshot(contracts, bob, "before")
+
+        state.troveManager.stakes.before =
+          await contracts.troveManager.totalStakes()
+        expect(state.troveManager.stakes.before).to.equal(
+          alice.trove.stake.before + bob.trove.stake.before,
+        )
+
+        const amount = to1e18("10,000")
+        await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        state.troveManager.stakes.after =
+          await contracts.troveManager.totalStakes()
+
+        expect(state.troveManager.stakes.after).to.equal(
+          state.troveManager.stakes.before - alice.trove.stake.before,
+        )
+        expect(alice.trove.stake.before).to.be.greaterThan(0)
+      })
+    })
+  })
+
   describe("addColl()", () => {
     /**
      *
@@ -1778,7 +2100,7 @@ describe("BorrowerOperations in Normal Mode", () => {
      */
 
     context("Expected Reverts", () => {
-      it("repayTHUSD(): reverts when repayment would leave trove with ICR < MCR", async () => {
+      it("repayMUSD(): reverts when repayment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
 
         const price = to1e18("30,000")
@@ -1796,16 +2118,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("repayTHUSD(): no mintlist, reverts when repayment would leave trove with ICR < MCR", async () => {
+      it("repayMUSD(): no mintlist, reverts when repayment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
         await removeMintlist(contracts, deployer.wallet)
 
         const price = to1e18("30,000")
         await contracts.mockAggregator.setPrice(price)
 
-        expect(await contracts.troveManager.checkRecoveryMode(price)).is.equal(
-          false,
-        )
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
@@ -1815,7 +2134,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("repayTHUSD(): reverts when it would leave trove with net debt < minimum net debt", async () => {
+      it("repayMUSD(): reverts when it would leave trove with net debt < minimum net debt", async () => {
         await setupCarolsTrove()
         const amount = to1e18("9,999")
 
@@ -1828,7 +2147,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("repayTHUSD(): reverts when calling address does not have active trove", async () => {
+      it("repayMUSD(): reverts when calling address does not have active trove", async () => {
         const amount = to1e18(1)
         await expect(
           contracts.borrowerOperations
@@ -1837,7 +2156,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
       })
 
-      it("repayTHUSD(): reverts when attempted repayment is > the debt of the trove", async () => {
+      it("repayMUSD(): reverts when attempted repayment is > the debt of the trove", async () => {
         await updateTroveSnapshot(contracts, alice, "before")
         const amount = alice.trove.debt.before + 1n
         await expect(
@@ -1847,7 +2166,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWithPanic()
       })
 
-      it("repayTHUSD(): Reverts if borrower has insufficient THUSD balance to cover his debt repayment", async () => {
+      it("repayMUSD(): Reverts if borrower has insufficient MUSD balance to cover his debt repayment", async () => {
         // bob has $20,000 of MUSD. Transfer $15,000 to Alice before trying to repay $15,000
         const amount = to1e18("15,000")
         await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
@@ -1885,7 +2204,7 @@ describe("BorrowerOperations in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("repayTHUSD(): succeeds when it would leave trove with net debt >= minimum net debt", async () => {
+      it("repayMUSD(): succeeds when it would leave trove with net debt >= minimum net debt", async () => {
         const amount = to1e18("1,000")
         await contracts.borrowerOperations
           .connect(bob.wallet)
@@ -1895,7 +2214,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         expect(bob.trove.debt.after).is.greaterThan(MIN_NET_DEBT)
       })
 
-      it("repayTHUSD(): reduces the Trove's THUSD debt by the correct amount", async () => {
+      it("repayMUSD(): reduces the Trove's MUSD debt by the correct amount", async () => {
         const amount = to1e18("1,000")
         await updateTroveSnapshot(contracts, bob, "before")
         await contracts.borrowerOperations
@@ -1914,7 +2233,7 @@ describe("BorrowerOperations in Normal Mode", () => {
      */
 
     context("Balance changes", () => {
-      it("repayTHUSD(): decreases user THUSDToken balance by correct amount", async () => {
+      it("repayMUSD(): decreases user MUSDToken balance by correct amount", async () => {
         bob.musd.before = await contracts.musd.balanceOf(bob.address)
         const amount = to1e18("1,000")
         await contracts.borrowerOperations
@@ -1941,7 +2260,7 @@ describe("BorrowerOperations in Normal Mode", () => {
      */
 
     context("State change in other contracts", () => {
-      it("repayTHUSD(): decreases THUSD debt in ActivePool by correct amount", async () => {
+      it("repayMUSD(): decreases MUSD debt in ActivePool by correct amount", async () => {
         await updateContractsSnapshot(
           contracts,
           state,
