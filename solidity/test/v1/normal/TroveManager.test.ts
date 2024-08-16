@@ -22,6 +22,7 @@ import {
   updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
+  updateTroveSnapshots,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -976,14 +977,6 @@ describe("TroveManager in Normal Mode", () => {
 
     /**
      *
-     * Expected Reverts
-     *
-     */
-
-    context("Expected Reverts", () => {})
-
-    /**
-     *
      * Emitted Events
      *
      */
@@ -1041,10 +1034,11 @@ describe("TroveManager in Normal Mode", () => {
           ICR: "400",
           sender: dennis.wallet,
         })
-        await updateTroveSnapshot(contracts, alice, "before")
-        await updateTroveSnapshot(contracts, bob, "before")
-        await updateTroveSnapshot(contracts, carol, "before")
-        await updateTroveSnapshot(contracts, dennis, "before")
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "before",
+        )
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
         await dropPriceAndLiquidate(contracts, alice, false)
@@ -1102,8 +1096,7 @@ describe("TroveManager in Normal Mode", () => {
 
         // Drop the price so that Dennis is at risk for liquidation
         await dropPriceAndLiquidate(contracts, dennis, false)
-        await updateTroveSnapshot(contracts, dennis, "after")
-        await updateTroveSnapshot(contracts, bob, "after")
+        await updateTroveSnapshots(contracts, [bob, dennis], "after")
 
         // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
         await contracts.troveManager.liquidateTroves(2)
@@ -1352,9 +1345,7 @@ describe("TroveManager in Normal Mode", () => {
         await provideToSP(contracts, bob, bobDeposit)
         await provideToSP(contracts, carol, carolDeposit)
 
-        await updateTroveSnapshot(contracts, alice, "before")
-        await updateTroveSnapshot(contracts, bob, "before")
-        await updateTroveSnapshot(contracts, carol, "before")
+        await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
 
         // Price drops so we can liquidate Alice and Bob
         await dropPriceAndLiquidate(contracts, alice, false)
