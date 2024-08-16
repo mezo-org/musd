@@ -8,7 +8,6 @@ import {
   DefaultPool,
   GasPool,
   MockAggregator,
-  MUSD,
   MUSDTester,
   PCV,
   PriceFeed,
@@ -87,7 +86,7 @@ export interface Contracts {
   defaultPool: DefaultPool
   gasPool: GasPool
   mockAggregator: MockAggregator
-  musd: MUSD | MUSDTester
+  musd: MUSDTester
   pcv: PCV
   priceFeed: PriceFeed
   sortedTroves: SortedTroves

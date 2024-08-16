@@ -1,5 +1,5 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { expect, assert } from "chai"
+import { expect } from "chai"
 
 import {
   Contracts,
@@ -721,8 +721,8 @@ describe("BorrowerOperations in Recovery Mode", () => {
           .transfer(bob.address, to1e18("2,000"))
         await contracts.borrowerOperations.connect(bob.wallet).closeTrove()
 
-        const trove = await contracts.troveManager.Troves(bob.wallet)
-        expect(trove[3]).to.equal(2)
+        await updateTroveSnapshot(contracts, bob, "after")
+        expect(bob.trove.status.after).to.equal(2)
         expect(await contracts.sortedTroves.contains(bob.wallet)).to.equal(
           false,
         )
@@ -731,12 +731,8 @@ describe("BorrowerOperations in Recovery Mode", () => {
       it("closeTrove(): no mintlist, succeeds when trove is the only one in the system", async () => {
         await removeMintlist(contracts, deployer.wallet)
 
-        if ("unprotectedMint" in contracts.musd) {
-          await contracts.musd.unprotectedMint(alice.wallet, to1e18("2,000"))
-          await contracts.musd.unprotectedMint(bob.wallet, to1e18("2,000"))
-        } else {
-          assert.fail("MUSDTester not loaded in contracts.musd")
-        }
+        await contracts.musd.unprotectedMint(alice.wallet, to1e18("2,000"))
+        await contracts.musd.unprotectedMint(bob.wallet, to1e18("2,000"))
 
         await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
         await contracts.borrowerOperations.connect(bob.wallet).closeTrove()

@@ -22,6 +22,8 @@ import {
   updateRewardSnapshot,
   updatePendingSnapshot,
   updateContractsSnapshot,
+  createLiquidationEvent,
+  updateTroveManagerSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
@@ -904,12 +906,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("closeTrove(): reverts when trove is the only one in the system", async () => {
         // Artificially mint to Alice and Bob have enough to close their troves
-        if ("unprotectedMint" in contracts.musd) {
-          await contracts.musd.unprotectedMint(alice.wallet, to1e18("1,000"))
-          await contracts.musd.unprotectedMint(bob.wallet, to1e18("1,000"))
-        } else {
-          assert.fail("MUSDTester not loaded in contracts.musd")
-        }
+        await contracts.musd.unprotectedMint(alice.wallet, to1e18("1,000"))
+        await contracts.musd.unprotectedMint(bob.wallet, to1e18("1,000"))
 
         await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
         await expect(
@@ -1068,15 +1066,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const amount = to1e18("10,000")
         await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
 
-        // liquidate bob
-        let price = to1e18("30,000")
-        await contracts.mockAggregator.setPrice(price)
-        await contracts.troveManager
-          .connect(deployer.wallet)
-          .liquidate(bob.wallet)
-
-        price = to1e18("50,000")
-        await contracts.mockAggregator.setPrice(price)
+        await createLiquidationEvent(contracts)
 
         // do a transaction that will update Alice's reward snapshot values
         await contracts.borrowerOperations.withdrawMUSD(
@@ -1100,8 +1090,8 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
         await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
 
-        const trove = await contracts.troveManager.Troves(alice.wallet)
-        expect(trove[3]).to.equal(2)
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.status.after).to.equal(2)
         expect(await contracts.sortedTroves.contains(alice.wallet)).to.equal(
           false,
         )
@@ -1164,19 +1154,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("closeTrove(): updates the the total stakes", async () => {
         await updateTroveSnapshot(contracts, alice, "before")
-        await updateTroveSnapshot(contracts, bob, "before")
-
-        state.troveManager.stakes.before =
-          await contracts.troveManager.totalStakes()
-        expect(state.troveManager.stakes.before).to.equal(
-          alice.trove.stake.before + bob.trove.stake.before,
-        )
+        await updateTroveManagerSnapshot(contracts, state, "before")
 
         const amount = to1e18("10,000")
         await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
         await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
-        state.troveManager.stakes.after =
-          await contracts.troveManager.totalStakes()
+        await updateTroveManagerSnapshot(contracts, state, "after")
 
         expect(state.troveManager.stakes.after).to.equal(
           state.troveManager.stakes.before - alice.trove.stake.before,

@@ -53,13 +53,9 @@ describe("MUSD", () => {
     deployer = testSetup.users.deployer
 
     // Mint using tester functions.
-    if ("unprotectedMint" in contracts.musd) {
-      await contracts.musd.unprotectedMint(alice.wallet, to1e18(150))
-      await contracts.musd.unprotectedMint(bob.wallet, to1e18(100))
-      await contracts.musd.unprotectedMint(carol.wallet, to1e18(50))
-    } else {
-      assert.fail("MUSDTester not loaded in context.ts")
-    }
+    await contracts.musd.unprotectedMint(alice.wallet, to1e18(150))
+    await contracts.musd.unprotectedMint(bob.wallet, to1e18(100))
+    await contracts.musd.unprotectedMint(carol.wallet, to1e18(50))
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
@@ -248,11 +244,7 @@ describe("MUSD", () => {
       alice.musd.before = await contracts.musd.balanceOf(alice.wallet)
       expect(alice.musd.before).to.be.eq(to1e18(150))
 
-      if ("unprotectedMint" in contracts.musd) {
-        await contracts.musd.unprotectedMint(alice.wallet, to1e18(100))
-      } else {
-        assert.fail("MUSDTester not loaded in contracts.musd")
-      }
+      await contracts.musd.unprotectedMint(alice.wallet, to1e18(100))
 
       alice.musd.after = await contracts.musd.balanceOf(alice.wallet)
       await expect(alice.musd.after).to.be.eq(to1e18(250))
