@@ -18,7 +18,6 @@ import {
   TestSetup,
   updateContractsSnapshot,
   updateMUSDUserSnapshot,
-  updatePendingSnapshot,
   updateStabilityPoolUserSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
@@ -996,7 +995,37 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("System State Changes", () => {})
+    context("System State Changes", () => {
+      it("liquidateTroves(): A liquidation sequence containing Pool offsets increases the TCR", async () => {
+        await setupTroves()
+
+        // Open a couple more troves with the same ICR as Alice
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: dennis.wallet,
+        })
+
+        // Bob provides funds to SP
+        await provideToSP(contracts, addresses, bob, to1e18("10000"))
+
+        // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
+        await dropPriceAndLiquidate(contracts, alice, false)
+        await updateTroveManagerSnapshot(contracts, state, "before")
+
+        // Perform liquidation and check that TCR has improved
+        await contracts.troveManager.liquidateTroves(4)
+        await updateTroveManagerSnapshot(contracts, state, "after")
+        expect(state.troveManager.TCR.after).to.be.greaterThan(
+          state.troveManager.TCR.before,
+        )
+      })
+    })
 
     /**
      *
