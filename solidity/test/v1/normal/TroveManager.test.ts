@@ -1012,7 +1012,7 @@ describe("TroveManager in Normal Mode", () => {
         })
 
         // Bob provides funds to SP
-        await provideToSP(contracts, addresses, bob, to1e18("10000"))
+        await provideToSP(contracts, bob, to1e18("10000"))
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
         await dropPriceAndLiquidate(contracts, alice, false)
@@ -1023,6 +1023,42 @@ describe("TroveManager in Normal Mode", () => {
         await updateTroveManagerSnapshot(contracts, state, "after")
         expect(state.troveManager.TCR.after).to.be.greaterThan(
           state.troveManager.TCR.before,
+        )
+      })
+
+      it.only("liquidateTroves(): A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
+        await setupTroves()
+
+        // Open a couple more troves with the same ICR as Alice
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: dennis.wallet,
+        })
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateTroveSnapshot(contracts, bob, "before")
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateTroveSnapshot(contracts, dennis, "before")
+
+        // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
+        await dropPriceAndLiquidate(contracts, alice, false)
+        await updateTroveManagerSnapshot(contracts, state, "before")
+
+        // Perform liquidation and check that TCR has decreased
+        await contracts.troveManager.liquidateTroves(4)
+        await updateTroveManagerSnapshot(contracts, state, "after")
+        expect(state.troveManager.TCR.before).to.be.greaterThan(
+          state.troveManager.TCR.after,
+        )
+
+        // Check that the TCR has decreased by no more than the liquidation fee
+        expect(state.troveManager.TCR.after).to.be.greaterThanOrEqual(
+          applyLiquidationFee(state.troveManager.TCR.before),
         )
       })
     })
@@ -1099,7 +1135,7 @@ describe("TroveManager in Normal Mode", () => {
           sender: eric.wallet,
         })
 
-        await provideToSP(contracts, addresses, bob, to1e18("50,000"))
+        await provideToSP(contracts, bob, to1e18("50,000"))
 
         // Drop the price such that everyone with an ICR less than Alice (inclusive) can be liquidated
         await dropPriceAndLiquidate(contracts, alice, false)
@@ -1288,6 +1324,54 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("State change in other contracts", () => {})
+    context("State change in other contracts", () => {
+      it("liquidateTroves(): Liquidating troves with SP deposits correctly impacts their SP deposit and collateral gain", async () => {
+        // Open three troves: Alice, Bob, Carol
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "2000",
+          sender: carol.wallet,
+        })
+
+        // All deposit into the stability pool
+        const aliceDeposit = to1e18("500")
+        const bobDeposit = to1e18("1000")
+        const carolDeposit = to1e18("1500")
+        await provideToSP(contracts, alice, aliceDeposit)
+        await provideToSP(contracts, bob, bobDeposit)
+        await provideToSP(contracts, alice, carolDeposit)
+
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateTroveSnapshot(contracts, bob, "before")
+        await updateTroveSnapshot(contracts, carol, "before")
+
+        // Price drops so we can liquidate Alice and Bob
+        const { newPrice } = await dropPriceAndLiquidate(
+          contracts,
+          alice,
+          false,
+        )
+
+        // Liquidate
+        await contracts.troveManager.liquidateTroves(2)
+
+        // Check that each user's deposit has decreased by their share of the total liquidated debt
+        const totalDeposits = aliceDeposit + bobDeposit + carolDeposit
+        const totalLiquidatedDebt =
+          alice.trove.debt.before + bob.trove.debt.before
+
+        // Check that each user's collateral gain has increased by their share of the total liquidated collateral
+      })
+    })
   })
 })
