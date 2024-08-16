@@ -621,7 +621,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("repayTHUSD(): can repay debt in Recovery Mode", async () => {
+      it("repayMUSD(): can repay debt in Recovery Mode", async () => {
         const amount = to1e18("1,000")
         await updateTroveSnapshot(contracts, bob, "before")
         await contracts.borrowerOperations
@@ -632,7 +632,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
       })
 
-      it("repayTHUSD(): no mintlist, can repay debt in Recovery Mode", async () => {
+      it("repayMUSD(): no mintlist, can repay debt in Recovery Mode", async () => {
         await removeMintlist(contracts, deployer.wallet)
 
         const amount = to1e18("1,000")
@@ -643,6 +643,107 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await updateTroveSnapshot(contracts, bob, "after")
 
         expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
+      })
+    })
+
+    /**
+     *
+     *  Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
+  })
+
+  describe("closeTrove", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("closeTrove(): reverts when system is in Recovery Mode", async () => {
+        await contracts.musd
+          .connect(alice.wallet)
+          .transfer(bob.address, to1e18("2,000"))
+        await expect(
+          contracts.borrowerOperations.connect(bob.wallet).closeTrove(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Operation not permitted during Recovery Mode",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("closeTrove(): no mintlist, succeeds when in Recovery Mode", async () => {
+        await removeMintlist(contracts, deployer.wallet)
+        await contracts.musd
+          .connect(alice.wallet)
+          .transfer(bob.address, to1e18("2,000"))
+        await contracts.borrowerOperations.connect(bob.wallet).closeTrove()
+
+        await updateTroveSnapshot(contracts, bob, "after")
+        expect(bob.trove.status.after).to.equal(2)
+        expect(await contracts.sortedTroves.contains(bob.wallet)).to.equal(
+          false,
+        )
+      })
+
+      it("closeTrove(): no mintlist, succeeds when trove is the only one in the system", async () => {
+        await removeMintlist(contracts, deployer.wallet)
+
+        await contracts.musd.unprotectedMint(alice.wallet, to1e18("2,000"))
+        await contracts.musd.unprotectedMint(bob.wallet, to1e18("2,000"))
+
+        await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+        await contracts.borrowerOperations.connect(bob.wallet).closeTrove()
+
+        const trove = await contracts.troveManager.Troves(bob.wallet)
+        expect(trove[3]).to.equal(2)
+        expect(await contracts.sortedTroves.contains(bob.wallet)).to.equal(
+          false,
+        )
+
+        expect(await contracts.sortedTroves.isEmpty()).to.equal(true)
       })
     })
 

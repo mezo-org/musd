@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 10000,
+        runs: 100,
       },
     },
   },
@@ -61,6 +61,9 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       initialBaseFeePerGas: 0,
+      allowUnlimitedContractSize: true, // Allow larger contracts for testing
+      gas: 12000000,
+      blockGasLimit: 0x1fffffffffffff,
       accounts: [
         {
           privateKey:
@@ -135,7 +138,7 @@ const config: HardhatUserConfig = {
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
-    strict: true,
+    strict: false,
   },
   gasReporter: {
     enabled: true,

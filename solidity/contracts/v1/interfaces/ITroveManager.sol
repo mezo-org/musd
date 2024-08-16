@@ -94,7 +94,7 @@ interface ITroveManager {
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
         uint256 _maxIterations,
-        uint256 _maxFee
+        uint256 _maxFeePercentage
     ) external;
 
     function updateStakeAndTotalStakes(

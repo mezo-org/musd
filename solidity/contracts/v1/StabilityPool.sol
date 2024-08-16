@@ -82,6 +82,7 @@ contract StabilityPool is
 
     constructor() Ownable(msg.sender) {}
 
+    // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsActivePool();
         collateral += msg.value;
@@ -352,52 +353,6 @@ contract StabilityPool is
 
     // -- Internal ---
 
-    // Used to calculcate compounded deposits.
-    function _getCompoundedStakeFromSnapshots(
-        uint256 initialStake,
-        Snapshots memory snapshots
-    ) internal view returns (uint) {
-        uint256 snapshot_P = snapshots.P;
-        uint128 scaleSnapshot = snapshots.scale;
-        uint128 epochSnapshot = snapshots.epoch;
-
-        // If stake was made before a pool-emptying event, then it has been fully cancelled with debt -- so, return 0
-        if (epochSnapshot < currentEpoch) {
-            return 0;
-        }
-
-        uint256 compoundedStake;
-        uint128 scaleDiff = currentScale - scaleSnapshot;
-
-        /* Compute the compounded stake. If a scale change in P was made during the stake's lifetime,
-         * account for it. If more than one scale change was made, then the stake has decreased by a factor of
-         * at least 1e-9 -- so return 0.
-         */
-        if (scaleDiff == 0) {
-            compoundedStake = (initialStake * P) / snapshot_P;
-        } else if (scaleDiff == 1) {
-            compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;
-        } else {
-            // if scaleDiff >= 2
-            compoundedStake = 0;
-        }
-
-        /*
-         * If compounded deposit is less than a billionth of the initial deposit, return 0.
-         *
-         * NOTE: originally, this line was in place to stop rounding errors making the deposit
-         * too large. However, the error corrections should ensure the error in P "favors the Pool",
-         * i.e. any given compounded deposit should be slightly less than its theoretical value.
-         *
-         * Thus it's unclear whether this line is still really needed.
-         */
-        if (compoundedStake < initialStake / 1e9) {
-            return 0;
-        }
-
-        return compoundedStake;
-    }
-
     function _sendMUSDToDepositor(
         address _depositor,
         uint256 MUSDWithdrawal
@@ -610,7 +565,61 @@ contract StabilityPool is
         emit PUpdated(newP);
     }
 
-    // slither-disable-end dead-code
+    function _requireNoUnderCollateralizedTroves() internal {
+        uint256 price = priceFeed.fetchPrice();
+        address lowestTrove = sortedTroves.getLast();
+        uint256 ICR = troveManager.getCurrentICR(lowestTrove, price);
+        require(
+            ICR >= MCR,
+            "StabilityPool: Cannot withdraw while there are troves with ICR < MCR"
+        );
+    }
+
+    // Used to calculcate compounded deposits.
+    function _getCompoundedStakeFromSnapshots(
+        uint256 initialStake,
+        Snapshots memory snapshots
+    ) internal view returns (uint) {
+        uint256 snapshot_P = snapshots.P;
+        uint128 scaleSnapshot = snapshots.scale;
+        uint128 epochSnapshot = snapshots.epoch;
+
+        // If stake was made before a pool-emptying event, then it has been fully cancelled with debt -- so, return 0
+        if (epochSnapshot < currentEpoch) {
+            return 0;
+        }
+
+        uint256 compoundedStake;
+        uint128 scaleDiff = currentScale - scaleSnapshot;
+
+        /* Compute the compounded stake. If a scale change in P was made during the stake's lifetime,
+         * account for it. If more than one scale change was made, then the stake has decreased by a factor of
+         * at least 1e-9 -- so return 0.
+         */
+        if (scaleDiff == 0) {
+            compoundedStake = (initialStake * P) / snapshot_P;
+        } else if (scaleDiff == 1) {
+            compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;
+        } else {
+            // if scaleDiff >= 2
+            compoundedStake = 0;
+        }
+
+        /*
+         * If compounded deposit is less than a billionth of the initial deposit, return 0.
+         *
+         * NOTE: originally, this line was in place to stop rounding errors making the deposit
+         * too large. However, the error corrections should ensure the error in P "favors the Pool",
+         * i.e. any given compounded deposit should be slightly less than its theoretical value.
+         *
+         * Thus it's unclear whether this line is still really needed.
+         */
+        if (compoundedStake < initialStake / 1e9) {
+            return 0;
+        }
+
+        return compoundedStake;
+    }
 
     function _getCollateralGainFromSnapshots(
         uint256 initialDeposit,
@@ -640,23 +649,6 @@ contract StabilityPool is
         return collateralGain;
     }
 
-    function _requireNoUnderCollateralizedTroves() internal {
-        uint256 price = priceFeed.fetchPrice();
-        address lowestTrove = sortedTroves.getLast();
-        uint256 ICR = troveManager.getCurrentICR(lowestTrove, price);
-        require(
-            ICR >= MCR,
-            "StabilityPool: Cannot withdraw while there are troves with ICR < MCR"
-        );
-    }
-
-    function _requireUserHasDeposit(uint256 _initialDeposit) internal pure {
-        require(
-            _initialDeposit > 0,
-            "StabilityPool: User must have a non-zero deposit"
-        );
-    }
-
     function _requireCallerIsActivePool() internal view {
         require(
             msg.sender == address(activePool),
@@ -684,6 +676,13 @@ contract StabilityPool is
         require(
             collateralGain > 0,
             "StabilityPool: caller must have non-zero collateral Gain"
+        );
+    }
+
+    function _requireUserHasDeposit(uint256 _initialDeposit) internal pure {
+        require(
+            _initialDeposit > 0,
+            "StabilityPool: User must have a non-zero deposit"
         );
     }
 

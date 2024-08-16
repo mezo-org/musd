@@ -88,6 +88,33 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 collSurplus;
     }
 
+    struct ContractsCache {
+        IActivePool activePool;
+        IDefaultPool defaultPool;
+        IMUSD musdToken;
+        IPCV pcv;
+        ISortedTroves sortedTroves;
+        ICollSurplusPool collSurplusPool;
+        address gasPoolAddress;
+    }
+
+    struct SingleRedemptionValues {
+        uint256 MUSDLot;
+        uint256 collateralLot;
+        bool cancelledPartial;
+    }
+
+    struct RedemptionTotals {
+        uint256 remainingMUSD;
+        uint256 totalMUSDToRedeem;
+        uint256 totalCollateralDrawn;
+        uint256 collateralFee;
+        uint256 collateralToSendToRedeemer;
+        uint256 decayedBaseRate;
+        uint256 price;
+        uint256 totalMUSDDebtAtStart;
+    }
+
     // --- Connected contract declarations ---
 
     address public borrowerOperationsAddress;
@@ -115,6 +142,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public constant REDEMPTION_FEE_FLOOR =
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
+
+    /*
+     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
+     * Corresponds to (1 / ALPHA) in the white paper.
+     */
+    uint256 public constant BETA = 2;
 
     uint256 public baseRate;
 
@@ -213,7 +246,95 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         batchLiquidateTroves(borrowers);
     }
 
-    function liquidateTroves(uint256 _n) external override {}
+    function liquidateTroves(uint256 _n) external override {
+        ContractsCache memory contractsCache = ContractsCache(
+            activePool,
+            defaultPool,
+            IMUSD(address(0)),
+            IPCV(address(0)),
+            sortedTroves,
+            ICollSurplusPool(address(0)),
+            address(0)
+        );
+        IStabilityPool stabilityPoolCached = stabilityPool;
+
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_OuterLiquidationFunction memory vars;
+
+        LiquidationTotals memory totals;
+
+        vars.price = priceFeed.fetchPrice();
+        vars.MUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
+        vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
+
+        // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
+        if (vars.recoveryModeAtStart) {
+            totals = _getTotalsFromLiquidateTrovesSequenceRecoveryMode(
+                contractsCache,
+                vars.price,
+                vars.MUSDInStabPool,
+                _n
+            );
+        } else {
+            // if !vars.recoveryModeAtStart
+            totals = _getTotalsFromLiquidateTrovesSequenceNormalMode(
+                contractsCache.activePool,
+                contractsCache.defaultPool,
+                vars.price,
+                vars.MUSDInStabPool,
+                _n
+            );
+        }
+
+        require(
+            totals.totalDebtInSequence > 0,
+            "TroveManager: nothing to liquidate"
+        );
+
+        // Move liquidated collateral and MUSD to the appropriate pools
+        stabilityPoolCached.offset(
+            totals.totalDebtToOffset,
+            totals.totalCollToSendToSP
+        );
+        _redistributeDebtAndColl(
+            contractsCache.activePool,
+            contractsCache.defaultPool,
+            totals.totalDebtToRedistribute,
+            totals.totalCollToRedistribute
+        );
+        if (totals.totalCollSurplus > 0) {
+            contractsCache.activePool.sendCollateral(
+                address(collSurplusPool),
+                totals.totalCollSurplus
+            );
+        }
+
+        // Update system snapshots
+        _updateSystemSnapshotsExcludeCollRemainder(
+            contractsCache.activePool,
+            totals.totalCollGasCompensation
+        );
+
+        vars.liquidatedDebt = totals.totalDebtInSequence;
+        vars.liquidatedColl =
+            totals.totalCollInSequence -
+            totals.totalCollGasCompensation -
+            totals.totalCollSurplus;
+        emit Liquidation(
+            vars.liquidatedDebt,
+            vars.liquidatedColl,
+            totals.totalCollGasCompensation,
+            totals.totalMUSDGasCompensation
+        );
+
+        // Send gas compensation to caller
+        _sendGasCompensation(
+            contractsCache.activePool,
+            msg.sender,
+            totals.totalMUSDGasCompensation,
+            totals.totalCollGasCompensation
+        );
+    }
 
     function redeemCollateral(
         uint256 _MUSDAmount,
@@ -222,8 +343,145 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
         uint256 _maxIterations,
-        uint256 _maxFee
-    ) external override {}
+        uint256 _maxFeePercentage
+    ) external override {
+        ContractsCache memory contractsCache = ContractsCache(
+            activePool,
+            defaultPool,
+            musdToken,
+            pcv,
+            sortedTroves,
+            collSurplusPool,
+            gasPoolAddress
+        );
+        // slither-disable-next-line uninitialized-local
+        RedemptionTotals memory totals;
+
+        _requireValidMaxFeePercentage(_maxFeePercentage);
+        totals.price = priceFeed.fetchPrice();
+        _requireTCRoverMCR(totals.price);
+        _requireAmountGreaterThanZero(_MUSDAmount);
+        _requireMUSDBalanceCoversRedemption(
+            contractsCache.musdToken,
+            msg.sender,
+            _MUSDAmount
+        );
+
+        totals.totalMUSDDebtAtStart = getEntireSystemDebt();
+        totals.remainingMUSD = _MUSDAmount;
+        address currentBorrower;
+
+        if (
+            _isValidFirstRedemptionHint(
+                contractsCache.sortedTroves,
+                _firstRedemptionHint,
+                totals.price
+            )
+        ) {
+            currentBorrower = _firstRedemptionHint;
+        } else {
+            currentBorrower = contractsCache.sortedTroves.getLast();
+            // Find the first trove with ICR >= MCR
+            while (
+                currentBorrower != address(0) &&
+                getCurrentICR(currentBorrower, totals.price) < MCR
+            ) {
+                // slither-disable-next-line calls-loop
+                currentBorrower = contractsCache.sortedTroves.getPrev(
+                    currentBorrower
+                );
+            }
+        }
+
+        // Loop through the Troves starting from the one with lowest collateral ratio until _amount of MUSD is exchanged for collateral
+        if (_maxIterations == 0) {
+            _maxIterations = type(uint256).max;
+        }
+        while (
+            currentBorrower != address(0) &&
+            totals.remainingMUSD > 0 &&
+            _maxIterations > 0
+        ) {
+            _maxIterations--;
+            // Save the address of the Trove preceding the current one, before potentially modifying the list
+            // slither-disable-next-line calls-loop
+            address nextUserToCheck = contractsCache.sortedTroves.getPrev(
+                currentBorrower
+            );
+
+            _applyPendingRewards(
+                contractsCache.activePool,
+                contractsCache.defaultPool,
+                currentBorrower
+            );
+
+            SingleRedemptionValues
+                memory singleRedemption = _redeemCollateralFromTrove(
+                    contractsCache,
+                    currentBorrower,
+                    totals.remainingMUSD,
+                    totals.price,
+                    _upperPartialRedemptionHint,
+                    _lowerPartialRedemptionHint,
+                    _partialRedemptionHintNICR
+                );
+
+            if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
+
+            totals.totalMUSDToRedeem += singleRedemption.MUSDLot;
+            totals.totalCollateralDrawn += singleRedemption.collateralLot;
+
+            totals.remainingMUSD -= singleRedemption.MUSDLot;
+            currentBorrower = nextUserToCheck;
+        }
+        require(
+            totals.totalCollateralDrawn > 0,
+            "TroveManager: Unable to redeem any amount"
+        );
+
+        // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
+        // Use the saved total MUSD supply value, from before it was reduced by the redemption.
+        _updateBaseRateFromRedemption(
+            totals.totalCollateralDrawn,
+            totals.price,
+            totals.totalMUSDDebtAtStart
+        );
+
+        // Calculate the collateral fee
+        totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
+
+        _requireUserAcceptsFee(
+            totals.collateralFee,
+            totals.totalCollateralDrawn,
+            _maxFeePercentage
+        );
+
+        // Send the collateral fee to the PCV contract
+        contractsCache.activePool.sendCollateral(
+            address(contractsCache.pcv),
+            totals.collateralFee
+        );
+
+        totals.collateralToSendToRedeemer =
+            totals.totalCollateralDrawn -
+            totals.collateralFee;
+
+        emit Redemption(
+            _MUSDAmount,
+            totals.totalMUSDToRedeem,
+            totals.totalCollateralDrawn,
+            totals.collateralFee
+        );
+
+        // Burn the total MUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
+        contractsCache.musdToken.burn(msg.sender, totals.totalMUSDToRedeem);
+        // Update Active Pool MUSD, and send collateral to account
+        contractsCache.activePool.decreaseMUSDDebt(totals.totalMUSDToRedeem);
+        contractsCache.activePool.sendCollateral(
+            msg.sender,
+            totals.collateralToSendToRedeemer
+        );
+    }
 
     function updateStakeAndTotalStakes(
         address _borrower
@@ -256,7 +514,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _closeTrove(_borrower, Status.closedByOwner);
     }
 
-    function removeStake(address _borrower) external override {}
+    function removeStake(address _borrower) external override {
+        _requireCallerIsBorrowerOperations();
+        return _removeStake(_borrower);
+    }
 
     // Updates the baseRate state variable based on time elapsed since the last redemption or MUSD borrowing operation.
     function decayBaseRateFromBorrowing() external override {
@@ -327,22 +588,31 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getTroveFromTroveOwnersArray(
         uint256 _index
-    ) external view override returns (address) {}
+    ) external view override returns (address) {
+        return TroveOwners[_index];
+    }
 
     function getNominalICR(
         address _borrower
-    ) external view override returns (uint) {}
+    ) external view override returns (uint) {
+        (
+            uint256 currentCollateral,
+            uint256 currentMUSDDebt
+        ) = _getCurrentTroveAmounts(_borrower);
 
-    function getRedemptionRateWithDecay()
-        external
-        view
-        override
-        returns (uint)
-    {}
+        uint256 NICR = LiquityMath._computeNominalCR(
+            currentCollateral,
+            currentMUSDDebt
+        );
+        return NICR;
+    }
 
     function getRedemptionFeeWithDecay(
         uint256 _collateralDrawn
-    ) external view override returns (uint) {}
+    ) external view override returns (uint) {
+        return
+            _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
+    }
 
     // --- Borrowing fee functions ---
 
@@ -486,6 +756,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
+    function getRedemptionRateWithDecay() public view override returns (uint) {
+        return _calcRedemptionRate(_calcDecayedBaseRate());
+    }
+
     function getCurrentICR(
         address _borrower,
         uint256 _price
@@ -592,6 +866,164 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getRedemptionRate() public view override returns (uint) {
         return _calcRedemptionRate(baseRate);
+    }
+
+    /*
+     * This function is used when the liquidateTroves sequence starts during Recovery Mode. However, it
+     * handle the case where the system *leaves* Recovery Mode, part way through the liquidation sequence
+     */
+    function _getTotalsFromLiquidateTrovesSequenceRecoveryMode(
+        ContractsCache memory _contractsCache,
+        uint256 _price,
+        uint256 _MUSDInStabPool,
+        uint256 _n
+    ) internal returns (LiquidationTotals memory totals) {
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_LiquidationSequence memory vars;
+        LiquidationValues memory singleLiquidation;
+
+        vars.remainingMUSDInStabPool = _MUSDInStabPool;
+        vars.backToNormalMode = false;
+        vars.entireSystemDebt = getEntireSystemDebt();
+        vars.entireSystemColl = getEntireSystemColl();
+
+        vars.user = _contractsCache.sortedTroves.getLast();
+        address firstUser = _contractsCache.sortedTroves.getFirst();
+        for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
+            // we need to cache it, because current user is likely going to be deleted
+            address nextUser = _contractsCache.sortedTroves.getPrev(vars.user);
+
+            vars.ICR = getCurrentICR(vars.user, _price);
+
+            if (!vars.backToNormalMode) {
+                // Break the loop if ICR is greater than MCR and Stability Pool is empty
+                if (vars.ICR >= MCR && vars.remainingMUSDInStabPool == 0) {
+                    break;
+                }
+
+                uint256 TCR = LiquityMath._computeCR(
+                    vars.entireSystemColl,
+                    vars.entireSystemDebt,
+                    _price
+                );
+
+                singleLiquidation = _liquidateRecoveryMode(
+                    _contractsCache.activePool,
+                    _contractsCache.defaultPool,
+                    vars.user,
+                    vars.ICR,
+                    vars.remainingMUSDInStabPool,
+                    TCR,
+                    _price
+                );
+
+                // Update aggregate trackers
+                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
+                vars.entireSystemDebt -= singleLiquidation.debtToOffset;
+                vars.entireSystemColl -=
+                    singleLiquidation.collToSendToSP +
+                    singleLiquidation.collGasCompensation +
+                    singleLiquidation.collSurplus;
+
+                // Add liquidation values to their respective running totals
+                totals = _addLiquidationValuesToTotals(
+                    totals,
+                    singleLiquidation
+                );
+
+                vars.backToNormalMode = !_checkPotentialRecoveryMode(
+                    vars.entireSystemColl,
+                    vars.entireSystemDebt,
+                    _price
+                );
+            } else if (vars.backToNormalMode && vars.ICR < MCR) {
+                singleLiquidation = _liquidateNormalMode(
+                    _contractsCache.activePool,
+                    _contractsCache.defaultPool,
+                    vars.user,
+                    vars.remainingMUSDInStabPool
+                );
+
+                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
+
+                // Add liquidation values to their respective running totals
+                totals = _addLiquidationValuesToTotals(
+                    totals,
+                    singleLiquidation
+                );
+            } else break; // break if the loop reaches a Trove with ICR >= MCR
+
+            vars.user = nextUser;
+        }
+    }
+
+    function _getTotalsFromLiquidateTrovesSequenceNormalMode(
+        IActivePool _activePool,
+        IDefaultPool _defaultPool,
+        uint256 _price,
+        uint256 _MUSDInStabPool,
+        uint256 _n
+    ) internal returns (LiquidationTotals memory totals) {
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_LiquidationSequence memory vars;
+        LiquidationValues memory singleLiquidation;
+        ISortedTroves sortedTrovesCached = sortedTroves;
+
+        vars.remainingMUSDInStabPool = _MUSDInStabPool;
+
+        for (vars.i = 0; vars.i < _n; vars.i++) {
+            vars.user = sortedTrovesCached.getLast();
+            vars.ICR = getCurrentICR(vars.user, _price);
+
+            if (vars.ICR < MCR) {
+                singleLiquidation = _liquidateNormalMode(
+                    _activePool,
+                    _defaultPool,
+                    vars.user,
+                    vars.remainingMUSDInStabPool
+                );
+
+                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
+
+                // Add liquidation values to their respective running totals
+                totals = _addLiquidationValuesToTotals(
+                    totals,
+                    singleLiquidation
+                );
+            } else break; // break if the loop reaches a Trove with ICR >= MCR
+        }
+    }
+
+    /*
+     * This function has two impacts on the baseRate state variable:
+     * 1) decays the baseRate based on time passed since last redemption or MUSD borrowing operation.
+     * then,
+     * 2) increases the baseRate based on the amount redeemed, as a proportion of total debt
+     */
+    function _updateBaseRateFromRedemption(
+        uint256 _collateralDrawn,
+        uint256 _price,
+        uint256 _totalMUSDDebt
+    ) internal returns (uint) {
+        uint256 decayedBaseRate = _calcDecayedBaseRate();
+
+        /* Convert the drawn collateral back to MUSD at face value rate (1 MUSD:1 USD), in order to get
+         * the fraction of total supply that was redeemed at face value. */
+        uint256 redeemedMUSDFraction = (_collateralDrawn * _price) /
+            _totalMUSDDebt;
+
+        uint256 newBaseRate = decayedBaseRate + (redeemedMUSDFraction / BETA);
+        newBaseRate = LiquityMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
+        //assert(newBaseRate <= DECIMAL_PRECISION); // This is already enforced in the line above
+        assert(newBaseRate > 0); // Base rate is always non-zero after redemption
+
+        // Update the baseRate state variable
+        baseRate = newBaseRate;
+        emit BaseRateUpdated(newBaseRate);
+
+        _updateLastFeeOpTime();
+
+        return newBaseRate;
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
@@ -791,6 +1223,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Remove borrower's stake from the totalStakes sum, and set their stake to 0
     function _removeStake(address _borrower) internal {
         uint256 stake = Troves[_borrower].stake;
+        // slither-disable-next-line costly-loop
         totalStakes -= stake;
         Troves[_borrower].stake = 0;
     }
@@ -1072,6 +1505,119 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return singleLiquidation;
     }
 
+    /*
+     * Called when a full redemption occurs, and closes the trove.
+     * The redeemer swaps (debt - liquidation reserve) MUSD for (debt - liquidation reserve) worth of collateral, so the MUSD liquidation reserve left corresponds to the remaining debt.
+     * In order to close the trove, the MUSD liquidation reserve is burned, and the corresponding debt is removed from the active pool.
+     * The debt recorded on the trove's struct is zero'd elswhere, in _closeTrove.
+     * Any surplus collateral left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
+     */
+    function _redeemCloseTrove(
+        ContractsCache memory _contractsCache,
+        address _borrower,
+        uint256 _MUSD,
+        uint256 _collateral
+    ) internal {
+        // slither-disable-next-line calls-loop
+        _contractsCache.musdToken.burn(gasPoolAddress, _MUSD);
+        // Update Active Pool MUSD, and send collateral to account
+        // slither-disable-next-line calls-loop
+        _contractsCache.activePool.decreaseMUSDDebt(_MUSD);
+
+        // send collateral from Active Pool to CollSurplus Pool
+        // slither-disable-next-line calls-loop
+        _contractsCache.collSurplusPool.accountSurplus(_borrower, _collateral);
+        // slither-disable-next-line calls-loop
+        _contractsCache.activePool.sendCollateral(
+            address(_contractsCache.collSurplusPool),
+            _collateral
+        );
+    }
+
+    // Redeem as much collateral as possible from _borrower's Trove in exchange for MUSD up to _maxMUSDamount
+    function _redeemCollateralFromTrove(
+        ContractsCache memory _contractsCache,
+        address _borrower,
+        uint256 _maxMUSDamount,
+        uint256 _price,
+        address _upperPartialRedemptionHint,
+        address _lowerPartialRedemptionHint,
+        uint256 _partialRedemptionHintNICR
+    ) internal returns (SingleRedemptionValues memory singleRedemption) {
+        // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
+        singleRedemption.MUSDLot = LiquityMath._min(
+            _maxMUSDamount,
+            Troves[_borrower].debt - MUSD_GAS_COMPENSATION
+        );
+
+        // Get the collateralLot of equivalent value in USD
+        singleRedemption.collateralLot =
+            (singleRedemption.MUSDLot * DECIMAL_PRECISION) /
+            _price;
+
+        // Decrease the debt and collateral of the current Trove according to the MUSD lot and corresponding collateral to send
+        uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
+        uint256 newColl = Troves[_borrower].coll -
+            singleRedemption.collateralLot;
+
+        if (newDebt == MUSD_GAS_COMPENSATION) {
+            // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
+            _removeStake(_borrower);
+            _closeTrove(_borrower, Status.closedByRedemption);
+            _redeemCloseTrove(
+                _contractsCache,
+                _borrower,
+                MUSD_GAS_COMPENSATION,
+                newColl
+            );
+            emit TroveUpdated(
+                _borrower,
+                0,
+                0,
+                0,
+                uint8(TroveManagerOperation.redeemCollateral)
+            );
+        } else {
+            uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
+
+            /*
+             * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
+             * certainly result in running out of gas.
+             *
+             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
+             */
+            if (
+                newNICR != _partialRedemptionHintNICR ||
+                _getNetDebt(newDebt) < MIN_NET_DEBT
+            ) {
+                singleRedemption.cancelledPartial = true;
+                return singleRedemption;
+            }
+
+            // slither-disable-next-line calls-loop
+            _contractsCache.sortedTroves.reInsert(
+                _borrower,
+                newNICR,
+                _upperPartialRedemptionHint,
+                _lowerPartialRedemptionHint
+            );
+
+            Troves[_borrower].debt = newDebt;
+            Troves[_borrower].coll = newColl;
+            _updateStakeAndTotalStakes(_borrower);
+
+            emit TroveUpdated(
+                _borrower,
+                newDebt,
+                newColl,
+                Troves[_borrower].stake,
+                uint8(TroveManagerOperation.redeemCollateral)
+            );
+        }
+
+        return singleRedemption;
+    }
+
     // Update borrower's stake based on their latest collateral value
     function _updateStakeAndTotalStakes(
         address _borrower
@@ -1080,6 +1626,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 oldStake = Troves[_borrower].stake;
         Troves[_borrower].stake = newStake;
 
+        // slither-disable-next-line costly-loop
         totalStakes = totalStakes - oldStake + newStake;
         emit TotalStakesUpdated(totalStakes);
 
@@ -1127,8 +1674,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _MUSD,
         uint256 _collateral
     ) internal {
+        // slither-disable-next-line calls-loop
         _defaultPool.decreaseMUSDDebt(_MUSD);
+        // slither-disable-next-line calls-loop
         _activePool.increaseMUSDDebt(_MUSD);
+        // slither-disable-next-line calls-loop
         _defaultPool.sendCollateralToActivePool(_collateral);
     }
 
@@ -1138,6 +1688,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
 
         uint256 TroveOwnersArrayLength = TroveOwners.length;
+        // slither-disable-next-line calls-loop
         if (musdToken.mintList(borrowerOperationsAddress)) {
             _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
         }
@@ -1150,6 +1701,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         rewardSnapshots[_borrower].MUSDDebt = 0;
 
         _removeTroveOwner(_borrower, TroveOwnersArrayLength);
+        // slither-disable-next-line calls-loop
         sortedTroves.remove(_borrower);
     }
 
@@ -1179,12 +1731,50 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[addressToMove].arrayIndex = index;
         emit TroveIndexUpdated(addressToMove, index);
 
+        // slither-disable-next-line costly-loop
         TroveOwners.pop();
+    }
+
+    function _isValidFirstRedemptionHint(
+        ISortedTroves _sortedTroves,
+        address _firstRedemptionHint,
+        uint256 _price
+    ) internal view returns (bool) {
+        if (
+            _firstRedemptionHint == address(0) ||
+            !_sortedTroves.contains(_firstRedemptionHint) ||
+            getCurrentICR(_firstRedemptionHint, _price) < MCR
+        ) {
+            return false;
+        }
+
+        address nextTrove = _sortedTroves.getNext(_firstRedemptionHint);
+        return
+            nextTrove == address(0) || getCurrentICR(nextTrove, _price) < MCR;
+    }
+
+    function _requireTCRoverMCR(uint256 _price) internal view {
+        require(
+            _getTCR(_price) >= MCR,
+            "TroveManager: Cannot redeem when TCR < MCR"
+        );
+    }
+
+    function _requireMUSDBalanceCoversRedemption(
+        IMUSD _musd,
+        address _redeemer,
+        uint256 _amount
+    ) internal view {
+        require(
+            _musd.balanceOf(_redeemer) >= _amount,
+            "TroveManager: Requested redemption amount must be <= user's MUSD token balance"
+        );
     }
 
     function _requireMoreThanOneTroveInSystem(
         uint256 TroveOwnersArrayLength
     ) internal view {
+        // slither-disable-next-line calls-loop
         require(
             TroveOwnersArrayLength > 1 && sortedTroves.getSize() > 1,
             "TroveManager: Only one trove in the system"
@@ -1296,6 +1886,20 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             debtToRedistribute = _debt;
             collToRedistribute = _coll;
         }
+    }
+
+    function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
+        require(_amount > 0, "TroveManager: Amount must be greater than zero");
+    }
+
+    function _requireValidMaxFeePercentage(
+        uint256 _maxFeePercentage
+    ) internal pure {
+        require(
+            _maxFeePercentage >= REDEMPTION_FEE_FLOOR &&
+                _maxFeePercentage <= DECIMAL_PRECISION,
+            "Max fee percentage must be between 0.5% and 100%"
+        );
     }
 
     // Check whether or not the system *would be* in Recovery Mode, given an collateral:USD price, and the entire system coll and debt.
