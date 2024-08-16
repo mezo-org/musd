@@ -19,6 +19,7 @@ import {
   updateContractsSnapshot,
   updateMUSDUserSnapshot,
   updateStabilityPoolUserSnapshot,
+  updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   User,
@@ -1026,7 +1027,7 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("liquidateTroves(): A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
+      it("liquidateTroves(): A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
         await setupTroves()
 
         // Open a couple more troves with the same ICR as Alice
@@ -1346,20 +1347,22 @@ describe("TroveManager in Normal Mode", () => {
         // All deposit into the stability pool
         const aliceDeposit = to1e18("500")
         const bobDeposit = to1e18("1000")
-        const carolDeposit = to1e18("1500")
+        const carolDeposit = to1e18("3000")
         await provideToSP(contracts, alice, aliceDeposit)
         await provideToSP(contracts, bob, bobDeposit)
-        await provideToSP(contracts, alice, carolDeposit)
+        await provideToSP(contracts, carol, carolDeposit)
 
         await updateTroveSnapshot(contracts, alice, "before")
         await updateTroveSnapshot(contracts, bob, "before")
         await updateTroveSnapshot(contracts, carol, "before")
 
         // Price drops so we can liquidate Alice and Bob
-        const { newPrice } = await dropPriceAndLiquidate(
+        await dropPriceAndLiquidate(contracts, alice, false)
+
+        await updateStabilityPoolUserSnapshots(
           contracts,
-          alice,
-          false,
+          [alice, bob, carol],
+          "before",
         )
 
         // Liquidate
@@ -1367,10 +1370,38 @@ describe("TroveManager in Normal Mode", () => {
 
         // Check that each user's deposit has decreased by their share of the total liquidated debt
         const totalDeposits = aliceDeposit + bobDeposit + carolDeposit
-        const totalLiquidatedDebt =
-          alice.trove.debt.before + bob.trove.debt.before
+        const liquidatedDebt = alice.trove.debt.before + bob.trove.debt.before
+        await updateStabilityPoolUserSnapshots(
+          contracts,
+          [alice, bob, carol],
+          "after",
+        )
+        expect(
+          aliceDeposit - (liquidatedDebt * aliceDeposit) / totalDeposits,
+        ).to.be.closeTo(alice.stabilityPool.compoundedDeposit.after, 1000)
+        expect(
+          bobDeposit - (liquidatedDebt * bobDeposit) / totalDeposits,
+        ).to.be.closeTo(bob.stabilityPool.compoundedDeposit.after, 1000)
+        expect(
+          carolDeposit - (liquidatedDebt * carolDeposit) / totalDeposits,
+        ).to.be.closeTo(carol.stabilityPool.compoundedDeposit.after, 10000) // TODO Determine correct error tolerance
 
         // Check that each user's collateral gain has increased by their share of the total liquidated collateral
+        const liquidatedColl = applyLiquidationFee(
+          alice.trove.collateral.before + bob.trove.collateral.before,
+        )
+        expect((liquidatedColl * aliceDeposit) / totalDeposits).to.be.closeTo(
+          alice.stabilityPool.collateralGain.after,
+          1000,
+        )
+        expect((liquidatedColl * bobDeposit) / totalDeposits).to.be.closeTo(
+          bob.stabilityPool.collateralGain.after,
+          1000,
+        )
+        expect((liquidatedColl * carolDeposit) / totalDeposits).to.be.closeTo(
+          carol.stabilityPool.collateralGain.after,
+          10000,
+        ) // TODO Determine correct error tolerance
       })
     })
   })
