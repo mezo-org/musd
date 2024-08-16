@@ -17,6 +17,7 @@ import {
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
+  updatePendingSnapshot,
   updateStabilityPoolUserSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
@@ -1145,6 +1146,68 @@ describe("TroveManager in Normal Mode", () => {
         expect(state.troveManager.troves.before).to.equal(
           state.troveManager.troves.after,
         )
+        expect(state.troveManager.TCR.before).to.equal(
+          state.troveManager.TCR.after,
+        )
+      })
+
+      it("liquidateTroves(): liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: alice.wallet,
+        })
+
+        // Open a trove for Bob, then two troves with slightly lower ICRs for Carol and Dennis
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200.01",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: dennis.wallet,
+        })
+
+        // Drop the price so that Carol and Dennis are at risk for liquidation, but do not liquidate anyone yet
+        const { newPrice } = await dropPriceAndLiquidate(
+          contracts,
+          dennis,
+          false,
+        )
+
+        // Check that Bob's ICR is above the MCR after the price drop and before liquidation
+        await updateTroveSnapshot(contracts, bob, "before")
+        const mcr = await contracts.troveManager.MCR()
+        expect(bob.trove.icr.before).to.be.greaterThan(mcr)
+
+        // Liquidate Dennis, creating rewards for everyone
+        await contracts.troveManager.liquidate(dennis.wallet)
+
+        // Check that Bob's ICR is below the MCR following liquidation
+        await updateTroveSnapshot(contracts, bob, "after")
+        expect(bob.trove.icr.after).to.be.lessThan(mcr)
+
+        // Check that Bob's raw ICR (debt and coll less pending rewards) is above the MCR
+        const rawICR =
+          (bob.trove.collateral.after * newPrice) / bob.trove.debt.after
+        expect(rawICR).to.be.greaterThan(mcr)
+
+        // Attempt to liquidate all troves
+        await contracts.troveManager.liquidateTroves(3)
+
+        // Check that Alice stays active and Carol and Bob get liquidated
+        expect(await checkTroveStatus(contracts, alice, 1n, true)).to.equal(
+          true,
+        )
+        expect(await checkTroveStatus(contracts, bob)).to.equal(true)
+        expect(await checkTroveStatus(contracts, carol)).to.equal(true)
       })
     })
 
