@@ -947,7 +947,31 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Expected Reverts", () => {})
+    context("Expected Reverts", () => {
+      it("liquidateTroves(): does nothing if all troves have ICR > 110%", async () => {
+        await setupTroves()
+        await updateTroveManagerSnapshot(contracts, state, "before")
+        await expect(
+          contracts.troveManager.liquidateTroves(2),
+        ).to.be.revertedWith("TroveManager: nothing to liquidate")
+        await updateTroveManagerSnapshot(contracts, state, "after")
+        expect(state.troveManager.troves.before).to.equal(
+          state.troveManager.troves.after,
+        )
+        expect(state.troveManager.TCR.before).to.equal(
+          state.troveManager.TCR.after,
+        )
+      })
+
+      it("liquidateTroves(): reverts if n = 0", async () => {
+        await setupTroves()
+        // Drop the price so Alice is eligible for liquidation but do not perform the liquidation yet
+        await dropPriceAndLiquidate(contracts, alice, false)
+        await expect(
+          contracts.troveManager.liquidateTroves(0),
+        ).to.be.revertedWith("TroveManager: nothing to liquidate")
+      })
+    })
 
     /**
      *
@@ -1134,21 +1158,6 @@ describe("TroveManager in Normal Mode", () => {
         )
         expect(await checkTroveStatus(contracts, bob, 1n, true)).to.equal(true)
         expect(await checkTroveStatus(contracts, eric, 1n, true)).to.equal(true)
-      })
-
-      it("liquidateTroves(): does nothing if all troves have ICR > 110%", async () => {
-        await setupTroves()
-        await updateTroveManagerSnapshot(contracts, state, "before")
-        await expect(
-          contracts.troveManager.liquidateTroves(2),
-        ).to.be.revertedWith("TroveManager: nothing to liquidate")
-        await updateTroveManagerSnapshot(contracts, state, "after")
-        expect(state.troveManager.troves.before).to.equal(
-          state.troveManager.troves.after,
-        )
-        expect(state.troveManager.TCR.before).to.equal(
-          state.troveManager.TCR.after,
-        )
       })
 
       it("liquidateTroves(): liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
