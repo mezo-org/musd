@@ -28,6 +28,7 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
+import debugBalances from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -1340,6 +1341,12 @@ describe("TroveManager in Normal Mode", () => {
           [alice, bob, carol],
           "after",
         )
+
+        await debugBalances(contracts, testSetup.users, [
+          "alice",
+          "bob",
+          "carol",
+        ])
         expect(
           aliceDeposit - (liquidatedDebt * aliceDeposit) / totalDeposits,
         ).to.be.closeTo(alice.stabilityPool.compoundedDeposit.after, 1000)
@@ -1368,5 +1375,63 @@ describe("TroveManager in Normal Mode", () => {
         ) // TODO Determine correct error tolerance
       })
     })
+  })
+
+  describe("batchLiquidateTroves()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
   })
 })
