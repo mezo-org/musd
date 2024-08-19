@@ -1,5 +1,6 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
+import { ContractTransactionResponse } from "ethers"
 import {
   adjustTroveToICR,
   applyLiquidationFee,
@@ -54,6 +55,68 @@ describe("TroveManager in Normal Mode", () => {
       ICR: "5000",
       sender: bob.wallet,
     })
+  }
+
+  async function testLiquidateICRLessThanMCR<T extends any[]>(
+    liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
+    ...liquidateFunctionArgs: T
+  ) {
+    // Open 2 troves with high ICRs
+    await setupTroves()
+
+    // Create 3 more troves with varying ICRs
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "200",
+      sender: carol.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "150",
+      sender: dennis.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "450",
+      sender: eric.wallet,
+    })
+
+    await provideToSP(contracts, bob, to1e18("50,000"))
+
+    // Drop the price such that everyone with an ICR less than Alice (inclusive) can be liquidated
+    await dropPrice(contracts, alice)
+
+    // Confirm we have the correct ICR expectations
+    const eligibleUsers = [alice, carol, dennis]
+    const ineligibleUsers = [bob, eric]
+    await Promise.all(
+      eligibleUsers.concat(ineligibleUsers).map(async (user) => {
+        await updateTroveSnapshot(contracts, user, "after")
+      }),
+    )
+    const mcr = await contracts.troveManager.MCR()
+    expect(eligibleUsers).to.satisfy((users: User[]) =>
+      users.every((user) => user.trove.icr.after < mcr),
+    )
+    expect(ineligibleUsers).to.satisfy((users: User[]) =>
+      users.every((user) => user.trove.icr.after > mcr),
+    )
+
+    // Attempt to liquidate all 5 troves
+    await liquidateFunction(...liquidateFunctionArgs)
+
+    // Check that eligible troves have been closed by liquidation
+    const closedByLiquidation = await Promise.all(
+      eligibleUsers.map((user) =>
+        checkTroveClosedByLiquidation(contracts, user),
+      ),
+    )
+    expect(closedByLiquidation.every(Boolean)).to.equal(true)
+
+    const stillActive = await Promise.all(
+      ineligibleUsers.map((user) => checkTroveActive(contracts, user)),
+    )
+    expect(stillActive.every(Boolean)).to.equal(true)
   }
 
   beforeEach(async () => {
@@ -1097,62 +1160,10 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       it("liquidateTroves(): closes every Trove with ICR < MCR, when n > number of undercollateralized troves", async () => {
-        // Open 2 troves with high ICRs
-        await setupTroves()
-
-        // Create 3 more troves with varying ICRs
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "200",
-          sender: carol.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "150",
-          sender: dennis.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "450",
-          sender: eric.wallet,
-        })
-
-        await provideToSP(contracts, bob, to1e18("50,000"))
-
-        // Drop the price such that everyone with an ICR less than Alice (inclusive) can be liquidated
-        await dropPrice(contracts, alice)
-
-        // Confirm we have the correct ICR expectations
-        const eligibleUsers = [alice, carol, dennis]
-        const ineligibleUsers = [bob, eric]
-        await Promise.all(
-          eligibleUsers
-            .concat(ineligibleUsers)
-            .map((user) => updateTroveSnapshot(contracts, user, "after")),
+        await testLiquidateICRLessThanMCR(
+          contracts.troveManager.liquidateTroves,
+          5,
         )
-        const mcr = await contracts.troveManager.MCR()
-        expect(eligibleUsers).to.satisfy((users: User[]) =>
-          users.every((user) => user.trove.icr.after < mcr),
-        )
-        expect(ineligibleUsers).to.satisfy((users: User[]) =>
-          users.every((user) => user.trove.icr.after > mcr),
-        )
-
-        // Attempt to liquidate all 5 troves
-        await contracts.troveManager.liquidateTroves(5)
-
-        // Check that eligible troves have been closed by liquidation
-        const closedByLiquidation = await Promise.all(
-          eligibleUsers.map((user) =>
-            checkTroveClosedByLiquidation(contracts, user),
-          ),
-        )
-        expect(closedByLiquidation.every(Boolean)).to.equal(true)
-
-        const stillActive = await Promise.all(
-          ineligibleUsers.map((user) => checkTroveActive(contracts, user)),
-        )
-        expect(stillActive.every(Boolean)).to.equal(true)
       })
 
       it("liquidateTroves(): liquidates up to (but no more than) the requested number of undercollateralized troves", async () => {
@@ -1403,7 +1414,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it.only("batchLiquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
+      it("batchLiquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
         await setupTroves()
         await openTrove(contracts, {
           musdAmount: "5000",
@@ -1447,6 +1458,13 @@ describe("TroveManager in Normal Mode", () => {
         expect(
           await contracts.sortedTroves.contains(bob.wallet.address),
         ).to.equal(true)
+      })
+
+      it("batchLiquidateTroves(): closes every trove with ICR < MCR in the given array", async () => {
+        await testLiquidateICRLessThanMCR(
+          contracts.troveManager.batchLiquidateTroves,
+          [alice.wallet, bob.wallet, carol.wallet, dennis.wallet, eric.wallet],
+        )
       })
     })
 
