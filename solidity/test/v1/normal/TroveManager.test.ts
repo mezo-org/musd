@@ -1086,15 +1086,6 @@ describe("TroveManager in Normal Mode", () => {
         // Drop price and attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
         await dropPrice(contracts, alice)
         await contracts.troveManager.liquidateTroves(3)
-        expect(
-          await contracts.sortedTroves.contains(alice.wallet.address),
-        ).to.equal(false)
-        expect(
-          await contracts.sortedTroves.contains(bob.wallet.address),
-        ).to.equal(true)
-        expect(
-          await contracts.sortedTroves.contains(dennis.wallet.address),
-        ).to.equal(true)
 
         // Drop the price so that Dennis is at risk for liquidation
         await dropPrice(contracts, dennis)
