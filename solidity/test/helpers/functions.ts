@@ -469,10 +469,21 @@ export async function dropPriceAndLiquidate(
 export async function checkTroveStatus(
   contracts: Contracts,
   user: User,
-  statusToCheck: bigint = 3n,
-  isInSortedList: boolean = false,
+  statusToCheck: bigint,
+  isInSortedList: boolean,
 ) {
   const status = await contracts.troveManager.getTroveStatus(user.wallet)
   const inSortedList = await contracts.sortedTroves.contains(user.wallet)
   return status === statusToCheck && isInSortedList === inSortedList
+}
+
+export async function checkTroveClosedByLiquidation(
+  contracts: Contracts,
+  user: User,
+) {
+  return checkTroveStatus(contracts, user, 3n, false)
+}
+
+export async function checkTroveActive(contracts: Contracts, user: User) {
+  return checkTroveStatus(contracts, user, 1n, true)
 }

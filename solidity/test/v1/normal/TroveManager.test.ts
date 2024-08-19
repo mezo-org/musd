@@ -3,7 +3,8 @@ import { expect } from "chai"
 import {
   adjustTroveToICR,
   applyLiquidationFee,
-  checkTroveStatus,
+  checkTroveActive,
+  checkTroveClosedByLiquidation,
   connectContracts,
   Contracts,
   ContractsState,
@@ -1210,15 +1211,17 @@ describe("TroveManager in Normal Mode", () => {
         await contracts.troveManager.liquidateTroves(2)
 
         // Check that Carol and Dennis troves have been closed and are no longer in the sorted list
-        expect(await checkTroveStatus(contracts, carol)).to.equal(true)
-        expect(await checkTroveStatus(contracts, dennis)).to.equal(true)
-
-        // Check that Alice, Bob, and Eric still have active troves
-        expect(await checkTroveStatus(contracts, alice, 1n, true)).to.equal(
+        expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
           true,
         )
-        expect(await checkTroveStatus(contracts, bob, 1n, true)).to.equal(true)
-        expect(await checkTroveStatus(contracts, eric, 1n, true)).to.equal(true)
+        expect(await checkTroveClosedByLiquidation(contracts, dennis)).to.equal(
+          true,
+        )
+
+        // Check that Alice, Bob, and Eric still have active troves
+        expect(await checkTroveActive(contracts, alice)).to.equal(true)
+        expect(await checkTroveActive(contracts, bob)).to.equal(true)
+        expect(await checkTroveActive(contracts, eric)).to.equal(true)
       })
 
       it("liquidateTroves(): liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
@@ -1269,11 +1272,13 @@ describe("TroveManager in Normal Mode", () => {
         await contracts.troveManager.liquidateTroves(3)
 
         // Check that Alice stays active and Carol and Bob get liquidated
-        expect(await checkTroveStatus(contracts, alice, 1n, true)).to.equal(
+        expect(await checkTroveActive(contracts, alice)).to.equal(true)
+        expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(
           true,
         )
-        expect(await checkTroveStatus(contracts, bob)).to.equal(true)
-        expect(await checkTroveStatus(contracts, carol)).to.equal(true)
+        expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
+          true,
+        )
       })
     })
 
