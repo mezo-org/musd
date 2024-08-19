@@ -1067,7 +1067,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("liquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
+      it("liquidateTroves(): liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
         await setupTroves()
         await openTrove(contracts, {
           musdAmount: "5000",
