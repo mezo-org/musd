@@ -1145,43 +1145,28 @@ describe("TroveManager in Normal Mode", () => {
           }),
         )
         const mcr = await contracts.troveManager.MCR()
-        expect(
-          eligibleUsers.every((user) => user.trove.icr.after < mcr),
-        ).to.equal(true)
-        expect(
-          ineligibleUsers.every((user) => user.trove.icr.after > mcr),
-        ).to.equal(true)
+        expect(eligibleUsers).to.satisfy((users: User[]) =>
+          users.every((user) => user.trove.icr.after < mcr),
+        )
+        expect(ineligibleUsers).to.satisfy((users: User[]) =>
+          users.every((user) => user.trove.icr.after > mcr),
+        )
 
         // Attempt to liquidate all 5 troves
         await contracts.troveManager.liquidateTroves(5)
 
-        // Check that eligible troves have been removed from the system
-        const closedTroves = await Promise.all(
-          eligibleUsers.map((user) =>
-            contracts.sortedTroves.contains(user.wallet),
-          ),
-        )
-        expect(closedTroves).to.satisfy((troves: boolean[]) =>
-          troves.every((trove: boolean) => !trove),
-        )
-
-        // Check that ineligible troves remain
-        const remainingTroves = await Promise.all(
-          ineligibleUsers.map((user) =>
-            contracts.sortedTroves.contains(user.wallet),
-          ),
-        )
-        expect(remainingTroves).to.satisfy((troves: boolean[]) =>
-          troves.every((trove: boolean) => trove),
-        )
-
         // Check that eligible troves have been closed by liquidation
-        const troveStructs = await Promise.all(
+        const closedByLiquidation = await Promise.all(
           eligibleUsers.map((user) =>
-            contracts.troveManager.Troves(user.address),
+            checkTroveClosedByLiquidation(contracts, user),
           ),
         )
-        expect(troveStructs.every((trove) => trove[3] === 3n)).to.equal(true)
+        expect(closedByLiquidation.every(Boolean)).to.equal(true)
+
+        const stillActive = await Promise.all(
+          ineligibleUsers.map((user) => checkTroveActive(contracts, user)),
+        )
+        expect(stillActive.every(Boolean)).to.equal(true)
       })
 
       it("liquidateTroves(): liquidates up to (but no more than) the requested number of undercollateralized troves", async () => {
