@@ -119,6 +119,47 @@ describe("TroveManager in Normal Mode", () => {
     expect(stillActive.every(Boolean)).to.equal(true)
   }
 
+  async function testLiquidateOnly<T extends any[]>(
+    liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
+    ...liquidateFunctionArgs: T
+  ) {
+    await setupTroves()
+
+    // Open 3 more troves with lower ICRs
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "200",
+      sender: carol.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "210",
+      sender: dennis.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "2000",
+      ICR: "220",
+      sender: eric.wallet,
+    })
+
+    // Drop price so that all 3 troves are eligible for liquidation
+    await dropPrice(contracts, eric)
+
+    // Attempt to liquidate troves
+    await liquidateFunction(...liquidateFunctionArgs)
+
+    // Check that Carol and Dennis troves have been closed and are no longer in the sorted list
+    expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(true)
+    expect(await checkTroveClosedByLiquidation(contracts, dennis)).to.equal(
+      true,
+    )
+
+    // Check that Alice, Bob, and Eric still have active troves
+    expect(await checkTroveActive(contracts, alice)).to.equal(true)
+    expect(await checkTroveActive(contracts, bob)).to.equal(true)
+    expect(await checkTroveActive(contracts, eric)).to.equal(true)
+  }
+
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
@@ -1167,43 +1208,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       it("liquidateTroves(): liquidates up to (but no more than) the requested number of undercollateralized troves", async () => {
-        await setupTroves()
-
-        // Open 3 more troves with lower ICRs
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "200",
-          sender: carol.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "210",
-          sender: dennis.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "220",
-          sender: eric.wallet,
-        })
-
-        // Drop price so that all 3 troves are eligible for liquidation
-        await dropPrice(contracts, eric)
-
-        // Attempt to liquidate 2 troves
-        await contracts.troveManager.liquidateTroves(2)
-
-        // Check that Carol and Dennis troves have been closed and are no longer in the sorted list
-        expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
-          true,
-        )
-        expect(await checkTroveClosedByLiquidation(contracts, dennis)).to.equal(
-          true,
-        )
-
-        // Check that Alice, Bob, and Eric still have active troves
-        expect(await checkTroveActive(contracts, alice)).to.equal(true)
-        expect(await checkTroveActive(contracts, bob)).to.equal(true)
-        expect(await checkTroveActive(contracts, eric)).to.equal(true)
+        await testLiquidateOnly(contracts.troveManager.liquidateTroves, 2)
       })
 
       it("liquidateTroves(): liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
@@ -1465,6 +1470,13 @@ describe("TroveManager in Normal Mode", () => {
           contracts.troveManager.batchLiquidateTroves,
           [alice.wallet, bob.wallet, carol.wallet, dennis.wallet, eric.wallet],
         )
+      })
+
+      it("batchLiquidateTroves(): does not liquidate troves that are not in the given array", async () => {
+        await testLiquidateOnly(contracts.troveManager.batchLiquidateTroves, [
+          carol.wallet,
+          dennis.wallet,
+        ])
       })
     })
 
