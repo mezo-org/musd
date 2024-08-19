@@ -7,6 +7,7 @@ import {
   connectContracts,
   Contracts,
   ContractsState,
+  dropPrice,
   dropPriceAndLiquidate,
   fixture,
   getAddresses,
@@ -968,7 +969,7 @@ describe("TroveManager in Normal Mode", () => {
       it("liquidateTroves(): reverts if n = 0", async () => {
         await setupTroves()
         // Drop the price so Alice is eligible for liquidation but do not perform the liquidation yet
-        await dropPriceAndLiquidate(contracts, alice, false)
+        await dropPrice(contracts, alice)
         await expect(
           contracts.troveManager.liquidateTroves(0),
         ).to.be.revertedWith("TroveManager: nothing to liquidate")
@@ -1009,7 +1010,7 @@ describe("TroveManager in Normal Mode", () => {
         await provideToSP(contracts, bob, to1e18("10000"))
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
-        await dropPriceAndLiquidate(contracts, alice, false)
+        await dropPrice(contracts, alice)
         await updateTroveManagerSnapshot(contracts, state, "before")
 
         // Perform liquidation and check that TCR has improved
@@ -1041,7 +1042,7 @@ describe("TroveManager in Normal Mode", () => {
         )
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
-        await dropPriceAndLiquidate(contracts, alice, false)
+        await dropPrice(contracts, alice)
         await updateTroveManagerSnapshot(contracts, state, "before")
 
         // Perform liquidation and check that TCR has decreased
@@ -1082,7 +1083,7 @@ describe("TroveManager in Normal Mode", () => {
         await dropPriceAndLiquidate(contracts, carol)
 
         // Drop price and attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
-        await dropPriceAndLiquidate(contracts, alice, false)
+        await dropPrice(contracts, alice)
         await contracts.troveManager.liquidateTroves(3)
         expect(
           await contracts.sortedTroves.contains(alice.wallet.address),
@@ -1095,7 +1096,7 @@ describe("TroveManager in Normal Mode", () => {
         ).to.equal(true)
 
         // Drop the price so that Dennis is at risk for liquidation
-        await dropPriceAndLiquidate(contracts, dennis, false)
+        await dropPrice(contracts, dennis)
         await updateTroveSnapshots(contracts, [bob, dennis], "after")
 
         // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
@@ -1132,7 +1133,7 @@ describe("TroveManager in Normal Mode", () => {
         await provideToSP(contracts, bob, to1e18("50,000"))
 
         // Drop the price such that everyone with an ICR less than Alice (inclusive) can be liquidated
-        await dropPriceAndLiquidate(contracts, alice, false)
+        await dropPrice(contracts, alice)
 
         // Confirm we have the correct ICR expectations
         const eligibleUsers = [alice, carol, dennis]
@@ -1203,7 +1204,7 @@ describe("TroveManager in Normal Mode", () => {
         })
 
         // Drop price so that all 3 troves are eligible for liquidation
-        await dropPriceAndLiquidate(contracts, eric, false)
+        await dropPrice(contracts, eric)
 
         // Attempt to liquidate 2 troves
         await contracts.troveManager.liquidateTroves(2)
@@ -1245,11 +1246,7 @@ describe("TroveManager in Normal Mode", () => {
         })
 
         // Drop the price so that Carol and Dennis are at risk for liquidation, but do not liquidate anyone yet
-        const { newPrice } = await dropPriceAndLiquidate(
-          contracts,
-          dennis,
-          false,
-        )
+        const newPrice = await dropPrice(contracts, dennis)
 
         // Check that Bob's ICR is above the MCR after the price drop and before liquidation
         await updateTroveSnapshot(contracts, bob, "before")
@@ -1293,7 +1290,7 @@ describe("TroveManager in Normal Mode", () => {
         await updateMUSDUserSnapshot(contracts, bob, "before")
 
         // Attempt to liquidate both troves, only Alice gets liquidated
-        await dropPriceAndLiquidate(contracts, alice, false)
+        await dropPrice(contracts, alice)
         await contracts.troveManager.liquidateTroves(2)
         await updateMUSDUserSnapshot(contracts, alice, "after")
         await updateMUSDUserSnapshot(contracts, bob, "after")
