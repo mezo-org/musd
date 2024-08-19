@@ -28,7 +28,6 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import debugBalances from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -1342,11 +1341,6 @@ describe("TroveManager in Normal Mode", () => {
           "after",
         )
 
-        await debugBalances(contracts, testSetup.users, [
-          "alice",
-          "bob",
-          "carol",
-        ])
         expect(
           aliceDeposit - (liquidatedDebt * aliceDeposit) / totalDeposits,
         ).to.be.closeTo(alice.stabilityPool.compoundedDeposit.after, 1000)
@@ -1408,7 +1402,53 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Individual Troves", () => {})
+    context("Individual Troves", () => {
+      it.only("batchLiquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
+        await setupTroves()
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "120",
+          sender: carol.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "500",
+          sender: dennis.wallet,
+        })
+
+        // Liquidate Carol, creating pending rewards for everyone
+        await dropPriceAndLiquidate(contracts, carol)
+
+        // Drop price and attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
+        await dropPrice(contracts, alice)
+        await contracts.troveManager.liquidateTroves(3)
+        expect(
+          await contracts.sortedTroves.contains(alice.wallet.address),
+        ).to.equal(false)
+        expect(
+          await contracts.sortedTroves.contains(bob.wallet.address),
+        ).to.equal(true)
+        expect(
+          await contracts.sortedTroves.contains(dennis.wallet.address),
+        ).to.equal(true)
+
+        // Drop the price so that Dennis is at risk for liquidation
+        await dropPrice(contracts, dennis)
+        await updateTroveSnapshots(contracts, [bob, dennis], "after")
+
+        // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
+        await contracts.troveManager.batchLiquidateTroves([
+          bob.wallet,
+          dennis.wallet,
+        ])
+        expect(
+          await contracts.sortedTroves.contains(dennis.wallet.address),
+        ).to.equal(false)
+        expect(
+          await contracts.sortedTroves.contains(bob.wallet.address),
+        ).to.equal(true)
+      })
+    })
 
     /**
      *
