@@ -1,7 +1,8 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
-import { ContractTransactionResponse } from "ethers"
+import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
+import { assert } from "chai"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
 import {
   Contracts,
@@ -104,6 +105,17 @@ export async function updateContractsSnapshot(
   state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
 }
 
+export async function updatePCVSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  checkPoint: CheckPoint,
+) {
+  state.pcv.collateral[checkPoint] = await ethers.provider.getBalance(
+    await contracts.pcv.getAddress(),
+  )
+  // More fields can be added as needed
+}
+
 export async function updatePendingSnapshot(
   contracts: Contracts,
   user: User,
@@ -185,6 +197,13 @@ export async function updateWalletSnapshot(
   user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
 }
 
+export async function updateBTCUserSnapshot(
+  user: User,
+  checkPoint: CheckPoint,
+) {
+  user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
+}
+
 export async function updateTroveManagerSnapshot(
   contracts: Contracts,
   state: ContractsState,
@@ -215,14 +234,14 @@ export async function getTroveEntireDebt(
   return (await contracts.troveManager.getEntireDebtAndColl(address))[0]
 }
 
-export async function getEventArgByName(
+export async function getAllEventsByName(
   tx: ContractTransactionResponse,
   abi: Array<string>,
   eventName: string,
-  argIndex: number,
 ) {
   const txReceipt = await tx.wait()
   const iface = new ethers.Interface(abi)
+  const events = []
 
   if (txReceipt) {
     // eslint-disable-next-line no-restricted-syntax
@@ -230,16 +249,83 @@ export async function getEventArgByName(
       try {
         const parsedLog = iface.parseLog(log)
         if (parsedLog && parsedLog.name === eventName) {
-          return parsedLog.args[argIndex]
+          events.push(parsedLog)
         }
       } catch (error) {
         // continue if the log does not match the event
       }
     }
   }
+  return events
+}
+
+export async function getEventArgByName(
+  tx: ContractTransactionResponse,
+  abi: Array<string>,
+  eventName: string,
+  argIndex: number,
+) {
+  const events = await getAllEventsByName(tx, abi, eventName)
+  if (events.length > 0) {
+    return events[0].args[argIndex]
+  }
   throw new Error(
     `The transaction logs do not contain event ${eventName} and arg ${argIndex}`,
   )
+}
+
+export async function getEmittedRedemptionValues(
+  redemptionTx: ContractTransactionResponse,
+) {
+  const abi = [
+    "event Redemption(uint256 _attemptedMUSDAmount,uint256 _actualMUSDAmount,uint256 _collateralSent,uint256 _collateralFee)",
+  ]
+
+  const attemptedMUSDAmount = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    0,
+  )
+
+  const actualMUSDAmount = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    1,
+  )
+
+  const collateralSent = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    2,
+  )
+
+  const collateralFee = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    3,
+  )
+
+  return {
+    attemptedMUSDAmount,
+    actualMUSDAmount,
+    collateralSent,
+    collateralFee,
+  }
+}
+
+export async function getDebtAndCollFromTroveUpdatedEvents(
+  troveUpdatedEvents: LogDescription[],
+  user: User,
+) {
+  const event = troveUpdatedEvents.find((e) => e.args[0] === user.address)
+  return {
+    debt: event?.args[1],
+    coll: event?.args[2],
+  }
 }
 
 export async function getEmittedLiquidationValues(
@@ -340,6 +426,10 @@ export async function adjustTroveToICR(
   return { requestedDebtIncrease, increasedTotalDebt }
 }
 
+async function getActualDebtFromComposite(compositeDebt: bigint) {
+  return compositeDebt - to1e18("200")
+}
+
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const params = inputs
 
@@ -367,6 +457,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
   // amount of debt to take on
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
+  const netDebt = await getActualDebtFromComposite(totalDebt)
 
   // amount of assets required for the loan
   const assetAmount = (ICR * totalDebt) / price
@@ -389,6 +480,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
     totalDebt,
     collateral: assetAmount,
     tx,
+    netDebt,
   }
 }
 
@@ -458,7 +550,9 @@ export async function dropPrice(
   )
 
   // If none provided, set target ICR to just slightly less than MCR
-  const target = targetICR ?? (await contracts.troveManager.MCR()) - 1n
+  const target = targetICR
+    ? targetICR / 100n
+    : (await contracts.troveManager.MCR()) - 1n
 
   const newPrice = (target * currentPrice) / icr
   await contracts.mockAggregator.setPrice(newPrice)
@@ -498,15 +592,22 @@ export async function checkTroveStatus(
   return status === statusToCheck && isInSortedList === inSortedList
 }
 
+export async function checkTroveActive(contracts: Contracts, user: User) {
+  return checkTroveStatus(contracts, user, 1n, true)
+}
+
+export async function checkTroveClosedByRedemption(
+  contracts: Contracts,
+  user: User,
+) {
+  return checkTroveStatus(contracts, user, 4n, false)
+}
+
 export async function checkTroveClosedByLiquidation(
   contracts: Contracts,
   user: User,
 ) {
   return checkTroveStatus(contracts, user, 3n, false)
-}
-
-export async function checkTroveActive(contracts: Contracts, user: User) {
-  return checkTroveStatus(contracts, user, 1n, true)
 }
 
 export function transferMUSD(
@@ -518,4 +619,13 @@ export function transferMUSD(
   return contracts.musd
     .connect(sender.wallet)
     .transfer(receiver.wallet, amount, NO_GAS)
+}
+
+export async function setBaseRate(contracts: Contracts, rate: bigint) {
+  if ("setBaseRate" in contracts.troveManager) {
+    await contracts.troveManager.setBaseRate(rate)
+    await contracts.troveManager.setLastFeeOpTimeToNow()
+  } else {
+    assert.fail("TroveManagerTester not loaded")
+  }
 }
