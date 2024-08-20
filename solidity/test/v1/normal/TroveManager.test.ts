@@ -97,9 +97,9 @@ describe("TroveManager in Normal Mode", () => {
     const eligibleUsers = [alice, carol, dennis]
     const ineligibleUsers = [bob, eric]
     await Promise.all(
-      eligibleUsers.concat(ineligibleUsers).map(async (user) => {
-        await updateTroveSnapshot(contracts, user, "after")
-      }),
+      eligibleUsers
+        .concat(ineligibleUsers)
+        .map((user) => updateTroveSnapshot(contracts, user, "after")),
     )
     const mcr = await contracts.troveManager.MCR()
     expect(eligibleUsers).to.satisfy((users: User[]) =>
