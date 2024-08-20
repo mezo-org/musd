@@ -1202,7 +1202,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("liquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
+      it("liquidateTroves(): liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
         await setupTrovesLiquidateWithSkip()
 
         // Drop the price so that Dennis is at risk for liquidation
@@ -1416,7 +1416,6 @@ describe("TroveManager in Normal Mode", () => {
     context("Expected Reverts", () => {
       it("batchLiquidateTroves(): reverts if array is empty", async () => {
         await setupTroves()
-        // Drop the price so Alice is eligible for liquidation but do not perform the liquidation yet
         await dropPrice(contracts, alice)
         await expect(
           contracts.troveManager.batchLiquidateTroves([]),
@@ -1526,7 +1525,9 @@ describe("TroveManager in Normal Mode", () => {
         ])
 
         // Check that Carol's trove is non-existent
-        expect(checkTroveStatus(contracts, carol, 0n, false))
+        expect(await checkTroveStatus(contracts, carol, 0n, false)).to.equal(
+          true,
+        )
       })
 
       it("batchLiquidateTroves(): skips if a trove has been closed", async () => {
