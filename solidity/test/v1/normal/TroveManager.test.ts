@@ -1622,7 +1622,10 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Individual Troves", () => {})
+    context("Individual Troves", () => {
+      it("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
+
+      })
 
     /**
      *
