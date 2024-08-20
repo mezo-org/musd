@@ -58,7 +58,7 @@ describe("TroveManager in Normal Mode", () => {
     })
   }
 
-  async function testLiquidateICRLessThanMCR<T extends any[]>(
+  async function testLiquidateICRLessThanMCR<T extends unknown[]>(
     liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
     ...liquidateFunctionArgs: T
   ) {
