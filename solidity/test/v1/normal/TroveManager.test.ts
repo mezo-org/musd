@@ -1457,6 +1457,33 @@ describe("TroveManager in Normal Mode", () => {
           dennis.wallet,
         ])
       })
+
+      it.only("batchLiquidateTroves(): does not close troves with ICR >= MCR in the given array", async () => {
+        await setupTroves()
+
+        // Open a trove with lower ICR
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        // Drop price to make only Carol eligible for liquidation
+        await dropPrice(contracts, carol)
+
+        // Attempt to liquidate everyone
+        await contracts.troveManager.batchLiquidateTroves([
+          alice.wallet,
+          bob.wallet,
+          carol.wallet,
+        ])
+
+        expect(await checkTroveActive(contracts, alice)).to.equal(true)
+        expect(await checkTroveActive(contracts, bob)).to.equal(true)
+        expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
+          true,
+        )
+      })
     })
 
     /**
