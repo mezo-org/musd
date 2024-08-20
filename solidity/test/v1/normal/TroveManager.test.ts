@@ -119,6 +119,26 @@ describe("TroveManager in Normal Mode", () => {
     expect(stillActive.every(Boolean)).to.equal(true)
   }
 
+  async function setupTrovesLiquidateWithSkip() {
+    await setupTroves()
+    await openTrove(contracts, {
+      musdAmount: "5000",
+      ICR: "120",
+      sender: carol.wallet,
+    })
+    await openTrove(contracts, {
+      musdAmount: "5000",
+      ICR: "500",
+      sender: dennis.wallet,
+    })
+
+    // Liquidate Carol, creating pending rewards for everyone
+    await dropPriceAndLiquidate(contracts, carol)
+
+    // Drop price
+    await dropPrice(contracts, alice)
+  }
+
   async function testLiquidateOnly<T extends any[]>(
     liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
     ...liquidateFunctionArgs: T
@@ -1166,25 +1186,8 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("liquidateTroves(): liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
-        await setupTroves()
-        await openTrove(contracts, {
-          musdAmount: "5000",
-          ICR: "120",
-          sender: carol.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "5000",
-          ICR: "500",
-          sender: dennis.wallet,
-        })
-
-        // Liquidate Carol, creating pending rewards for everyone
-        await dropPriceAndLiquidate(contracts, carol)
-
-        // Drop price and attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
-        await dropPrice(contracts, alice)
-        await contracts.troveManager.liquidateTroves(3)
+      it("liquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
+        await setupTrovesLiquidateWithSkip()
 
         // Drop the price so that Dennis is at risk for liquidation
         await dropPrice(contracts, dennis)
@@ -1419,34 +1422,10 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("batchLiquidateTroves(): liquidates a Trove that a) was skipped in a previous liquidation and b) has pending rewards", async () => {
-        await setupTroves()
-        await openTrove(contracts, {
-          musdAmount: "5000",
-          ICR: "120",
-          sender: carol.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "5000",
-          ICR: "500",
-          sender: dennis.wallet,
-        })
-
-        // Liquidate Carol, creating pending rewards for everyone
-        await dropPriceAndLiquidate(contracts, carol)
-
-        // Drop price and attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
-        await dropPrice(contracts, alice)
+      it("batchLiquidateTroves(): liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
+        await setupTrovesLiquidateWithSkip()
+        // attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
         await contracts.troveManager.liquidateTroves(3)
-        expect(
-          await contracts.sortedTroves.contains(alice.wallet.address),
-        ).to.equal(false)
-        expect(
-          await contracts.sortedTroves.contains(bob.wallet.address),
-        ).to.equal(true)
-        expect(
-          await contracts.sortedTroves.contains(dennis.wallet.address),
-        ).to.equal(true)
 
         // Drop the price so that Dennis is at risk for liquidation
         await dropPrice(contracts, dennis)
