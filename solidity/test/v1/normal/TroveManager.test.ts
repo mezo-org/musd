@@ -1623,32 +1623,31 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
+      it("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {})
 
-      })
+      /**
+       *
+       * Balance changes
+       *
+       */
 
-    /**
-     *
-     * Balance changes
-     *
-     */
+      context("Balance changes", () => {})
 
-    context("Balance changes", () => {})
+      /**
+       *
+       * Fees
+       *
+       */
 
-    /**
-     *
-     * Fees
-     *
-     */
+      context("Fees", () => {})
 
-    context("Fees", () => {})
+      /**
+       *
+       * State change in other contracts
+       *
+       */
 
-    /**
-     *
-     * State change in other contracts
-     *
-     */
-
-    context("State change in other contracts", () => {})
+      context("State change in other contracts", () => {})
+    })
   })
 })

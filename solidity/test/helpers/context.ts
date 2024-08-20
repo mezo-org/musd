@@ -16,6 +16,7 @@ import type {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  HintHelpers,
   PCV,
   PriceFeed,
   SortedTroves,
@@ -43,6 +44,7 @@ export async function deployment(overwrite: Array<string>) {
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
+  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
   const musd: MUSD | MUSDTester = overwrite.includes("MUSD")
@@ -65,6 +67,7 @@ export async function deployment(overwrite: Array<string>) {
     collSurplusPool,
     defaultPool,
     gasPool,
+    hintHelpers,
     mockAggregator,
     musd,
     pcv,
@@ -197,6 +200,7 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     collSurplusPool: await contracts.collSurplusPool.getAddress(),
     defaultPool: await contracts.defaultPool.getAddress(),
     gasPool: await contracts.gasPool.getAddress(),
+    hintHelpers: await contracts.hintHelpers.getAddress(),
     mockAggregator: await contracts.mockAggregator.getAddress(),
     musd: await contracts.musd.getAddress(),
     pcv: await contracts.pcv.getAddress(),
