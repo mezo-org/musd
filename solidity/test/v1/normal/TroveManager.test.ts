@@ -1036,11 +1036,6 @@ describe("TroveManager in Normal Mode", () => {
           ICR: "400",
           sender: dennis.wallet,
         })
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "before",
-        )
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
         await dropPrice(contracts, alice)
