@@ -6,6 +6,7 @@ import {
   applyLiquidationFee,
   checkTroveActive,
   checkTroveClosedByLiquidation,
+  checkTroveStatus,
   connectContracts,
   Contracts,
   ContractsState,
@@ -1494,6 +1495,23 @@ describe("TroveManager in Normal Mode", () => {
         expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
           true,
         )
+      })
+
+      it("batchLiquidateTroves(): skips if trove is non-existent", async () => {
+        await setupTroves()
+
+        // Drop price so we can liquidate everyone as Bob has the highest ICR
+        await dropPrice(contracts, bob)
+
+        // Attempt to liquidate Alice, Bob, and Carol (who has no trove)
+        await contracts.troveManager.batchLiquidateTroves([
+          alice.wallet,
+          bob.wallet,
+          carol.wallet,
+        ])
+
+        // Check that Carol's trove is non-existent
+        expect(checkTroveStatus(contracts, carol, 0n, false))
       })
     })
 
