@@ -1513,6 +1513,41 @@ describe("TroveManager in Normal Mode", () => {
         // Check that Carol's trove is non-existent
         expect(checkTroveStatus(contracts, carol, 0n, false))
       })
+
+      it("batchLiquidateTroves(): skips if a trove has been closed", async () => {
+        await setupTroves()
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        // Send MUSD to Carol so she can close her trove
+        await contracts.musd
+          .connect(bob.wallet)
+          .transfer(carol.address, to1e18("1000"))
+
+        await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+
+        // Drop the price so Alice and Carol would be eligible for liquidation but not bob
+        await dropPrice(contracts, alice)
+        await contracts.troveManager.batchLiquidateTroves([
+          alice.wallet,
+          bob.wallet,
+          carol.wallet,
+        ])
+
+        // Check Carol's trove is closed by user
+        expect(await checkTroveStatus(contracts, carol, 2n, false)).to.equal(
+          true,
+        )
+
+        // Bob is active and Alice is closed by liquidation
+        expect(await checkTroveActive(contracts, bob)).to.equal(true)
+        expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
+          true,
+        )
+      })
     })
 
     /**
