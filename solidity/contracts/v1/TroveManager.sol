@@ -16,6 +16,7 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "../debugging/console.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -336,6 +337,27 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
+    /* Send _MUSDamount MUSD to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
+    * request.  Applies pending rewards to a Trove before reducing its debt and coll.
+    *
+    * Note that if _amount is very large, this function can run out of gas, specially if traversed troves are small. This can be easily avoided by
+    * splitting the total _amount in appropriate chunks and calling the function multiple times.
+    *
+    * Param `_maxIterations` can also be provided, so the loop through Troves is capped (if it’s zero, it will be ignored).This makes it easier to
+    * avoid OOG for the frontend, as only knowing approximately the average cost of an iteration is enough, without needing to know the “topology”
+    * of the trove list. It also avoids the need to set the cap in stone in the contract, nor doing gas calculations, as both gas price and opcode
+    * costs can vary.
+    *
+    * All Troves that are redeemed from -- with the likely exception of the last one -- will end up with no debt left, therefore they will be closed.
+    * If the last Trove does have some remaining debt, it has a finite ICR, and the reinsertion could be anywhere in the list, therefore it requires a hint.
+    * A frontend should use getRedemptionHints() to calculate what the ICR of this Trove will be after redemption, and pass a hint for its position
+    * in the sortedTroves list along with the ICR value that the hint was found for.
+    *
+    * If another transaction modifies the list between calling getRedemptionHints() and passing the hints to redeemCollateral(), it
+    * is very likely that the last (partially) redeemed Trove would end up with a different ICR than what the hint is for. In this case the
+    * redemption will stop after the last completely redeemed Trove and the sender will keep the remaining MUSD amount, which they can attempt
+    * to redeem later.
+    */
     function redeemCollateral(
         uint256 _MUSDAmount,
         address _firstRedemptionHint,
@@ -1549,18 +1571,24 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _maxMUSDamount,
             Troves[_borrower].debt - MUSD_GAS_COMPENSATION
         );
+        console.log("singleRedemption.MUSDLot", singleRedemption.MUSDLot);
 
         // Get the collateralLot of equivalent value in USD
         singleRedemption.collateralLot =
             (singleRedemption.MUSDLot * DECIMAL_PRECISION) /
             _price;
+        console.log(_price);
+        console.log("singleRedemption.collateralLot", singleRedemption.collateralLot);
 
         // Decrease the debt and collateral of the current Trove according to the MUSD lot and corresponding collateral to send
         uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
         uint256 newColl = Troves[_borrower].coll -
             singleRedemption.collateralLot;
+        console.log("newDebt", newDebt);
+        console.log("newColl", newColl);
 
         if (newDebt == MUSD_GAS_COMPENSATION) {
+            console.log("hit here");
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1578,6 +1606,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
+            console.log("got here");
             uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
 
             /*

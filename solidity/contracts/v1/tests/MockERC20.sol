@@ -15,7 +15,7 @@ contract MockERC20 is ERC20, IApproveAndCall, Ownable {
         _mint(msg.sender, supply);
     }
 
-    function mint(address account, uint256 value) external onlyOwner {
+    function mint(address account, uint256 value) external {
         _mint(account, value);
     }
 

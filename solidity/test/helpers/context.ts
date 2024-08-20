@@ -16,6 +16,7 @@ import type {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  HintHelpers,
   PCV,
   PriceFeed,
   SortedTroves,
@@ -26,6 +27,7 @@ import type { MUSD } from "../../typechain/contracts/token"
 
 import type {
   MockAggregator,
+  MockERC20,
   MUSDTester,
   TroveManagerTester,
 } from "../../typechain/contracts/v1/tests"
@@ -43,8 +45,10 @@ export async function deployment(overwrite: Array<string>) {
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
+  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
+  const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
   const musd: MUSD | MUSDTester = overwrite.includes("MUSD")
     ? await getDeployedContract("MUSDTester")
     : await getDeployedContract("MUSD")
@@ -65,7 +69,9 @@ export async function deployment(overwrite: Array<string>) {
     collSurplusPool,
     defaultPool,
     gasPool,
+    hintHelpers,
     mockAggregator,
+    mockERC20,
     musd,
     pcv,
     priceFeed,
@@ -197,7 +203,9 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     collSurplusPool: await contracts.collSurplusPool.getAddress(),
     defaultPool: await contracts.defaultPool.getAddress(),
     gasPool: await contracts.gasPool.getAddress(),
+    hintHelpers: await contracts.hintHelpers.getAddress(),
     mockAggregator: await contracts.mockAggregator.getAddress(),
+    mockERC20: await contracts.mockERC20.getAddress(),
     musd: await contracts.musd.getAddress(),
     pcv: await contracts.pcv.getAddress(),
     priceFeed: await contracts.priceFeed.getAddress(),
@@ -231,6 +239,13 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.sortedTroves.getAddress(),
       await contracts.priceFeed.getAddress(),
       ZERO_ADDRESS,
+    )
+
+  await contracts.hintHelpers
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.sortedTroves.getAddress(),
+      await contracts.troveManager.getAddress(),
     )
 
   await contracts.pcv
