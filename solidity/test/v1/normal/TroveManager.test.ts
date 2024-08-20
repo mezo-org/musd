@@ -62,11 +62,9 @@ describe("TroveManager in Normal Mode", () => {
    * Contains the setup and expectations for tests that liquidate a sequence of troves with some having ICR < MCR.
    * The expectations are included along with the setup to allow for continuity when reading the test.
    * @param liquidateFunction The function being tested
-   * @param liquidateFunctionArgs The arguments to be passed to `liquidateFunction`
    */
-  async function testLiquidateICRLessThanMCR<T extends unknown[]>(
-    liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
-    ...liquidateFunctionArgs: T
+  async function testLiquidateICRLessThanMCR(
+    liquidateFunction: () => Promise<ContractTransactionResponse>,
   ) {
     // Open 2 troves with high ICRs
     await setupTroves()
@@ -110,7 +108,7 @@ describe("TroveManager in Normal Mode", () => {
     )
 
     // Attempt to liquidate all 5 troves
-    await liquidateFunction(...liquidateFunctionArgs)
+    await liquidateFunction()
 
     // Check that eligible troves have been closed by liquidation
     const closedByLiquidation = await Promise.all(
@@ -153,11 +151,9 @@ describe("TroveManager in Normal Mode", () => {
    * Contains the setup and expectations for tests that liquidate a sequence of troves and check that only the specified
    * troves are liquidated.  The expectations are included along with the setup to allow for continuity when reading the test.
    * @param liquidateFunction The function being tested
-   * @param liquidateFunctionArgs The arguments to be passed to `liquidateFunction`
    */
-  async function testLiquidateOnly<T extends unknown[]>(
-    liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
-    ...liquidateFunctionArgs: T
+  async function testLiquidateOnly(
+    liquidateFunction: () => Promise<ContractTransactionResponse>,
   ) {
     await setupTroves()
 
@@ -182,7 +178,7 @@ describe("TroveManager in Normal Mode", () => {
     await dropPrice(contracts, eric)
 
     // Attempt to liquidate troves
-    await liquidateFunction(...liquidateFunctionArgs)
+    await liquidateFunction()
 
     // Check that Carol and Dennis troves have been closed and are no longer in the sorted list
     expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(true)
@@ -1220,14 +1216,13 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       it("liquidateTroves(): closes every Trove with ICR < MCR, when n > number of undercollateralized troves", async () => {
-        await testLiquidateICRLessThanMCR(
-          contracts.troveManager.liquidateTroves,
-          5,
+        await testLiquidateICRLessThanMCR(() =>
+          contracts.troveManager.liquidateTroves(5),
         )
       })
 
       it("liquidateTroves(): liquidates up to (but no more than) the requested number of undercollateralized troves", async () => {
-        await testLiquidateOnly(contracts.troveManager.liquidateTroves, 2)
+        await testLiquidateOnly(() => contracts.troveManager.liquidateTroves(2))
       })
 
       it("liquidateTroves(): liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
@@ -1471,17 +1466,24 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       it("batchLiquidateTroves(): closes every trove with ICR < MCR in the given array", async () => {
-        await testLiquidateICRLessThanMCR(
-          contracts.troveManager.batchLiquidateTroves,
-          [alice.wallet, bob.wallet, carol.wallet, dennis.wallet, eric.wallet],
+        await testLiquidateICRLessThanMCR(() =>
+          contracts.troveManager.batchLiquidateTroves([
+            alice.wallet,
+            bob.wallet,
+            carol.wallet,
+            dennis.wallet,
+            eric.wallet,
+          ]),
         )
       })
 
       it("batchLiquidateTroves(): does not liquidate troves that are not in the given array", async () => {
-        await testLiquidateOnly(contracts.troveManager.batchLiquidateTroves, [
-          carol.wallet,
-          dennis.wallet,
-        ])
+        await testLiquidateOnly(() =>
+          contracts.troveManager.batchLiquidateTroves([
+            carol.wallet,
+            dennis.wallet,
+          ]),
+        )
       })
 
       it("batchLiquidateTroves(): does not close troves with ICR >= MCR in the given array", async () => {
