@@ -1397,7 +1397,18 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Expected Reverts", () => {})
+    context("Expected Reverts", () => {
+      it("batchLiquidateTroves(): reverts if array is empty", async () => {
+        await setupTroves()
+        // Drop the price so Alice is eligible for liquidation but do not perform the liquidation yet
+        await dropPrice(contracts, alice)
+        await expect(
+          contracts.troveManager.batchLiquidateTroves([]),
+        ).to.be.revertedWith(
+          "TroveManager: Calldata address array must not be empty",
+        )
+      })
+    })
 
     /**
      *
@@ -1458,7 +1469,7 @@ describe("TroveManager in Normal Mode", () => {
         ])
       })
 
-      it.only("batchLiquidateTroves(): does not close troves with ICR >= MCR in the given array", async () => {
+      it("batchLiquidateTroves(): does not close troves with ICR >= MCR in the given array", async () => {
         await setupTroves()
 
         // Open a trove with lower ICR
