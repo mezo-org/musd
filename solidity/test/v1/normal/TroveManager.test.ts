@@ -58,6 +58,12 @@ describe("TroveManager in Normal Mode", () => {
     })
   }
 
+  /**
+   * Contains the setup and expectations for tests that liquidate a sequence of troves with some having ICR < MCR.
+   * The expectations are included along with the setup to allow for continuity when reading the test.
+   * @param liquidateFunction The function being tested
+   * @param liquidateFunctionArgs The arguments to be passed to `liquidateFunction`
+   */
   async function testLiquidateICRLessThanMCR<T extends unknown[]>(
     liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
     ...liquidateFunctionArgs: T
@@ -120,6 +126,9 @@ describe("TroveManager in Normal Mode", () => {
     expect(stillActive.every(Boolean)).to.equal(true)
   }
 
+  /**
+   * Setup troves for tests that need multiple troves with pending rewards and a trove that is skipped during a liquidation
+   */
   async function setupTrovesLiquidateWithSkip() {
     await setupTroves()
     await openTrove(contracts, {
@@ -140,7 +149,13 @@ describe("TroveManager in Normal Mode", () => {
     await dropPrice(contracts, alice)
   }
 
-  async function testLiquidateOnly<T extends any[]>(
+  /**
+   * Contains the setup and expectations for tests that liquidate a sequence of troves and check that only the specified
+   * troves are liquidated.  The expectations are included along with the setup to allow for continuity when reading the test.
+   * @param liquidateFunction The function being tested
+   * @param liquidateFunctionArgs The arguments to be passed to `liquidateFunction`
+   */
+  async function testLiquidateOnly<T extends unknown[]>(
     liquidateFunction: (...args: T) => Promise<ContractTransactionResponse>,
     ...liquidateFunctionArgs: T
   ) {
