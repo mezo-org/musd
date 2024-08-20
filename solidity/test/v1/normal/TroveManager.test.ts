@@ -1590,4 +1590,62 @@ describe("TroveManager in Normal Mode", () => {
 
     context("State change in other contracts", () => {})
   })
+
+  describe("getRedemptionHints()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
+  })
 })
