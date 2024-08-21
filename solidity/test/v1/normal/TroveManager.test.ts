@@ -1625,11 +1625,14 @@ describe("TroveManager in Normal Mode", () => {
     context("Individual Troves", () => {
       it.only("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
         // Open Troves for Alice and Bob
-        await openTrove(contracts, {
-          musdAmount: "2100",
-          ICR: "310",
-          sender: alice.wallet,
-        })
+        const { totalDebt, musdAmount, collateral } = await openTrove(
+          contracts,
+          {
+            musdAmount: "2100",
+            ICR: "310",
+            sender: alice.wallet,
+          },
+        )
         await openTrove(contracts, {
           musdAmount: "2000",
           ICR: "290",
@@ -1665,8 +1668,29 @@ describe("TroveManager in Normal Mode", () => {
         const expectedCollateral = alice.trove.collateral.before
         const expectedDebt = alice.trove.debt.before - partialRedemptionAmount
         const expectedICR = (expectedCollateral * to1e18("100")) / expectedDebt
-        console.log(expectedCollateral)
-        console.log(expectedDebt)
+        // console.log(expectedCollateral)
+        // console.log(expectedDebt)
+        // console.log(alice.trove)
+        const maxRedeemableMUSD =
+          totalDebt - musdAmount - partialRedemptionAmount + to1e18("200") // Partial redemption amount + 200 MUSD for gas comp
+        console.log(maxRedeemableMUSD)
+        // const collateral = alice.trove.collateral.before
+        console.log(collateral)
+        console.log(totalDebt)
+        console.log(musdAmount)
+
+        const netmusddebt = totalDebt - to1e18("200")
+        expect(maxRedeemableMUSD).to.equal(310500000000000000000n)
+        expect(netmusddebt).to.equal(2110500000000000000000n)
+
+        const newColl = collateral - to1e18(maxRedeemableMUSD) / price
+        expect(newColl).to.equal(136476454545454546n)
+
+        const newDebt = netmusddebt - maxRedeemableMUSD
+        const compositeDebt = newDebt + to1e18("200")
+        expect(compositeDebt).to.equal(2000000000000000000000n)
+
+        const nominalICR = (newColl * to1e18("100")) / compositeDebt
 
         const { firstRedemptionHint, partialRedemptionHintNICR } =
           await contracts.hintHelpers.getRedemptionHints(
@@ -1676,8 +1700,7 @@ describe("TroveManager in Normal Mode", () => {
           )
 
         expect(firstRedemptionHint).to.equal(carol.address)
-        // TODO Fix this expectation
-        // expect(partialRedemptionHintNICR).to.equal(expectedICR)
+        expect(partialRedemptionHintNICR).to.equal(nominalICR)
       })
 
       /**
