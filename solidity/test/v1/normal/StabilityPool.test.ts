@@ -424,10 +424,7 @@ describe("StabilityPool in Normal Mode", () => {
         // Retrive $900
         await contracts.stabilityPool
           .connect(alice.wallet)
-          .withdrawFromSP(to1e18(900), {
-            maxFeePerGas: 0,
-            maxPriorityFeePerGas: 0,
-          })
+          .withdrawFromSP(to1e18(900), NO_GAS)
 
         await updateStabilityPoolSnapshot(contracts, state, "after")
         await updateStabilityPoolUserSnapshot(contracts, alice, "after")
@@ -496,10 +493,7 @@ describe("StabilityPool in Normal Mode", () => {
       // fully withdraw
       await contracts.stabilityPool
         .connect(alice.wallet)
-        .withdrawFromSP(alice.stabilityPool.deposit.before, {
-          maxFeePerGas: 0,
-          maxPriorityFeePerGas: 0,
-        })
+        .withdrawFromSP(alice.stabilityPool.deposit.before, NO_GAS)
 
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -521,20 +515,14 @@ describe("StabilityPool in Normal Mode", () => {
 
       await contracts.stabilityPool
         .connect(alice.wallet)
-        .withdrawFromSP(to1e18(900), {
-          maxFeePerGas: 0,
-          maxPriorityFeePerGas: 0,
-        })
+        .withdrawFromSP(to1e18(900), NO_GAS)
 
       await updateWalletSnapshot(contracts, alice, "before")
 
       await provideToSP(contracts, alice, to1e18(900))
       await contracts.stabilityPool
         .connect(alice.wallet)
-        .withdrawFromSP(to1e18(900), {
-          maxFeePerGas: 0,
-          maxPriorityFeePerGas: 0,
-        })
+        .withdrawFromSP(to1e18(900), NO_GAS)
 
       await updateWalletSnapshot(contracts, alice, "after")
       expect(alice.btc.after).to.equal(alice.btc.before)

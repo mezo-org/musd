@@ -24,6 +24,7 @@ import {
   updateContractsSnapshot,
   createLiquidationEvent,
   updateTroveManagerSnapshot,
+  NO_GAS,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
@@ -1512,10 +1513,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         carol.btc.before = await ethers.provider.getBalance(carol.address)
         await contracts.borrowerOperations
           .connect(carol.wallet)
-          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, {
-            maxFeePerGas: 0,
-            maxPriorityFeePerGas: 0,
-          })
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, NO_GAS)
         carol.btc.after = await ethers.provider.getBalance(carol.address)
 
         expect(carol.btc.after).to.equal(carol.btc.before + withdrawalAmount)
@@ -1598,16 +1596,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         const withdrawalAmount = 1n
         await contracts.borrowerOperations
           .connect(carol.wallet)
-          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, {
-            maxFeePerGas: 0,
-            maxPriorityFeePerGas: 0,
-          })
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, NO_GAS)
         await contracts.borrowerOperations
           .connect(dennis.wallet)
-          .withdrawColl(withdrawalAmount, dennis.wallet, dennis.wallet, {
-            maxFeePerGas: 0,
-            maxPriorityFeePerGas: 0,
-          })
+          .withdrawColl(withdrawalAmount, dennis.wallet, dennis.wallet, NO_GAS)
 
         await updateTroveSnapshot(contracts, carol, "after")
         await updateTroveSnapshot(contracts, dennis, "after")
