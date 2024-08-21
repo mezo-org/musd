@@ -21,12 +21,12 @@ import {
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
-  updateMUSDUserSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateTroveSnapshots,
+  updateWalletSnapshot,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -1292,14 +1292,14 @@ describe("TroveManager in Normal Mode", () => {
     context("Balance changes", () => {
       it("liquidateTroves(): does not affect the liquidated user's token balances", async () => {
         await setupTroves()
-        await updateMUSDUserSnapshot(contracts, alice, "before")
-        await updateMUSDUserSnapshot(contracts, bob, "before")
+        await updateWalletSnapshot(contracts, alice, "before")
+        await updateWalletSnapshot(contracts, bob, "before")
 
         // Attempt to liquidate both troves, only Alice gets liquidated
         await dropPrice(contracts, alice)
         await contracts.troveManager.liquidateTroves(2)
-        await updateMUSDUserSnapshot(contracts, alice, "after")
-        await updateMUSDUserSnapshot(contracts, bob, "after")
+        await updateWalletSnapshot(contracts, alice, "after")
+        await updateWalletSnapshot(contracts, bob, "after")
 
         // Balances should remain unchanged
         expect(alice.musd.before).to.equal(alice.musd.after)
