@@ -17,14 +17,13 @@ import {
   openTrove,
   provideToSP,
   updateContractsSnapshot,
-  updateMUSDUserSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
-  updateUserBtcSnapshot,
+  updateWalletSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -99,13 +98,13 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): reduces the user's MUSD balance", async () => {
-      await updateMUSDUserSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, alice, "before")
 
       const amount = to1e18(200)
 
       await provideToSP(contracts, alice, amount)
 
-      await updateMUSDUserSnapshot(contracts, alice, "after")
+      await updateWalletSnapshot(contracts, alice, "after")
 
       expect(alice.musd.after).to.equal(alice.musd.before - amount)
     })
@@ -199,7 +198,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("provideToSP(): reverts if user tries to provide more than their MUSD balance", async () => {
-      await updateMUSDUserSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, alice, "before")
 
       await expect(provideToSP(contracts, alice, alice.musd.before + 1n)).to.be
         .reverted
@@ -420,8 +419,7 @@ describe("StabilityPool in Normal Mode", () => {
 
         liquidationTx = await createLiquidationEvent(contracts)
 
-        await updateUserBtcSnapshot(alice, "before")
-        await updateMUSDUserSnapshot(contracts, alice, "before")
+        await updateWalletSnapshot(contracts, alice, "before")
 
         // Retrive $900
         await contracts.stabilityPool
@@ -431,10 +429,9 @@ describe("StabilityPool in Normal Mode", () => {
             maxPriorityFeePerGas: 0,
           })
 
-        await updateUserBtcSnapshot(alice, "after")
         await updateStabilityPoolSnapshot(contracts, state, "after")
         await updateStabilityPoolUserSnapshot(contracts, alice, "after")
-        await updateMUSDUserSnapshot(contracts, alice, "after")
+        await updateWalletSnapshot(contracts, alice, "after")
       })
 
       it("withdrawFromSP(): retrieves correct MUSD amount and the entire collateral Gain, and updates deposit", async () => {
@@ -529,8 +526,7 @@ describe("StabilityPool in Normal Mode", () => {
           maxPriorityFeePerGas: 0,
         })
 
-      await updateUserBtcSnapshot(alice, "before")
-      await updateMUSDUserSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, alice, "before")
 
       await provideToSP(contracts, alice, to1e18(900))
       await contracts.stabilityPool
@@ -540,7 +536,7 @@ describe("StabilityPool in Normal Mode", () => {
           maxPriorityFeePerGas: 0,
         })
 
-      await updateUserBtcSnapshot(alice, "after")
+      await updateWalletSnapshot(contracts, alice, "after")
       expect(alice.btc.after).to.equal(alice.btc.before)
     })
 
@@ -607,14 +603,14 @@ describe("StabilityPool in Normal Mode", () => {
 
       await createLiquidationEvent(contracts)
 
-      await updateMUSDUserSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, alice, "before")
       await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
       await contracts.stabilityPool
         .connect(alice.wallet)
         .withdrawFromSP(alice.stabilityPool.compoundedDeposit.before)
 
-      await updateMUSDUserSnapshot(contracts, alice, "after")
+      await updateWalletSnapshot(contracts, alice, "after")
 
       expect(alice.musd.after).to.equal(
         alice.musd.before + alice.stabilityPool.compoundedDeposit.before,
@@ -739,16 +735,14 @@ describe("StabilityPool in Normal Mode", () => {
       await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
-      await updateMUSDUserSnapshot(contracts, whale, "before")
-      await updateUserBtcSnapshot(whale, "before")
+      await updateWalletSnapshot(contracts, whale, "before")
 
       await contracts.stabilityPool
         .connect(whale.wallet)
         .withdrawFromSP(0n, NO_GAS)
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "after")
-      await updateMUSDUserSnapshot(contracts, whale, "after")
-      await updateUserBtcSnapshot(whale, "after")
+      await updateWalletSnapshot(contracts, whale, "after")
 
       expect(whale.musd.after).to.equal(whale.musd.before)
       expect(whale.btc.after).to.equal(
@@ -786,7 +780,7 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(contracts, alice, amount)
 
       await updateTroveSnapshot(contracts, alice, "before")
-      await updateUserBtcSnapshot(alice, "before")
+      await updateWalletSnapshot(contracts, alice, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
       await contracts.stabilityPool
@@ -794,7 +788,7 @@ describe("StabilityPool in Normal Mode", () => {
         .withdrawFromSP(amount, NO_GAS)
 
       await updateTroveSnapshot(contracts, alice, "after")
-      await updateUserBtcSnapshot(alice, "after")
+      await updateWalletSnapshot(contracts, alice, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(alice.btc.after).to.equal(alice.btc.before)
@@ -808,7 +802,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("withdrawFromSP(): Request to withdraw > caller's deposit only withdraws the caller's compounded deposit", async () => {
       await updateStabilityPoolSnapshot(contracts, state, "before")
-      await updateMUSDUserSnapshot(contracts, whale, "before")
+      await updateWalletSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
 
       await contracts.stabilityPool
@@ -818,7 +812,7 @@ describe("StabilityPool in Normal Mode", () => {
         )
 
       await updateStabilityPoolSnapshot(contracts, state, "after")
-      await updateMUSDUserSnapshot(contracts, whale, "after")
+      await updateWalletSnapshot(contracts, whale, "after")
       await updateStabilityPoolUserSnapshot(contracts, whale, "after")
 
       expect(state.stabilityPool.musd.after).to.equal(
@@ -837,7 +831,7 @@ describe("StabilityPool in Normal Mode", () => {
       )
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
-      await updateMUSDUserSnapshot(contracts, whale, "before")
+      await updateWalletSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
 
       await contracts.stabilityPool
@@ -845,7 +839,7 @@ describe("StabilityPool in Normal Mode", () => {
         .withdrawFromSP(maxBytes32)
 
       await updateStabilityPoolSnapshot(contracts, state, "after")
-      await updateMUSDUserSnapshot(contracts, whale, "after")
+      await updateWalletSnapshot(contracts, whale, "after")
       await updateStabilityPoolUserSnapshot(contracts, whale, "after")
 
       expect(state.stabilityPool.musd.after).to.equal(

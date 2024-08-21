@@ -86,13 +86,6 @@ export async function updateTroveSnapshots(
   )
 }
 
-export async function updateUserBtcSnapshot(
-  user: User,
-  checkPoint: CheckPoint,
-) {
-  user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
-}
-
 /* Updates the snapshot of collateral and btc for either active pool or default pool.
  * In the future we can potentially include more state updates to contracts but want to avoid too much coupling for now.
  */
@@ -183,12 +176,13 @@ export async function updateStabilityPoolUserSnapshots(
   )
 }
 
-export async function updateMUSDUserSnapshot(
+export async function updateWalletSnapshot(
   contracts: Contracts,
   user: User,
   checkPoint: CheckPoint,
 ) {
   user.musd[checkPoint] = await contracts.musd.balanceOf(user.wallet)
+  user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
 }
 
 export async function updateTroveManagerSnapshot(
