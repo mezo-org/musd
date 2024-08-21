@@ -105,7 +105,6 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                         remainingMUSD,
                         netMUSDDebt - MIN_NET_DEBT
                     );
-                    console.log(maxRedeemableMUSD);
 
                     uint256 collateral = troveManager.getTroveColl(
                         currentTroveuser
@@ -114,15 +113,11 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                             currentTroveuser
                         );
 
-                    console.log(collateral);
-                    console.log(netMUSDDebt);
                     uint256 newColl = collateral -
                         ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
                     uint256 newDebt = netMUSDDebt - maxRedeemableMUSD;
 
                     uint256 compositeDebt = _getCompositeDebt(newDebt);
-                    console.log(newColl);
-                    console.log(compositeDebt);
                     partialRedemptionHintNICR = LiquityMath._computeNominalCR(
                         newColl,
                         compositeDebt

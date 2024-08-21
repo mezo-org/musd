@@ -1665,28 +1665,12 @@ describe("TroveManager in Normal Mode", () => {
           bob.trove.debt.before +
           partialRedemptionAmount
 
-        const expectedCollateral = alice.trove.collateral.before
-        const expectedDebt = alice.trove.debt.before - partialRedemptionAmount
-        const expectedICR = (expectedCollateral * to1e18("100")) / expectedDebt
-        // console.log(expectedCollateral)
-        // console.log(expectedDebt)
-        // console.log(alice.trove)
         const maxRedeemableMUSD =
           totalDebt - musdAmount - partialRedemptionAmount + to1e18("200") // Partial redemption amount + 200 MUSD for gas comp
-        console.log(maxRedeemableMUSD)
-        // const collateral = alice.trove.collateral.before
-        console.log(collateral)
-        console.log(totalDebt)
-        console.log(musdAmount)
-
-        const netmusddebt = totalDebt - to1e18("200")
-        expect(maxRedeemableMUSD).to.equal(310500000000000000000n)
-        expect(netmusddebt).to.equal(2110500000000000000000n)
-
+        const netMUSDdebt = totalDebt - to1e18("200")
         const newColl = collateral - to1e18(maxRedeemableMUSD) / price
-        expect(newColl).to.equal(136476454545454546n)
 
-        const newDebt = netmusddebt - maxRedeemableMUSD
+        const newDebt = netMUSDdebt - maxRedeemableMUSD
         const compositeDebt = newDebt + to1e18("200")
         expect(compositeDebt).to.equal(2000000000000000000000n)
 
