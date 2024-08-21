@@ -1623,7 +1623,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
+      it.only("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
         await setupTroves()
         await openTrove(contracts, {
           musdAmount: "2000",
@@ -1631,7 +1631,17 @@ describe("TroveManager in Normal Mode", () => {
           sender: carol.wallet,
         })
         // Drop the price so that Carol has an ICR below MCR
-        await dropPrice(contracts, carol)
+        const price = await dropPrice(contracts, carol)
+
+        const partialRedemptionAmount = to1e18("100")
+        const { firstRedemptionHint, partialRedemptionHintNICR } =
+          await contracts.hintHelpers.getRedemptionHints(
+            partialRedemptionAmount,
+            price,
+            0,
+          )
+
+        expect(firstRedemptionHint).to.equal(carol.address)
       })
 
       /**

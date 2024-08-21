@@ -237,6 +237,13 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       ZERO_ADDRESS,
     )
 
+  await contracts.hintHelpers
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.sortedTroves.getAddress(),
+      await contracts.troveManager.getAddress(),
+    )
+
   await contracts.pcv
     .connect(users.deployer.wallet)
     .setAddresses(
