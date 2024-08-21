@@ -7,6 +7,7 @@ import "./interfaces/ITroveManager.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
+import "../debugging/console.sol";
 
 contract HintHelpers is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
@@ -117,6 +118,8 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                     uint256 newDebt = netMUSDDebt - maxRedeemableMUSD;
 
                     uint256 compositeDebt = _getCompositeDebt(newDebt);
+                    console.log(newColl);
+                    console.log(compositeDebt);
                     partialRedemptionHintNICR = LiquityMath._computeNominalCR(
                         newColl,
                         compositeDebt
