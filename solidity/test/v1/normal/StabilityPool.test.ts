@@ -788,7 +788,7 @@ describe("StabilityPool in Normal Mode", () => {
       )
     })
 
-    it("withdrawFromSP(): Request to withdraw > caller's deposit only withdraws the caller's compounded deposit", async () => {
+    it("withdrawFromSP(): Requests to withdraw amounts greater than the caller's compounded deposit only withdraws the caller's compounded deposit", async () => {
       await updateStabilityPoolSnapshot(contracts, state, "before")
       await updateWalletSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
