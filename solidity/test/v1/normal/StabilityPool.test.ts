@@ -24,6 +24,7 @@ import {
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
   updateWalletSnapshot,
+  dropPrice,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -55,9 +56,6 @@ describe("StabilityPool in Normal Mode", () => {
     dennis = testSetup.users.dennis
     whale = testSetup.users.whale
     addresses = await getAddresses(contracts, testSetup.users)
-
-    // set 1 BTC = $1000 for ease of math
-    await contracts.mockAggregator.setPrice(to1e18("1,000"))
 
     // Open a trove for $5k for alice backed by $10k worth of BTC (10 BTC)
     await openTrove(contracts, {
@@ -330,8 +328,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await provideToSP(contracts, bob, to1e18("2,000"))
 
-      // Price drops from $1,000 to $900
-      await contracts.mockAggregator.setPrice(to1e18(900))
+      await dropPrice(contracts, bob)
 
       // Liquidate bob
       await contracts.troveManager.liquidate(bob.wallet)
@@ -395,8 +392,7 @@ describe("StabilityPool in Normal Mode", () => {
         sender: bob.wallet,
       })
 
-      // Decrease collateral price from $1000 to $900, making Bob's CR equal 108%
-      await contracts.mockAggregator.setPrice(900)
+      await dropPrice(contracts, bob)
 
       await expect(
         contracts.stabilityPool.connect(whale.wallet).withdrawFromSP(1n),
@@ -716,11 +712,7 @@ describe("StabilityPool in Normal Mode", () => {
         sender: bob.wallet,
       })
 
-      const priceBefore = await contracts.priceFeed.fetchPrice()
-
-      // Drop price to 90% of prior. This makes the Bob's ICR equal to 108%
-      // which is below the MCR of 110%
-      await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
+      await dropPrice(contracts, bob)
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
       await updateWalletSnapshot(contracts, whale, "before")
