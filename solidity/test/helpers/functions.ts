@@ -13,6 +13,11 @@ import {
 } from "./interfaces"
 import { fastForwardTime } from "./time"
 
+export const NO_GAS = {
+  maxFeePerGas: 0,
+  maxPriorityFeePerGas: 0,
+}
+
 // Contract specific helper functions
 export async function removeMintlist(
   contracts: Contracts,
@@ -171,12 +176,13 @@ export async function updateStabilityPoolUserSnapshots(
   )
 }
 
-export async function updateMUSDUserSnapshot(
+export async function updateWalletSnapshot(
   contracts: Contracts,
   user: User,
   checkPoint: CheckPoint,
 ) {
   user.musd[checkPoint] = await contracts.musd.balanceOf(user.wallet)
+  user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
 }
 
 export async function updateTroveManagerSnapshot(
@@ -384,7 +390,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
 export async function createLiquidationEvent(
   contracts: Contracts,
-): Promise<void> {
+): Promise<ContractTransactionResponse> {
   const priceBefore = await contracts.priceFeed.fetchPrice()
   const defaulter = (await helpers.signers.getUnnamedSigners())[8]
   await openTrove(contracts, {
@@ -398,10 +404,12 @@ export async function createLiquidationEvent(
   await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
 
   // Liquidate Frank
-  await contracts.troveManager.liquidate(defaulter)
+  const tx = await contracts.troveManager.liquidate(defaulter)
 
   // Reset the price
   await contracts.mockAggregator.setPrice(priceBefore)
+
+  return tx
 }
 
 export function applyLiquidationFee(collateralAmount: bigint) {
@@ -417,8 +425,8 @@ export async function provideToSP(
   const stabilityPoolAddress = await contracts.stabilityPool.getAddress()
   await contracts.musd
     .connect(user.wallet)
-    .approve(stabilityPoolAddress, amount)
-  await contracts.stabilityPool.connect(user.wallet).provideToSP(amount)
+    .approve(stabilityPoolAddress, amount, NO_GAS)
+  await contracts.stabilityPool.connect(user.wallet).provideToSP(amount, NO_GAS)
 }
 
 /*
