@@ -15,6 +15,7 @@ import {
   fixture,
   getAddresses,
   getEmittedLiquidationValues,
+  getEmittedRedemptionValues,
   getTCR,
   openTrove,
   provideToSP,
@@ -1836,7 +1837,7 @@ describe("TroveManager in Normal Mode", () => {
             dennis.wallet,
           )
 
-        await contracts.troveManager
+        const redemptionTx = await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
             redemptionAmount,
@@ -1848,6 +1849,14 @@ describe("TroveManager in Normal Mode", () => {
             to1e18("1"),
           )
 
+        const {
+          attemptedMUSDAmount,
+          actualMUSDAmount,
+          collateralSent,
+          collateralFee,
+        } = await getEmittedRedemptionValues(redemptionTx)
+        const collNeeded = to1e18(redemptionAmount) / price
+
         // Dennis should receive 200 MUSD worth of collateral
         await updateTroveSnapshots(
           contracts,
@@ -1857,7 +1866,7 @@ describe("TroveManager in Normal Mode", () => {
 
         // await contracts.mockERC20.mint(dennis.address, to1e18("200"))
         const dennisColl = await contracts.mockERC20.balanceOf(dennis.address)
-        expect(dennisColl).to.equal(to1e18("200"))
+        expect(collateralSent).to.equal(collNeeded)
 
         // Alice's trove's debt should be reduced by 200 MUSD
         expect(alice.trove.debt.before - alice.trove.debt.after).to.equal(
@@ -1865,7 +1874,6 @@ describe("TroveManager in Normal Mode", () => {
         )
 
         // Alice's collateral should have decreased by 200 MUSD worth
-        const collNeeded = to1e18(redemptionAmount) / price
         expect(
           alice.trove.collateral.before - alice.trove.collateral.after,
         ).to.equal(collNeeded)

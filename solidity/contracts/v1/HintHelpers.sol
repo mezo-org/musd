@@ -100,9 +100,6 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                 troveManager.getTroveDebt(currentTroveuser)
             ) + troveManager.getPendingMUSDDebtReward(currentTroveuser);
 
-            console.log(netMUSDDebt);
-            console.log(remainingMUSD);
-            console.log(MIN_NET_DEBT);
             if (netMUSDDebt > remainingMUSD) {
                 if (netMUSDDebt > MIN_NET_DEBT) {
                     uint256 maxRedeemableMUSD = LiquityMath._min(

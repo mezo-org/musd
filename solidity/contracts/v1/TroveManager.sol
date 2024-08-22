@@ -1571,24 +1571,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _maxMUSDamount,
             Troves[_borrower].debt - MUSD_GAS_COMPENSATION
         );
-        console.log("singleRedemption.MUSDLot", singleRedemption.MUSDLot);
 
         // Get the collateralLot of equivalent value in USD
         singleRedemption.collateralLot =
             (singleRedemption.MUSDLot * DECIMAL_PRECISION) /
             _price;
-        console.log(_price);
-        console.log("singleRedemption.collateralLot", singleRedemption.collateralLot);
 
         // Decrease the debt and collateral of the current Trove according to the MUSD lot and corresponding collateral to send
         uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
         uint256 newColl = Troves[_borrower].coll -
             singleRedemption.collateralLot;
-        console.log("newDebt", newDebt);
-        console.log("newColl", newColl);
 
         if (newDebt == MUSD_GAS_COMPENSATION) {
-            console.log("hit here");
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1606,7 +1600,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
-            console.log("got here");
             uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
 
             /*

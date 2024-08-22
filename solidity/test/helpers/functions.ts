@@ -238,6 +238,49 @@ export async function getEventArgByName(
   )
 }
 
+export async function getEmittedRedemptionValues(
+  redemptionTx: ContractTransactionResponse,
+) {
+  const abi = [
+    "event Redemption(uint256 _attemptedMUSDAmount,uint256 _actualMUSDAmount,uint256 _collateralSent,uint256 _collateralFee)",
+  ]
+
+  const attemptedMUSDAmount = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    0,
+  )
+
+  const actualMUSDAmount = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    1,
+  )
+
+  const collateralSent = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    2,
+  )
+
+  const collateralFee = await getEventArgByName(
+    redemptionTx,
+    abi,
+    "Redemption",
+    3,
+  )
+
+  return {
+    attemptedMUSDAmount,
+    actualMUSDAmount,
+    collateralSent,
+    collateralFee,
+  }
+}
+
 export async function getEmittedLiquidationValues(
   liquidationTx: ContractTransactionResponse,
 ) {
