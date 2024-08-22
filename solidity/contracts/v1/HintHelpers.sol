@@ -95,6 +95,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
             remainingMUSD > 0 &&
             _maxIterations-- > 0
         ) {
+            console.log(_maxIterations);
             uint256 netMUSDDebt = _getNetDebt(
                 troveManager.getTroveDebt(currentTroveuser)
             ) + troveManager.getPendingMUSDDebtReward(currentTroveuser);
@@ -124,6 +125,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                     );
 
                     remainingMUSD -= maxRedeemableMUSD;
+                    console.log(remainingMUSD);
                 }
                 break;
             } else {

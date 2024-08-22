@@ -1623,7 +1623,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it.only("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
+      it("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
         // Open Troves for Alice and Bob
         const { totalDebt, musdAmount, collateral } = await openTrove(
           contracts,
@@ -1672,7 +1672,6 @@ describe("TroveManager in Normal Mode", () => {
 
         const newDebt = netMUSDdebt - maxRedeemableMUSD
         const compositeDebt = newDebt + to1e18("200")
-        expect(compositeDebt).to.equal(2000000000000000000000n)
 
         const nominalICR = (newColl * to1e18("100")) / compositeDebt
 
@@ -1685,6 +1684,37 @@ describe("TroveManager in Normal Mode", () => {
 
         expect(firstRedemptionHint).to.equal(carol.address)
         expect(partialRedemptionHintNICR).to.equal(nominalICR)
+      })
+
+      it.only("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
+        // Open three troves
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: carol.wallet,
+        })
+
+        const price = await contracts.priceFeed.fetchPrice()
+
+        // Try to redeem 210 MUSD.  At least 3 iterations should be needed for total redemption of the given amount.
+        const { partialRedemptionHintNICR } =
+          await contracts.hintHelpers.getRedemptionHints(
+            to1e18("2050"),
+            price,
+            1,
+          )
+
+        expect(partialRedemptionHintNICR).to.equal(0)
       })
 
       /**
