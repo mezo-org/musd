@@ -1778,29 +1778,103 @@ describe("TroveManager in Normal Mode", () => {
 
     context("Individual Troves", () => {})
 
-      /**
-       *
-       * Balance changes
-       *
-       */
+    /**
+     *
+     * Balance changes
+     *
+     */
 
-      context("Balance changes", () => {})
+    context("Balance changes", () => {
+      it.only("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+        // Open three troves with ascending ICRs
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "300",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "400",
+          sender: carol.wallet,
+        })
 
-      /**
-       *
-       * Fees
-       *
-       */
+        // Open another trove for Dennis with a very high ICR
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "4000",
+          sender: dennis.wallet,
+        })
 
-      context("Fees", () => {})
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "before",
+        )
 
-      /**
-       *
-       * State change in other contracts
-       *
-       */
+        // Attempt to redeem 200 MUSD, which should be possible to redeem from Alice's trove alone
+        const redemptionAmount = to1e18("200")
+        const price = await contracts.priceFeed.fetchPrice()
+        const { firstRedemptionHint, partialRedemptionHintNICR } =
+          await contracts.hintHelpers.getRedemptionHints(
+            redemptionAmount,
+            price,
+            0,
+          )
 
-      context("State change in other contracts", () => {})
+        const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+          await contracts.sortedTroves.findInsertPosition(
+            partialRedemptionHintNICR,
+            dennis.wallet,
+            dennis.wallet,
+          )
+
+        await contracts.troveManager.redeemCollateral(
+          redemptionAmount,
+          firstRedemptionHint,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+          partialRedemptionHintNICR,
+          0,
+          to1e18("1"),
+        )
+
+        // Dennis should receive 200 MUSD worth of collateral
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
+        await updateMUSDUserSnapshot(contracts, dennis, "after")
+        // TODO Fix mock erc20 and add
+
+        // Alice's trove's debt should be reduced by 200 MUSD
+        expect(alice.trove.debt.before - alice.trove.debt.after).to.equal(
+          to1e18("200"),
+        )
+
+        // Alice's collateral should have decreased by 200 MUSD worth
+      })
     })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {})
   })
 })

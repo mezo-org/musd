@@ -330,6 +330,10 @@ export async function adjustTroveToICR(
   return { requestedDebtIncrease, increasedTotalDebt }
 }
 
+async function getActualDebtFromComposite(compositeDebt: bigint) {
+  return compositeDebt - to1e18("200")
+}
+
 export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const params = inputs
 
@@ -357,6 +361,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
   // amount of debt to take on
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
+  const netDebt = await getActualDebtFromComposite(totalDebt)
 
   // amount of assets required for the loan
   const assetAmount = (ICR * totalDebt) / price
@@ -379,6 +384,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
     totalDebt,
     collateral: assetAmount,
     tx,
+    netDebt,
   }
 }
 
