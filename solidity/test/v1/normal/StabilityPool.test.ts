@@ -25,6 +25,8 @@ import {
   updateStabilityPoolUserSnapshots,
   updateWalletSnapshot,
   dropPrice,
+  withdrawCollateralGainToTrove,
+  transferMUSD,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -962,5 +964,208 @@ describe("StabilityPool in Normal Mode", () => {
         )
       })
     })
+  })
+
+  describe("withdrawCollateralGainToTrove()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("withdrawCollateralGainToTrove(): reverts when user has no active deposit", async () => {
+        await expect(
+          withdrawCollateralGainToTrove(contracts, alice),
+        ).to.be.revertedWith("StabilityPool: User must have a non-zero deposit")
+      })
+
+      it("withdrawCollateralGainToTrove(): reverts if it would leave trove with ICR < MCR", async () => {
+        await openTrove(contracts, {
+          musdAmount: "5,000", // slightly over the minimum of $1800
+          ICR: "120", // 120%
+          sender: bob.wallet,
+        })
+        await provideToSP(contracts, bob, to1e18(200))
+
+        await createLiquidationEvent(contracts)
+
+        // drop ICR to 102%
+        await dropPrice(contracts, bob, to1e18(102) / 100n)
+
+        await expect(
+          withdrawCollateralGainToTrove(contracts, bob),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): reverts with subsequent deposit and withdrawal attempt from same account with no intermediate liquidations", async () => {
+        await createLiquidationEvent(contracts)
+
+        await withdrawCollateralGainToTrove(contracts, whale)
+
+        await expect(
+          withdrawCollateralGainToTrove(contracts, whale),
+        ).to.be.revertedWith(
+          "StabilityPool: caller must have non-zero collateral Gain",
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): reverts if user has no trove", async () => {
+        const amount = to1e18(900)
+        await transferMUSD(contracts, whale, bob, amount)
+        await provideToSP(contracts, bob, amount)
+
+        await createLiquidationEvent(contracts)
+
+        await expect(
+          withdrawCollateralGainToTrove(contracts, bob),
+        ).to.be.revertedWith(
+          "StabilityPool: caller must have an active trove to withdraw collateralGain to",
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): reverts when depositor has no collateral gain", async () => {
+        await expect(
+          withdrawCollateralGainToTrove(contracts, whale),
+        ).to.be.revertedWith(
+          "StabilityPool: caller must have non-zero collateral Gain",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("withdrawCollateralGainToTrove(): decreases StabilityPool collateral and increases activePool collateral", async () => {
+        await createLiquidationEvent(contracts)
+
+        await updateStabilityPoolSnapshot(contracts, state, "before")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+
+        await withdrawCollateralGainToTrove(contracts, whale)
+
+        await updateStabilityPoolSnapshot(contracts, state, "after")
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "after",
+          addresses,
+        )
+
+        expect(state.stabilityPool.collateral.after).to.equal(
+          state.stabilityPool.collateral.before -
+            whale.stabilityPool.collateralGain.before,
+        )
+        expect(state.activePool.collateral.after).to.equal(
+          state.activePool.collateral.before +
+            whale.stabilityPool.collateralGain.before,
+        )
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {
+      it("withdrawCollateralGainToTrove(): Applies MUSDLoss to user's deposit, and redirects collateral reward to user's Trove", async () => {
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshot(contracts, whale, "before")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+
+        await withdrawCollateralGainToTrove(contracts, whale)
+
+        await updateTroveSnapshot(contracts, whale, "after")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+
+        expect(whale.stabilityPool.deposit.after).to.equal(
+          whale.stabilityPool.compoundedDeposit.before,
+        )
+        expect(whale.stabilityPool.collateralGain.after).to.equal(0n)
+        expect(whale.trove.collateral.after).to.equal(
+          whale.trove.collateral.before +
+            whale.stabilityPool.collateralGain.before,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): All depositors are able to withdraw their collateral gain from the SP to their Trove", async () => {
+        const users = [bob, carol, dennis]
+        await Promise.all(
+          users.map(async (user) => {
+            await openTrove(contracts, {
+              musdAmount: "5,000",
+              ICR: "200",
+              sender: user.wallet,
+            })
+            await provideToSP(contracts, user, to1e18("5,000"))
+          }),
+        )
+
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await Promise.all(
+          users.map((user) => withdrawCollateralGainToTrove(contracts, user)),
+        )
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        users.forEach((user) => {
+          expect(user.stabilityPool.deposit.after).to.equal(
+            user.stabilityPool.compoundedDeposit.before,
+          )
+          expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+          expect(user.trove.collateral.after).to.equal(
+            user.trove.collateral.before +
+              user.stabilityPool.collateralGain.before,
+          )
+        })
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
   })
 })

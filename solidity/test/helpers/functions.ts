@@ -429,6 +429,15 @@ export async function provideToSP(
   await contracts.stabilityPool.connect(user.wallet).provideToSP(amount, NO_GAS)
 }
 
+export function withdrawCollateralGainToTrove(
+  contracts: Contracts,
+  user: User,
+) {
+  return contracts.stabilityPool
+    .connect(user.wallet)
+    .withdrawCollateralGainToTrove(ZERO_ADDRESS, ZERO_ADDRESS, NO_GAS)
+}
+
 /*
  * Drop the price enough to bring the provided user's ICR to the target ICR or to just below the MCR if no target
  * is provided.
@@ -494,4 +503,15 @@ export async function checkTroveClosedByLiquidation(
 
 export async function checkTroveActive(contracts: Contracts, user: User) {
   return checkTroveStatus(contracts, user, 1n, true)
+}
+
+export function transferMUSD(
+  contracts: Contracts,
+  sender: User,
+  receiver: User,
+  amount: bigint,
+) {
+  return contracts.musd
+    .connect(sender.wallet)
+    .transfer(receiver.wallet, amount, NO_GAS)
 }

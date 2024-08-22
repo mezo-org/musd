@@ -232,7 +232,20 @@ contract BorrowerOperations is
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) external payable override {}
+    ) external payable override {
+        _requireCallerIsStabilityPool();
+        _assetAmount = getAssetAmount(_assetAmount);
+        _adjustTrove(
+            _borrower,
+            0,
+            0,
+            false,
+            _assetAmount,
+            _upperHint,
+            _lowerHint,
+            0
+        );
+    }
 
     // Withdraw collateral from a trove
     function withdrawColl(
@@ -756,6 +769,13 @@ contract BorrowerOperations is
 
         uint256 newTCR = LiquityMath._computeCR(totalColl, totalDebt, _price);
         return newTCR;
+    }
+
+    function _requireCallerIsStabilityPool() internal view {
+        require(
+            msg.sender == stabilityPoolAddress,
+            "BorrowerOps: Caller is not Stability Pool"
+        );
     }
 
     function _requireTroveisActive(
