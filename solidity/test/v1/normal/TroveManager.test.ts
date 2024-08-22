@@ -1836,22 +1836,17 @@ describe("TroveManager in Normal Mode", () => {
             dennis.wallet,
           )
 
-        await debugBalances(contracts, testSetup.users, [
-          "alice",
-          "bob",
-          "carol",
-          "dennis",
-        ])
-
-        await contracts.troveManager.redeemCollateral(
-          redemptionAmount,
-          firstRedemptionHint,
-          upperPartialRedemptionHint,
-          lowerPartialRedemptionHint,
-          partialRedemptionHintNICR,
-          0,
-          to1e18("1"),
-        )
+        await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+          )
 
         // Dennis should receive 200 MUSD worth of collateral
         await updateTroveSnapshots(
@@ -1859,15 +1854,7 @@ describe("TroveManager in Normal Mode", () => {
           [alice, bob, carol, dennis],
           "after",
         )
-        console.log(dennis.address)
-        console.log(dennis.wallet.address)
-        console.log(addresses)
-        await debugBalances(contracts, testSetup.users, [
-          "alice",
-          "bob",
-          "carol",
-          "dennis",
-        ])
+
         // await contracts.mockERC20.mint(dennis.address, to1e18("200"))
         const dennisColl = await contracts.mockERC20.balanceOf(dennis.address)
         expect(dennisColl).to.equal(to1e18("200"))
