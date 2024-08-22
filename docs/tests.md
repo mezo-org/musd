@@ -47,8 +47,6 @@ Which can be called in the tests by connecting as the contract owner.
 await contracts.mockAggregator.connect(deployer).setPrice(price)
 ```
 
-## Deploying Contracts
-
 # Unit Tests
 
 Unit tests should only test one piece of functionality per test. When an operation changes the state in a trove and another contract the test for that should be split across
@@ -255,3 +253,70 @@ expect(await contracts.activePool.getCollateralBalance()).to.equal(await getTrov
 ```
 
 If the state of a contract is used in multiple comparisons then it should be stored in a temporary variable.
+
+## Test Organization
+
+We split up each external function call into:
+
+- Expected Reverts
+- Emitted Events
+- System State Changes
+- Individual Troves
+- Balance changes
+- Fees
+- State change in other contracts
+
+Here's a template:
+
+```
+/**
+ *
+ * Expected Reverts
+ *
+ */
+context("Expected Reverts", () => {})
+
+/**
+ *
+ * Emitted Events
+ *
+ */
+context("Emitted Events", () => {})
+
+/**
+ *
+ * System State Changes
+ *
+ */
+context("System State Changes", () => {})
+
+
+/**
+ *
+ * Individual Troves
+ *
+ */
+ context("Individual Troves", () => {})
+
+ /**
+  *
+  * Balance changes
+  *
+  */
+ context("Balance changes", () => {})
+
+ /**
+  *
+  * Fees
+  *
+  */
+ context("Fees", () => {})
+
+
+ /**
+  *
+  * State change in other contracts
+  *
+  */
+ context("State change in other contracts", () => {})
+```
