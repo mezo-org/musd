@@ -1,6 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
+import { ethers } from "hardhat"
 import {
   adjustTroveToICR,
   applyLiquidationFee,
@@ -21,6 +22,7 @@ import {
   provideToSP,
   TestingAddresses,
   TestSetup,
+  updateBTCUserSnapshot,
   updateContractsSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
@@ -1820,6 +1822,8 @@ describe("TroveManager in Normal Mode", () => {
           "before",
         )
 
+        await updateBTCUserSnapshot(dennis, "before")
+
         // Attempt to redeem 200 MUSD, which should be possible to redeem from Alice's trove alone
         const redemptionAmount = to1e18("200")
         const price = await contracts.priceFeed.fetchPrice()
@@ -1837,6 +1841,7 @@ describe("TroveManager in Normal Mode", () => {
             dennis.wallet,
           )
 
+        // Don't pay for gas to make it easier to calculate the received collateral
         const redemptionTx = await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
@@ -1847,14 +1852,13 @@ describe("TroveManager in Normal Mode", () => {
             partialRedemptionHintNICR,
             0,
             to1e18("1"),
+            { from: dennis.wallet, gasPrice: 0 },
           )
 
-        const {
-          attemptedMUSDAmount,
-          actualMUSDAmount,
-          collateralSent,
-          collateralFee,
-        } = await getEmittedRedemptionValues(redemptionTx)
+        const { collateralSent, collateralFee } =
+          await getEmittedRedemptionValues(redemptionTx)
+
+        // Calculate the amount of collateral needed to redeem 200 MUSD
         const collNeeded = to1e18(redemptionAmount) / price
 
         // Dennis should receive 200 MUSD worth of collateral
@@ -1864,8 +1868,12 @@ describe("TroveManager in Normal Mode", () => {
           "after",
         )
 
-        // await contracts.mockERC20.mint(dennis.address, to1e18("200"))
-        const dennisColl = await contracts.mockERC20.balanceOf(dennis.address)
+        // Check that Dennis received the correct amount of collateral and the emitted values match
+        await updateBTCUserSnapshot(dennis, "after")
+        expect(dennis.btc.after - dennis.btc.before).to.be.closeTo(
+          collNeeded - collateralFee,
+          1000,
+        )
         expect(collateralSent).to.equal(collNeeded)
 
         // Alice's trove's debt should be reduced by 200 MUSD
