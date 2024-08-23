@@ -1693,33 +1693,30 @@ describe("TroveManager in Normal Mode", () => {
         expect(partialRedemptionHintNICR).to.equal(nominalICR)
       })
 
-      // TODO Fix expectation
-      // A > B > C
       it.only("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
         // Open three troves
         await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "1800",
+          musdAmount: "25000",
+          ICR: "300",
           sender: alice.wallet,
         })
         await openTrove(contracts, {
-          musdAmount: "1800",
-          ICR: "400",
+          musdAmount: "15000",
+          ICR: "250",
           sender: bob.wallet,
         })
         await openTrove(contracts, {
-          musdAmount: "1800",
-          ICR: "400",
+          musdAmount: "5000",
+          ICR: "200",
           sender: carol.wallet,
         })
 
         const price = await contracts.priceFeed.fetchPrice()
 
-        // TODO Figure out how this
-        // Try to redeem 210 MUSD.  At least 3 iterations should be needed for total redemption of the given amount.
+        // Try to redeem 10k MUSD.  At least 2 iterations should be needed for total redemption of the given amount.
         const { partialRedemptionHintNICR } =
           await contracts.hintHelpers.getRedemptionHints(
-            to1e18("200"),
+            to1e18("10000"),
             price,
             1,
           )
