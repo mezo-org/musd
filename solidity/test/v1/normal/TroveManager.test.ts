@@ -1952,7 +1952,7 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("redeemCollateral(): has the same functionality with invalid first hint, non-existent trove", async () => {
+      it("redeemCollateral(): has the same functionality with invalid first hint, non-existent trove", async () => {
         await setupRedemptionTroves()
 
         const redemptionAmount = to1e18("200")
@@ -1985,7 +1985,49 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it("redeemCollateral(): has the same functionality with invalid first hint, trove below MCR", async () => {})
+      it("redeemCollateral(): has the same functionality with invalid first hint, trove below MCR", async () => {
+        await setupRedemptionTroves()
+
+        // Increase the price to start Eric
+        const price = await contracts.priceFeed.fetchPrice()
+        await contracts.mockAggregator.setPrice(price * 2n)
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "200",
+          sender: eric.wallet,
+        })
+
+        // Drop the price back to the initial price to put Eric below MCR
+        await contracts.mockAggregator.setPrice(price)
+
+        const redemptionAmount = to1e18("200")
+
+        const {
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        // Don't pay for gas to make it easier to calculate the received collateral
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            eric.address, // Invalid first hint
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
+      })
     })
 
     /**
