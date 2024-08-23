@@ -125,8 +125,6 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         collateral -= _amount;
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
-        console.log("account", _account);
-        console.log(_amount);
 
         sendCollateral(IERC20(collateralAddress), _account, _amount);
         if (collateralAddress == address(0)) {

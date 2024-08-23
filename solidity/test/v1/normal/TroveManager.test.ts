@@ -1749,6 +1749,100 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   describe("redeemCollateral()", () => {
+    async function setupRedemptionTroves() {
+      // Open three troves with ascending ICRs
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "300",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+
+      // Open another trove for Dennis with a very high ICR
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "4000",
+        sender: dennis.wallet,
+      })
+
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "before",
+      )
+
+      await updateBTCUserSnapshot(dennis, "before")
+    }
+
+    async function getRedemptionHints(redemptionAmount: bigint, price: bigint) {
+      const { firstRedemptionHint, partialRedemptionHintNICR } =
+        await contracts.hintHelpers.getRedemptionHints(
+          redemptionAmount,
+          price,
+          0,
+        )
+
+      const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+        await contracts.sortedTroves.findInsertPosition(
+          partialRedemptionHintNICR,
+          dennis.wallet,
+          dennis.wallet,
+        )
+
+      return {
+        firstRedemptionHint,
+        partialRedemptionHintNICR,
+        upperPartialRedemptionHint,
+        lowerPartialRedemptionHint,
+      }
+    }
+
+    async function checkCollateralAndDebtValues(
+      redemptionTx: ContractTransactionResponse,
+      redemptionAmount: bigint,
+      price: bigint,
+    ) {
+      const { collateralSent, collateralFee } =
+        await getEmittedRedemptionValues(redemptionTx)
+
+      // Calculate the amount of collateral needed to redeem 200 MUSD
+      const collNeeded = to1e18(redemptionAmount) / price
+
+      // Dennis should receive 200 MUSD worth of collateral
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
+
+      // Check that Dennis received the correct amount of collateral and the emitted values match
+      await updateBTCUserSnapshot(dennis, "after")
+      expect(dennis.btc.after - dennis.btc.before).to.be.closeTo(
+        collNeeded - collateralFee,
+        1000,
+      )
+      expect(collateralSent).to.equal(collNeeded)
+
+      // Alice's trove's debt should be reduced by 200 MUSD
+      expect(alice.trove.debt.before - alice.trove.debt.after).to.equal(
+        to1e18("200"),
+      )
+
+      // Alice's collateral should have decreased by 200 MUSD worth
+      expect(
+        alice.trove.collateral.before - alice.trove.collateral.after,
+      ).to.equal(collNeeded)
+    }
+
     /**
      *
      * Expected Reverts
@@ -1779,7 +1873,51 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Individual Troves", () => {})
+    context("Individual Troves", () => {
+      it.only("redeemCollateral(): ends the redemption sequence when the token redemption request has been filled", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("200")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        // Don't pay for gas to make it easier to calculate the received collateral
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        // Check that Alice's debt and collateral has been adjusted
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
+
+        // Check that the other troves are unaffected
+        const otherUsers = [bob, carol, dennis]
+        const debtChanges = await Promise.all(
+          otherUsers.map(
+            (user) => user.trove.debt.after - user.trove.debt.before === 0n,
+          ),
+        )
+        expect(debtChanges.every(Boolean)).to.equal(true)
+      })
+    })
 
     /**
      *
@@ -1788,103 +1926,6 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Balance changes", () => {
-      async function setupRedemptionTroves() {
-        // Open three troves with ascending ICRs
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "200",
-          sender: alice.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "300",
-          sender: bob.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "400",
-          sender: carol.wallet,
-        })
-
-        // Open another trove for Dennis with a very high ICR
-        await openTrove(contracts, {
-          musdAmount: "20000",
-          ICR: "4000",
-          sender: dennis.wallet,
-        })
-
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "before",
-        )
-
-        await updateBTCUserSnapshot(dennis, "before")
-      }
-
-      async function getRedemptionHints(
-        redemptionAmount: bigint,
-        price: bigint,
-      ) {
-        const { firstRedemptionHint, partialRedemptionHintNICR } =
-          await contracts.hintHelpers.getRedemptionHints(
-            redemptionAmount,
-            price,
-            0,
-          )
-
-        const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-          await contracts.sortedTroves.findInsertPosition(
-            partialRedemptionHintNICR,
-            dennis.wallet,
-            dennis.wallet,
-          )
-
-        return {
-          firstRedemptionHint,
-          partialRedemptionHintNICR,
-          upperPartialRedemptionHint,
-          lowerPartialRedemptionHint,
-        }
-      }
-
-      async function checkCollateralAndDebtValues(
-        redemptionTx: ContractTransactionResponse,
-        redemptionAmount: bigint,
-        price: bigint,
-      ) {
-        const { collateralSent, collateralFee } =
-          await getEmittedRedemptionValues(redemptionTx)
-
-        // Calculate the amount of collateral needed to redeem 200 MUSD
-        const collNeeded = to1e18(redemptionAmount) / price
-
-        // Dennis should receive 200 MUSD worth of collateral
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "after",
-        )
-
-        // Check that Dennis received the correct amount of collateral and the emitted values match
-        await updateBTCUserSnapshot(dennis, "after")
-        expect(dennis.btc.after - dennis.btc.before).to.be.closeTo(
-          collNeeded - collateralFee,
-          1000,
-        )
-        expect(collateralSent).to.equal(collNeeded)
-
-        // Alice's trove's debt should be reduced by 200 MUSD
-        expect(alice.trove.debt.before - alice.trove.debt.after).to.equal(
-          to1e18("200"),
-        )
-
-        // Alice's collateral should have decreased by 200 MUSD worth
-        expect(
-          alice.trove.collateral.before - alice.trove.collateral.after,
-        ).to.equal(collNeeded)
-      }
-
       it("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
         await setupRedemptionTroves()
 
@@ -2013,7 +2054,7 @@ describe("TroveManager in Normal Mode", () => {
           .connect(dennis.wallet)
           .redeemCollateral(
             redemptionAmount,
-            eric.address, // Invalid first hint
+            eric.address, // Invalid first hint, eric is below mcr
             upperPartialRedemptionHint,
             lowerPartialRedemptionHint,
             partialRedemptionHintNICR,
