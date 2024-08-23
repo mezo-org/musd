@@ -1791,7 +1791,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Balance changes", () => {
-      it.only("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+      async function redeemCollateralTest() {
         // Open three troves with ascending ICRs
         await openTrove(contracts, {
           musdAmount: "2000",
@@ -1885,6 +1885,9 @@ describe("TroveManager in Normal Mode", () => {
         expect(
           alice.trove.collateral.before - alice.trove.collateral.after,
         ).to.equal(collNeeded)
+      }
+      it.only("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+        await redeemCollateralTest()
       })
     })
 
