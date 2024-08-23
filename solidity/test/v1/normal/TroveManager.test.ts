@@ -18,6 +18,7 @@ import {
   getEmittedLiquidationValues,
   getEmittedRedemptionValues,
   getTCR,
+  NO_GAS,
   openTrove,
   provideToSP,
   TestingAddresses,
@@ -1693,7 +1694,8 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // TODO Fix expectation
-      it.skip("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
+      // A > B > C
+      it.only("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
         // Open three troves
         await openTrove(contracts, {
           musdAmount: "2000",
@@ -1791,6 +1793,9 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Balance changes", () => {
+      async function setupRedemptionTest() {
+        // Set up troves and return hints
+      }
       async function redeemCollateralTest() {
         // Open three troves with ascending ICRs
         await openTrove(contracts, {
@@ -1852,7 +1857,7 @@ describe("TroveManager in Normal Mode", () => {
             partialRedemptionHintNICR,
             0,
             to1e18("1"),
-            { from: dennis.wallet, gasPrice: 0 },
+            NO_GAS,
           )
 
         const { collateralSent, collateralFee } =
@@ -1886,9 +1891,16 @@ describe("TroveManager in Normal Mode", () => {
           alice.trove.collateral.before - alice.trove.collateral.after,
         ).to.equal(collNeeded)
       }
-      it.only("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+
+      it("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
         await redeemCollateralTest()
       })
+
+      it("redeemCollateral(): has the same functionality with invalid first hint, zero address", async () => {})
+
+      it("redeemCollateral(): has the same functionality with invalid first hint, non-existent trove", async () => {})
+
+      it("redeemCollateral(): has the same functionality with invalid first hint, trove below MCR", async () => {})
     })
 
     /**
