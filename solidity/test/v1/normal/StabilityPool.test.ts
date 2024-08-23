@@ -981,8 +981,8 @@ describe("StabilityPool in Normal Mode", () => {
 
       it("withdrawCollateralGainToTrove(): reverts if it would leave trove with ICR < MCR", async () => {
         await openTrove(contracts, {
-          musdAmount: "5,000", // slightly over the minimum of $1800
-          ICR: "120", // 120%
+          musdAmount: "5,000",
+          ICR: "120",
           sender: bob.wallet,
         })
         await provideToSP(contracts, bob, to1e18(200))
