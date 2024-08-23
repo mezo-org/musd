@@ -1693,7 +1693,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(partialRedemptionHintNICR).to.equal(nominalICR)
       })
 
-      it.only("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
+      it("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
         // Open three troves
         await openTrove(contracts, {
           musdAmount: "25000",
@@ -1790,10 +1790,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Balance changes", () => {
-      async function setupRedemptionTest() {
-        // Set up troves and return hints
-      }
-      async function redeemCollateralTest() {
+      async function setupRedemptionTroves() {
         // Open three troves with ascending ICRs
         await openTrove(contracts, {
           musdAmount: "2000",
@@ -1825,10 +1822,12 @@ describe("TroveManager in Normal Mode", () => {
         )
 
         await updateBTCUserSnapshot(dennis, "before")
+      }
 
-        // Attempt to redeem 200 MUSD, which should be possible to redeem from Alice's trove alone
-        const redemptionAmount = to1e18("200")
-        const price = await contracts.priceFeed.fetchPrice()
+      async function getRedemptionHints(
+        redemptionAmount: bigint,
+        price: bigint,
+      ) {
         const { firstRedemptionHint, partialRedemptionHintNICR } =
           await contracts.hintHelpers.getRedemptionHints(
             redemptionAmount,
@@ -1843,20 +1842,19 @@ describe("TroveManager in Normal Mode", () => {
             dennis.wallet,
           )
 
-        // Don't pay for gas to make it easier to calculate the received collateral
-        const redemptionTx = await contracts.troveManager
-          .connect(dennis.wallet)
-          .redeemCollateral(
-            redemptionAmount,
-            firstRedemptionHint,
-            upperPartialRedemptionHint,
-            lowerPartialRedemptionHint,
-            partialRedemptionHintNICR,
-            0,
-            to1e18("1"),
-            NO_GAS,
-          )
+        return {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        }
+      }
 
+      async function checkCollateralAndDebtValues(
+        redemptionTx: ContractTransactionResponse,
+        redemptionAmount: bigint,
+        price: bigint,
+      ) {
         const { collateralSent, collateralFee } =
           await getEmittedRedemptionValues(redemptionTx)
 
@@ -1889,11 +1887,46 @@ describe("TroveManager in Normal Mode", () => {
         ).to.equal(collNeeded)
       }
 
-      it("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
-        await redeemCollateralTest()
+      it.only("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("200")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        // Don't pay for gas to make it easier to calculate the received collateral
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
       })
 
-      it("redeemCollateral(): has the same functionality with invalid first hint, zero address", async () => {})
+      it("redeemCollateral(): has the same functionality with invalid first hint, zero address", async () => {
+        // Setup troves and update snapshots
+        // Grab redemption hints and return
+        // Call trove manager with provided hints except for the first hint which is the zero address and return emitted values
+        // Check expectations are the same
+      })
 
       it("redeemCollateral(): has the same functionality with invalid first hint, non-existent trove", async () => {})
 
