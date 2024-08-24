@@ -195,6 +195,10 @@ export async function updateTroveManagerSnapshot(
     await contracts.troveManager.totalStakes()
   state.troveManager.troves[checkPoint] =
     await contracts.troveManager.getTroveOwnersCount()
+  state.troveManager.baseRate[checkPoint] =
+    await contracts.troveManager.baseRate()
+  state.troveManager.lastFeeOperationTime[checkPoint] =
+    await contracts.troveManager.lastFeeOperationTime()
 }
 
 export async function getTroveEntireColl(
