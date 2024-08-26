@@ -2092,7 +2092,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
       })
 
-      it.only("redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date", async () => {
+      it("redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date", async () => {
         await setupRedemptionTroves()
 
         // Dennis plans to redeem Alice and Bob's troves, plus a partial redemption from Carol
@@ -2141,10 +2141,11 @@ describe("TroveManager in Normal Mode", () => {
         expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
       })
 
-      it("redeemCollateral(): doesn't touch Troves with ICR < 110%", async () => {
+      it.only("redeemCollateral(): doesn't touch Troves with ICR < 110%", async () => {
         await setupRedemptionTroves()
 
         // Drop the price so that Alice's trove is below MCR
+        await dropPrice(contracts, alice)
         const redemptionAmount = to1e18("100")
 
         await performRedemption(dennis, redemptionAmount)
@@ -2156,6 +2157,27 @@ describe("TroveManager in Normal Mode", () => {
         expect(
           alice.trove.collateral.after - alice.trove.collateral.before,
         ).to.equal(0n)
+      })
+      it("redeemCollateral(): finds the last Trove with ICR == 110% even if there is more than one", async () => {
+        // Open 3 troves with the same ICR
+        const users = [alice, bob, carol]
+        await Promise.all(
+          users.map((user) =>
+            openTrove(contracts, {
+              musdAmount: "2000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+
+        // Open a trove for Dennis with a slightly lower ICR
+
+        // Open a trove for Eric that will keep us out of recovery mode
+
+        // Try to trick redeemCollateral that doesn't point to the last Trove with ICR == 110
+
+        // TODO Complete expectations
       })
     })
 
