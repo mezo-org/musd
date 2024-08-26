@@ -448,6 +448,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                     _partialRedemptionHintNICR
                 );
 
+            console.log("hit before the if");
+
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
 
             totals.totalMUSDToRedeem += singleRedemption.MUSDLot;
@@ -456,6 +458,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.remainingMUSD -= singleRedemption.MUSDLot;
             currentBorrower = nextUserToCheck;
         }
+
         require(
             totals.totalCollateralDrawn > 0,
             "TroveManager: Unable to redeem any amount"
@@ -1566,11 +1569,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
+        console.log("_maxMUSDamount", _maxMUSDamount);
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.MUSDLot = LiquityMath._min(
             _maxMUSDamount,
             Troves[_borrower].debt - MUSD_GAS_COMPENSATION
         );
+
+        console.log("singleRedemption.MUSDLot", singleRedemption.MUSDLot);
 
         // Get the collateralLot of equivalent value in USD
         singleRedemption.collateralLot =
@@ -1581,6 +1587,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
         uint256 newColl = Troves[_borrower].coll -
             singleRedemption.collateralLot;
+
+        console.log("newDebt", newDebt);
+        console.log("newDebt - MUSD_GAS_COMPENSATION", newDebt - MUSD_GAS_COMPENSATION);
 
         if (newDebt == MUSD_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
@@ -1612,6 +1621,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 newNICR != _partialRedemptionHintNICR ||
                 _getNetDebt(newDebt) < MIN_NET_DEBT
             ) {
+                console.log("hit single redemption true");
+                console.log("hint out of date", newNICR != _partialRedemptionHintNICR);
+                console.log("net debt too low", _getNetDebt(newDebt) < MIN_NET_DEBT);
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
             }

@@ -365,18 +365,16 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(msg.sender, coll);
     }
 
-    function adjustTrove(
-        uint256 _maxFeePercentage,
-        uint256 _collWithdrawal,
-        uint256 _debtChange,
-        bool _isDebtIncrease,
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint
-    ) external payable override {}
+    function adjustTrove(uint256 _maxFeePercentage, uint256 _collWithdrawal, uint256 _THUSDChange, bool _isDebtIncrease, uint256 _assetAmount, address _upperHint, address _lowerHint) external payable override {
+        _assetAmount = getAssetAmount(_assetAmount);
+        _adjustTrove(msg.sender, _collWithdrawal, _THUSDChange, _isDebtIncrease, _assetAmount, _upperHint, _lowerHint, _maxFeePercentage);
+    }
 
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
-    function claimCollateral() external override {}
+    function claimCollateral() external override {
+        // send collateral from CollSurplus Pool to owner
+        collSurplusPool.claimColl(msg.sender);
+    }
 
     function setAddresses(
         address _activePoolAddress,

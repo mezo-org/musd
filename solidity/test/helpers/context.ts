@@ -291,6 +291,15 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.troveManager.getAddress(),
     )
 
+  await contracts.collSurplusPool
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.borrowerOperations.getAddress(),
+      await contracts.troveManager.getAddress(),
+      await contracts.activePool.getAddress(),
+      ZERO_ADDRESS,
+    )
+
   await contracts.troveManager
     .connect(users.deployer.wallet)
     .setAddresses(

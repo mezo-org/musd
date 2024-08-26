@@ -34,7 +34,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
     // --- Fallback function ---
 
-    // This executes when the contract recieves ETH
+    // This executes when the contract receives ETH
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsBorrowerOperationsOrDefaultPool();
@@ -126,6 +126,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
 
+        console.log("got account", _account);
         sendCollateral(IERC20(collateralAddress), _account, _amount);
         if (collateralAddress == address(0)) {
             return;

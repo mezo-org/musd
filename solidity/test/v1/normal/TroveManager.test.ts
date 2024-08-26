@@ -6,6 +6,7 @@ import {
   applyLiquidationFee,
   checkTroveActive,
   checkTroveClosedByLiquidation,
+  checkTroveClosedByRedemption,
   checkTroveStatus,
   connectContracts,
   Contracts,
@@ -33,6 +34,7 @@ import {
   User,
 } from "../../helpers"
 import { to1e18, ZERO_ADDRESS } from "../../utils"
+import debugBalances from "../../helpers/debugging.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -1877,7 +1879,7 @@ describe("TroveManager in Normal Mode", () => {
       it.only("redeemCollateral(): ends the redemption sequence when the token redemption request has been filled", async () => {
         await setupRedemptionTroves()
 
-        const redemptionAmount = to1e18("200")
+        const redemptionAmount = to1e18("2010") // Redeem an amount equal to Alice's net debt
         const price = await contracts.priceFeed.fetchPrice()
 
         const {
@@ -1887,15 +1889,24 @@ describe("TroveManager in Normal Mode", () => {
           lowerPartialRedemptionHint,
         } = await getRedemptionHints(redemptionAmount, price)
 
+        await debugBalances(contracts, testSetup.users, [
+          "alice",
+          "bob",
+          "carol",
+          "dennis",
+        ])
+
+        console.log(addresses)
+
         // Don't pay for gas to make it easier to calculate the received collateral
         const redemptionTx = await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
             redemptionAmount,
-            firstRedemptionHint,
-            upperPartialRedemptionHint,
-            lowerPartialRedemptionHint,
-            partialRedemptionHintNICR,
+            alice.address,
+            alice.address,
+            alice.address,
+            0,
             0,
             to1e18("1"),
             NO_GAS,
@@ -1908,14 +1919,26 @@ describe("TroveManager in Normal Mode", () => {
           price,
         )
 
-        // Check that the other troves are unaffected
         const otherUsers = [bob, carol, dennis]
+
+        // Debt should remain unchanged for other troves
         const debtChanges = await Promise.all(
           otherUsers.map(
             (user) => user.trove.debt.after - user.trove.debt.before === 0n,
           ),
         )
         expect(debtChanges.every(Boolean)).to.equal(true)
+
+        // Other troves should still be active
+        const stillActive = await Promise.all(
+          otherUsers.map((user) => checkTroveActive(contracts, user)),
+        )
+        expect(stillActive.every(Boolean)).to.equal(true)
+
+        // Alice's trove should be closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
       })
     })
 

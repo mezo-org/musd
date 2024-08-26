@@ -550,15 +550,22 @@ export async function checkTroveStatus(
   return status === statusToCheck && isInSortedList === inSortedList
 }
 
+export async function checkTroveActive(contracts: Contracts, user: User) {
+  return checkTroveStatus(contracts, user, 1n, true)
+}
+
+export async function checkTroveClosedByRedemption(
+  contracts: Contracts,
+  user: User,
+) {
+  return checkTroveStatus(contracts, user, 2n, false)
+}
+
 export async function checkTroveClosedByLiquidation(
   contracts: Contracts,
   user: User,
 ) {
   return checkTroveStatus(contracts, user, 3n, false)
-}
-
-export async function checkTroveActive(contracts: Contracts, user: User) {
-  return checkTroveStatus(contracts, user, 1n, true)
 }
 
 export function transferMUSD(
