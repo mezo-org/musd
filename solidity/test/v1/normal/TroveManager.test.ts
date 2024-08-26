@@ -2012,7 +2012,7 @@ describe("TroveManager in Normal Mode", () => {
         // Check that Carol's trove is still active
         expect(await checkTroveActive(contracts, carol)).to.equal(true)
 
-        // Check that Carol's debt has been 100 MUSD because of the partial redemption
+        // Check that Carol's debt has been reduced by 100 MUSD because of the partial redemption
         await updateTroveSnapshot(contracts, carol, "after")
         expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
           to1e18("-100"),
@@ -2107,18 +2107,9 @@ describe("TroveManager in Normal Mode", () => {
             NO_GAS,
           )
 
-        const { collateralSent, collateralFee } =
-          await getEmittedRedemptionValues(redemptionTx)
-
-        const collNeeded =
-          to1e18(redemptionAmount - partialRedemptionAmount) / price
-
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "after",
-        )
-        expect(collateralSent).to.equal(collNeeded)
+        // Check that Carol's debt is untouched because no partial redemption was performed
+        await updateTroveSnapshot(contracts, carol, "after")
+        expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
       })
     })
 
