@@ -1819,7 +1819,7 @@ describe("TroveManager in Normal Mode", () => {
       // Calculate the amount of collateral needed to redeem 200 MUSD
       const collNeeded = to1e18(redemptionAmount) / price
 
-      // Dennis should receive 200 MUSD worth of collateral
+      // Dennis should receive `redemptionAmount` MUSD worth of collateral
       await updateTroveSnapshots(
         contracts,
         [alice, bob, carol, dennis],
@@ -1834,9 +1834,9 @@ describe("TroveManager in Normal Mode", () => {
       )
       expect(collateralSent).to.equal(collNeeded)
 
-      // Alice's trove's debt should be reduced by 200 MUSD
+      // Alice's trove's debt should be reduced by redemption amount
       expect(alice.trove.debt.before - alice.trove.debt.after).to.equal(
-        to1e18("200"),
+        redemptionAmount,
       )
 
       // Alice's collateral should have decreased by 200 MUSD worth
@@ -1880,26 +1880,9 @@ describe("TroveManager in Normal Mode", () => {
         await setupRedemptionTroves()
 
         const redemptionAmount = to1e18("2010") // Redeem an amount equal to Alice's net debt
-        const price = await contracts.priceFeed.fetchPrice()
 
-        const {
-          firstRedemptionHint,
-          partialRedemptionHintNICR,
-          upperPartialRedemptionHint,
-          lowerPartialRedemptionHint,
-        } = await getRedemptionHints(redemptionAmount, price)
-
-        await debugBalances(contracts, testSetup.users, [
-          "alice",
-          "bob",
-          "carol",
-          "dennis",
-        ])
-
-        console.log(addresses)
-
-        // Don't pay for gas to make it easier to calculate the received collateral
-        const redemptionTx = await contracts.troveManager
+        // Hints do not matter for the purposes of
+        await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
             redemptionAmount,
@@ -1912,12 +1895,13 @@ describe("TroveManager in Normal Mode", () => {
             NO_GAS,
           )
 
-        // Check that Alice's debt and collateral has been adjusted
-        await checkCollateralAndDebtValues(
-          redemptionTx,
-          redemptionAmount,
-          price,
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
         )
+
+        expect(alice.trove.debt.after).to.equal(0n)
 
         const otherUsers = [bob, carol, dennis]
 

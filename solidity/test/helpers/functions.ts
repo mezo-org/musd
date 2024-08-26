@@ -558,7 +558,7 @@ export async function checkTroveClosedByRedemption(
   contracts: Contracts,
   user: User,
 ) {
-  return checkTroveStatus(contracts, user, 2n, false)
+  return checkTroveStatus(contracts, user, 4n, false)
 }
 
 export async function checkTroveClosedByLiquidation(
