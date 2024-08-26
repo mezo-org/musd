@@ -2019,7 +2019,7 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
+      it("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
         await setupRedemptionTroves()
 
         // Alice and Bob's net debt + 300 MUSD.  A partial redemption of 300 MUSD would put Carol below minimum net debt
@@ -2061,6 +2061,64 @@ describe("TroveManager in Normal Mode", () => {
         // Check that Carol's debt is untouched because no partial redemption was performed
         await updateTroveSnapshot(contracts, carol, "after")
         expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
+      })
+
+      it.only("redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date", async () => {
+        await setupRedemptionTroves()
+
+        // Dennis plans to redeem Alice and Bob's troves, plus a partial redemption from Carol
+        const aliceAndBobNetDebt = to1e18("4020")
+        const partialRedemptionAmount = to1e18("100")
+
+        const redemptionAmount = aliceAndBobNetDebt + partialRedemptionAmount
+        const price = await contracts.priceFeed.fetchPrice()
+
+        // Calculate Dennis's hints
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        const {
+          firstRedemptionHint: f,
+          partialRedemptionHintNICR: p,
+          upperPartialRedemptionHint: u,
+          lowerPartialRedemptionHint: l,
+        } = await getRedemptionHints(to1e18("10"), price)
+
+        // Carol redeems 10 MUSD from Alice's trove ahead of Dennis's redemption
+        await contracts.troveManager
+          .connect(carol.wallet)
+          .redeemCollateral(to1e18("10"), f, u, l, p, 0, to1e18("1"), NO_GAS)
+
+        // Dennis tries to redeem with outdated hint
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        const { collateralSent, collateralFee } =
+          await getEmittedRedemptionValues(redemptionTx)
+
+        const collNeeded =
+          to1e18(redemptionAmount - partialRedemptionAmount) / price
+
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
+        expect(collateralSent).to.equal(collNeeded)
       })
     })
 
