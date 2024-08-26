@@ -1923,23 +1923,21 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("redeemCollateral(): ends the redemption sequence when max iterations have been reached", async () => {
+      it("redeemCollateral(): ends the redemption sequence when max iterations have been reached", async () => {
         await setupRedemptionTroves()
 
         const redemptionAmount = to1e18("6010") // Redeem an amount equal to Alice, Bob, and Carol's net debt
 
-        await contracts.troveManager
-          .connect(dennis.wallet)
-          .redeemCollateral(
-            redemptionAmount,
-            alice.address,
-            alice.address,
-            alice.address,
-            0,
-            2,
-            to1e18("1"),
-            NO_GAS,
-          )
+        await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
+          redemptionAmount,
+          alice.address,
+          alice.address,
+          alice.address,
+          0,
+          2, // Max redemptions set to 2 so we will stop after Bob's trove
+          to1e18("1"),
+          NO_GAS,
+        )
 
         await updateTroveSnapshots(
           contracts,
@@ -1972,6 +1970,40 @@ describe("TroveManager in Normal Mode", () => {
         )
         expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
           true,
+        )
+      })
+
+      it.only("redeemCollateral(): performs partial redemption if resultant debt is > minimum net debt", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("100") // 100 MUSD will leave Alice's debt > minimum net debt
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        // Don't pay for gas to make it easier to calculate the received collateral
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
         )
       })
     })
