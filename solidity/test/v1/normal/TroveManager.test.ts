@@ -1816,10 +1816,9 @@ describe("TroveManager in Normal Mode", () => {
       const { collateralSent, collateralFee } =
         await getEmittedRedemptionValues(redemptionTx)
 
-      // Calculate the amount of collateral needed to redeem 200 MUSD
+      // Calculate the amount of collateral needed to redeem the given amount of MUSD
       const collNeeded = to1e18(redemptionAmount) / price
 
-      // Dennis should receive `redemptionAmount` MUSD worth of collateral
       await updateTroveSnapshots(
         contracts,
         [alice, bob, carol, dennis],
@@ -1839,7 +1838,7 @@ describe("TroveManager in Normal Mode", () => {
         redemptionAmount,
       )
 
-      // Alice's collateral should have decreased by 200 MUSD worth
+      // Check that Alice's collateral has decreased by the correct amount
       expect(
         alice.trove.collateral.before - alice.trove.collateral.after,
       ).to.equal(collNeeded)
