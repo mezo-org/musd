@@ -1875,12 +1875,11 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Individual Troves", () => {
-      it.only("redeemCollateral(): ends the redemption sequence when the token redemption request has been filled", async () => {
+      it("redeemCollateral(): ends the redemption sequence when the token redemption request has been filled", async () => {
         await setupRedemptionTroves()
 
         const redemptionAmount = to1e18("2010") // Redeem an amount equal to Alice's net debt
 
-        // Hints do not matter for the purposes of
         await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
@@ -1920,6 +1919,58 @@ describe("TroveManager in Normal Mode", () => {
 
         // Alice's trove should be closed by redemption
         expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+      })
+
+      it.only("redeemCollateral(): ends the redemption sequence when max iterations have been reached", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("6010") // Redeem an amount equal to Alice, Bob, and Carol's net debt
+
+        await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            alice.address,
+            alice.address,
+            alice.address,
+            0,
+            2,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
+
+        expect(alice.trove.debt.after).to.equal(0n)
+        expect(bob.trove.debt.after).to.equal(0n)
+
+        const otherUsers = [carol, dennis]
+
+        // Debt should remain unchanged for other troves
+        const debtChanges = await Promise.all(
+          otherUsers.map(
+            (user) => user.trove.debt.after - user.trove.debt.before === 0n,
+          ),
+        )
+        expect(debtChanges.every(Boolean)).to.equal(true)
+
+        // Other troves should still be active
+        const stillActive = await Promise.all(
+          otherUsers.map((user) => checkTroveActive(contracts, user)),
+        )
+        expect(stillActive.every(Boolean)).to.equal(true)
+
+        // Alice and Bob's troves should be closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
           true,
         )
       })
