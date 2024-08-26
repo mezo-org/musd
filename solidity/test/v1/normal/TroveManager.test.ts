@@ -23,6 +23,7 @@ import {
   provideToSP,
   TestingAddresses,
   TestSetup,
+  transferMUSD,
   updateBTCUserSnapshot,
   updateContractsSnapshot,
   updateStabilityPoolUserSnapshot,
@@ -1926,7 +1927,7 @@ describe("TroveManager in Normal Mode", () => {
       it("redeemCollateral(): ends the redemption sequence when max iterations have been reached", async () => {
         await setupRedemptionTroves()
 
-        const redemptionAmount = to1e18("6010") // Redeem an amount equal to Alice, Bob, and Carol's net debt
+        const redemptionAmount = to1e18("6030") // Redeem an amount equal to Alice, Bob, and Carol's net debt
 
         await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
           redemptionAmount,
@@ -1973,10 +1974,10 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("redeemCollateral(): performs partial redemption if resultant debt is > minimum net debt", async () => {
+      it("redeemCollateral(): performs partial redemption if resultant debt is > minimum net debt", async () => {
         await setupRedemptionTroves()
 
-        const redemptionAmount = to1e18("100") // 100 MUSD will leave Alice's debt > minimum net debt
+        const redemptionAmount = to1e18("4120") // Alice and Bob's net debt + 100 MUSD
         const price = await contracts.priceFeed.fetchPrice()
 
         const {
@@ -2000,11 +2001,66 @@ describe("TroveManager in Normal Mode", () => {
             NO_GAS,
           )
 
-        await checkCollateralAndDebtValues(
-          redemptionTx,
-          redemptionAmount,
-          price,
+        // Check that Alice and Bob's trove's are closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
         )
+        expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
+          true,
+        )
+
+        // Check that Carol's trove is still active
+        expect(await checkTroveActive(contracts, carol)).to.equal(true)
+
+        // Check that Carol's debt has been 100 MUSD because of the partial redemption
+        await updateTroveSnapshot(contracts, carol, "after")
+        expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
+          to1e18("-100"),
+        )
+      })
+
+      it.only("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
+        await setupRedemptionTroves()
+
+        // Alice and Bob's net debt + 300 MUSD.  A partial redemption of 300 MUSD would put Carol below minimum net debt
+        const redemptionAmount = to1e18("4320")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        // Don't pay for gas to make it easier to calculate the received collateral
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        // Check that Alice and Bob's troves are closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
+          true,
+        )
+
+        // Check that Carol's trove is still active
+        expect(await checkTroveActive(contracts, carol)).to.equal(true)
+
+        // Check that Carol's debt is untouched because no partial redemption was performed
+        await updateTroveSnapshot(contracts, carol, "after")
+        expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
       })
     })
 
