@@ -1809,6 +1809,35 @@ describe("TroveManager in Normal Mode", () => {
       }
     }
 
+    async function performRedemption(
+      user: User,
+      redemptionAmount: bigint,
+      maxIterations: number = 0,
+    ) {
+      const price = await contracts.priceFeed.fetchPrice()
+
+      const {
+        firstRedemptionHint,
+        partialRedemptionHintNICR,
+        upperPartialRedemptionHint,
+        lowerPartialRedemptionHint,
+      } = await getRedemptionHints(redemptionAmount, price)
+
+      // Don't pay for gas to make it easier to calculate the received collateral
+      return contracts.troveManager
+        .connect(dennis.wallet)
+        .redeemCollateral(
+          redemptionAmount,
+          firstRedemptionHint,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+          partialRedemptionHintNICR,
+          maxIterations,
+          to1e18("1"),
+          NO_GAS,
+        )
+    }
+
     async function checkCollateralAndDebtValues(
       redemptionTx: ContractTransactionResponse,
       redemptionAmount: bigint,
@@ -2110,6 +2139,23 @@ describe("TroveManager in Normal Mode", () => {
         // Check that Carol's debt is untouched because no partial redemption was performed
         await updateTroveSnapshot(contracts, carol, "after")
         expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
+      })
+
+      it("redeemCollateral(): doesn't touch Troves with ICR < 110%", async () => {
+        await setupRedemptionTroves()
+
+        // Drop the price so that Alice's trove is below MCR
+        const redemptionAmount = to1e18("100")
+
+        await performRedemption(dennis, redemptionAmount)
+
+        await updateTroveSnapshots(contracts, [alice], "after")
+
+        // Alice's trove should be untouched
+        expect(alice.trove.debt.after - alice.trove.debt.before).to.equal(0n)
+        expect(
+          alice.trove.collateral.after - alice.trove.collateral.before,
+        ).to.equal(0n)
       })
     })
 
