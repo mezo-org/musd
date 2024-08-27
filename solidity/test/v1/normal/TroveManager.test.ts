@@ -1880,7 +1880,35 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Expected Reverts", () => {})
+    context("Expected Reverts", () => {
+      it("redeemCollateral(): reverts when TCR < MCR", async () => {
+        const users = [alice, bob, carol, dennis]
+        await Promise.all(
+          users.slice(0, -1).map((user) =>
+            openTrove(contracts, {
+              musdAmount: "2000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "195",
+          sender: dennis.wallet,
+        })
+
+        // Drop price to put Alice, Bob, and Carol at 110% ICR and Dennis just below
+        await dropPrice(contracts, carol, to1e18("110"))
+        expect(await getTCR(contracts)).to.be.lessThan(
+          await contracts.troveManager.MCR(),
+        )
+
+        await expect(
+          performRedemption(dennis, to1e18("1000")),
+        ).to.be.revertedWith("TroveManager: Cannot redeem when TCR < MCR")
+      })
+    })
 
     /**
      *
