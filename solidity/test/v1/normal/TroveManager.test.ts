@@ -1908,6 +1908,14 @@ describe("TroveManager in Normal Mode", () => {
           performRedemption(dennis, to1e18("1000")),
         ).to.be.revertedWith("TroveManager: Cannot redeem when TCR < MCR")
       })
+
+      it.only("redeemCollateral(): reverts when argument _amount is 0", async () => {
+        await setupRedemptionTroves()
+
+        await expect(performRedemption(dennis, 0n)).to.be.revertedWith(
+          "TroveManager: Amount must be greater than zero",
+        )
+      })
     })
 
     /**
