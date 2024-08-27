@@ -1992,6 +1992,18 @@ describe("TroveManager in Normal Mode", () => {
           redeemWithFee(feePercentageNumber - 0.01, attemptedRedemptionAmount),
         ).to.be.revertedWith("Fee exceeded provided maximum")
       })
+
+      it.only("redeemCollateral(): reverts when requested redemption amount exceeds caller's MUSD token balance", async () => {
+        await setupRedemptionTroves()
+        await updateWalletSnapshot(contracts, dennis, "before")
+
+        await updateWalletSnapshot(contracts, dennis, "after")
+        await expect(
+          performRedemption(dennis, dennis.musd.before + 1n),
+        ).to.be.revertedWith(
+          "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
+        )
+      })
     })
 
     /**
@@ -2479,7 +2491,7 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("redeemCollateral(): caller can redeem their entire MUSDToken balance", async () => {
+      it("redeemCollateral(): caller can redeem their entire MUSDToken balance", async () => {
         await setupRedemptionTroves()
         await updateWalletSnapshot(contracts, dennis, "before")
 
