@@ -1825,7 +1825,7 @@ describe("TroveManager in Normal Mode", () => {
 
       // Don't pay for gas to make it easier to calculate the received collateral
       return contracts.troveManager
-        .connect(dennis.wallet)
+        .connect(user.wallet)
         .redeemCollateral(
           redemptionAmount,
           firstRedemptionHint,
@@ -2141,7 +2141,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
       })
 
-      it.only("redeemCollateral(): doesn't touch Troves with ICR < 110%", async () => {
+      it("redeemCollateral(): doesn't touch Troves with ICR < 110%", async () => {
         await setupRedemptionTroves()
 
         // Drop the price so that Alice's trove is below MCR
@@ -2158,26 +2158,73 @@ describe("TroveManager in Normal Mode", () => {
           alice.trove.collateral.after - alice.trove.collateral.before,
         ).to.equal(0n)
       })
+
       it("redeemCollateral(): finds the last Trove with ICR == 110% even if there is more than one", async () => {
         // Open 3 troves with the same ICR
         const users = [alice, bob, carol]
-        await Promise.all(
-          users.map((user) =>
-            openTrove(contracts, {
-              musdAmount: "2000",
-              ICR: "200",
-              sender: user.wallet,
-            }),
-          ),
-        )
+        const sumTotalDebt = await users.reduce(async (accPromise, user) => {
+          const acc = await accPromise
+          const { totalDebt } = await openTrove(contracts, {
+            musdAmount: "2000",
+            ICR: "200",
+            sender: user.wallet,
+          })
+          return acc + totalDebt
+        }, Promise.resolve(0n))
 
         // Open a trove for Dennis with a slightly lower ICR
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "180",
+          sender: dennis.wallet,
+        })
 
         // Open a trove for Eric that will keep us out of recovery mode
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "2000",
+          sender: eric.wallet,
+        })
+
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "before",
+        )
+
+        // Drop price to put the first 3 troves at 110 ICR
+        await dropPrice(contracts, alice, to1e18("110"))
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
 
         // Try to trick redeemCollateral that doesn't point to the last Trove with ICR == 110
+        await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
+          sumTotalDebt,
+          carol.address, // last trove with ICR == 110 should be Alice
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000",
+          0,
+          0,
+          to1e18("1"),
+          NO_GAS,
+        )
 
-        // TODO Complete expectations
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
+
+        // Check that all Troves with ICR === 110 have been closed
+        const closedByRedemption = await Promise.all(
+          users.map((user) => checkTroveClosedByRedemption(contracts, user)),
+        )
+        expect(closedByRedemption.every(Boolean)).to.equal(true)
+
+        // Check that Dennis's trove has not been touched
       })
     })
 

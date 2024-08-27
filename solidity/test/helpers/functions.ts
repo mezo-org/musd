@@ -510,7 +510,9 @@ export async function dropPrice(
   )
 
   // If none provided, set target ICR to just slightly less than MCR
-  const target = targetICR ?? (await contracts.troveManager.MCR()) - 1n
+  const target = targetICR
+    ? targetICR / 100n
+    : (await contracts.troveManager.MCR()) - 1n
 
   const newPrice = (target * currentPrice) / icr
   await contracts.mockAggregator.setPrice(newPrice)

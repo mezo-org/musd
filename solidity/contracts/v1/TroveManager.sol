@@ -16,6 +16,7 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "../debugging/console.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -407,6 +408,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 currentBorrower != address(0) &&
                 getCurrentICR(currentBorrower, totals.price) < MCR
             ) {
+
                 // slither-disable-next-line calls-loop
                 currentBorrower = contractsCache.sortedTroves.getPrev(
                     currentBorrower
