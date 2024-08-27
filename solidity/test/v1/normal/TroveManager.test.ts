@@ -1881,6 +1881,31 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Expected Reverts", () => {
+      async function redeemWithFee(fee: bigint) {
+        const redemptionAmount = to1e18("1000")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        return contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            fee,
+            NO_GAS,
+          )
+      }
+
       it("redeemCollateral(): reverts when TCR < MCR", async () => {
         const users = [alice, bob, carol, dennis]
         await Promise.all(
@@ -1909,11 +1934,19 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.revertedWith("TroveManager: Cannot redeem when TCR < MCR")
       })
 
-      it.only("redeemCollateral(): reverts when argument _amount is 0", async () => {
+      it("redeemCollateral(): reverts when argument _amount is 0", async () => {
         await setupRedemptionTroves()
 
         await expect(performRedemption(dennis, 0n)).to.be.revertedWith(
           "TroveManager: Amount must be greater than zero",
+        )
+      })
+
+      it("redeemCollateral(): reverts if max fee > 100%", async () => {
+        await setupRedemptionTroves()
+
+        await expect(redeemWithFee(to1e18("101"))).to.be.revertedWith(
+          "Max fee percentage must be between 0.5% and 100%",
         )
       })
     })
