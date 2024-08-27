@@ -2529,6 +2529,29 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("State change in other contracts", () => {})
+    context("State change in other contracts", () => {
+      it.only("redeemCollateral(): doesn't affect the Stability Pool deposits or collateral gain of redeemed-from troves", async () => {
+        await setupRedemptionTroves()
+
+        // Deposit to stability pool
+        await provideToSP(contracts, bob, to1e18("1000"))
+
+        // Liquidate Alice
+        await dropPriceAndLiquidate(contracts, alice)
+        await updateStabilityPoolUserSnapshot(contracts, bob, "before")
+
+        // Redeem collateral from Bob's trove
+        await performRedemption(dennis, to1e18("100"))
+
+        // Check that the Stability Pool deposits and collateral gain are unchanged
+        await updateStabilityPoolUserSnapshot(contracts, bob, "after")
+        expect(bob.stabilityPool.collateralGain.after).to.equal(
+          bob.stabilityPool.collateralGain.before,
+        )
+        expect(bob.stabilityPool.compoundedDeposit.after).to.equal(
+          bob.stabilityPool.compoundedDeposit.before,
+        )
+      })
+    })
   })
 })
