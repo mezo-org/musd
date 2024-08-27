@@ -36,6 +36,7 @@ import {
 } from "../../helpers"
 import { to1e18, ZERO_ADDRESS } from "../../utils"
 import debugBalances from "../../helpers/debugging.ts"
+import { TroveManagerTester } from "../../../typechain"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -1874,6 +1875,33 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(collNeeded)
     }
 
+    async function redeemWithFee(
+      fee: bigint,
+      redemptionAmount: bigint = to1e18("1000"),
+    ) {
+      const price = await contracts.priceFeed.fetchPrice()
+
+      const {
+        firstRedemptionHint,
+        partialRedemptionHintNICR,
+        upperPartialRedemptionHint,
+        lowerPartialRedemptionHint,
+      } = await getRedemptionHints(redemptionAmount, price)
+
+      return contracts.troveManager
+        .connect(dennis.wallet)
+        .redeemCollateral(
+          redemptionAmount,
+          firstRedemptionHint,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+          partialRedemptionHintNICR,
+          0,
+          fee,
+          NO_GAS,
+        )
+    }
+
     /**
      *
      * Expected Reverts
@@ -1881,33 +1909,6 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Expected Reverts", () => {
-      async function redeemWithFee(
-        fee: bigint,
-        redemptionAmount: bigint = to1e18("1000"),
-      ) {
-        const price = await contracts.priceFeed.fetchPrice()
-
-        const {
-          firstRedemptionHint,
-          partialRedemptionHintNICR,
-          upperPartialRedemptionHint,
-          lowerPartialRedemptionHint,
-        } = await getRedemptionHints(redemptionAmount, price)
-
-        return contracts.troveManager
-          .connect(dennis.wallet)
-          .redeemCollateral(
-            redemptionAmount,
-            firstRedemptionHint,
-            upperPartialRedemptionHint,
-            lowerPartialRedemptionHint,
-            partialRedemptionHintNICR,
-            0,
-            fee,
-            NO_GAS,
-          )
-      }
-
       it("redeemCollateral(): reverts when TCR < MCR", async () => {
         const users = [alice, bob, carol, dennis]
         await Promise.all(
@@ -1964,9 +1965,17 @@ describe("TroveManager in Normal Mode", () => {
         await setupRedemptionTroves()
         const totalSupply = await contracts.musd.totalSupply()
         const attemptedRedemptionAmount = totalSupply / 10n
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(attemptedRedemptionAmount) / price
+        console.log("Collateral needed: ", collNeeded)
+        const fee = await (
+          contracts.troveManager as TroveManagerTester
+        ).callGetRedemptionFee(collNeeded)
+        const feePercentage = to1e18(fee) / collNeeded
+        console.log("Fee percentage: ", feePercentage)
 
         await expect(
-          redeemWithFee(to1e18("1") / 100n, attemptedRedemptionAmount),
+          redeemWithFee(feePercentage + 1n, attemptedRedemptionAmount),
         ).to.be.revertedWith("Fee exceeded provided maximum")
       })
     })
@@ -2463,7 +2472,28 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Fees", () => {})
+    context("Fees", () => {
+      it("redeemCollateral(): succeeds if fee is less than max fee percentage", async () => {
+        await setupRedemptionTroves()
+        const totalSupply = await contracts.musd.totalSupply()
+        console.log(totalSupply)
+        const attemptedRedemptionAmount = totalSupply / 10n
+
+        await (contracts.troveManager as TroveManagerTester).setBaseRate(0)
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(attemptedRedemptionAmount) / price
+        const slightlyMoreThanFee =
+          await contracts.troveManager.getRedemptionFeeWithDecay(collNeeded)
+        console.log(slightlyMoreThanFee)
+
+        const redemptionTx = await redeemWithFee(
+          slightlyMoreThanFee,
+          attemptedRedemptionAmount,
+        )
+        const receipt = await redemptionTx.wait()
+        expect(receipt?.status).to.equal(1)
+      })
+    })
 
     /**
      *

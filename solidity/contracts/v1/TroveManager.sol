@@ -379,6 +379,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // slither-disable-next-line uninitialized-local
         RedemptionTotals memory totals;
 
+        console.log("_maxFeePercentage: ", _maxFeePercentage);
+        console.log("REDEMPTION_FEE_FLOOR: ", REDEMPTION_FEE_FLOOR);
+
         _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
         _requireTCRoverMCR(totals.price);
@@ -2023,13 +2026,17 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _calcRedemptionFee(
         uint256 _redemptionRate,
         uint256 _collateralDrawn
-    ) internal pure returns (uint) {
+    ) internal view returns (uint) {
         uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
             DECIMAL_PRECISION;
         require(
             redemptionFee < _collateralDrawn,
             "TroveManager: Fee would eat up all returned collateral"
         );
+        console.log("collateralDrawn: ", _collateralDrawn);
+        console.log("baseRate: ", baseRate);
+        console.log("redemptionRate: ", _redemptionRate);
+        console.log("redemptionFee: ", redemptionFee);
         return redemptionFee;
     }
 
