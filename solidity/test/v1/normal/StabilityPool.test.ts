@@ -1168,4 +1168,13 @@ describe("StabilityPool in Normal Mode", () => {
      */
     context("State change in other contracts", () => {})
   })
+
+  describe("Rounding Errors", () => {
+    it.skip("100 deposits of $100 into SP, then 200 liquidations of $49", () => {
+      // https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/StabilityPool_RoundingErrors.js#L38C12-L38C95
+      // Tried to get it to work for a couple of days, seems to rely on a bunch of assumptions that we don't make,
+      // like having no minimum trove amount (we can't open a $49 trove). Also, as written, the original test looks broken.
+      // ... And horribly slow.
+    })
+  })
 })
