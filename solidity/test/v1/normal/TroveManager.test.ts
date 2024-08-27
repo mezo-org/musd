@@ -2003,6 +2003,27 @@ describe("TroveManager in Normal Mode", () => {
           "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
         )
       })
+
+      it.skip("redeemCollateral(): reverts if caller's tries to redeem more than the outstanding system debt", async () => {
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "300",
+          sender: bob.wallet,
+        })
+        const totalDebt = await contracts.activePool.getMUSDDebt()
+        const illGottenMUSD = totalDebt + to1e18("100")
+        await contracts.musd.unprotectedMint(dennis.address, illGottenMUSD)
+        await expect(
+          performRedemption(dennis, illGottenMUSD),
+        ).to.be.revertedWith(
+          "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
+        )
+      })
     })
 
     /**
@@ -2574,7 +2595,7 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.only("redeemCollateral(): value of issued collateral == face value of redeemed MUSD (assuming 1 MUSD has value of $1)", async () => {
+      it("redeemCollateral(): value of issued collateral == face value of redeemed MUSD (assuming 1 MUSD has value of $1)", async () => {
         await setupRedemptionTroves()
 
         await updateContractsSnapshot(
