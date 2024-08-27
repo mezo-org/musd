@@ -1881,8 +1881,10 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Expected Reverts", () => {
-      async function redeemWithFee(fee: bigint) {
-        const redemptionAmount = to1e18("1000")
+      async function redeemWithFee(
+        fee: bigint,
+        redemptionAmount: bigint = to1e18("1000"),
+      ) {
         const price = await contracts.priceFeed.fetchPrice()
 
         const {
@@ -1945,9 +1947,18 @@ describe("TroveManager in Normal Mode", () => {
       it("redeemCollateral(): reverts if max fee > 100%", async () => {
         await setupRedemptionTroves()
 
-        await expect(redeemWithFee(to1e18("101"))).to.be.revertedWith(
+        await expect(redeemWithFee(to1e18("101") / 100n)).to.be.revertedWith(
           "Max fee percentage must be between 0.5% and 100%",
         )
+      })
+      it.only("redeemCollateral(): reverts if fee exceeds max fee percentage", async () => {
+        await setupRedemptionTroves()
+        const totalSupply = await contracts.musd.totalSupply()
+        const attemptedRedemptionAmount = totalSupply / 10n
+
+        await expect(
+          redeemWithFee(to1e18("1") / 100n, attemptedRedemptionAmount),
+        ).to.be.revertedWith("Fee exceeded provided maximum")
       })
     })
 
