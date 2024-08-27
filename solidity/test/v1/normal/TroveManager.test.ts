@@ -1993,11 +1993,10 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.revertedWith("Fee exceeded provided maximum")
       })
 
-      it.only("redeemCollateral(): reverts when requested redemption amount exceeds caller's MUSD token balance", async () => {
+      it("redeemCollateral(): reverts when requested redemption amount exceeds caller's MUSD token balance", async () => {
         await setupRedemptionTroves()
         await updateWalletSnapshot(contracts, dennis, "before")
 
-        await updateWalletSnapshot(contracts, dennis, "after")
         await expect(
           performRedemption(dennis, dennis.musd.before + 1n),
         ).to.be.revertedWith(
@@ -2573,6 +2572,37 @@ describe("TroveManager in Normal Mode", () => {
         expect(bob.stabilityPool.compoundedDeposit.after).to.equal(
           bob.stabilityPool.compoundedDeposit.before,
         )
+      })
+
+      it.only("redeemCollateral(): value of issued collateral == face value of redeemed MUSD (assuming 1 MUSD has value of $1)", async () => {
+        await setupRedemptionTroves()
+
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+
+        const redemptionAmount = to1e18("100")
+        await performRedemption(dennis, redemptionAmount)
+
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(redemptionAmount) / price
+
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "after",
+          addresses,
+        )
+
+        expect(
+          state.activePool.collateral.before -
+            state.activePool.collateral.after,
+        ).to.equal(collNeeded)
       })
     })
   })
