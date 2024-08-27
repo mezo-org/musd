@@ -8,8 +8,6 @@ import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPool.sol";
 import "../interfaces/IPriceFeed.sol";
 import "../interfaces/ILiquityBase.sol";
-import "../../debugging/console.sol";
-
 /*
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
@@ -91,7 +89,6 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         uint256 _maxFeePercentage
     ) internal view {
         uint256 feePercentage = (_fee * DECIMAL_PRECISION) / _amount;
-        console.log("feePercentage: ", feePercentage);
         require(
             feePercentage <= _maxFeePercentage,
             "Fee exceeded provided maximum"

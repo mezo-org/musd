@@ -1982,16 +1982,14 @@ describe("TroveManager in Normal Mode", () => {
         const attemptedRedemptionAmount = totalSupply / 10n
         const price = await contracts.priceFeed.fetchPrice()
         const collNeeded = to1e18(attemptedRedemptionAmount) / price
-        console.log("Collateral needed: ", collNeeded)
         const fee = await (
           contracts.troveManager as TroveManagerTester
         ).callGetRedemptionFee(collNeeded)
-        const feePercentage = (to1e18(fee) / collNeeded) * 100n
-        const feePercentagenumber = Number(feePercentage) / Number(1e18)
-        console.log("Fee percentage: ", feePercentagenumber)
+        const feePercentage = (to1e18(fee) / collNeeded) * 1000n
+        const feePercentageNumber = Number(feePercentage) / Number(1e18)
 
         await expect(
-          redeemWithFee(feePercentagenumber, attemptedRedemptionAmount),
+          redeemWithFee(feePercentageNumber - 0.01, attemptedRedemptionAmount),
         ).to.be.revertedWith("Fee exceeded provided maximum")
       })
     })
@@ -2489,7 +2487,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Fees", () => {
-      it.only("redeemCollateral(): succeeds if fee is less than max fee percentage", async () => {
+      it("redeemCollateral(): succeeds if fee is less than max fee percentage", async () => {
         const users = [alice, bob, carol, dennis]
         await Promise.all(
           users.slice(0, -1).map((user) =>
@@ -2509,16 +2507,15 @@ describe("TroveManager in Normal Mode", () => {
         const attemptedRedemptionAmount = totalSupply / 10n
         const price = await contracts.priceFeed.fetchPrice()
         const collNeeded = to1e18(attemptedRedemptionAmount) / price
-        console.log("Collateral needed: ", collNeeded)
         const fee = await (
           contracts.troveManager as TroveManagerTester
         ).callGetRedemptionFee(collNeeded)
-        const feePercentage = (to1e18(fee) / collNeeded) * 100n
-        const feePercentagenumber = Number(feePercentage) / Number(1e18)
-        console.log("Fee percentage: ", feePercentagenumber * 10)
+        const baseRate = await contracts.troveManager.baseRate()
+        const feePercentage = (to1e18(fee) / collNeeded) * 1000n + baseRate
+        const feePercentageNumber = Number(feePercentage) / Number(1e18)
 
         const redemptionTx = await redeemWithFee(
-          feePercentagenumber * 10 + 1,
+          feePercentageNumber + 1,
           attemptedRedemptionAmount,
         )
         const receipt = await redemptionTx.wait()

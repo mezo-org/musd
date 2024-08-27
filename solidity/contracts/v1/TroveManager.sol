@@ -16,7 +16,6 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
-import "../debugging/console.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -378,9 +377,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
         // slither-disable-next-line uninitialized-local
         RedemptionTotals memory totals;
-
-        console.log("_maxFeePercentage: ", _maxFeePercentage);
-        console.log("REDEMPTION_FEE_FLOOR: ", REDEMPTION_FEE_FLOOR);
 
         _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
@@ -2033,10 +2029,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             redemptionFee < _collateralDrawn,
             "TroveManager: Fee would eat up all returned collateral"
         );
-        console.log("collateralDrawn: ", _collateralDrawn);
-        console.log("baseRate: ", baseRate);
-        console.log("redemptionRate: ", _redemptionRate);
-        console.log("redemptionFee: ", redemptionFee);
         return redemptionFee;
     }
 
