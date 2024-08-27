@@ -2515,9 +2515,12 @@ describe("TroveManager in Normal Mode", () => {
         ).callGetRedemptionFee(collNeeded)
         const feePercentage = (to1e18(fee) / collNeeded) * 100n
         const feePercentagenumber = Number(feePercentage) / Number(1e18)
-        console.log("Fee percentage: ", feePercentagenumber)
+        console.log("Fee percentage: ", feePercentagenumber * 10)
 
-        const redemptionTx = await redeemWithFee(6, attemptedRedemptionAmount)
+        const redemptionTx = await redeemWithFee(
+          feePercentagenumber * 10 + 1,
+          attemptedRedemptionAmount,
+        )
         const receipt = await redemptionTx.wait()
         expect(receipt?.status).to.equal(1)
       })
