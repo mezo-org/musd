@@ -1876,10 +1876,11 @@ describe("TroveManager in Normal Mode", () => {
     }
 
     async function redeemWithFee(
-      fee: bigint,
-      redemptionAmount: bigint = to1e18("1000"),
+      feePercentage: number,
+      redemptionAmount: bigint = to1e18("100"),
     ) {
       const price = await contracts.priceFeed.fetchPrice()
+      const fee = to1e18(feePercentage) / 100n
 
       const {
         firstRedemptionHint,
@@ -1948,7 +1949,7 @@ describe("TroveManager in Normal Mode", () => {
       it("redeemCollateral(): reverts if max fee > 100%", async () => {
         await setupRedemptionTroves()
 
-        await expect(redeemWithFee(to1e18("101") / 100n)).to.be.revertedWith(
+        await expect(redeemWithFee(101)).to.be.revertedWith(
           "Max fee percentage must be between 0.5% and 100%",
         )
       })
@@ -1956,13 +1957,27 @@ describe("TroveManager in Normal Mode", () => {
       it("redeemCollateral(): reverts if max fee < 0.5%", async () => {
         await setupRedemptionTroves()
 
-        await expect(redeemWithFee(to1e18("0.49") / 100n)).to.be.revertedWith(
+        await expect(redeemWithFee(0.49)).to.be.revertedWith(
           "Max fee percentage must be between 0.5% and 100%",
         )
       })
 
       it("redeemCollateral(): reverts if fee exceeds max fee percentage", async () => {
-        await setupRedemptionTroves()
+        const users = [alice, bob, carol, dennis]
+        await Promise.all(
+          users.slice(0, -1).map((user) =>
+            openTrove(contracts, {
+              musdAmount: "20000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+        await openTrove(contracts, {
+          musdAmount: "40000",
+          ICR: "195",
+          sender: dennis.wallet,
+        })
         const totalSupply = await contracts.musd.totalSupply()
         const attemptedRedemptionAmount = totalSupply / 10n
         const price = await contracts.priceFeed.fetchPrice()
@@ -1971,11 +1986,12 @@ describe("TroveManager in Normal Mode", () => {
         const fee = await (
           contracts.troveManager as TroveManagerTester
         ).callGetRedemptionFee(collNeeded)
-        const feePercentage = to1e18(fee) / collNeeded
-        console.log("Fee percentage: ", feePercentage)
+        const feePercentage = (to1e18(fee) / collNeeded) * 100n
+        const feePercentagenumber = Number(feePercentage) / Number(1e18)
+        console.log("Fee percentage: ", feePercentagenumber)
 
         await expect(
-          redeemWithFee(feePercentage + 1n, attemptedRedemptionAmount),
+          redeemWithFee(feePercentagenumber, attemptedRedemptionAmount),
         ).to.be.revertedWith("Fee exceeded provided maximum")
       })
     })
@@ -2473,23 +2489,35 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("Fees", () => {
-      it("redeemCollateral(): succeeds if fee is less than max fee percentage", async () => {
-        await setupRedemptionTroves()
+      it.only("redeemCollateral(): succeeds if fee is less than max fee percentage", async () => {
+        const users = [alice, bob, carol, dennis]
+        await Promise.all(
+          users.slice(0, -1).map((user) =>
+            openTrove(contracts, {
+              musdAmount: "20000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+        await openTrove(contracts, {
+          musdAmount: "40000",
+          ICR: "195",
+          sender: dennis.wallet,
+        })
         const totalSupply = await contracts.musd.totalSupply()
-        console.log(totalSupply)
         const attemptedRedemptionAmount = totalSupply / 10n
-
-        await (contracts.troveManager as TroveManagerTester).setBaseRate(0)
         const price = await contracts.priceFeed.fetchPrice()
         const collNeeded = to1e18(attemptedRedemptionAmount) / price
-        const slightlyMoreThanFee =
-          await contracts.troveManager.getRedemptionFeeWithDecay(collNeeded)
-        console.log(slightlyMoreThanFee)
+        console.log("Collateral needed: ", collNeeded)
+        const fee = await (
+          contracts.troveManager as TroveManagerTester
+        ).callGetRedemptionFee(collNeeded)
+        const feePercentage = (to1e18(fee) / collNeeded) * 100n
+        const feePercentagenumber = Number(feePercentage) / Number(1e18)
+        console.log("Fee percentage: ", feePercentagenumber)
 
-        const redemptionTx = await redeemWithFee(
-          slightlyMoreThanFee,
-          attemptedRedemptionAmount,
-        )
+        const redemptionTx = await redeemWithFee(6, attemptedRedemptionAmount)
         const receipt = await redemptionTx.wait()
         expect(receipt?.status).to.equal(1)
       })
