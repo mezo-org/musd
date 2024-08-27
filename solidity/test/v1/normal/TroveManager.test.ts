@@ -2478,6 +2478,16 @@ describe("TroveManager in Normal Mode", () => {
           price,
         )
       })
+
+      it.only("redeemCollateral(): caller can redeem their entire MUSDToken balance", async () => {
+        await setupRedemptionTroves()
+        await updateWalletSnapshot(contracts, dennis, "before")
+
+        await performRedemption(dennis, dennis.musd.before)
+
+        await updateWalletSnapshot(contracts, dennis, "after")
+        expect(dennis.musd.after).to.equal(0n)
+      })
     })
 
     /**
@@ -2530,7 +2540,7 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("State change in other contracts", () => {
-      it.only("redeemCollateral(): doesn't affect the Stability Pool deposits or collateral gain of redeemed-from troves", async () => {
+      it("redeemCollateral(): doesn't affect the Stability Pool deposits or collateral gain of redeemed-from troves", async () => {
         await setupRedemptionTroves()
 
         // Deposit to stability pool
