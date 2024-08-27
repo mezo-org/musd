@@ -2186,19 +2186,10 @@ describe("TroveManager in Normal Mode", () => {
           sender: eric.wallet,
         })
 
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "before",
-        )
+        await updateTroveSnapshot(contracts, dennis, "before")
 
         // Drop price to put the first 3 troves at 110 ICR
         await dropPrice(contracts, alice, to1e18("110"))
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "after",
-        )
 
         // Try to trick redeemCollateral that doesn't point to the last Trove with ICR == 110
         await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
@@ -2212,11 +2203,7 @@ describe("TroveManager in Normal Mode", () => {
           NO_GAS,
         )
 
-        await updateTroveSnapshots(
-          contracts,
-          [alice, bob, carol, dennis],
-          "after",
-        )
+        await updateTroveSnapshot(contracts, dennis, "after")
 
         // Check that all Troves with ICR === 110 have been closed
         const closedByRedemption = await Promise.all(
@@ -2225,6 +2212,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(closedByRedemption.every(Boolean)).to.equal(true)
 
         // Check that Dennis's trove has not been touched
+        expect(dennis.trove.debt.after).to.equal(dennis.trove.debt.before)
       })
     })
 
