@@ -1951,7 +1951,16 @@ describe("TroveManager in Normal Mode", () => {
           "Max fee percentage must be between 0.5% and 100%",
         )
       })
-      it.only("redeemCollateral(): reverts if fee exceeds max fee percentage", async () => {
+
+      it("redeemCollateral(): reverts if max fee < 0.5%", async () => {
+        await setupRedemptionTroves()
+
+        await expect(redeemWithFee(to1e18("0.49") / 100n)).to.be.revertedWith(
+          "Max fee percentage must be between 0.5% and 100%",
+        )
+      })
+
+      it("redeemCollateral(): reverts if fee exceeds max fee percentage", async () => {
         await setupRedemptionTroves()
         const totalSupply = await contracts.musd.totalSupply()
         const attemptedRedemptionAmount = totalSupply / 10n
