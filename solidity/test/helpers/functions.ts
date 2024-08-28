@@ -2,6 +2,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse } from "ethers"
 import { ethers, helpers } from "hardhat"
+import { assert } from "chai"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
 import {
   Contracts,
@@ -579,4 +580,13 @@ export function transferMUSD(
   return contracts.musd
     .connect(sender.wallet)
     .transfer(receiver.wallet, amount, NO_GAS)
+}
+
+export async function setBaseRate(contracts: Contracts, rate: bigint) {
+  if ("setBaseRate" in contracts.troveManager) {
+    await contracts.troveManager.setBaseRate(rate)
+    await contracts.troveManager.setLastFeeOpTimeToNow()
+  } else {
+    assert.fail("TroveManagerTester not loaded")
+  }
 }

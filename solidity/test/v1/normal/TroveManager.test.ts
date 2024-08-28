@@ -21,6 +21,7 @@ import {
   NO_GAS,
   openTrove,
   provideToSP,
+  setBaseRate,
   TestingAddresses,
   TestSetup,
   transferMUSD,
@@ -2004,25 +2005,59 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.skip("redeemCollateral(): reverts if caller's tries to redeem more than the outstanding system debt", async () => {
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "200",
-          sender: alice.wallet,
-        })
-        await openTrove(contracts, {
-          musdAmount: "2000",
-          ICR: "300",
-          sender: bob.wallet,
-        })
-        const totalDebt = await contracts.activePool.getMUSDDebt()
-        const illGottenMUSD = totalDebt + to1e18("100")
-        await contracts.musd.unprotectedMint(dennis.address, illGottenMUSD)
-        await expect(
-          performRedemption(dennis, illGottenMUSD),
-        ).to.be.revertedWith(
-          "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
+      it.skip("redeemCollateral(): reverts if caller tries to redeem more than the outstanding system debt", async () => {
+        // TODO Link to THUSD test
+        await contracts.musd.unprotectedMint(
+          bob.address,
+          "101000000000000000000",
         )
+        const { totalDebt: carolTotalDebt } = await openTrove(contracts, {
+          musdAmount: "1840",
+          ICR: "1000",
+          sender: carol.wallet,
+        })
+        const { totalDebt: dennisTotalDebt } = await openTrove(contracts, {
+          musdAmount: "1840",
+          ICR: "1000",
+          sender: dennis.wallet,
+        })
+        const totalDebt = carolTotalDebt + dennisTotalDebt
+        expect(await contracts.activePool.getMUSDDebt()).to.equal(totalDebt)
+        const price = await contracts.priceFeed.fetchPrice()
+        const { firstRedemptionHint, partialRedemptionHintNICR } =
+          await getRedemptionHints(to1e18("101"), price)
+        const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+          await contracts.sortedTroves.findInsertPosition(
+            partialRedemptionHintNICR,
+            bob.wallet,
+            bob.wallet,
+          )
+
+        try {
+          const redemptionTx = await contracts.troveManager.redeemCollateral(
+            totalDebt + to1e18("100"),
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            { from: bob.address },
+          )
+        } catch (error) {
+          console.log(error)
+          expect(error.message).contains(
+            "VM Exception while processing transaction",
+          )
+        }
+
+        // const illGottenMUSD = totalDebt + to1e18("100")
+        // await contracts.musd.unprotectedMint(dennis.address, illGottenMUSD)
+        // await expect(
+        //   performRedemption(dennis, illGottenMUSD),
+        // ).to.be.revertedWith(
+        //   "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
+        // )
       })
     })
 
@@ -2624,6 +2659,16 @@ describe("TroveManager in Normal Mode", () => {
           state.activePool.collateral.before -
             state.activePool.collateral.after,
         ).to.equal(collNeeded)
+      })
+
+      it("redeemCollateral(): a redemption made when base rate is zero increases the base rate", async () => {
+        await setupRedemptionTroves()
+
+        await setBaseRate(contracts, to1e18("0"))
+
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.baseRate()).to.be.gt(0)
       })
     })
   })
