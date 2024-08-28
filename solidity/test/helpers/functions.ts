@@ -105,6 +105,17 @@ export async function updateContractsSnapshot(
   state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
 }
 
+export async function updatePCVSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  checkPoint: CheckPoint,
+) {
+  state.pcv.collateral[checkPoint] = await ethers.provider.getBalance(
+    await contracts.pcv.getAddress(),
+  )
+  // TODO Add more updates to PCV state
+}
+
 export async function updatePendingSnapshot(
   contracts: Contracts,
   user: User,

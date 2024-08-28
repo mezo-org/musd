@@ -13,6 +13,7 @@ import {
   ContractsState,
   dropPrice,
   dropPriceAndLiquidate,
+  fastForwardTime,
   fixture,
   getAddresses,
   getEmittedLiquidationValues,
@@ -27,6 +28,7 @@ import {
   transferMUSD,
   updateBTCUserSnapshot,
   updateContractsSnapshot,
+  updatePCVSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
@@ -2609,7 +2611,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(await contracts.troveManager.baseRate()).to.be.gt(0)
       })
 
-      it.only("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
+      it("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
         await setupRedemptionTroves()
 
         const initialBaseRate = to1e18("0.1")
@@ -2619,6 +2621,38 @@ describe("TroveManager in Normal Mode", () => {
 
         expect(await contracts.troveManager.baseRate()).to.be.gt(
           initialBaseRate,
+        )
+      })
+
+      it("redeemCollateral(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
+        await setupRedemptionTroves()
+
+        const initialBaseRate = to1e18("0.1")
+        await setBaseRate(contracts, initialBaseRate)
+
+        await performRedemption(dennis, to1e18("100"))
+
+        const lastFeeOpTime =
+          await contracts.troveManager.lastFeeOperationTime()
+        await fastForwardTime(45)
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.lastFeeOperationTime()).to.equal(
+          lastFeeOpTime,
+        )
+      })
+
+      it("redeemCollateral(): a redemption made at zero base increases the collateral-fees in PCV contract", async () => {
+        await setBaseRate(contracts, to1e18("0"))
+
+        await setupRedemptionTroves()
+        await updatePCVSnapshot(contracts, state, "before")
+
+        await performRedemption(dennis, to1e18("100"))
+        await updatePCVSnapshot(contracts, state, "after")
+
+        expect(state.pcv.collateral.after).to.be.greaterThan(
+          state.pcv.collateral.before,
         )
       })
     })
