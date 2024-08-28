@@ -2642,8 +2642,19 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it("redeemCollateral(): a redemption made at zero base rate send a non-zero CollateralFee to PCV contract", async () => {
+      it("redeemCollateral(): a redemption made at zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
         await setBaseRate(contracts, to1e18("0"))
+
+        await setupRedemptionTroves()
+
+        await performRedemption(dennis, to1e18("100"))
+        await updatePCVSnapshot(contracts, state, "after")
+
+        expect(state.pcv.collateral.after).to.be.greaterThan(0n)
+      })
+
+      it("redeemCollateral(): a redemption made at non-zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
+        await setBaseRate(contracts, to1e18("0.1"))
 
         await setupRedemptionTroves()
 
@@ -2665,6 +2676,46 @@ describe("TroveManager in Normal Mode", () => {
         expect(state.pcv.collateral.after).to.be.greaterThan(
           state.pcv.collateral.before,
         )
+      })
+
+      it.skip("redeemCollateral(): a redemption made at a non-zero base rate increases collateral in the staking contract", async () => {
+        // TODO Link to Staking test - this seems to be a duplicate of the above
+      })
+
+      it.only("redeemCollateral(): a redemption sends the collateral remainder (CollateralDrawn - CollateralFee) to the redeemer", async () => {
+        await setupRedemptionTroves()
+
+        await updateBTCUserSnapshot(dennis, "before")
+        const redemptionAmount = to1e18("100")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        const { collateralSent, collateralFee } =
+          await getEmittedRedemptionValues(redemptionTx)
+
+        const remainder = collateralSent - collateralFee
+
+        await updateBTCUserSnapshot(dennis, "after")
+        expect(dennis.btc.after - dennis.btc.before).to.equal(remainder)
       })
     })
 
