@@ -2598,6 +2598,29 @@ describe("TroveManager in Normal Mode", () => {
         const receipt = await redemptionTx.wait()
         expect(receipt?.status).to.equal(1)
       })
+
+      it("redeemCollateral(): a redemption made when base rate is zero increases the base rate", async () => {
+        await setupRedemptionTroves()
+
+        await setBaseRate(contracts, to1e18("0"))
+
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.baseRate()).to.be.gt(0)
+      })
+
+      it.only("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
+        await setupRedemptionTroves()
+
+        const initialBaseRate = to1e18("0.1")
+        await setBaseRate(contracts, initialBaseRate)
+
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.baseRate()).to.be.gt(
+          initialBaseRate,
+        )
+      })
     })
 
     /**
@@ -2659,16 +2682,6 @@ describe("TroveManager in Normal Mode", () => {
           state.activePool.collateral.before -
             state.activePool.collateral.after,
         ).to.equal(collNeeded)
-      })
-
-      it("redeemCollateral(): a redemption made when base rate is zero increases the base rate", async () => {
-        await setupRedemptionTroves()
-
-        await setBaseRate(contracts, to1e18("0"))
-
-        await performRedemption(dennis, to1e18("100"))
-
-        expect(await contracts.troveManager.baseRate()).to.be.gt(0)
       })
     })
   })
