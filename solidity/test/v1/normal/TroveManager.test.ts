@@ -2395,6 +2395,14 @@ describe("TroveManager in Normal Mode", () => {
         // Check that Dennis's trove has not been touched
         expect(dennis.trove.debt.after).to.equal(dennis.trove.debt.before)
       })
+
+      it.only("redeemCollateral(): a full redemption (leaving trove with 0 debt), closes the trove", async () => {
+        await setupRedemptionTroves()
+        await performRedemption(dennis, to1e18("2010")) // Full redemption on Alice's trove
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+      })
     })
 
     /**
@@ -2682,7 +2690,7 @@ describe("TroveManager in Normal Mode", () => {
         // TODO Link to Staking test - this seems to be a duplicate of the above
       })
 
-      it.only("redeemCollateral(): a redemption sends the collateral remainder (CollateralDrawn - CollateralFee) to the redeemer", async () => {
+      it("redeemCollateral(): a redemption sends the collateral remainder (CollateralDrawn - CollateralFee) to the redeemer", async () => {
         await setupRedemptionTroves()
 
         await updateBTCUserSnapshot(dennis, "before")
