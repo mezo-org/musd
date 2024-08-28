@@ -20,7 +20,6 @@ import {
   getDebtAndCollFromTroveUpdatedEvents,
   getEmittedLiquidationValues,
   getEmittedRedemptionValues,
-  getEmittedTroveUpdatedValues,
   getTCR,
   NO_GAS,
   openTrove,
@@ -28,7 +27,6 @@ import {
   setBaseRate,
   TestingAddresses,
   TestSetup,
-  transferMUSD,
   updateBTCUserSnapshot,
   updateContractsSnapshot,
   updatePCVSnapshot,
@@ -41,7 +39,6 @@ import {
   User,
 } from "../../helpers"
 import { to1e18, ZERO_ADDRESS } from "../../utils"
-import debugBalances from "../../helpers/debugging.ts"
 import { TroveManagerTester } from "../../../typechain"
 
 describe("TroveManager in Normal Mode", () => {
