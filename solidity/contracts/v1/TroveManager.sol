@@ -407,7 +407,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 currentBorrower != address(0) &&
                 getCurrentICR(currentBorrower, totals.price) < MCR
             ) {
-
                 // slither-disable-next-line calls-loop
                 currentBorrower = contractsCache.sortedTroves.getPrev(
                     currentBorrower
@@ -456,7 +455,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.remainingMUSD -= singleRedemption.MUSDLot;
             currentBorrower = nextUserToCheck;
         }
-
         require(
             totals.totalCollateralDrawn > 0,
             "TroveManager: Unable to redeem any amount"
