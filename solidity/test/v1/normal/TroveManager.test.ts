@@ -2064,6 +2064,21 @@ describe("TroveManager in Normal Mode", () => {
         //   "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
         // )
       })
+
+      it("redeemCollateral(): reverts if fee eats up all returned collateral", async () => {
+        await setupRedemptionTroves()
+        await updateTroveSnapshot(contracts, alice, "before")
+
+        // Set base rate to 100%
+        await setBaseRate(contracts, to1e18("1"))
+
+        // Attempt to fully redeem Alice's trove
+        await expect(
+          performRedemption(dennis, alice.trove.debt.before),
+        ).to.be.revertedWith(
+          "TroveManager: Fee would eat up all returned collateral",
+        )
+      })
     })
 
     /**
@@ -2632,7 +2647,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(collateralSurplus).to.be.closeTo(collNeeded, 1000n)
       })
 
-      it.only("redeemCollateral(): a redemption that closes a trove leaves the trove's collateral surplus available for the trove owner after re-opening trove", async () => {
+      it("redeemCollateral(): a redemption that closes a trove leaves the trove's collateral surplus available for the trove owner after re-opening trove", async () => {
         await setupRedemptionTroves()
 
         // Fully redeem Alice's trove
