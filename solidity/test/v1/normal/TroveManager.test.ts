@@ -2604,6 +2604,31 @@ describe("TroveManager in Normal Mode", () => {
         await updateWalletSnapshot(contracts, dennis, "after")
         expect(dennis.musd.after).to.equal(0n)
       })
+
+      it("redeemCollateral(): a redemption that closes a trove leaves the trove's collateral surplus (collateral - collateral drawn) available for the trove owner to claim", async () => {
+        await setupRedemptionTroves()
+
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateBTCUserSnapshot(alice, "before")
+
+        // Fully redeem Alice's trove
+        const redemptionAmount = to1e18("2010")
+        await performRedemption(dennis, redemptionAmount)
+
+        // Alice claims collateral surplus
+        await contracts.borrowerOperations
+          .connect(alice.wallet)
+          .claimCollateral({ gasPrice: 0 })
+
+        await updateBTCUserSnapshot(alice, "after")
+
+        // Alice's collateral surplus should be equal to the difference between the collateral needed to cancel her debt and her total collateral
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(redemptionAmount) / price
+        const collateralSurplus =
+          alice.btc.before + alice.trove.collateral.before - alice.btc.after
+        expect(collateralSurplus).to.be.closeTo(collNeeded, 1000n)
+      })
     })
 
     /**
