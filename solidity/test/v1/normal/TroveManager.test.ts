@@ -2642,6 +2642,17 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
+      it("redeemCollateral(): a redemption made at zero base rate send a non-zero CollateralFee to PCV contract", async () => {
+        await setBaseRate(contracts, to1e18("0"))
+
+        await setupRedemptionTroves()
+
+        await performRedemption(dennis, to1e18("100"))
+        await updatePCVSnapshot(contracts, state, "after")
+
+        expect(state.pcv.collateral.after).to.be.greaterThan(0n)
+      })
+
       it("redeemCollateral(): a redemption made at zero base increases the collateral-fees in PCV contract", async () => {
         await setBaseRate(contracts, to1e18("0"))
 
