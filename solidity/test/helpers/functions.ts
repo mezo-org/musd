@@ -1,6 +1,6 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
-import { ContractTransactionResponse } from "ethers"
+import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
 import { assert } from "chai"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
@@ -297,6 +297,68 @@ export async function getEmittedRedemptionValues(
     actualMUSDAmount,
     collateralSent,
     collateralFee,
+  }
+}
+
+export async function getAllEventsByName(
+  tx: ContractTransactionResponse,
+  abi: Array<string>,
+  eventName: string,
+) {
+  const txReceipt = await tx.wait()
+  const iface = new ethers.Interface(abi)
+  const events = []
+
+  if (txReceipt) {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const log of txReceipt.logs) {
+      try {
+        const parsedLog = iface.parseLog(log)
+        if (parsedLog && parsedLog.name === eventName) {
+          events.push(parsedLog)
+        }
+      } catch (error) {
+        // continue if the log does not match the event
+      }
+    }
+  }
+  return events
+}
+
+export async function getDebtAndCollFromTroveUpdatedEvents(
+  troveUpdatedEvents: LogDescription[],
+  user: User,
+) {
+  const event = troveUpdatedEvents.find((e) => e.args[0] === user.address)
+  return {
+    debt: event?.args[1],
+    coll: event?.args[2],
+  }
+}
+
+export async function getEmittedTroveUpdatedValues(
+  redemptionTx: ContractTransactionResponse,
+) {
+  const abi = [
+    "event TroveUpdated(address indexed _borrower,uint256 _debt, uint256 _coll, uint256 _stake, uint8 operation)",
+  ]
+
+  const borrower = await getEventArgByName(redemptionTx, abi, "TroveUpdated", 0)
+
+  const debt = await getEventArgByName(redemptionTx, abi, "TroveUpdated", 1)
+
+  const coll = await getEventArgByName(redemptionTx, abi, "TroveUpdated", 2)
+
+  const stake = await getEventArgByName(redemptionTx, abi, "TroveUpdated", 3)
+
+  const status = await getEventArgByName(redemptionTx, abi, "TroveUpdated", 4)
+
+  return {
+    borrower,
+    debt,
+    coll,
+    stake,
+    status,
   }
 }
 

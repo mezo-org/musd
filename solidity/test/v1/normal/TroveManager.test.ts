@@ -16,8 +16,11 @@ import {
   fastForwardTime,
   fixture,
   getAddresses,
+  getAllEventsByName,
+  getDebtAndCollFromTroveUpdatedEvents,
   getEmittedLiquidationValues,
   getEmittedRedemptionValues,
+  getEmittedTroveUpdatedValues,
   getTCR,
   NO_GAS,
   openTrove,
@@ -2069,7 +2072,43 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
 
-    context("Emitted Events", () => {})
+    context("Emitted Events", () => {
+      it("redeemCollateral(): emits correct debt and coll values in each redeemed trove's TroveUpdated event", async () => {
+        await setupRedemptionTroves()
+        await updateTroveSnapshot(contracts, bob, "before")
+
+        const partialAmount = to1e18("10")
+        const redemptionAmount = to1e18("2010") + partialAmount // Redeem an amount equal to Alice's net debt + 10 MUSD
+
+        // Perform a redemption that fully redeems Alice's trove and partially redeems Bob's
+        const redemptionTx = await performRedemption(dennis, redemptionAmount)
+
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(partialAmount) / price
+
+        const abi = [
+          "event TroveUpdated(address indexed _borrower,uint256 _debt, uint256 _coll, uint256 _stake, uint8 operation)",
+        ]
+
+        const troveUpdatedEvents = await getAllEventsByName(
+          redemptionTx,
+          abi,
+          "TroveUpdated",
+        )
+        const { debt: aliceDebt, coll: aliceColl } =
+          await getDebtAndCollFromTroveUpdatedEvents(troveUpdatedEvents, alice)
+        const { debt: bobDebt, coll: bobColl } =
+          await getDebtAndCollFromTroveUpdatedEvents(troveUpdatedEvents, bob)
+
+        // Check that Alice's TroveUpdated event has 0 emitted debt and coll since it was closed
+        expect(aliceDebt).to.equal(0n)
+        expect(aliceColl).to.equal(0n)
+
+        // Check that Bob's TroveUpdated event has the correct emitted debt and coll values
+        expect(bobDebt).to.equal(bob.trove.debt.before - partialAmount)
+        expect(bobColl).to.equal(bob.trove.collateral.before - collNeeded)
+      })
+    })
 
     /**
      *
@@ -2396,7 +2435,7 @@ describe("TroveManager in Normal Mode", () => {
         expect(dennis.trove.debt.after).to.equal(dennis.trove.debt.before)
       })
 
-      it.only("redeemCollateral(): a full redemption (leaving trove with 0 debt), closes the trove", async () => {
+      it("redeemCollateral(): a full redemption (leaving trove with 0 debt), closes the trove", async () => {
         await setupRedemptionTroves()
         await performRedemption(dennis, to1e18("2010")) // Full redemption on Alice's trove
         expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
