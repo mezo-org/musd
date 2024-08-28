@@ -2009,50 +2009,49 @@ describe("TroveManager in Normal Mode", () => {
 
       it.skip("redeemCollateral(): reverts if caller tries to redeem more than the outstanding system debt", async () => {
         // TODO Link to THUSD test
-        await contracts.musd.unprotectedMint(
-          bob.address,
-          "101000000000000000000",
-        )
-        const { totalDebt: carolTotalDebt } = await openTrove(contracts, {
-          musdAmount: "1840",
-          ICR: "1000",
-          sender: carol.wallet,
-        })
-        const { totalDebt: dennisTotalDebt } = await openTrove(contracts, {
-          musdAmount: "1840",
-          ICR: "1000",
-          sender: dennis.wallet,
-        })
-        const totalDebt = carolTotalDebt + dennisTotalDebt
-        expect(await contracts.activePool.getMUSDDebt()).to.equal(totalDebt)
-        const price = await contracts.priceFeed.fetchPrice()
-        const { firstRedemptionHint, partialRedemptionHintNICR } =
-          await getRedemptionHints(to1e18("101"), price)
-        const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-          await contracts.sortedTroves.findInsertPosition(
-            partialRedemptionHintNICR,
-            bob.wallet,
-            bob.wallet,
-          )
-
-        try {
-          const redemptionTx = await contracts.troveManager.redeemCollateral(
-            totalDebt + to1e18("100"),
-            firstRedemptionHint,
-            upperPartialRedemptionHint,
-            lowerPartialRedemptionHint,
-            partialRedemptionHintNICR,
-            0,
-            to1e18("1"),
-            { from: bob.address },
-          )
-        } catch (error) {
-          console.log(error)
-          expect(error.message).contains(
-            "VM Exception while processing transaction",
-          )
-        }
-
+        // await contracts.musd.unprotectedMint(
+        //   bob.address,
+        //   "101000000000000000000",
+        // )
+        // const { totalDebt: carolTotalDebt } = await openTrove(contracts, {
+        //   musdAmount: "1840",
+        //   ICR: "1000",
+        //   sender: carol.wallet,
+        // })
+        // const { totalDebt: dennisTotalDebt } = await openTrove(contracts, {
+        //   musdAmount: "1840",
+        //   ICR: "1000",
+        //   sender: dennis.wallet,
+        // })
+        // const totalDebt = carolTotalDebt + dennisTotalDebt
+        // expect(await contracts.activePool.getMUSDDebt()).to.equal(totalDebt)
+        // const price = await contracts.priceFeed.fetchPrice()
+        // const { firstRedemptionHint, partialRedemptionHintNICR } =
+        //   await getRedemptionHints(to1e18("101"), price)
+        // const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+        //   await contracts.sortedTroves.findInsertPosition(
+        //     partialRedemptionHintNICR,
+        //     bob.wallet,
+        //     bob.wallet,
+        //   )
+        //
+        // try {
+        //   await contracts.troveManager.redeemCollateral(
+        //     totalDebt + to1e18("100"),
+        //     firstRedemptionHint,
+        //     upperPartialRedemptionHint,
+        //     lowerPartialRedemptionHint,
+        //     partialRedemptionHintNICR,
+        //     0,
+        //     to1e18("1"),
+        //     { from: bob.address },
+        //   )
+        // } catch (error) {
+        //   // @ts-expect-error
+        //   expect(error.message).contains(
+        //     "VM Exception while processing transaction",
+        //   )
+        // }
         // const illGottenMUSD = totalDebt + to1e18("100")
         // await contracts.musd.unprotectedMint(dennis.address, illGottenMUSD)
         // await expect(
@@ -2239,30 +2238,9 @@ describe("TroveManager in Normal Mode", () => {
         await setupRedemptionTroves()
 
         const redemptionAmount = to1e18("4120") // Alice and Bob's net debt + 100 MUSD
-        const price = await contracts.priceFeed.fetchPrice()
+        await performRedemption(dennis, redemptionAmount)
 
-        const {
-          firstRedemptionHint,
-          partialRedemptionHintNICR,
-          upperPartialRedemptionHint,
-          lowerPartialRedemptionHint,
-        } = await getRedemptionHints(redemptionAmount, price)
-
-        // Don't pay for gas to make it easier to calculate the received collateral
-        const redemptionTx = await contracts.troveManager
-          .connect(dennis.wallet)
-          .redeemCollateral(
-            redemptionAmount,
-            firstRedemptionHint,
-            upperPartialRedemptionHint,
-            lowerPartialRedemptionHint,
-            partialRedemptionHintNICR,
-            0,
-            to1e18("1"),
-            NO_GAS,
-          )
-
-        // Check that Alice and Bob's trove's are closed by redemption
+        // Check that Alice and Bob's troves are closed by redemption
         expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
           true,
         )
@@ -2295,7 +2273,7 @@ describe("TroveManager in Normal Mode", () => {
         } = await getRedemptionHints(redemptionAmount, price)
 
         // Don't pay for gas to make it easier to calculate the received collateral
-        const redemptionTx = await contracts.troveManager
+        await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
             redemptionAmount,
@@ -2355,7 +2333,7 @@ describe("TroveManager in Normal Mode", () => {
           .redeemCollateral(to1e18("10"), f, u, l, p, 0, to1e18("1"), NO_GAS)
 
         // Dennis tries to redeem with outdated hint
-        const redemptionTx = await contracts.troveManager
+        await contracts.troveManager
           .connect(dennis.wallet)
           .redeemCollateral(
             redemptionAmount,
