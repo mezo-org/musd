@@ -350,7 +350,7 @@ describe("TroveManager in Normal Mode", () => {
         async () => {
           await setupTroves()
           // Approve up to $10k to be sent to the stability pool for Bob.
-          await provideToSP(contracts, bob, to1e18("10000"))
+          await provideToSP(contracts, bob, to1e18("10,000"))
 
           await updateTroveManagerSnapshot(contracts, state, "before")
 
@@ -395,7 +395,7 @@ describe("TroveManager in Normal Mode", () => {
 
       it("liquidate(): Pool offsets increase the TCR", async () => {
         await setupTroves()
-        await provideToSP(contracts, bob, to1e18("10000"))
+        await provideToSP(contracts, bob, to1e18("10,000"))
 
         // Open additional troves with low enough ICRs that they will default on a small price drop
         await openTrove(contracts, {
@@ -1153,7 +1153,7 @@ describe("TroveManager in Normal Mode", () => {
         })
 
         // Bob provides funds to SP
-        await provideToSP(contracts, bob, to1e18("10000"))
+        await provideToSP(contracts, bob, to1e18("10,000"))
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
         await dropPrice(contracts, alice)
@@ -1720,7 +1720,7 @@ describe("TroveManager in Normal Mode", () => {
         // Try to redeem 10k MUSD.  At least 2 iterations should be needed for total redemption of the given amount.
         const { partialRedemptionHintNICR } =
           await contracts.hintHelpers.getRedemptionHints(
-            to1e18("10000"),
+            to1e18("10,000"),
             price,
             1,
           )
