@@ -7,7 +7,6 @@ import "./interfaces/ITroveManager.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
-import "../debugging/console.sol";
 
 contract HintHelpers is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
@@ -77,6 +76,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
         uint256 remainingMUSD = _MUSDamount;
         address currentTroveuser = sortedTrovesCached.getLast();
 
+        // slither-disable-start calls-loop
         while (
             currentTroveuser != address(0) &&
             troveManager.getCurrentICR(currentTroveuser, _price) < MCR
@@ -133,6 +133,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
 
             currentTroveuser = sortedTrovesCached.getPrev(currentTroveuser);
         }
+        // slither-disable-end calls-loop
 
         truncatedMUSDamount = _MUSDamount - remainingMUSD;
     }
@@ -170,6 +171,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
 
         uint256 i = 1;
 
+        // slither-disable-start calls-loop
         while (i < _numTrials) {
             latestRandomSeed = uint(
                 keccak256(abi.encodePacked(latestRandomSeed))
@@ -193,6 +195,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
             }
             i++;
         }
+        // slither-disable-end calls-loop
     }
 
     function computeNominalCR(

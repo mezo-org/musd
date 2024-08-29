@@ -44,10 +44,13 @@ contract CollSurplusPool is
             checkContract(_collateralAddress);
         }
 
+        // checkContract does the zero address check so disable slither warning
+        // slither-disable-start missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
         troveManagerAddress = _troveManagerAddress;
         activePoolAddress = _activePoolAddress;
         collateralAddress = _collateralAddress;
+        // slither-disable-end missing-zero-check
 
         require(
             (Ownable(_activePoolAddress).owner() != address(0) ||
@@ -141,6 +144,7 @@ contract CollSurplusPool is
             collateralAddress != address(0),
             "CollSurplusPool: ETH collateral needed, not ERC20"
         );
+        // slither-disable-next-line events-maths
         collateral += _amount;
     }
 
@@ -153,6 +157,7 @@ contract CollSurplusPool is
             collateralAddress == address(0),
             "CollSurplusPool: ERC20 collateral needed, not ETH"
         );
+        // slither-disable-next-line events-maths
         collateral += msg.value;
     }
 }
