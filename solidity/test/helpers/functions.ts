@@ -197,13 +197,6 @@ export async function updateWalletSnapshot(
   user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
 }
 
-export async function updateBTCUserSnapshot(
-  user: User,
-  checkPoint: CheckPoint,
-) {
-  user.btc[checkPoint] = await ethers.provider.getBalance(user.address)
-}
-
 export async function updateTroveManagerSnapshot(
   contracts: Contracts,
   state: ContractsState,

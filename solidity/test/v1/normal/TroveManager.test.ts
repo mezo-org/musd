@@ -27,7 +27,7 @@ import {
   setBaseRate,
   TestingAddresses,
   TestSetup,
-  updateBTCUserSnapshot,
+  updateWalletSnapshot,
   updateContractsSnapshot,
   updatePCVSnapshot,
   updateStabilityPoolUserSnapshot,
@@ -35,7 +35,6 @@ import {
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateTroveSnapshots,
-  updateWalletSnapshot,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -1787,7 +1786,7 @@ describe("TroveManager in Normal Mode", () => {
         "before",
       )
 
-      await updateBTCUserSnapshot(dennis, "before")
+      await updateWalletSnapshot(contracts, dennis, "before")
     }
 
     async function getRedemptionHints(redemptionAmount: bigint, price: bigint) {
@@ -1860,7 +1859,7 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       // Check that Dennis received the correct amount of collateral and the emitted values match
-      await updateBTCUserSnapshot(dennis, "after")
+      await updateWalletSnapshot(contracts, dennis, "after")
       expect(dennis.btc.after - dennis.btc.before).to.be.closeTo(
         collNeeded - collateralFee,
         1000,
@@ -2548,7 +2547,7 @@ describe("TroveManager in Normal Mode", () => {
         await setupRedemptionTroves()
 
         await updateTroveSnapshot(contracts, alice, "before")
-        await updateBTCUserSnapshot(alice, "before")
+        await updateWalletSnapshot(contracts, alice, "before")
 
         // Fully redeem Alice's trove
         const redemptionAmount = to1e18("2010")
@@ -2559,7 +2558,7 @@ describe("TroveManager in Normal Mode", () => {
           .connect(alice.wallet)
           .claimCollateral({ gasPrice: 0 })
 
-        await updateBTCUserSnapshot(alice, "after")
+        await updateWalletSnapshot(contracts, alice, "after")
 
         // Alice's collateral surplus should be equal to the difference between the collateral needed to cancel her debt and her total collateral
         const price = await contracts.priceFeed.fetchPrice()
@@ -2589,7 +2588,7 @@ describe("TroveManager in Normal Mode", () => {
           sender: alice.wallet,
         })
 
-        await updateBTCUserSnapshot(alice, "before")
+        await updateWalletSnapshot(contracts, alice, "before")
 
         // Claim collateral surplus
         await contracts.borrowerOperations
@@ -2597,7 +2596,7 @@ describe("TroveManager in Normal Mode", () => {
           .claimCollateral({ gasPrice: 0 })
 
         // Check that Alice's balance after is equal to her balance before claiming collateral plus the calculated surplus
-        await updateBTCUserSnapshot(alice, "after")
+        await updateWalletSnapshot(contracts, alice, "after")
         expect(alice.btc.after).to.equal(alice.btc.before + collateralSurplus)
       })
     })
@@ -2737,7 +2736,7 @@ describe("TroveManager in Normal Mode", () => {
       it("redeemCollateral(): a redemption sends the collateral remainder (CollateralDrawn - CollateralFee) to the redeemer", async () => {
         await setupRedemptionTroves()
 
-        await updateBTCUserSnapshot(dennis, "before")
+        await updateWalletSnapshot(contracts, dennis, "before")
         const redemptionAmount = to1e18("100")
         const redemptionTx = await performRedemption(dennis, redemptionAmount)
 
@@ -2746,7 +2745,7 @@ describe("TroveManager in Normal Mode", () => {
 
         const remainder = collateralSent - collateralFee
 
-        await updateBTCUserSnapshot(dennis, "after")
+        await updateWalletSnapshot(contracts, dennis, "after")
         expect(dennis.btc.after - dennis.btc.before).to.equal(remainder)
       })
     })
