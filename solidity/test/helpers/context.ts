@@ -20,9 +20,7 @@ import type {
   PriceFeed,
   SortedTroves,
   StabilityPool,
-  TroveManager,
 } from "../../typechain/contracts/v1"
-import type { MUSD } from "../../typechain/contracts/token"
 
 import type {
   MockAggregator,
@@ -33,7 +31,7 @@ import type {
 const maxBytes32 = `0x${"f".repeat(64)}`
 
 // eslint-disable-next-line import/prefer-default-export
-export async function deployment(overwrite: Array<string>) {
+export async function deployment() {
   await deployments.fixture()
 
   const activePool: ActivePool = await getDeployedContract("ActivePool")
@@ -45,19 +43,14 @@ export async function deployment(overwrite: Array<string>) {
   const gasPool: GasPool = await getDeployedContract("GasPool")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
-  const musd: MUSD | MUSDTester = overwrite.includes("MUSD")
-    ? await getDeployedContract("MUSDTester")
-    : await getDeployedContract("MUSD")
+  const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
-  const troveManager: TroveManager | TroveManagerTester = overwrite.includes(
-    "TroveManager",
-  )
-    ? await getDeployedContract("TroveManagerTester")
-    : await getDeployedContract("TroveManager")
+  const troveManager: TroveManagerTester =
+    await getDeployedContract("TroveManagerTester")
 
   const contracts: Contracts = {
     activePool,
@@ -83,12 +76,13 @@ function initializeContractState(): ContractsState {
   return {
     troveManager: {
       baseRate: beforeAndAfter(),
-      troves: beforeAndAfter(),
-      stakes: beforeAndAfter(),
+      lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
         debt: beforeAndAfter(),
       },
+      stakes: beforeAndAfter(),
+      troves: beforeAndAfter(),
       TCR: beforeAndAfter(),
     },
     activePool: {
@@ -165,7 +159,7 @@ export async function fixture(): Promise<TestSetup> {
     frankWallet,
     whaleWallet,
   ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deployment(["MUSD", "PriceFeed", "TroveManager"])
+  const contracts = await deployment()
 
   const users: Users = {
     alice: await initializeUserObject(aliceWallet),

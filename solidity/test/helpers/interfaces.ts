@@ -13,7 +13,6 @@ import {
   PriceFeed,
   SortedTroves,
   StabilityPool,
-  TroveManager,
   TroveManagerTester,
 } from "../../typechain"
 
@@ -48,12 +47,13 @@ type BeforeAndAfter = {
 export interface ContractsState {
   troveManager: {
     baseRate: BeforeAndAfter
-    troves: BeforeAndAfter
-    stakes: BeforeAndAfter
+    lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
       debt: BeforeAndAfter
     }
+    stakes: BeforeAndAfter
+    troves: BeforeAndAfter
     TCR: BeforeAndAfter
   }
   activePool: {
@@ -91,7 +91,7 @@ export interface Contracts {
   priceFeed: PriceFeed
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
-  troveManager: TroveManager | TroveManagerTester
+  troveManager: TroveManagerTester
 }
 
 export interface User {
