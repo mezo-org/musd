@@ -153,6 +153,13 @@ export interface AddCollParams {
   upperHint?: string
 }
 
+export interface WithdrawCollParams {
+  amount: string | bigint
+  lowerHint?: string
+  sender: HardhatEthersSigner
+  upperHint?: string
+}
+
 export interface OpenTroveParams {
   musdAmount: string | bigint
   ICR?: string
