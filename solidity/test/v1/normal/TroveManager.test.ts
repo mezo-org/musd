@@ -2728,11 +2728,6 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.skip("redeemCollateral(): a redemption made at a non-zero base rate increases collateral in the staking contract", async () => {
-        // This test seems to be a duplicate of the above.
-        // See https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L3607
-      })
-
       it("redeemCollateral(): a redemption sends the collateral remainder (CollateralDrawn - CollateralFee) to the redeemer", async () => {
         await setupRedemptionTroves()
 
