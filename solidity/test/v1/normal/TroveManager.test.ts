@@ -6,30 +6,39 @@ import {
   applyLiquidationFee,
   checkTroveActive,
   checkTroveClosedByLiquidation,
+  checkTroveClosedByRedemption,
   checkTroveStatus,
   connectContracts,
   Contracts,
   ContractsState,
   dropPrice,
   dropPriceAndLiquidate,
+  fastForwardTime,
   fixture,
   getAddresses,
+  getAllEventsByName,
+  getDebtAndCollFromTroveUpdatedEvents,
   getEmittedLiquidationValues,
+  getEmittedRedemptionValues,
   getTCR,
+  NO_GAS,
   openTrove,
   provideToSP,
+  setBaseRate,
   TestingAddresses,
   TestSetup,
+  updateWalletSnapshot,
   updateContractsSnapshot,
+  updatePCVSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateTroveSnapshots,
-  updateWalletSnapshot,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
+import { TroveManagerTester } from "../../../typechain"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -341,7 +350,7 @@ describe("TroveManager in Normal Mode", () => {
         async () => {
           await setupTroves()
           // Approve up to $10k to be sent to the stability pool for Bob.
-          await provideToSP(contracts, bob, to1e18("10000"))
+          await provideToSP(contracts, bob, to1e18("10,000"))
 
           await updateTroveManagerSnapshot(contracts, state, "before")
 
@@ -386,7 +395,7 @@ describe("TroveManager in Normal Mode", () => {
 
       it("liquidate(): Pool offsets increase the TCR", async () => {
         await setupTroves()
-        await provideToSP(contracts, bob, to1e18("10000"))
+        await provideToSP(contracts, bob, to1e18("10,000"))
 
         // Open additional troves with low enough ICRs that they will default on a small price drop
         await openTrove(contracts, {
@@ -1144,7 +1153,7 @@ describe("TroveManager in Normal Mode", () => {
         })
 
         // Bob provides funds to SP
-        await provideToSP(contracts, bob, to1e18("10000"))
+        await provideToSP(contracts, bob, to1e18("10,000"))
 
         // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
         await dropPrice(contracts, alice)
@@ -1379,7 +1388,7 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.closeTo(bob.stabilityPool.compoundedDeposit.after, 1000)
         expect(
           carolDeposit - (liquidatedDebt * carolDeposit) / totalDeposits,
-        ).to.be.closeTo(carol.stabilityPool.compoundedDeposit.after, 10000) // TODO Determine correct error tolerance
+        ).to.be.closeTo(carol.stabilityPool.compoundedDeposit.after, 10000)
 
         // Check that each user's collateral gain has increased by their share of the total liquidated collateral
         const liquidatedColl = applyLiquidationFee(
@@ -1591,5 +1600,1211 @@ describe("TroveManager in Normal Mode", () => {
      */
 
     context("State change in other contracts", () => {})
+  })
+
+  describe("getRedemptionHints()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("getRedemptionHints(): gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
+        // Open Troves for Alice and Bob
+        const { totalDebt, musdAmount, collateral } = await openTrove(
+          contracts,
+          {
+            musdAmount: "2100",
+            ICR: "310",
+            sender: alice.wallet,
+          },
+        )
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "290",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "250",
+          sender: carol.wallet,
+        })
+
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "120",
+          sender: dennis.wallet,
+        })
+
+        // Drop the price so that Dennis has an ICR below MCR, she should be untouched by redemptions
+        const price = await dropPrice(contracts, dennis)
+
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "before",
+        )
+
+        const partialRedemptionAmount = to1e18("100")
+        const redemptionAmount =
+          carol.trove.debt.before +
+          bob.trove.debt.before +
+          partialRedemptionAmount
+
+        const maxRedeemableMUSD =
+          totalDebt - musdAmount - partialRedemptionAmount + to1e18("200") // Partial redemption amount + 200 MUSD for gas comp
+        const netMUSDdebt = totalDebt - to1e18("200")
+        const newColl = collateral - to1e18(maxRedeemableMUSD) / price
+
+        const newDebt = netMUSDdebt - maxRedeemableMUSD
+        const compositeDebt = newDebt + to1e18("200")
+
+        const nominalICR = (newColl * to1e18("100")) / compositeDebt
+
+        const { firstRedemptionHint, partialRedemptionHintNICR } =
+          await contracts.hintHelpers.getRedemptionHints(
+            redemptionAmount,
+            price,
+            0,
+          )
+
+        expect(firstRedemptionHint).to.equal(carol.address)
+        expect(partialRedemptionHintNICR).to.equal(nominalICR)
+      })
+
+      it("getRedemptionHints(): returns 0 as partialRedemptionHintNICR when reaching _maxIterations", async () => {
+        // Open three troves
+        await openTrove(contracts, {
+          musdAmount: "25000",
+          ICR: "300",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "15000",
+          ICR: "250",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        const price = await contracts.priceFeed.fetchPrice()
+
+        // Try to redeem 10k MUSD.  At least 2 iterations should be needed for total redemption of the given amount.
+        const { partialRedemptionHintNICR } =
+          await contracts.hintHelpers.getRedemptionHints(
+            to1e18("10,000"),
+            price,
+            1,
+          )
+
+        expect(partialRedemptionHintNICR).to.equal(0)
+      })
+
+      /**
+       *
+       * Balance changes
+       *
+       */
+
+      context("Balance changes", () => {})
+
+      /**
+       *
+       * Fees
+       *
+       */
+
+      context("Fees", () => {})
+
+      /**
+       *
+       * State change in other contracts
+       *
+       */
+
+      context("State change in other contracts", () => {})
+    })
+  })
+
+  describe("redeemCollateral()", () => {
+    async function setupRedemptionTroves() {
+      // Open three troves with ascending ICRs
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "300",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+
+      // Open another trove for Dennis with a very high ICR
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "4000",
+        sender: dennis.wallet,
+      })
+
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "before",
+      )
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+    }
+
+    async function getRedemptionHints(redemptionAmount: bigint, price: bigint) {
+      const { firstRedemptionHint, partialRedemptionHintNICR } =
+        await contracts.hintHelpers.getRedemptionHints(
+          redemptionAmount,
+          price,
+          0,
+        )
+
+      const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+        await contracts.sortedTroves.findInsertPosition(
+          partialRedemptionHintNICR,
+          dennis.wallet,
+          dennis.wallet,
+        )
+
+      return {
+        firstRedemptionHint,
+        partialRedemptionHintNICR,
+        upperPartialRedemptionHint,
+        lowerPartialRedemptionHint,
+      }
+    }
+
+    async function performRedemption(
+      user: User,
+      redemptionAmount: bigint,
+      maxIterations: number = 0,
+    ) {
+      const price = await contracts.priceFeed.fetchPrice()
+
+      const {
+        firstRedemptionHint,
+        partialRedemptionHintNICR,
+        upperPartialRedemptionHint,
+        lowerPartialRedemptionHint,
+      } = await getRedemptionHints(redemptionAmount, price)
+
+      // Don't pay for gas to make it easier to calculate the received collateral
+      return contracts.troveManager
+        .connect(user.wallet)
+        .redeemCollateral(
+          redemptionAmount,
+          firstRedemptionHint,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+          partialRedemptionHintNICR,
+          maxIterations,
+          to1e18("1"),
+          NO_GAS,
+        )
+    }
+
+    async function checkCollateralAndDebtValues(
+      redemptionTx: ContractTransactionResponse,
+      redemptionAmount: bigint,
+      price: bigint,
+    ) {
+      const { collateralSent, collateralFee } =
+        await getEmittedRedemptionValues(redemptionTx)
+
+      // Calculate the amount of collateral needed to redeem the given amount of MUSD
+      const collNeeded = to1e18(redemptionAmount) / price
+
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
+
+      // Check that Dennis received the correct amount of collateral and the emitted values match
+      await updateWalletSnapshot(contracts, dennis, "after")
+      expect(dennis.btc.after - dennis.btc.before).to.be.closeTo(
+        collNeeded - collateralFee,
+        1000,
+      )
+      expect(collateralSent).to.equal(collNeeded)
+
+      // Alice's trove's debt should be reduced by redemption amount
+      expect(alice.trove.debt.before - alice.trove.debt.after).to.equal(
+        redemptionAmount,
+      )
+
+      // Check that Alice's collateral has decreased by the correct amount
+      expect(
+        alice.trove.collateral.before - alice.trove.collateral.after,
+      ).to.equal(collNeeded)
+    }
+
+    async function redeemWithFee(
+      feePercentage: number,
+      redemptionAmount: bigint = to1e18("100"),
+    ) {
+      const price = await contracts.priceFeed.fetchPrice()
+      const fee = to1e18(feePercentage) / 100n
+
+      const {
+        firstRedemptionHint,
+        partialRedemptionHintNICR,
+        upperPartialRedemptionHint,
+        lowerPartialRedemptionHint,
+      } = await getRedemptionHints(redemptionAmount, price)
+
+      return contracts.troveManager
+        .connect(dennis.wallet)
+        .redeemCollateral(
+          redemptionAmount,
+          firstRedemptionHint,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+          partialRedemptionHintNICR,
+          0,
+          fee,
+          NO_GAS,
+        )
+    }
+
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+
+    context("Expected Reverts", () => {
+      it("redeemCollateral(): reverts when TCR < MCR", async () => {
+        const users = [alice, bob, carol, dennis]
+        await Promise.all(
+          users.slice(0, -1).map((user) =>
+            openTrove(contracts, {
+              musdAmount: "2000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "195",
+          sender: dennis.wallet,
+        })
+
+        // Drop price to put Alice, Bob, and Carol at 110% ICR and Dennis just below
+        await dropPrice(contracts, carol, to1e18("110"))
+        expect(await getTCR(contracts)).to.be.lessThan(
+          await contracts.troveManager.MCR(),
+        )
+
+        await expect(
+          performRedemption(dennis, to1e18("1000")),
+        ).to.be.revertedWith("TroveManager: Cannot redeem when TCR < MCR")
+      })
+
+      it("redeemCollateral(): reverts when argument _amount is 0", async () => {
+        await setupRedemptionTroves()
+
+        await expect(performRedemption(dennis, 0n)).to.be.revertedWith(
+          "TroveManager: Amount must be greater than zero",
+        )
+      })
+
+      it("redeemCollateral(): reverts if max fee > 100%", async () => {
+        await setupRedemptionTroves()
+
+        await expect(redeemWithFee(101)).to.be.revertedWith(
+          "Max fee percentage must be between 0.5% and 100%",
+        )
+      })
+
+      it("redeemCollateral(): reverts if max fee < 0.5%", async () => {
+        await setupRedemptionTroves()
+
+        await expect(redeemWithFee(0.49)).to.be.revertedWith(
+          "Max fee percentage must be between 0.5% and 100%",
+        )
+      })
+
+      it("redeemCollateral(): reverts if fee exceeds max fee percentage", async () => {
+        // Open identical troves for everyone but Dennis
+        const users = [alice, bob, carol, dennis]
+        await Promise.all(
+          users.slice(0, -1).map((user) =>
+            openTrove(contracts, {
+              musdAmount: "20000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+
+        // Open a trove for Dennis with slightly lower ICR
+        await openTrove(contracts, {
+          musdAmount: "40000",
+          ICR: "195",
+          sender: dennis.wallet,
+        })
+
+        // Calculate the fee for redeeming 1/10 of the total supply
+        const totalSupply = await contracts.musd.totalSupply()
+        const attemptedRedemptionAmount = totalSupply / 10n
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(attemptedRedemptionAmount) / price
+        const fee = await (
+          contracts.troveManager as TroveManagerTester
+        ).callGetRedemptionFee(collNeeded)
+        const feePercentage = (to1e18(fee) / collNeeded) * 1000n
+
+        // Convert the fee to a number to make it easier to work with
+        const feePercentageNumber = Number(feePercentage) / Number(1e18)
+
+        // Attempt to redeem with a maximum fee just slightly less than the calculated fee
+        await expect(
+          redeemWithFee(feePercentageNumber - 0.01, attemptedRedemptionAmount),
+        ).to.be.revertedWith("Fee exceeded provided maximum")
+      })
+
+      it("redeemCollateral(): reverts when requested redemption amount exceeds caller's MUSD token balance", async () => {
+        await setupRedemptionTroves()
+        await updateWalletSnapshot(contracts, dennis, "before")
+
+        await expect(
+          performRedemption(dennis, dennis.musd.before + 1n),
+        ).to.be.revertedWith(
+          "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
+        )
+      })
+
+      it.skip("redeemCollateral(): reverts if caller tries to redeem more than the outstanding system debt", async () => {
+        /*
+         This test reverts but not for the reason expected.  Instead, it says there is only one trove left.
+         It also seems like this could be simplified by just grabbing the total debt of the system
+         and trying to redeem more than that.  Checking that the system debt matches the return of openTrove seems redundant.
+         See: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L3345
+        */
+        await contracts.musd.unprotectedMint(
+          bob.address,
+          "101000000000000000000",
+        )
+        const { totalDebt: carolTotalDebt } = await openTrove(contracts, {
+          musdAmount: "1840",
+          ICR: "1000",
+          sender: carol.wallet,
+        })
+        const { totalDebt: dennisTotalDebt } = await openTrove(contracts, {
+          musdAmount: "1840",
+          ICR: "1000",
+          sender: dennis.wallet,
+        })
+        const totalDebt = carolTotalDebt + dennisTotalDebt
+        expect(await contracts.activePool.getMUSDDebt()).to.equal(totalDebt)
+
+        const price = await contracts.priceFeed.fetchPrice()
+        const { firstRedemptionHint, partialRedemptionHintNICR } =
+          await getRedemptionHints(to1e18("101"), price)
+        const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+          await contracts.sortedTroves.findInsertPosition(
+            partialRedemptionHintNICR,
+            bob.wallet,
+            bob.wallet,
+          )
+
+        try {
+          await contracts.troveManager.redeemCollateral(
+            totalDebt + to1e18("100"),
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            { from: bob.address },
+          )
+        } catch (error) {
+          // @ts-expect-error next line is checking the error message, should probably be revertedWith
+          expect(error.message).contains(
+            "VM Exception while processing transaction",
+          )
+        }
+      })
+
+      it("redeemCollateral(): reverts if fee eats up all returned collateral", async () => {
+        await setupRedemptionTroves()
+        await updateTroveSnapshot(contracts, alice, "before")
+
+        // Set base rate to 100%
+        await setBaseRate(contracts, to1e18("1"))
+
+        // Attempt to fully redeem Alice's trove
+        await expect(
+          performRedemption(dennis, alice.trove.debt.before),
+        ).to.be.revertedWith(
+          "TroveManager: Fee would eat up all returned collateral",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+
+    context("Emitted Events", () => {
+      it("redeemCollateral(): emits correct debt and coll values in each redeemed trove's TroveUpdated event", async () => {
+        await setupRedemptionTroves()
+        await updateTroveSnapshot(contracts, bob, "before")
+
+        const partialAmount = to1e18("10")
+        const redemptionAmount = to1e18("2010") + partialAmount // Redeem an amount equal to Alice's net debt + 10 MUSD
+
+        // Perform a redemption that fully redeems Alice's trove and partially redeems Bob's
+        const redemptionTx = await performRedemption(dennis, redemptionAmount)
+
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(partialAmount) / price
+
+        const abi = [
+          "event TroveUpdated(address indexed _borrower,uint256 _debt, uint256 _coll, uint256 _stake, uint8 operation)",
+        ]
+
+        const troveUpdatedEvents = await getAllEventsByName(
+          redemptionTx,
+          abi,
+          "TroveUpdated",
+        )
+        const { debt: aliceDebt, coll: aliceColl } =
+          await getDebtAndCollFromTroveUpdatedEvents(troveUpdatedEvents, alice)
+        const { debt: bobDebt, coll: bobColl } =
+          await getDebtAndCollFromTroveUpdatedEvents(troveUpdatedEvents, bob)
+
+        // Check that Alice's TroveUpdated event has 0 emitted debt and coll since it was closed
+        expect(aliceDebt).to.equal(0n)
+        expect(aliceColl).to.equal(0n)
+
+        // Check that Bob's TroveUpdated event has the correct emitted debt and coll values
+        expect(bobDebt).to.equal(bob.trove.debt.before - partialAmount)
+        expect(bobColl).to.equal(bob.trove.collateral.before - collNeeded)
+      })
+    })
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+
+    context("Individual Troves", () => {
+      it("redeemCollateral(): ends the redemption sequence when the token redemption request has been filled", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("2010") // Redeem an amount equal to Alice's net debt
+
+        await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            alice.address,
+            alice.address,
+            alice.address,
+            0,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
+
+        expect(alice.trove.debt.after).to.equal(0n)
+
+        const otherUsers = [bob, carol, dennis]
+
+        // Debt should remain unchanged for other troves
+        const debtChanges = await Promise.all(
+          otherUsers.map(
+            (user) => user.trove.debt.after - user.trove.debt.before === 0n,
+          ),
+        )
+        expect(debtChanges.every(Boolean)).to.equal(true)
+
+        // Other troves should still be active
+        const stillActive = await Promise.all(
+          otherUsers.map((user) => checkTroveActive(contracts, user)),
+        )
+        expect(stillActive.every(Boolean)).to.equal(true)
+
+        // Alice's trove should be closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+      })
+
+      it("redeemCollateral(): ends the redemption sequence when max iterations have been reached", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("6030") // Redeem an amount equal to Alice, Bob, and Carol's net debt
+
+        await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
+          redemptionAmount,
+          alice.address,
+          alice.address,
+          alice.address,
+          0,
+          2, // Max redemptions set to 2, so we will stop after Bob's trove
+          to1e18("1"),
+          NO_GAS,
+        )
+
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, carol, dennis],
+          "after",
+        )
+
+        expect(alice.trove.debt.after).to.equal(0n)
+        expect(bob.trove.debt.after).to.equal(0n)
+
+        const otherUsers = [carol, dennis]
+
+        // Debt should remain unchanged for other troves
+        const debtChanges = await Promise.all(
+          otherUsers.map(
+            (user) => user.trove.debt.after - user.trove.debt.before === 0n,
+          ),
+        )
+        expect(debtChanges.every(Boolean)).to.equal(true)
+
+        // Other troves should still be active
+        const stillActive = await Promise.all(
+          otherUsers.map((user) => checkTroveActive(contracts, user)),
+        )
+        expect(stillActive.every(Boolean)).to.equal(true)
+
+        // Alice and Bob's troves should be closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
+          true,
+        )
+      })
+
+      it("redeemCollateral(): performs partial redemption if resultant debt is > minimum net debt", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("4120") // Alice and Bob's net debt + 100 MUSD
+        await performRedemption(dennis, redemptionAmount)
+
+        // Check that Alice and Bob's troves are closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
+          true,
+        )
+
+        // Check that Carol's trove is still active
+        expect(await checkTroveActive(contracts, carol)).to.equal(true)
+
+        // Check that Carol's debt has been reduced by 100 MUSD because of the partial redemption
+        await updateTroveSnapshot(contracts, carol, "after")
+        expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
+          to1e18("-100"),
+        )
+      })
+
+      it("redeemCollateral(): doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
+        await setupRedemptionTroves()
+
+        // Alice and Bob's net debt + 300 MUSD.  A partial redemption of 300 MUSD would put Carol below minimum net debt
+        const redemptionAmount = to1e18("4320")
+
+        await performRedemption(dennis, redemptionAmount)
+
+        // Check that Alice and Bob's troves are closed by redemption
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(
+          true,
+        )
+
+        // Check that Carol's trove is still active
+        expect(await checkTroveActive(contracts, carol)).to.equal(true)
+
+        // Check that Carol's debt is untouched because no partial redemption was performed
+        await updateTroveSnapshot(contracts, carol, "after")
+        expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
+      })
+
+      it("redeemCollateral(): doesnt perform the final partial redemption in the sequence if the hint is out-of-date", async () => {
+        await setupRedemptionTroves()
+
+        // Dennis plans to redeem Alice and Bob's troves, plus a partial redemption from Carol
+        const aliceAndBobNetDebt = to1e18("4020")
+        const partialRedemptionAmount = to1e18("100")
+
+        const redemptionAmount = aliceAndBobNetDebt + partialRedemptionAmount
+        const price = await contracts.priceFeed.fetchPrice()
+
+        // Calculate Dennis's hints
+        const {
+          firstRedemptionHint,
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        const {
+          firstRedemptionHint: f,
+          partialRedemptionHintNICR: p,
+          upperPartialRedemptionHint: u,
+          lowerPartialRedemptionHint: l,
+        } = await getRedemptionHints(to1e18("10"), price)
+
+        // Carol redeems 10 MUSD from Alice's trove ahead of Dennis's redemption
+        await contracts.troveManager
+          .connect(carol.wallet)
+          .redeemCollateral(to1e18("10"), f, u, l, p, 0, to1e18("1"), NO_GAS)
+
+        // Dennis tries to redeem with outdated hint
+        await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            firstRedemptionHint,
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        // Check that Carol's debt is untouched because no partial redemption was performed
+        await updateTroveSnapshot(contracts, carol, "after")
+        expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
+      })
+
+      it("redeemCollateral(): doesn't touch Troves with ICR < 110%", async () => {
+        await setupRedemptionTroves()
+
+        // Drop the price so that Alice's trove is below MCR
+        await dropPrice(contracts, alice)
+        const redemptionAmount = to1e18("100")
+
+        await performRedemption(dennis, redemptionAmount)
+
+        await updateTroveSnapshots(contracts, [alice], "after")
+
+        // Alice's trove should be untouched
+        expect(alice.trove.debt.after - alice.trove.debt.before).to.equal(0n)
+        expect(
+          alice.trove.collateral.after - alice.trove.collateral.before,
+        ).to.equal(0n)
+      })
+
+      it("redeemCollateral(): finds the last Trove with ICR == 110% even if there is more than one", async () => {
+        // Open 3 troves with the same ICR
+        const users = [alice, bob, carol]
+
+        // Sum the total debt of all 3 troves
+        const sumTotalDebt = await users.reduce(async (acc, user) => {
+          const { totalDebt } = await openTrove(contracts, {
+            musdAmount: "2000",
+            ICR: "200",
+            sender: user.wallet,
+          })
+          return (await acc) + totalDebt
+        }, Promise.resolve(0n))
+
+        // Open a trove for Dennis with a slightly lower ICR
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "180",
+          sender: dennis.wallet,
+        })
+
+        // Open a trove for Eric that will keep us out of recovery mode
+        await openTrove(contracts, {
+          musdAmount: "20000",
+          ICR: "2000",
+          sender: eric.wallet,
+        })
+
+        await updateTroveSnapshot(contracts, dennis, "before")
+
+        // Drop price to put the first 3 troves at 110 ICR
+        await dropPrice(contracts, alice, to1e18("110"))
+
+        // Try to trick redeemCollateral with hint that doesn't point to the last Trove with ICR == 110
+        await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
+          sumTotalDebt,
+          carol.address, // last trove with ICR == 110 should be Alice
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000",
+          0,
+          0,
+          to1e18("1"),
+          NO_GAS,
+        )
+
+        await updateTroveSnapshot(contracts, dennis, "after")
+
+        // Check that all Troves with ICR === 110 have been closed
+        const closedByRedemption = await Promise.all(
+          users.map((user) => checkTroveClosedByRedemption(contracts, user)),
+        )
+        expect(closedByRedemption.every(Boolean)).to.equal(true)
+
+        // Check that Dennis's trove has not been touched
+        expect(dennis.trove.debt.after).to.equal(dennis.trove.debt.before)
+      })
+
+      it("redeemCollateral(): a full redemption (leaving trove with 0 debt), closes the trove", async () => {
+        await setupRedemptionTroves()
+        await performRedemption(dennis, to1e18("2010")) // Full redemption on Alice's trove
+        expect(await checkTroveClosedByRedemption(contracts, alice)).to.equal(
+          true,
+        )
+      })
+    })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+
+    context("Balance changes", () => {
+      it("redeemCollateral(): cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("200")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const redemptionTx = await performRedemption(dennis, redemptionAmount)
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
+      })
+
+      it("redeemCollateral(): has the same functionality with invalid first hint, zero address", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("200")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const redemptionTx = await performRedemption(dennis, redemptionAmount)
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
+      })
+
+      it("redeemCollateral(): has the same functionality with invalid first hint, non-existent trove", async () => {
+        await setupRedemptionTroves()
+
+        const redemptionAmount = to1e18("200")
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const {
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            eric.address, // Invalid first hint
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
+      })
+
+      it("redeemCollateral(): has the same functionality with invalid first hint, trove below MCR", async () => {
+        await setupRedemptionTroves()
+
+        // Increase the price to start Eric
+        const price = await contracts.priceFeed.fetchPrice()
+        await contracts.mockAggregator.setPrice(price * 2n)
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "200",
+          sender: eric.wallet,
+        })
+
+        // Drop the price back to the initial price to put Eric below MCR
+        await contracts.mockAggregator.setPrice(price)
+
+        const redemptionAmount = to1e18("200")
+
+        const {
+          partialRedemptionHintNICR,
+          upperPartialRedemptionHint,
+          lowerPartialRedemptionHint,
+        } = await getRedemptionHints(redemptionAmount, price)
+
+        const redemptionTx = await contracts.troveManager
+          .connect(dennis.wallet)
+          .redeemCollateral(
+            redemptionAmount,
+            eric.address, // Invalid first hint, eric is below mcr
+            upperPartialRedemptionHint,
+            lowerPartialRedemptionHint,
+            partialRedemptionHintNICR,
+            0,
+            to1e18("1"),
+            NO_GAS,
+          )
+
+        await checkCollateralAndDebtValues(
+          redemptionTx,
+          redemptionAmount,
+          price,
+        )
+      })
+
+      it("redeemCollateral(): caller can redeem their entire MUSDToken balance", async () => {
+        await setupRedemptionTroves()
+        await updateWalletSnapshot(contracts, dennis, "before")
+
+        await performRedemption(dennis, dennis.musd.before)
+
+        await updateWalletSnapshot(contracts, dennis, "after")
+        expect(dennis.musd.after).to.equal(0n)
+      })
+
+      it("redeemCollateral(): a redemption that closes a trove leaves the trove's collateral surplus (collateral - collateral drawn) available for the trove owner to claim", async () => {
+        await setupRedemptionTroves()
+
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateWalletSnapshot(contracts, alice, "before")
+
+        // Fully redeem Alice's trove
+        const redemptionAmount = to1e18("2010")
+        await performRedemption(dennis, redemptionAmount)
+
+        // Alice claims collateral surplus
+        await contracts.borrowerOperations
+          .connect(alice.wallet)
+          .claimCollateral({ gasPrice: 0 })
+
+        await updateWalletSnapshot(contracts, alice, "after")
+
+        // Alice's collateral surplus should be equal to the difference between the collateral needed to cancel her debt and her total collateral
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(redemptionAmount) / price
+
+        expect(
+          alice.btc.before + alice.trove.collateral.before - alice.btc.after,
+        ).to.be.closeTo(collNeeded, 1000n)
+      })
+
+      it("redeemCollateral(): a redemption that closes a trove leaves the trove's collateral surplus available for the trove owner after re-opening trove", async () => {
+        await setupRedemptionTroves()
+
+        // Fully redeem Alice's trove
+        const redemptionAmount = to1e18("2010")
+
+        await updateTroveSnapshot(contracts, alice, "before")
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(redemptionAmount) / price
+        const collateralSurplus = alice.trove.collateral.before - collNeeded
+        await performRedemption(dennis, redemptionAmount)
+
+        // Open a new trove
+        await openTrove(contracts, {
+          musdAmount: "2000",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+
+        await updateWalletSnapshot(contracts, alice, "before")
+
+        // Claim collateral surplus
+        await contracts.borrowerOperations
+          .connect(alice.wallet)
+          .claimCollateral({ gasPrice: 0 })
+
+        // Check that Alice's balance after is equal to her balance before claiming collateral plus the calculated surplus
+        await updateWalletSnapshot(contracts, alice, "after")
+        expect(alice.btc.after).to.equal(alice.btc.before + collateralSurplus)
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+
+    context("Fees", () => {
+      it("redeemCollateral(): succeeds if fee is less than max fee percentage", async () => {
+        // Open identical troves for everyone but Dennis
+        const users = [alice, bob, carol, dennis]
+        await Promise.all(
+          users.slice(0, -1).map((user) =>
+            openTrove(contracts, {
+              musdAmount: "20000",
+              ICR: "200",
+              sender: user.wallet,
+            }),
+          ),
+        )
+
+        // Open a trove for Dennis with slightly lower ICR
+        await openTrove(contracts, {
+          musdAmount: "40000",
+          ICR: "195",
+          sender: dennis.wallet,
+        })
+
+        // Calculate the fee for redeeming 1/10 of the total supply
+        const totalSupply = await contracts.musd.totalSupply()
+        const attemptedRedemptionAmount = totalSupply / 10n
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(attemptedRedemptionAmount) / price
+        const fee = await (
+          contracts.troveManager as TroveManagerTester
+        ).callGetRedemptionFee(collNeeded)
+        const baseRate = await contracts.troveManager.baseRate()
+        const feePercentage = (to1e18(fee) / collNeeded) * 1000n + baseRate
+        const feePercentageNumber = Number(feePercentage) / Number(1e18)
+
+        // Attempt to redeem with a fee 1% more than the calculated fee
+        const redemptionTx = await redeemWithFee(
+          feePercentageNumber + 1,
+          attemptedRedemptionAmount,
+        )
+        const receipt = await redemptionTx.wait()
+
+        // Check that the redemption succeeded
+        expect(receipt?.status).to.equal(1)
+      })
+
+      it("redeemCollateral(): a redemption made when base rate is zero increases the base rate", async () => {
+        await setupRedemptionTroves()
+
+        await setBaseRate(contracts, to1e18("0"))
+
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.baseRate()).to.be.gt(0)
+      })
+
+      it("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
+        await setupRedemptionTroves()
+
+        const initialBaseRate = to1e18("0.1")
+        await setBaseRate(contracts, initialBaseRate)
+
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.baseRate()).to.be.gt(
+          initialBaseRate,
+        )
+      })
+
+      it("redeemCollateral(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
+        await setupRedemptionTroves()
+
+        const initialBaseRate = to1e18("0.1")
+        await setBaseRate(contracts, initialBaseRate)
+
+        await performRedemption(dennis, to1e18("100"))
+
+        const lastFeeOpTime =
+          await contracts.troveManager.lastFeeOperationTime()
+        await fastForwardTime(45)
+        await performRedemption(dennis, to1e18("100"))
+
+        expect(await contracts.troveManager.lastFeeOperationTime()).to.equal(
+          lastFeeOpTime,
+        )
+      })
+
+      it("redeemCollateral(): a redemption made at zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
+        await setBaseRate(contracts, to1e18("0"))
+
+        await setupRedemptionTroves()
+
+        await performRedemption(dennis, to1e18("100"))
+        await updatePCVSnapshot(contracts, state, "after")
+
+        expect(state.pcv.collateral.after).to.be.greaterThan(0n)
+      })
+
+      it("redeemCollateral(): a redemption made at non-zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
+        await setBaseRate(contracts, to1e18("0.1"))
+
+        await setupRedemptionTroves()
+
+        await performRedemption(dennis, to1e18("100"))
+        await updatePCVSnapshot(contracts, state, "after")
+
+        expect(state.pcv.collateral.after).to.be.greaterThan(0n)
+      })
+
+      it("redeemCollateral(): a redemption made at zero base increases the collateral-fees in PCV contract", async () => {
+        await setBaseRate(contracts, to1e18("0"))
+
+        await setupRedemptionTroves()
+        await updatePCVSnapshot(contracts, state, "before")
+
+        await performRedemption(dennis, to1e18("100"))
+        await updatePCVSnapshot(contracts, state, "after")
+
+        expect(state.pcv.collateral.after).to.be.greaterThan(
+          state.pcv.collateral.before,
+        )
+      })
+
+      it("redeemCollateral(): a redemption sends the collateral remainder (CollateralDrawn - CollateralFee) to the redeemer", async () => {
+        await setupRedemptionTroves()
+
+        await updateWalletSnapshot(contracts, dennis, "before")
+        const redemptionAmount = to1e18("100")
+        const redemptionTx = await performRedemption(dennis, redemptionAmount)
+
+        const { collateralSent, collateralFee } =
+          await getEmittedRedemptionValues(redemptionTx)
+
+        const remainder = collateralSent - collateralFee
+
+        await updateWalletSnapshot(contracts, dennis, "after")
+        expect(dennis.btc.after - dennis.btc.before).to.equal(remainder)
+      })
+    })
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+
+    context("State change in other contracts", () => {
+      it("redeemCollateral(): doesn't affect the Stability Pool deposits or collateral gain of redeemed-from troves", async () => {
+        await setupRedemptionTroves()
+
+        // Deposit to stability pool
+        await provideToSP(contracts, bob, to1e18("1000"))
+
+        // Liquidate Alice
+        await dropPriceAndLiquidate(contracts, alice)
+        await updateStabilityPoolUserSnapshot(contracts, bob, "before")
+
+        // Redeem collateral from Bob's trove
+        await performRedemption(dennis, to1e18("100"))
+
+        // Check that the Stability Pool deposits and collateral gain are unchanged
+        await updateStabilityPoolUserSnapshot(contracts, bob, "after")
+        expect(bob.stabilityPool.collateralGain.after).to.equal(
+          bob.stabilityPool.collateralGain.before,
+        )
+        expect(bob.stabilityPool.compoundedDeposit.after).to.equal(
+          bob.stabilityPool.compoundedDeposit.before,
+        )
+      })
+
+      it("redeemCollateral(): value of issued collateral == face value of redeemed MUSD (assuming 1 MUSD has value of $1)", async () => {
+        await setupRedemptionTroves()
+
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "before",
+          addresses,
+        )
+
+        const redemptionAmount = to1e18("100")
+        await performRedemption(dennis, redemptionAmount)
+
+        const price = await contracts.priceFeed.fetchPrice()
+        const collNeeded = to1e18(redemptionAmount) / price
+
+        await updateContractsSnapshot(
+          contracts,
+          state,
+          "activePool",
+          "after",
+          addresses,
+        )
+
+        expect(
+          state.activePool.collateral.before -
+            state.activePool.collateral.after,
+        ).to.equal(collNeeded)
+      })
+    })
   })
 })

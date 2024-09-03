@@ -25,6 +25,7 @@ import {
   createLiquidationEvent,
   updateTroveManagerSnapshot,
   NO_GAS,
+  setBaseRate,
   updateWalletSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -99,13 +100,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   }
 
   async function setNewRate(rate: bigint) {
-    if ("setBaseRate" in contracts.troveManager) {
-      // Artificially make baseRate 5%
-      await contracts.troveManager.setBaseRate(rate)
-      await contracts.troveManager.setLastFeeOpTimeToNow()
-    } else {
-      assert.fail("TroveManagerTester not loaded")
-    }
+    await setBaseRate(contracts, rate)
   }
 
   async function setupCarolsTroveAndAdjustRate() {

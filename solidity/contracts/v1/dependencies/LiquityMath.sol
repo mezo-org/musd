@@ -85,6 +85,13 @@ library LiquityMath {
         return decMul(x, y);
     }
 
+    function _getAbsoluteDifference(
+        uint256 _a,
+        uint256 _b
+    ) internal pure returns (uint) {
+        return (_a >= _b) ? _a - _b : _b - _a;
+    }
+
     function _computeNominalCR(
         uint256 _coll,
         uint256 _debt

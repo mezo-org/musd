@@ -7,7 +7,9 @@ import {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  HintHelpers,
   MockAggregator,
+  MockERC20,
   MUSDTester,
   PCV,
   PriceFeed,
@@ -22,7 +24,9 @@ export interface TestingAddresses {
   collSurplusPool: string
   defaultPool: string
   gasPool: string
+  hintHelpers: string
   mockAggregator: string
+  mockERC20: string
   musd: string
   pcv: string
   priceFeed: string
@@ -85,7 +89,9 @@ export interface Contracts {
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
   gasPool: GasPool
+  hintHelpers: HintHelpers
   mockAggregator: MockAggregator
+  mockERC20: MockERC20
   musd: MUSDTester
   pcv: PCV
   priceFeed: PriceFeed

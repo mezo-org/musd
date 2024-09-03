@@ -691,6 +691,7 @@ contract StabilityPool is
     }
 }
 
+// slither-disable-end dead-code
 // slither-disable-end reentrancy-benign
 // slither-disable-end reentrancy-events
 // slither-disable-end reentrancy-no-eth
