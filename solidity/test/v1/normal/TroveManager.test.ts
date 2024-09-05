@@ -30,12 +30,14 @@ import {
   updateWalletSnapshot,
   updateContractsSnapshot,
   updatePCVSnapshot,
+  updatePendingSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateTroveSnapshots,
   User,
+  transferMUSD,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import { TroveManagerTester } from "../../../typechain"
@@ -2805,6 +2807,215 @@ describe("TroveManager in Normal Mode", () => {
             state.activePool.collateral.after,
         ).to.equal(collNeeded)
       })
+    })
+  })
+
+  describe("getPendingMUSDDebtReward()", () => {
+    it("getPendingMUSDDebtReward(): returns 0 if there is no pending MUSD reward", async () => {
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+      await provideToSP(contracts, bob, to1e18("10000"))
+
+      await dropPriceAndLiquidate(contracts, carol)
+      await updatePendingSnapshot(contracts, alice, "after")
+      expect(alice.pending.debt.after).to.equal(0n)
+    })
+  })
+
+  describe("getPendingCollateralReward()", () => {
+    it("getPendingCollateralReward(): returns 0 if there is no pending collateral reward", async () => {
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+      await provideToSP(contracts, bob, to1e18("10000"))
+
+      await dropPriceAndLiquidate(contracts, carol)
+      await updatePendingSnapshot(contracts, alice, "after")
+      expect(alice.pending.collateral.after).to.equal(0n)
+    })
+  })
+
+  describe("computeICR()", () => {
+    it("computeICR(): Returns 0 if trove's coll is worth 0", async () => {
+      const price = 0
+      const coll = 1
+      const debt = to1e18("100")
+      expect(
+        await contracts.troveManager.computeICR(coll, debt, price),
+      ).to.equal(0)
+    })
+
+    it.skip("computeICR(): Returns 2^256-1 for collateral:USD = 100, coll = 1 BTC/token, debt = 100 MUSD", async () => {
+      // This seems designed to test an edge case where we would overflow but that edge case should no longer be possible
+      // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L4043
+    })
+
+    it("computeICR(): returns correct ICR for a given collateral, debt, and price", async () => {
+      const price = to1e18("100")
+      const coll = to1e18("200")
+      const debt = to1e18("30")
+      const expectedICR = (coll * price) / debt
+
+      expect(
+        await contracts.troveManager.computeICR(coll, debt, price),
+      ).to.equal(expectedICR)
+    })
+
+    it("computeICR(): returns 2^256-1 for non-zero coll and zero debt", async () => {
+      const price = to1e18("100")
+      const coll = to1e18("200")
+      const debt = 0n
+      expect(
+        await contracts.troveManager.computeICR(coll, debt, price),
+      ).to.equal(2n ** 256n - 1n)
+    })
+  })
+
+  describe("checkRecoveryMode()", () => {
+    it("checkRecoveryMode(): Returns true when TCR < 150%", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await dropPrice(contracts, alice)
+
+      expect(
+        await contracts.troveManager.checkRecoveryMode(
+          await contracts.priceFeed.fetchPrice(),
+        ),
+      ).to.equal(true)
+    })
+
+    it("checkRecoveryMode(): Returns false when TCR == 150%", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: alice.wallet,
+      })
+
+      expect(
+        await contracts.troveManager.checkRecoveryMode(
+          await contracts.priceFeed.fetchPrice(),
+        ),
+      ).to.equal(false)
+    })
+
+    it("checkRecoveryMode(): Returns false when TCR > 150%", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "151",
+        sender: alice.wallet,
+      })
+
+      expect(
+        await contracts.troveManager.checkRecoveryMode(
+          await contracts.priceFeed.fetchPrice(),
+        ),
+      ).to.equal(false)
+    })
+
+    it("checkRecoveryMode(): Returns true when TCR == 0", async () => {
+      // Note that the original implementation had this (incorrectly) returning false
+      // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L4144
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: alice.wallet,
+      })
+
+      await contracts.mockAggregator.setPrice(0)
+
+      expect(
+        await contracts.troveManager.checkRecoveryMode(
+          await contracts.priceFeed.fetchPrice(),
+        ),
+      ).to.equal(true)
+    })
+  })
+
+  describe("Getters", () => {
+    it("getTroveStake(): Returns stake", async () => {
+      const { collateral } = await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: alice.wallet,
+      })
+
+      expect(
+        await contracts.troveManager.getTroveStake(alice.address),
+      ).to.equal(collateral)
+    })
+
+    it("getTroveColl(): Returns coll", async () => {
+      const { collateral } = await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: alice.wallet,
+      })
+
+      expect(await contracts.troveManager.getTroveColl(alice.address)).to.equal(
+        collateral,
+      )
+    })
+
+    it("getTroveDebt(): Returns debt", async () => {
+      const { totalDebt } = await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: alice.wallet,
+      })
+
+      expect(await contracts.troveManager.getTroveDebt(alice.address)).to.equal(
+        totalDebt,
+      )
+    })
+
+    it("getTroveStatus(): Returns status", async () => {
+      const { totalDebt } = await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "200",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: carol.wallet,
+      })
+
+      // Close Alice's trove by repaying debt
+      await transferMUSD(contracts, bob, alice, totalDebt)
+      await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+
+      await dropPriceAndLiquidate(contracts, carol)
+
+      // Alice's trove should be status 2 -- closed by user
+      expect(await checkTroveStatus(contracts, alice, 2n, false)).to.equal(true)
+      expect(await checkTroveActive(contracts, bob)).to.equal(true)
+      expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
+        true,
+      )
+      expect(await checkTroveStatus(contracts, dennis, 0n, false)).to.equal(
+        true,
+      ) // No trove
+    })
+
+    it("hasPendingRewards(): Returns false if trove is not active", async () => {
+      expect(
+        await contracts.troveManager.hasPendingRewards(alice.address),
+      ).to.equal(false)
     })
   })
 })
