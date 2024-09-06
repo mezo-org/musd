@@ -144,6 +144,10 @@ export async function updateStabilityPoolSnapshot(
   state.stabilityPool.P[checkPoint] = await contracts.stabilityPool.P()
   state.stabilityPool.S[checkPoint] =
     await contracts.stabilityPool.epochToScaleToSum(0, 0)
+  state.stabilityPool.currentEpoch[checkPoint] =
+    await contracts.stabilityPool.currentEpoch()
+  state.stabilityPool.currentScale[checkPoint] =
+    await contracts.stabilityPool.currentScale()
 }
 
 export async function updateStabilityPoolUserSnapshot(

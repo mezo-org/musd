@@ -76,6 +76,8 @@ export interface ContractsState {
     musd: BeforeAndAfter
     P: BeforeAndAfter
     S: BeforeAndAfter
+    currentEpoch: BeforeAndAfter
+    currentScale: BeforeAndAfter
   }
 }
 

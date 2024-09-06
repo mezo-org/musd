@@ -108,6 +108,8 @@ function initializeContractState(): ContractsState {
       musd: beforeAndAfter(),
       P: beforeAndAfter(),
       S: beforeAndAfter(),
+      currentEpoch: beforeAndAfter(),
+      currentScale: beforeAndAfter(),
     },
   }
 }
