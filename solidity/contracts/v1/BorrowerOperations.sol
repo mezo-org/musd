@@ -373,10 +373,25 @@ contract BorrowerOperations is
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) external payable override {}
+    ) external payable override {
+        _assetAmount = getAssetAmount(_assetAmount);
+        _adjustTrove(
+            msg.sender,
+            _collWithdrawal,
+            _debtChange,
+            _isDebtIncrease,
+            _assetAmount,
+            _upperHint,
+            _lowerHint,
+            _maxFeePercentage
+        );
+    }
 
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
-    function claimCollateral() external override {}
+    function claimCollateral() external override {
+        // send collateral from CollSurplus Pool to owner
+        collSurplusPool.claimColl(msg.sender);
+    }
 
     function setAddresses(
         address _activePoolAddress,
@@ -486,7 +501,6 @@ contract BorrowerOperations is
         );
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;
-
         vars.price = priceFeed.fetchPrice();
         bool isRecoveryMode = _checkRecoveryMode(vars.price);
 

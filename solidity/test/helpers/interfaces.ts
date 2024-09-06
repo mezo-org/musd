@@ -7,13 +7,14 @@ import {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  HintHelpers,
   MockAggregator,
+  MockERC20,
   MUSDTester,
   PCV,
   PriceFeed,
   SortedTroves,
   StabilityPool,
-  TroveManager,
   TroveManagerTester,
 } from "../../typechain"
 
@@ -23,7 +24,9 @@ export interface TestingAddresses {
   collSurplusPool: string
   defaultPool: string
   gasPool: string
+  hintHelpers: string
   mockAggregator: string
+  mockERC20: string
   musd: string
   pcv: string
   priceFeed: string
@@ -48,12 +51,13 @@ type BeforeAndAfter = {
 export interface ContractsState {
   troveManager: {
     baseRate: BeforeAndAfter
-    troves: BeforeAndAfter
-    stakes: BeforeAndAfter
+    lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
       debt: BeforeAndAfter
     }
+    stakes: BeforeAndAfter
+    troves: BeforeAndAfter
     TCR: BeforeAndAfter
   }
   activePool: {
@@ -87,13 +91,15 @@ export interface Contracts {
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
   gasPool: GasPool
+  hintHelpers: HintHelpers
   mockAggregator: MockAggregator
+  mockERC20: MockERC20
   musd: MUSDTester
   pcv: PCV
   priceFeed: PriceFeed
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
-  troveManager: TroveManager | TroveManagerTester
+  troveManager: TroveManagerTester
 }
 
 export interface User {

@@ -1521,7 +1521,7 @@ describe("StabilityPool in Normal Mode", () => {
         await createLiquidationEvent(contracts)
 
         // drop ICR to 102%
-        await dropPrice(contracts, bob, to1e18(102) / 100n)
+        await dropPrice(contracts, bob, to1e18(102))
 
         await expect(
           withdrawCollateralGainToTrove(contracts, bob),

@@ -16,15 +16,16 @@ import type {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  HintHelpers,
   PCV,
   PriceFeed,
   SortedTroves,
   StabilityPool,
-  TroveManager,
 } from "../../typechain/contracts/v1"
 
 import type {
   MockAggregator,
+  MockERC20,
   MUSDTester,
   TroveManagerTester,
 } from "../../typechain/contracts/v1/tests"
@@ -32,7 +33,7 @@ import type {
 const maxBytes32 = `0x${"f".repeat(64)}`
 
 // eslint-disable-next-line import/prefer-default-export
-export async function deployment(overwrite: Array<string>) {
+export async function deployment() {
   await deployments.fixture()
 
   const activePool: ActivePool = await getDeployedContract("ActivePool")
@@ -42,19 +43,18 @@ export async function deployment(overwrite: Array<string>) {
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
+  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
+  const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
   const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
-  const troveManager: TroveManager | TroveManagerTester = overwrite.includes(
-    "TroveManager",
-  )
-    ? await getDeployedContract("TroveManagerTester")
-    : await getDeployedContract("TroveManager")
+  const troveManager: TroveManagerTester =
+    await getDeployedContract("TroveManagerTester")
 
   const contracts: Contracts = {
     activePool,
@@ -62,7 +62,9 @@ export async function deployment(overwrite: Array<string>) {
     collSurplusPool,
     defaultPool,
     gasPool,
+    hintHelpers,
     mockAggregator,
+    mockERC20,
     musd,
     pcv,
     priceFeed,
@@ -80,12 +82,13 @@ function initializeContractState(): ContractsState {
   return {
     troveManager: {
       baseRate: beforeAndAfter(),
-      troves: beforeAndAfter(),
-      stakes: beforeAndAfter(),
+      lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
         debt: beforeAndAfter(),
       },
+      stakes: beforeAndAfter(),
+      troves: beforeAndAfter(),
       TCR: beforeAndAfter(),
     },
     activePool: {
@@ -164,7 +167,7 @@ export async function fixture(): Promise<TestSetup> {
     frankWallet,
     whaleWallet,
   ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deployment(["MUSD", "PriceFeed", "TroveManager"])
+  const contracts = await deployment()
 
   const users: Users = {
     alice: await initializeUserObject(aliceWallet),
@@ -196,7 +199,9 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     collSurplusPool: await contracts.collSurplusPool.getAddress(),
     defaultPool: await contracts.defaultPool.getAddress(),
     gasPool: await contracts.gasPool.getAddress(),
+    hintHelpers: await contracts.hintHelpers.getAddress(),
     mockAggregator: await contracts.mockAggregator.getAddress(),
+    mockERC20: await contracts.mockERC20.getAddress(),
     musd: await contracts.musd.getAddress(),
     pcv: await contracts.pcv.getAddress(),
     priceFeed: await contracts.priceFeed.getAddress(),
@@ -230,6 +235,13 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.sortedTroves.getAddress(),
       await contracts.priceFeed.getAddress(),
       ZERO_ADDRESS,
+    )
+
+  await contracts.hintHelpers
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.sortedTroves.getAddress(),
+      await contracts.troveManager.getAddress(),
     )
 
   await contracts.pcv
@@ -273,6 +285,15 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.stabilityPool.getAddress(),
       await contracts.sortedTroves.getAddress(),
       await contracts.troveManager.getAddress(),
+    )
+
+  await contracts.collSurplusPool
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.borrowerOperations.getAddress(),
+      await contracts.troveManager.getAddress(),
+      await contracts.activePool.getAddress(),
+      ZERO_ADDRESS,
     )
 
   await contracts.troveManager

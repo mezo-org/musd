@@ -336,6 +336,27 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
+    /* Send _MUSDamount MUSD to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
+     * request.  Applies pending rewards to a Trove before reducing its debt and coll.
+     *
+     * Note that if _amount is very large, this function can run out of gas, specially if traversed troves are small. This can be easily avoided by
+     * splitting the total _amount in appropriate chunks and calling the function multiple times.
+     *
+     * Param `_maxIterations` can also be provided, so the loop through Troves is capped (if it’s zero, it will be ignored).This makes it easier to
+     * avoid OOG for the frontend, as only knowing approximately the average cost of an iteration is enough, without needing to know the “topology”
+     * of the trove list. It also avoids the need to set the cap in stone in the contract, nor doing gas calculations, as both gas price and opcode
+     * costs can vary.
+     *
+     * All Troves that are redeemed from -- with the likely exception of the last one -- will end up with no debt left, therefore they will be closed.
+     * If the last Trove does have some remaining debt, it has a finite ICR, and the reinsertion could be anywhere in the list, therefore it requires a hint.
+     * A frontend should use getRedemptionHints() to calculate what the ICR of this Trove will be after redemption, and pass a hint for its position
+     * in the sortedTroves list along with the ICR value that the hint was found for.
+     *
+     * If another transaction modifies the list between calling getRedemptionHints() and passing the hints to redeemCollateral(), it
+     * is very likely that the last (partially) redeemed Trove would end up with a different ICR than what the hint is for. In this case the
+     * redemption will stop after the last completely redeemed Trove and the sender will keep the remaining MUSD amount, which they can attempt
+     * to redeem later.
+     */
     function redeemCollateral(
         uint256 _MUSDAmount,
         address _firstRedemptionHint,

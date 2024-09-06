@@ -34,13 +34,13 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /
         1000); // 0.5%
 
-    // slither-disable-next-line uninitialized-state
+    // slither-disable-next-line all
     IActivePool public activePool;
 
     // slither-disable-next-line all
     IDefaultPool public defaultPool;
 
-    // slither-disable-next-line uninitialized-state
+    // slither-disable-next-line all
     IPriceFeed public override priceFeed;
 
     // --- Gas compensation functions ---
