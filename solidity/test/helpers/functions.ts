@@ -222,6 +222,10 @@ export async function updateTroveManagerSnapshot(
   state.troveManager.TCR[checkPoint] = await getTCR(contracts)
   state.troveManager.stakes[checkPoint] =
     await contracts.troveManager.totalStakes()
+  state.troveManager.collateralSnapshot[checkPoint] =
+    await contracts.troveManager.totalCollateralSnapshot()
+  state.troveManager.stakesSnapshot[checkPoint] =
+    await contracts.troveManager.totalStakesSnapshot()
   state.troveManager.troves[checkPoint] =
     await contracts.troveManager.getTroveOwnersCount()
   state.troveManager.baseRate[checkPoint] =
