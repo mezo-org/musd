@@ -22,7 +22,6 @@ import type {
   StabilityPool,
   TroveManager,
 } from "../../typechain/contracts/v1"
-import type { MUSD } from "../../typechain/contracts/token"
 
 import type {
   MockAggregator,
@@ -45,9 +44,7 @@ export async function deployment(overwrite: Array<string>) {
   const gasPool: GasPool = await getDeployedContract("GasPool")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
-  const musd: MUSD | MUSDTester = overwrite.includes("MUSD")
-    ? await getDeployedContract("MUSDTester")
-    : await getDeployedContract("MUSD")
+  const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
