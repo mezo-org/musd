@@ -36,6 +36,7 @@ describe("StabilityPool in Normal Mode", () => {
   let bob: User
   let carol: User
   let dennis: User
+  let eric: User
   let whale: User
   let state: ContractsState
   let contracts: Contracts
@@ -56,6 +57,7 @@ describe("StabilityPool in Normal Mode", () => {
     bob = testSetup.users.bob
     carol = testSetup.users.carol
     dennis = testSetup.users.dennis
+    eric = testSetup.users.eric
     whale = testSetup.users.whale
     addresses = await getAddresses(contracts, testSetup.users)
 
@@ -67,7 +69,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     await openTrove(contracts, {
-      musdAmount: "30,000",
+      musdAmount: "300,000",
       ICR: "200",
       sender: whale.wallet,
     })
@@ -905,6 +907,535 @@ describe("StabilityPool in Normal Mode", () => {
         )
         expect(whale.stabilityPool.compoundedDeposit.after).to.equal(0n)
       })
+
+      context("compounded deposit and collateral Gain", () => {
+        const setupIdenticalDeposits = async () => {
+          const users = [bob, carol, dennis]
+          const amount = to1e18("5,000")
+          await Promise.all(
+            users.map(async (user) => {
+              await openTrove(contracts, {
+                musdAmount: amount,
+                ICR: "200",
+                sender: user.wallet,
+              })
+              await provideToSP(contracts, user, amount)
+            }),
+          )
+        }
+
+        const setupVaryingDeposits = async () => {
+          const usersAndAmounts: { user: User; amount: bigint }[] = [
+            { user: bob, amount: to1e18("10,000") },
+            { user: carol, amount: to1e18("20,000") },
+            { user: dennis, amount: to1e18("30,000") },
+          ]
+
+          await Promise.all(
+            usersAndAmounts.map(async ({ user, amount }) => {
+              await openTrove(contracts, {
+                musdAmount: amount,
+                ICR: "200",
+                sender: user.wallet,
+              })
+              await provideToSP(contracts, user, amount)
+            }),
+          )
+        }
+
+        const verify = async () => {
+          const users = [bob, carol, dennis]
+          await updateStabilityPoolUserSnapshots(contracts, users, "before")
+          await Promise.all(
+            users.map((user) =>
+              updateWalletSnapshot(contracts, user, "before"),
+            ),
+          )
+
+          await Promise.all(
+            users.map((user) =>
+              contracts.stabilityPool
+                .connect(user.wallet)
+                .withdrawFromSP(to1e18("500,000"), NO_GAS),
+            ),
+          )
+
+          await updateStabilityPoolUserSnapshots(contracts, users, "after")
+          await Promise.all(
+            users.map((user) => updateWalletSnapshot(contracts, user, "after")),
+          )
+
+          users.forEach((user) => {
+            expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+            expect(user.btc.after).to.equal(
+              user.btc.before + user.stabilityPool.collateralGain.before,
+            )
+            expect(user.musd.after).to.equal(
+              user.musd.before + user.stabilityPool.compoundedDeposit.before,
+            )
+          })
+        }
+
+        it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after one liquidation", async () => {
+          await setupIdenticalDeposits()
+          await createLiquidationEvent(contracts)
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after two identical liquidations", async () => {
+          await setupIdenticalDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts)
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after three identical liquidations", async () => {
+          await setupIdenticalDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts)
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after two liquidations of increasing MUSD", async () => {
+          await setupIdenticalDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts, "3,000")
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after three liquidations of increasing MUSD", async () => {
+          await setupIdenticalDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts, "3,000")
+          await createLiquidationEvent(contracts, "5,000")
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with varying deposits withdraw correct compounded deposit and collateral Gain after two identical liquidations", async () => {
+          await setupVaryingDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts)
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with varying deposits withdraw correct compounded deposit and collateral Gain after three identical liquidations", async () => {
+          await setupVaryingDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts)
+          await verify()
+        })
+
+        it("withdrawFromSP(): Depositors with varying deposits withdraw correct compounded deposit and collateral Gain after three varying liquidations", async () => {
+          await setupVaryingDeposits()
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts, "3,000")
+          await createLiquidationEvent(contracts, "6,000")
+          await verify()
+        })
+
+        it("withdrawFromSP(): Bob and Carol deposit -> 2 liquidations -> Dennis deposits -> 2 liquidations. Various deposit and liquidation vals.", async () => {
+          await openTrove(contracts, {
+            musdAmount: "10,000",
+            ICR: "200",
+            sender: bob.wallet,
+          })
+          await provideToSP(contracts, bob, to1e18("10,000"))
+
+          await openTrove(contracts, {
+            musdAmount: "20,000",
+            ICR: "200",
+            sender: carol.wallet,
+          })
+          await provideToSP(contracts, carol, to1e18("20,000"))
+
+          await createLiquidationEvent(contracts)
+          await createLiquidationEvent(contracts, "4,000")
+
+          await openTrove(contracts, {
+            musdAmount: "30,000",
+            ICR: "200",
+            sender: dennis.wallet,
+          })
+          await provideToSP(contracts, dennis, to1e18("30,000"))
+
+          await createLiquidationEvent(contracts, "7,000")
+          await createLiquidationEvent(contracts, "9,000")
+
+          await verify()
+        })
+
+        it("withdrawFromSP(): Bob, Carol, Dennis deposit -> 2 liquidations -> Eric deposits -> 2 liquidations. All deposits and liquidations = 10,000 MUSD.", async () => {
+          await openTrove(contracts, {
+            musdAmount: "10,000",
+            ICR: "200",
+            sender: bob.wallet,
+          })
+          await provideToSP(contracts, bob, to1e18("10,000"))
+
+          await openTrove(contracts, {
+            musdAmount: "10,000",
+            ICR: "200",
+            sender: carol.wallet,
+          })
+          await provideToSP(contracts, carol, to1e18("10,000"))
+
+          await openTrove(contracts, {
+            musdAmount: "10,000",
+            ICR: "200",
+            sender: dennis.wallet,
+          })
+          await provideToSP(contracts, dennis, to1e18("10,000"))
+
+          await createLiquidationEvent(contracts, "10,000")
+          await createLiquidationEvent(contracts, "10,000")
+
+          await openTrove(contracts, {
+            musdAmount: "10,000",
+            ICR: "200",
+            sender: eric.wallet,
+          })
+          await provideToSP(contracts, eric, to1e18("10,000"))
+
+          await createLiquidationEvent(contracts, "10,000")
+          await createLiquidationEvent(contracts, "10,000")
+
+          await verify()
+        })
+
+        it("withdrawFromSP(): Bob, Carol, Dennis deposit -> 2 liquidations -> Dennis withdraws -> 2 liquidations. All deposits and liquidations = 2,000 MUSD.", async () => {
+          const users = [bob, carol, dennis]
+          const amount = "2,000"
+
+          await Promise.all(
+            users.map(async (user) => {
+              await openTrove(contracts, {
+                musdAmount: amount,
+                ICR: "200",
+                sender: user.wallet,
+              })
+              await provideToSP(contracts, user, to1e18(amount))
+            }),
+          )
+
+          await createLiquidationEvent(contracts, amount)
+          await createLiquidationEvent(contracts, amount)
+
+          await contracts.stabilityPool
+            .connect(dennis.wallet)
+            .withdrawFromSP(to1e18(amount))
+
+          await createLiquidationEvent(contracts, amount)
+          await createLiquidationEvent(contracts, amount)
+
+          await updateStabilityPoolUserSnapshots(contracts, users, "before")
+          await Promise.all(
+            users.map((user) =>
+              updateWalletSnapshot(contracts, user, "before"),
+            ),
+          )
+
+          // Dennis already withdrew
+          await Promise.all(
+            [bob, carol].map((user) =>
+              contracts.stabilityPool
+                .connect(user.wallet)
+                .withdrawFromSP(to1e18("500,000"), NO_GAS),
+            ),
+          )
+
+          await updateStabilityPoolUserSnapshots(contracts, users, "after")
+          await Promise.all(
+            users.map((user) => updateWalletSnapshot(contracts, user, "after")),
+          )
+
+          users.forEach((user) => {
+            expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+            expect(user.btc.after).to.equal(
+              user.btc.before + user.stabilityPool.collateralGain.before,
+            )
+            expect(user.musd.after).to.equal(
+              user.musd.before + user.stabilityPool.compoundedDeposit.before,
+            )
+          })
+        })
+
+        it("withdrawFromSP(): Depositor withdraws correct compounded deposit after liquidation empties the pool", async () => {
+          // The amount the whale originally provided.
+          await createLiquidationEvent(contracts, "20,000")
+
+          await updateWalletSnapshot(contracts, whale, "before")
+          await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+
+          await contracts.stabilityPool
+            .connect(whale.wallet)
+            .withdrawFromSP(to1e18("500,000"), NO_GAS)
+
+          await updateWalletSnapshot(contracts, whale, "after")
+          await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+
+          expect(whale.stabilityPool.compoundedDeposit.before).to.equal(0n)
+          expect(whale.stabilityPool.collateralGain.after).to.equal(0n)
+          expect(whale.btc.after).to.equal(
+            whale.btc.before + whale.stabilityPool.collateralGain.before,
+          )
+          expect(whale.musd.after).to.equal(whale.musd.before)
+        })
+      })
+
+      it("withdrawFromSP(): single deposit fully offset. After a subsequent liquidation, depositor withdraws 0 deposit and *only* the collateral Gain from one liquidation", async () => {
+        // The amount the whale originally provided.
+        await createLiquidationEvent(contracts, "20,000")
+
+        await updateWalletSnapshot(contracts, whale, "before")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+
+        // Subsequent liquidation
+        await createLiquidationEvent(contracts, "10,000")
+
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18("500,000"), NO_GAS)
+
+        await updateWalletSnapshot(contracts, whale, "after")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+
+        expect(whale.musd.after).to.equal(whale.musd.before)
+        expect(whale.stabilityPool.compoundedDeposit.before).to.equal(0n)
+        expect(whale.stabilityPool.deposit.after).to.equal(0n)
+        expect(whale.btc.after).to.equal(
+          whale.btc.before + whale.stabilityPool.collateralGain.before,
+        )
+      })
+
+      it("withdrawFromSP(): deposit spans one scale factor change: Single depositor withdraws correct compounded deposit and collateral Gain after one liquidation", async () => {
+        // clear the pool
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18("500,000"), NO_GAS)
+
+        // Add just enough MUSD to increase the scale
+        await provideToSP(contracts, whale, to1e18("10250") + 500000n)
+
+        await createLiquidationEvent(contracts, "10,000")
+
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+        await updateWalletSnapshot(contracts, whale, "before")
+        await updateStabilityPoolSnapshot(contracts, state, "before")
+
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18("10,000"), NO_GAS)
+
+        await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+        await updateWalletSnapshot(contracts, whale, "after")
+
+        expect(state.stabilityPool.currentScale.before).to.equal(1n)
+        expect(whale.musd.after).to.equal(whale.musd.before)
+        expect(whale.stabilityPool.compoundedDeposit.before).to.equal(0n)
+        expect(whale.stabilityPool.deposit.after).to.equal(0n)
+        expect(whale.btc.after).to.equal(
+          whale.btc.before + whale.stabilityPool.collateralGain.before,
+        )
+      })
+
+      it("withdrawFromSP(): Several deposits of varying amounts span one scale factor change. Depositors withdraw correct compounded deposit and collateral Gain after one liquidation", async () => {
+        // clear the pool
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18("500,000"), NO_GAS)
+
+        await openTrove(contracts, {
+          musdAmount: "10,000",
+          ICR: "200",
+          sender: bob.wallet,
+        })
+        await provideToSP(contracts, bob, to1e18("10,000"))
+
+        await openTrove(contracts, {
+          musdAmount: "20,000",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+        await provideToSP(contracts, carol, to1e18("20,000"))
+
+        // Just enough left over to increase the scale
+        const dennisAmount = to1e18("30,500") + 500000n
+        await openTrove(contracts, {
+          musdAmount: dennisAmount,
+          ICR: "200",
+          sender: dennis.wallet,
+        })
+        await provideToSP(contracts, dennis, dennisAmount)
+
+        await createLiquidationEvent(contracts, "60,000")
+
+        const users = [bob, carol, dennis]
+        await updateStabilityPoolSnapshot(contracts, state, "before")
+        await Promise.all(
+          users.map(async (user) => {
+            await updateStabilityPoolUserSnapshot(contracts, user, "before")
+            await updateWalletSnapshot(contracts, user, "before")
+          }),
+        )
+
+        await Promise.all(
+          users.map((user) =>
+            contracts.stabilityPool
+              .connect(user.wallet)
+              .withdrawFromSP(to1e18("500,000"), NO_GAS),
+          ),
+        )
+
+        await Promise.all(
+          users.map(async (user) => {
+            await updateStabilityPoolUserSnapshot(contracts, user, "after")
+            await updateWalletSnapshot(contracts, user, "after")
+          }),
+        )
+
+        users.forEach((user) => {
+          expect(user.musd.after).to.equal(user.musd.before)
+          expect(user.stabilityPool.compoundedDeposit.before).to.equal(0n)
+          expect(user.stabilityPool.deposit.after).to.equal(0n)
+          expect(user.btc.after).to.equal(
+            user.btc.before + user.stabilityPool.collateralGain.before,
+          )
+        })
+        expect(state.stabilityPool.currentScale.before).to.equal(1n)
+      })
+
+      it("withdrawFromSP(): Deposit that decreases to less than 1e-9 of it's original value is reduced to 0", async () => {
+        // clear the pool
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18("500,000"), NO_GAS)
+
+        const amount = "10,000"
+
+        await provideToSP(contracts, whale, to1e18(amount) + 10n)
+
+        await createLiquidationEvent(contracts, amount)
+
+        await updateWalletSnapshot(contracts, whale, "before")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18(amount), NO_GAS)
+
+        await updateWalletSnapshot(contracts, whale, "after")
+
+        expect(whale.musd.after).to.equal(whale.musd.before)
+        expect(whale.stabilityPool.compoundedDeposit.before).to.equal(0n)
+      })
+
+      it("withdrawFromSP(): 2 depositors can withdraw after each receiving half of a pool-emptying liquidation", async () => {
+        // clear the pool
+        await contracts.stabilityPool
+          .connect(whale.wallet)
+          .withdrawFromSP(to1e18("500,000"), NO_GAS)
+
+        const users = [bob, carol]
+
+        await Promise.all(
+          users.map(async (user) => {
+            const amount = "10,000"
+            await openTrove(contracts, {
+              musdAmount: amount,
+              ICR: "200",
+              sender: user.wallet,
+            })
+            await provideToSP(contracts, user, to1e18(amount))
+          }),
+        )
+
+        await createLiquidationEvent(contracts, "30,000")
+
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+        await updateWalletSnapshot(contracts, bob, "before")
+        await updateWalletSnapshot(contracts, carol, "before")
+
+        await Promise.all(
+          users.map((user) =>
+            contracts.stabilityPool
+              .connect(user.wallet)
+              .withdrawFromSP(to1e18("20,000"), NO_GAS),
+          ),
+        )
+
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+        await updateWalletSnapshot(contracts, bob, "after")
+        await updateWalletSnapshot(contracts, carol, "after")
+
+        users.forEach((user) => {
+          expect(user.stabilityPool.compoundedDeposit.before).to.equal(0n)
+          expect(user.stabilityPool.collateralGain.before).to.be.greaterThan(0n)
+
+          expect(user.stabilityPool.compoundedDeposit.after).to.equal(0n)
+          expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+
+          expect(user.musd.after).to.equal(user.musd.before)
+          expect(user.btc.after).to.equal(
+            user.btc.before + user.stabilityPool.collateralGain.before,
+          )
+        })
+      })
+
+      it("withdrawFromSP(): Large liquidated coll/debt, deposits and ETH price", async () => {
+        // collateral:USD price is $2 quintillion per BTC
+        await contracts.mockAggregator.setPrice(2n * 10n ** 36n)
+
+        const users = [bob, carol]
+        const amount = 1n * 10n ** 36n // $ 1 quintillion
+        await Promise.all(
+          users.map(async (user) => {
+            await openTrove(contracts, {
+              musdAmount: amount,
+              ICR: "200",
+              sender: user.wallet,
+            })
+            await provideToSP(contracts, user, amount)
+          }),
+        )
+
+        await createLiquidationEvent(contracts, amount)
+
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+        await Promise.all(
+          users.map(async (user) => {
+            await updateWalletSnapshot(contracts, user, "before")
+          }),
+        )
+
+        await Promise.all(
+          users.map((user) =>
+            contracts.stabilityPool
+              .connect(user.wallet)
+              .withdrawFromSP(amount, NO_GAS),
+          ),
+        )
+
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+        await Promise.all(
+          users.map(async (user) => {
+            await updateWalletSnapshot(contracts, user, "after")
+          }),
+        )
+
+        users.forEach((user) => {
+          expect(user.stabilityPool.compoundedDeposit.after).to.equal(0n)
+          expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+
+          expect(user.musd.after).to.equal(
+            user.musd.before + user.stabilityPool.compoundedDeposit.before,
+          )
+          expect(user.btc.after).to.equal(
+            user.btc.before + user.stabilityPool.collateralGain.before,
+          )
+        })
+      })
     })
 
     /**
@@ -1175,6 +1706,26 @@ describe("StabilityPool in Normal Mode", () => {
       // Tried to get it to work for a couple of days, seems to rely on a bunch of assumptions that we don't make,
       // like having no minimum trove amount (we can't open a $49 trove). Also, as written, the original test looks broken.
       // ... And horribly slow.
+    })
+  })
+
+  describe("Liquidation State Management", () => {
+    it("Pool-emptying liquidation increases epoch by one, resets scaleFactor to 0, and resets P to 1e18", async () => {
+      await createLiquidationEvent(contracts, "2,000")
+
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+
+      // The amount the whale originally provided.
+      await createLiquidationEvent(contracts, "20,000")
+
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+
+      expect(state.stabilityPool.currentEpoch.after).to.equal(
+        state.stabilityPool.currentEpoch.before + 1n,
+      )
+      expect(state.stabilityPool.currentScale.after).to.equal(0n)
+      expect(state.stabilityPool.P.before).to.not.equal(to1e18(1))
+      expect(state.stabilityPool.P.after).to.equal(to1e18(1))
     })
   })
 })
