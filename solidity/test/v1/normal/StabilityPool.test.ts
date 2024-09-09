@@ -1384,7 +1384,7 @@ describe("StabilityPool in Normal Mode", () => {
         })
       })
 
-      it("withdrawFromSP(): Large liquidated coll/debt, deposits and ETH price", async () => {
+      it("withdrawFromSP(): Large liquidated coll/debt, deposits and BTC price", async () => {
         // collateral:USD price is $2 quintillion per BTC
         await contracts.mockAggregator.setPrice(2n * 10n ** 36n)
 
