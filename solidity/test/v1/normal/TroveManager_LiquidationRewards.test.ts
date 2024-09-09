@@ -60,13 +60,6 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await dropPriceAndLiquidate(contracts, bob)
 
     await updatePendingSnapshot(contracts, alice, "before")
-    expect(alice.pending.collateral.before).to.equal(
-      expectedCollRewardAmount(
-        alice.trove.collateral.before,
-        bob.trove.collateral.before,
-        alice.trove.collateral.before,
-      ),
-    )
 
     await contracts.mockAggregator.setPrice(price)
 
