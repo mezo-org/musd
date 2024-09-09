@@ -2,8 +2,11 @@ import { expect } from "chai"
 import {
   addColl,
   applyLiquidationFee,
+  calculateSystemCollFromUsers,
   Contracts,
   dropPriceAndLiquidate,
+  expectedCollRewardAmount,
+  expectedRewardAmountForUsers,
   getTroveEntireColl,
   getTroveEntireDebt,
   openTrove,
@@ -46,89 +49,6 @@ describe("TroveManager - Redistribution reward calculations", () => {
     const trove = await setupTrove(user, musdAmount, ICR)
     await updateTroveSnapshot(contracts, user, "before")
     return trove
-  }
-
-  function expectedCollRewardAmount(
-    userColl: bigint,
-    liquidatedColl: bigint,
-    totalColl: bigint,
-  ) {
-    return (applyLiquidationFee(liquidatedColl) * userColl) / totalColl
-  }
-
-  function expectedDebtRewardAmount(
-    userColl: bigint,
-    liquidatedDebt: bigint,
-    totalColl: bigint,
-  ) {
-    return (userColl * liquidatedDebt) / totalColl
-  }
-
-  async function expectedRewardAmountForUser(
-    user: User,
-    liquidatedUser: User,
-    allUsers: User[],
-  ) {
-    // Get the total collateral of all users except the liquidated user
-    const totalColl = (
-      await Promise.all(
-        allUsers.map((u) => getTroveEntireColl(contracts, u.wallet)),
-      )
-    ).reduce((acc, coll) => acc + coll, 0n)
-
-    // Get collateral to be liquidated
-    const collateralToLiquidate = await getTroveEntireColl(
-      contracts,
-      liquidatedUser.wallet,
-    )
-
-    const debtToLiquidate = await getTroveEntireDebt(
-      contracts,
-      liquidatedUser.wallet,
-    )
-
-    const remainingColl = totalColl - collateralToLiquidate
-
-    const userCollateral = await getTroveEntireColl(contracts, user.wallet)
-
-    const collateral = expectedCollRewardAmount(
-      userCollateral,
-      collateralToLiquidate,
-      remainingColl,
-    )
-
-    const debt = expectedDebtRewardAmount(
-      userCollateral,
-      debtToLiquidate,
-      remainingColl,
-    )
-
-    // Calculate expected reward amount for user based on their share of total collateral
-    return {
-      collateral,
-      debt,
-    }
-  }
-
-  async function expectedRewardAmountForUsers(
-    liquidatedUser: User,
-    users: User[],
-  ) {
-    // Map over all users and calculate expected reward amount for each user
-    const rewards = await Promise.all(
-      users.map(async (user) => [
-        user.address,
-        await expectedRewardAmountForUser(user, liquidatedUser, users),
-      ]),
-    )
-    return Object.fromEntries(rewards)
-  }
-
-  async function calculateSystemCollFromUsers(users: User[]) {
-    const collArray = await Promise.all(
-      users.map((user) => getTroveEntireColl(contracts, user.wallet)),
-    )
-    return collArray.reduce((acc, coll) => acc + coll, 0n)
   }
 
   it("redistribution: A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
@@ -180,7 +100,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([alice, bob, carol]),
+      await calculateSystemCollFromUsers(contracts)([alice, bob, carol]),
       1000,
     )
   })
@@ -285,12 +205,10 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTrove(dennis, "20000", "210")
 
     // Calculate rewards for liquidating Dennis
-    const rewardsFromL2 = await expectedRewardAmountForUsers(dennis, [
-      alice,
-      bob,
-      carol,
+    const rewardsFromL2 = await expectedRewardAmountForUsers(contracts)(
       dennis,
-    ])
+      [alice, bob, carol, dennis],
+    )
     await dropPriceAndLiquidate(contracts, dennis)
     await Promise.all(
       [...users, dennis].map((user) =>
@@ -331,7 +249,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...users, dennis]),
+      await calculateSystemCollFromUsers(contracts)([...users, dennis]),
       1000,
     )
   })
@@ -358,7 +276,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await setupTrove(eric, "20000", "2000")
 
-    const rewards = await expectedRewardAmountForUsers(eric, [
+    const rewards = await expectedRewardAmountForUsers(contracts)(eric, [
       ...initialUsers,
       eric,
     ])
@@ -402,7 +320,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...initialUsers, eric]),
+      await calculateSystemCollFromUsers(contracts)([...initialUsers, eric]),
       1000,
     )
   })
@@ -434,7 +352,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await setupTrove(eric, "20000", "210")
 
-    const rewards = await expectedRewardAmountForUsers(eric, [
+    const rewards = await expectedRewardAmountForUsers(contracts)(eric, [
       ...initialUsers,
       eric,
     ])
@@ -480,7 +398,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...initialUsers, eric]),
+      await calculateSystemCollFromUsers(contracts)([...initialUsers, eric]),
       1000,
     )
   })
@@ -544,12 +462,10 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTrove(dennis, "20000", "210")
 
     // Calculate rewards for liquidating Dennis
-    const rewardsFromL2 = await expectedRewardAmountForUsers(dennis, [
-      alice,
-      bob,
-      carol,
+    const rewardsFromL2 = await expectedRewardAmountForUsers(contracts)(
       dennis,
-    ])
+      [alice, bob, carol, dennis],
+    )
     await dropPriceAndLiquidate(contracts, dennis)
     await Promise.all(
       users.map((user) => updatePendingSnapshot(contracts, user, "after")),
@@ -586,7 +502,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...users, dennis]),
+      await calculateSystemCollFromUsers(contracts)([...users, dennis]),
       1000,
     )
   })
@@ -613,7 +529,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await setupTrove(eric, "20000", "2000")
 
-    const rewards = await expectedRewardAmountForUsers(eric, [
+    const rewards = await expectedRewardAmountForUsers(contracts)(eric, [
       ...initialUsers,
       eric,
     ])
@@ -657,7 +573,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...initialUsers, eric]),
+      await calculateSystemCollFromUsers(contracts)([...initialUsers, eric]),
       1000,
     )
   })
@@ -690,7 +606,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await setupTrove(eric, "20000", "2000")
 
-    const rewards = await expectedRewardAmountForUsers(eric, [
+    const rewards = await expectedRewardAmountForUsers(contracts)(eric, [
       ...initialUsers,
       eric,
     ])
@@ -736,7 +652,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...initialUsers, eric]),
+      await calculateSystemCollFromUsers(contracts)([...initialUsers, eric]),
       1000,
     )
   })
@@ -747,7 +663,10 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(bob, "20,000", "180")
     await setupTroveAndSnapshot(carol, "20,000", "2000")
 
-    const rewardsFromL1 = await expectedRewardAmountForUsers(alice, users)
+    const rewardsFromL1 = await expectedRewardAmountForUsers(contracts)(
+      alice,
+      users,
+    )
     await dropPriceAndLiquidate(contracts, alice)
 
     await setupTroveAndSnapshot(dennis, "20,000", "210")
@@ -764,7 +683,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       sender: carol.wallet,
     })
 
-    const rewardsFromL2 = await expectedRewardAmountForUsers(bob, [
+    const rewardsFromL2 = await expectedRewardAmountForUsers(contracts)(bob, [
       ...users,
       dennis,
     ])
@@ -778,7 +697,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       sender: dennis.wallet,
     })
 
-    const rewardsFromL3 = await expectedRewardAmountForUsers(frank, [
+    const rewardsFromL3 = await expectedRewardAmountForUsers(contracts)(frank, [
       ...users,
       dennis,
       eric,
@@ -839,7 +758,12 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
     expect(entireSystemColl).to.be.closeTo(
-      await calculateSystemCollFromUsers([...users, dennis, eric, frank]),
+      await calculateSystemCollFromUsers(contracts)([
+        ...users,
+        dennis,
+        eric,
+        frank,
+      ]),
       1000,
     )
   })

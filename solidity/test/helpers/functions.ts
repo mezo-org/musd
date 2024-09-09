@@ -670,3 +670,100 @@ export async function setupTests() {
     frank,
   }
 }
+
+export function expectedCollRewardAmount(
+  userColl: bigint,
+  liquidatedColl: bigint,
+  totalColl: bigint,
+): bigint {
+  return (applyLiquidationFee(liquidatedColl) * userColl) / totalColl
+}
+
+export function expectedDebtRewardAmount(
+  userColl: bigint,
+  liquidatedDebt: bigint,
+  totalColl: bigint,
+): bigint {
+  return (userColl * liquidatedDebt) / totalColl
+}
+
+type RewardForUser = {
+  collateral: bigint
+  debt: bigint
+}
+export const expectedRewardAmountForUser =
+  (contracts: Contracts) =>
+  async (
+    user: User,
+    liquidatedUser: User,
+    allUsers: User[],
+  ): Promise<RewardForUser> => {
+    // Get the total collateral of all users except the liquidated user
+    const totalColl = (
+      await Promise.all(
+        allUsers.map((u) => getTroveEntireColl(contracts, u.wallet)),
+      )
+    ).reduce((acc, coll) => acc + coll, 0n)
+
+    // Get collateral to be liquidated
+    const collateralToLiquidate = await getTroveEntireColl(
+      contracts,
+      liquidatedUser.wallet,
+    )
+
+    const debtToLiquidate = await getTroveEntireDebt(
+      contracts,
+      liquidatedUser.wallet,
+    )
+
+    const remainingColl = totalColl - collateralToLiquidate
+
+    const userCollateral = await getTroveEntireColl(contracts, user.wallet)
+
+    const collateral = expectedCollRewardAmount(
+      userCollateral,
+      collateralToLiquidate,
+      remainingColl,
+    )
+
+    const debt = expectedDebtRewardAmount(
+      userCollateral,
+      debtToLiquidate,
+      remainingColl,
+    )
+
+    // Calculate expected reward amount for user based on their share of total collateral
+    return {
+      collateral,
+      debt,
+    }
+  }
+
+export const expectedRewardAmountForUsers =
+  (contracts: Contracts) =>
+  async (
+    liquidatedUser: User,
+    users: User[],
+  ): Promise<Record<string, RewardForUser>> => {
+    // Map over all users and calculate expected reward amount for each user
+    const rewards = await Promise.all(
+      users.map(async (user) => [
+        user.address,
+        await expectedRewardAmountForUser(contracts)(
+          user,
+          liquidatedUser,
+          users,
+        ),
+      ]),
+    )
+    return Object.fromEntries(rewards)
+  }
+
+export const calculateSystemCollFromUsers =
+  (contracts: Contracts) =>
+  async (users: User[]): Promise<bigint> => {
+    const collArray = await Promise.all(
+      users.map((user) => getTroveEntireColl(contracts, user.wallet)),
+    )
+    return collArray.reduce((acc, coll) => acc + coll, 0n)
+  }
