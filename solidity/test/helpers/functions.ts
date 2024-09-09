@@ -405,13 +405,9 @@ export async function withdrawColl(
   params.upperHint =
     inputs.upperHint === undefined ? ZERO_ADDRESS : inputs.upperHint
 
-  const tx = await contracts.borrowerOperations
+  return contracts.borrowerOperations
     .connect(inputs.sender)
     .withdrawColl(amount, params.lowerHint, params.upperHint)
-
-  return {
-    tx,
-  }
 }
 
 // Withdraw MUSD from a trove to make ICR equal to the target ICR
