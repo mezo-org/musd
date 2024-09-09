@@ -1184,8 +1184,8 @@ describe("StabilityPool in Normal Mode", () => {
         })
       })
 
-      it("withdrawFromSP(): single deposit fully offset. After a subsequent liquidation, depositor withdraws 0 deposit and *only* the collateral Gain from one liquidation", async () => {
-        // The amount the whale originally provided.
+      it("withdrawFromSP(): Single deposit fully offset. After a subsequent liquidation, depositor withdraws 0 musd and the collateral Gain from one liquidation", async () => {
+        // Full offset the whale's $20k deposit
         await createLiquidationEvent(contracts, "20,000")
 
         await updateWalletSnapshot(contracts, whale, "before")
@@ -1194,6 +1194,7 @@ describe("StabilityPool in Normal Mode", () => {
         // Subsequent liquidation
         await createLiquidationEvent(contracts, "10,000")
 
+        // The whale withdraws everything
         await contracts.stabilityPool
           .connect(whale.wallet)
           .withdrawFromSP(to1e18("500,000"), NO_GAS)
