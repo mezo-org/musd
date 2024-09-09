@@ -156,6 +156,10 @@ export async function updateStabilityPoolSnapshot(
   state.stabilityPool.P[checkPoint] = await contracts.stabilityPool.P()
   state.stabilityPool.S[checkPoint] =
     await contracts.stabilityPool.epochToScaleToSum(0, 0)
+  state.stabilityPool.currentEpoch[checkPoint] =
+    await contracts.stabilityPool.currentEpoch()
+  state.stabilityPool.currentScale[checkPoint] =
+    await contracts.stabilityPool.currentScale()
 }
 
 export async function updateStabilityPoolUserSnapshot(
@@ -476,11 +480,14 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
 export async function createLiquidationEvent(
   contracts: Contracts,
+  amount: string | bigint = "2,000",
 ): Promise<ContractTransactionResponse> {
+  const bigintAmount = typeof amount === "string" ? to1e18(amount) : amount
   const priceBefore = await contracts.priceFeed.fetchPrice()
   const defaulter = (await helpers.signers.getUnnamedSigners())[8]
+
   await openTrove(contracts, {
-    musdAmount: "2,000", // slightly over the minimum of $1800
+    musdAmount: bigintAmount,
     ICR: "120", // 120%
     sender: defaulter,
   })
