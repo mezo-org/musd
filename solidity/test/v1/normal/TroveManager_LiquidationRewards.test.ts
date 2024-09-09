@@ -12,6 +12,7 @@ import {
   openTrove,
   setupTests,
   updatePendingSnapshot,
+  updatePendingSnapshots,
   updateTroveSnapshot,
   updateTroveSnapshots,
   User,
@@ -185,9 +186,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
 
     await dropPriceAndLiquidate(contracts, carol)
-    await Promise.all(
-      users.map((user) => updatePendingSnapshot(contracts, user, "before")),
-    )
+    await updatePendingSnapshots(contracts, users, "before")
 
     const addedColl = to1e18(1)
     await addColl(contracts, {
@@ -203,11 +202,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       [alice, bob, carol, dennis],
     )
     await dropPriceAndLiquidate(contracts, dennis)
-    await Promise.all(
-      [...users, dennis].map((user) =>
-        updatePendingSnapshot(contracts, user, "after"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, [...users, dennis], "after")
 
     // Check collateral values
     expect(
@@ -255,11 +250,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
     await dropPriceAndLiquidate(contracts, dennis)
-    await Promise.all(
-      initialUsers.map((user) =>
-        updatePendingSnapshot(contracts, user, "before"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const addedColl = to1e18(0.01)
     await addColl(contracts, {
@@ -274,11 +265,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       eric,
     ])
     await dropPriceAndLiquidate(contracts, eric)
-    await Promise.all(
-      [...initialUsers, eric].map((user) =>
-        updatePendingSnapshot(contracts, user, "after"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note C topped up so their rewards from the first liquidation were applied
     expect(
@@ -328,11 +315,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(carol, "200,000", "400")
 
     await dropPriceAndLiquidate(contracts, dennis)
-    await Promise.all(
-      initialUsers.map((user) =>
-        updatePendingSnapshot(contracts, user, "before"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const addedColl = to1e18(1)
     await Promise.all(
@@ -350,11 +333,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       eric,
     ])
     await dropPriceAndLiquidate(contracts, eric)
-    await Promise.all(
-      [...initialUsers, eric].map((user) =>
-        updatePendingSnapshot(contracts, user, "after"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note A, B, C topped up so their rewards from the first liquidation were applied
     expect(alice.pending.collateral.after).to.be.closeTo(
@@ -442,9 +421,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(carol, "20000", "210")
 
     await dropPriceAndLiquidate(contracts, carol)
-    await Promise.all(
-      users.map((user) => updatePendingSnapshot(contracts, user, "before")),
-    )
+    await updatePendingSnapshots(contracts, users, "before")
 
     const withdrawnColl = to1e18(1)
     await withdrawColl(contracts, {
@@ -460,9 +437,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       [alice, bob, carol, dennis],
     )
     await dropPriceAndLiquidate(contracts, dennis)
-    await Promise.all(
-      users.map((user) => updatePendingSnapshot(contracts, user, "after")),
-    )
+    await updatePendingSnapshots(contracts, users, "after")
 
     // Check collateral values
     expect(
@@ -508,11 +483,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
     await dropPriceAndLiquidate(contracts, dennis)
-    await Promise.all(
-      initialUsers.map((user) =>
-        updatePendingSnapshot(contracts, user, "before"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const withdrawnColl = to1e18(0.01)
     await withdrawColl(contracts, {
@@ -527,11 +498,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       eric,
     ])
     await dropPriceAndLiquidate(contracts, eric)
-    await Promise.all(
-      [...initialUsers, eric].map((user) =>
-        updatePendingSnapshot(contracts, user, "after"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note C withdrew so their rewards from the first liquidation were applied
     expect(
@@ -579,11 +546,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
     await dropPriceAndLiquidate(contracts, dennis)
-    await Promise.all(
-      initialUsers.map((user) =>
-        updatePendingSnapshot(contracts, user, "before"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const withdrawnColl = to1e18(0.01)
     await Promise.all(
@@ -604,11 +567,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       eric,
     ])
     await dropPriceAndLiquidate(contracts, eric)
-    await Promise.all(
-      [...initialUsers, eric].map((user) =>
-        updatePendingSnapshot(contracts, user, "after"),
-      ),
-    )
+    await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note A, B, C withdrew so their rewards from the first liquidation were applied
     expect(alice.pending.collateral.after).to.be.closeTo(

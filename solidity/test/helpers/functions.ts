@@ -134,6 +134,16 @@ export async function updatePendingSnapshot(
   user.pending.debt[checkPoint] = debt
 }
 
+export async function updatePendingSnapshots(
+  contracts: Contracts,
+  users: User[],
+  checkPoint: CheckPoint,
+) {
+  return Promise.all(
+    users.map((user) => updatePendingSnapshot(contracts, user, checkPoint)),
+  )
+}
+
 export async function updateRewardSnapshot(
   contracts: Contracts,
   user: User,
