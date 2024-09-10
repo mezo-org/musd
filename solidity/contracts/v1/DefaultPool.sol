@@ -95,7 +95,16 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         IActivePool(activePool).updateCollateralBalance(_amount);
     }
 
-    function updateCollateralBalance(uint256 _amount) external override {}
+    // When ERC20 token collateral is received this function needs to be called
+    function updateCollateralBalance(uint256 _amount) external override {
+        _requireCallerIsActivePool();
+        require(
+            collateralAddress != address(0),
+            "DefaultPool: ETH collateral needed, not ERC20"
+        );
+        collateral += _amount;
+        emit DefaultPoolCollateralBalanceUpdated(collateral);
+    }
 
     function getCollateralBalance() external view override returns (uint) {
         return collateral;

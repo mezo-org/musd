@@ -3,6 +3,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
 import { assert } from "chai"
+import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
 import {
   Contracts,
@@ -11,8 +12,10 @@ import {
   User,
   TestingAddresses,
   ContractsState,
+  WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
+import { connectContracts, fixture, getAddresses } from "./context"
 
 export const NO_GAS = {
   maxFeePerGas: 0,
@@ -129,6 +132,16 @@ export async function updatePendingSnapshot(
   )
   user.pending.collateral[checkPoint] = collateral
   user.pending.debt[checkPoint] = debt
+}
+
+export async function updatePendingSnapshots(
+  contracts: Contracts,
+  users: User[],
+  checkPoint: CheckPoint,
+) {
+  return Promise.all(
+    users.map((user) => updatePendingSnapshot(contracts, user, checkPoint)),
+  )
 }
 
 export async function updateRewardSnapshot(
@@ -391,6 +404,26 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   }
 }
 
+export async function withdrawColl(
+  contracts: Contracts,
+  inputs: WithdrawCollParams,
+) {
+  const params = inputs
+
+  const amount =
+    typeof params.amount === "bigint" ? params.amount : to1e18(params.amount)
+
+  // fill in hints for searching trove list if not provided
+  params.lowerHint =
+    inputs.lowerHint === undefined ? ZERO_ADDRESS : inputs.lowerHint
+  params.upperHint =
+    inputs.upperHint === undefined ? ZERO_ADDRESS : inputs.upperHint
+
+  return contracts.borrowerOperations
+    .connect(inputs.sender)
+    .withdrawColl(amount, params.lowerHint, params.upperHint)
+}
+
 // Withdraw MUSD from a trove to make ICR equal to the target ICR
 export async function adjustTroveToICR(
   contracts: Contracts,
@@ -626,3 +659,128 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
     assert.fail("TroveManagerTester not loaded")
   }
 }
+
+export async function setupTests() {
+  const cachedTestSetup = await loadFixture(fixture)
+  const testSetup = { ...cachedTestSetup }
+  const { contracts, state } = testSetup
+
+  await connectContracts(contracts, testSetup.users)
+
+  // users
+  const { alice, bob, carol, dennis, eric, frank } = testSetup.users
+
+  // readability helper
+  const addresses = await getAddresses(contracts, testSetup.users)
+
+  return {
+    contracts,
+    state,
+    cachedTestSetup,
+    testSetup,
+    addresses,
+    alice,
+    bob,
+    carol,
+    dennis,
+    eric,
+    frank,
+  }
+}
+
+export function expectedCollRewardAmount(
+  userColl: bigint,
+  liquidatedColl: bigint,
+  totalColl: bigint,
+): bigint {
+  return (applyLiquidationFee(liquidatedColl) * userColl) / totalColl
+}
+
+export function expectedDebtRewardAmount(
+  userColl: bigint,
+  liquidatedDebt: bigint,
+  totalColl: bigint,
+): bigint {
+  return (userColl * liquidatedDebt) / totalColl
+}
+
+type RewardForUser = {
+  collateral: bigint
+  debt: bigint
+}
+export const expectedRewardAmountForUser =
+  (contracts: Contracts) =>
+  async (
+    user: User,
+    liquidatedUser: User,
+    allUsers: User[],
+  ): Promise<RewardForUser> => {
+    // Get the total collateral of all users except the liquidated user
+    const totalColl = (
+      await Promise.all(
+        allUsers.map((u) => getTroveEntireColl(contracts, u.wallet)),
+      )
+    ).reduce((acc, coll) => acc + coll, 0n)
+
+    // Get collateral to be liquidated
+    const collateralToLiquidate = await getTroveEntireColl(
+      contracts,
+      liquidatedUser.wallet,
+    )
+
+    const debtToLiquidate = await getTroveEntireDebt(
+      contracts,
+      liquidatedUser.wallet,
+    )
+
+    const remainingColl = totalColl - collateralToLiquidate
+
+    const userCollateral = await getTroveEntireColl(contracts, user.wallet)
+
+    const collateral = expectedCollRewardAmount(
+      userCollateral,
+      collateralToLiquidate,
+      remainingColl,
+    )
+
+    const debt = expectedDebtRewardAmount(
+      userCollateral,
+      debtToLiquidate,
+      remainingColl,
+    )
+
+    // Calculate expected reward amount for user based on their share of total collateral
+    return {
+      collateral,
+      debt,
+    }
+  }
+
+export const expectedRewardAmountForUsers =
+  (contracts: Contracts) =>
+  async (
+    liquidatedUser: User,
+    users: User[],
+  ): Promise<Record<string, RewardForUser>> => {
+    // Map over all users and calculate expected reward amount for each user
+    const rewards = await Promise.all(
+      users.map(async (user) => [
+        user.address,
+        await expectedRewardAmountForUser(contracts)(
+          user,
+          liquidatedUser,
+          users,
+        ),
+      ]),
+    )
+    return Object.fromEntries(rewards)
+  }
+
+export const calculateSystemCollFromUsers =
+  (contracts: Contracts) =>
+  async (users: User[]): Promise<bigint> => {
+    const collArray = await Promise.all(
+      users.map((user) => getTroveEntireColl(contracts, user.wallet)),
+    )
+    return collArray.reduce((acc, coll) => acc + coll, 0n)
+  }
