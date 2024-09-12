@@ -1,6 +1,7 @@
 {
   "name": "contracts",
   "version": "0.1.0",
+  "packageManager": "pnpm@8.13.1",
   "license": "GPL-3.0",
   "scripts": {
     "clean": "hardhat clean && rm -rf cache/ artifacts/ typechain/",
@@ -16,7 +17,8 @@
     "prepare:env": "cp -n .env.example .env || true",
     "test": "npm run prepare:env && hardhat test",
     "node": "hardhat node",
-    "deploy": "npm run prepare:env && hardhat deploy"
+    "deploy": "npm run prepare:env && hardhat deploy",
+    "coverage": "hardhat coverage"
   },
   "devDependencies": {
     "@keep-network/hardhat-helpers": "^0.7.1",
@@ -36,6 +38,7 @@
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-deploy": "^0.11.45",
     "hardhat-gas-reporter": "^1.0.10",
+    "istanbul": "^0.4.5",
     "prettier": "^3.1.1",
     "prettier-plugin-solidity": "^1.3.1",
     "solhint": "^4.0.0",
@@ -43,6 +46,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
-    "@openzeppelin/contracts-upgradeable": "^5.0.2"
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "solidity-coverage": "^0.8.12"
   }
 }
