@@ -1047,10 +1047,6 @@ describe("TroveManager in Recovery Mode", () => {
         await updateWalletSnapshot(contracts, bob, "after")
         expect(bob.btc.after).to.equal(bob.btc.before + surplus)
       })
-
-      it("description", async () => {
-        console.log("template")
-      })
     })
   })
 })
