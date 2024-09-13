@@ -82,12 +82,14 @@ function initializeContractState(): ContractsState {
   return {
     troveManager: {
       baseRate: beforeAndAfter(),
+      collateralSnapshot: beforeAndAfter(),
       lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
         debt: beforeAndAfter(),
       },
       stakes: beforeAndAfter(),
+      stakesSnapshot: beforeAndAfter(),
       troves: beforeAndAfter(),
       TCR: beforeAndAfter(),
     },

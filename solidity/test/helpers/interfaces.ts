@@ -51,12 +51,14 @@ type BeforeAndAfter = {
 export interface ContractsState {
   troveManager: {
     baseRate: BeforeAndAfter
+    collateralSnapshot: BeforeAndAfter
     lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
       debt: BeforeAndAfter
     }
     stakes: BeforeAndAfter
+    stakesSnapshot: BeforeAndAfter
     troves: BeforeAndAfter
     TCR: BeforeAndAfter
   }

@@ -928,7 +928,7 @@ describe("TroveManager in Normal Mode", () => {
 
         // Bob's ICR including pending rewards is below the MCR, but his raw coll and debt have not changed
         expect(bob.trove.debt.after).to.equal(bob.trove.debt.before)
-        expect(bob.trove.debt.after).to.equal(bob.trove.debt.before)
+        expect(bob.trove.collateral.after).to.equal(bob.trove.collateral.before)
 
         // Whale (Eric) enters the system, ensuring we don't go into recovery mode
         await openTrove(contracts, {
