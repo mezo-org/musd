@@ -41,6 +41,8 @@ export interface TestingAddresses {
   frank: string
   whale: string
   deployer: string
+  council: string
+  treasury: string
 }
 
 type BeforeAndAfter = {
@@ -142,6 +144,8 @@ export interface Users {
   frank: User
   whale: User
   deployer: User
+  council: User
+  treasury: User
 }
 
 export interface TestSetup {

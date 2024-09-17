@@ -56,9 +56,9 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     }
 
     constructor(uint256 _governanceTimeDelay) Ownable(msg.sender) {
-    governanceTimeDelay = _governanceTimeDelay;
-    require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
-}
+        governanceTimeDelay = _governanceTimeDelay;
+        require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
+    }
 
     receive() external payable {
         require(
@@ -115,6 +115,22 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
 
         isInitialized = true;
+        depositToStabilityPool(BOOTSTRAP_LOAN);
+    }
+
+    function depositToStabilityPool(
+        uint256 _musdAmount
+    ) public onlyOwnerOrCouncilOrTreasury {
+        require(
+            _musdAmount <= musd.balanceOf(address(this)),
+            "PCV: not enough tokens"
+        );
+        musd.approve(borrowerOperations.stabilityPoolAddress(), _musdAmount);
+        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
+            _musdAmount
+        );
+
+        // TODO Emit event
     }
 
     function withdrawMUSD(
@@ -159,7 +175,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     ) public override onlyOwner {
         require(
             !recipientsWhitelist[_recipient],
-            "PCV: Recipient has already added to whitelist"
+            "PCV: Recipient has already been added to whitelist"
         );
         recipientsWhitelist[_recipient] = true;
         emit RecipientAdded(_recipient);
@@ -188,7 +204,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         emit RecipientRemoved(_recipient);
     }
 
-
     function removeRecipientsFromWhitelist(
         address[] calldata _recipients
     ) external override onlyOwner {
@@ -200,7 +215,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
             removeRecipientFromWhitelist(_recipients[i]);
         }
     }
-
 
     function startChangingRoles(
         address _council,

@@ -168,6 +168,8 @@ export async function fixture(): Promise<TestSetup> {
     ericWallet,
     frankWallet,
     whaleWallet,
+    councilWallet,
+    treasuryWallet,
   ] = await helpers.signers.getUnnamedSigners()
   const contracts = await deployment()
 
@@ -180,6 +182,8 @@ export async function fixture(): Promise<TestSetup> {
     frank: await initializeUserObject(frankWallet),
     whale: await initializeUserObject(whaleWallet),
     deployer: await initializeUserObject(deployer),
+    council: await initializeUserObject(councilWallet),
+    treasury: await initializeUserObject(treasuryWallet),
   }
 
   const state: ContractsState = initializeContractState()
@@ -219,6 +223,8 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     frank: users.frank.wallet.address,
     whale: users.whale.wallet.address,
     deployer: users.deployer.wallet.address,
+    council: users.council.wallet.address,
+    treasury: users.treasury.wallet.address,
   }
 
   return addresses

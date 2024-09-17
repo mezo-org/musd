@@ -15,7 +15,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
     await deployments.deploy("PCV", {
       contract: "PCV",
-      args: [0],
+      args: [7200],
       from: deployer,
       log: true,
       waitConfirmations: waitConfirmationsNumber(hre),

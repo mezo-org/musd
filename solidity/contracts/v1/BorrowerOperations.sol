@@ -86,12 +86,18 @@ contract BorrowerOperations is
 
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
-        require(msg.sender == pcvAddress, "BorrowerOperations: caller must be PCV");
+        require(
+            msg.sender == pcvAddress,
+            "BorrowerOperations: caller must be PCV"
+        );
         musd.mint(pcvAddress, _musdToMint);
     }
 
     function burnDebtFromPCV(uint256 _musdToBurn) external {
-        require(msg.sender == pcvAddress, "BorrowerOperations: caller must be PCV");
+        require(
+            msg.sender == pcvAddress,
+            "BorrowerOperations: caller must be PCV"
+        );
         musd.burn(pcvAddress, _musdToBurn);
     }
 
