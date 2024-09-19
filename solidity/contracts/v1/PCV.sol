@@ -189,8 +189,10 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
             "PCV: these roles already set"
         );
 
+        // solhint-disable-next-line not-rely-on-time
         changingRolesInitiated = block.timestamp;
         if (council == address(0) && treasury == address(0)) {
+            // solhint-disable-next-line not-rely-on-time
             changingRolesInitiated -= governanceTimeDelay; // skip delay if no roles set
         }
         pendingCouncilAddress = _council;
@@ -208,6 +210,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     function finalizeChangingRoles() external override onlyOwner {
         require(changingRolesInitiated > 0, "PCV: Change not initiated");
         require(
+            // solhint-disable-next-line not-rely-on-time
             block.timestamp >= changingRolesInitiated + governanceTimeDelay,
             "PCV: Governance delay has not elapsed"
         );
@@ -251,7 +254,10 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
             "PCV: not enough tokens"
         );
         require(
-            musd.approve(borrowerOperations.stabilityPoolAddress(), _musdAmount),
+            musd.approve(
+                borrowerOperations.stabilityPoolAddress(),
+                _musdAmount
+            ),
             "PCV: Approval failed"
         );
         IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
