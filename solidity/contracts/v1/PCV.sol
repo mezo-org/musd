@@ -77,7 +77,9 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         );
         uint256 musdToBurn = LiquityMath._min(_musdToBurn, debtToPay);
         debtToPay -= musdToBurn;
+
         borrowerOperations.burnDebtFromPCV(musdToBurn);
+        // slither-disable-next-line reentrancy-events
         emit PCVDebtPaid(musdToBurn);
     }
 
@@ -112,25 +114,9 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         require(!isInitialized, "PCV: already initialized");
 
         debtToPay = BOOTSTRAP_LOAN;
-        borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
-
         isInitialized = true;
+        borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
         depositToStabilityPool(BOOTSTRAP_LOAN);
-    }
-
-    function depositToStabilityPool(
-        uint256 _musdAmount
-    ) public onlyOwnerOrCouncilOrTreasury {
-        require(
-            _musdAmount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-        musd.approve(borrowerOperations.stabilityPoolAddress(), _musdAmount);
-        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
-            _musdAmount
-        );
-
-        // TODO Emit event
     }
 
     function withdrawMUSD(
@@ -151,7 +137,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
             musd.transfer(_recipient, _musdAmount),
             "PCV: sending MUSD failed"
         );
-
+        // slither-disable-next-line reentrancy-events
         emit MUSDWithdraw(_recipient, _musdAmount);
     }
 
@@ -170,17 +156,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         emit CollateralWithdraw(_recipient, _collateralAmount);
     }
 
-    function addRecipientToWhitelist(
-        address _recipient
-    ) public override onlyOwner {
-        require(
-            !recipientsWhitelist[_recipient],
-            "PCV: Recipient has already been added to whitelist"
-        );
-        recipientsWhitelist[_recipient] = true;
-        emit RecipientAdded(_recipient);
-    }
-
     function addRecipientsToWhitelist(
         address[] calldata _recipients
     ) external override onlyOwner {
@@ -191,17 +166,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         for (uint256 i = 0; i < _recipients.length; i++) {
             addRecipientToWhitelist(_recipients[i]);
         }
-    }
-
-    function removeRecipientFromWhitelist(
-        address _recipient
-    ) public override onlyOwner {
-        require(
-            recipientsWhitelist[_recipient],
-            "PCV: Recipient is not in whitelist"
-        );
-        recipientsWhitelist[_recipient] = false;
-        emit RecipientRemoved(_recipient);
     }
 
     function removeRecipientsFromWhitelist(
@@ -255,5 +219,45 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         changingRolesInitiated = 0;
         pendingCouncilAddress = address(0);
         pendingTreasuryAddress = address(0);
+    }
+
+    function addRecipientToWhitelist(
+        address _recipient
+    ) public override onlyOwner {
+        require(
+            !recipientsWhitelist[_recipient],
+            "PCV: Recipient has already been added to whitelist"
+        );
+        recipientsWhitelist[_recipient] = true;
+        emit RecipientAdded(_recipient);
+    }
+
+    function removeRecipientFromWhitelist(
+        address _recipient
+    ) public override onlyOwner {
+        require(
+            recipientsWhitelist[_recipient],
+            "PCV: Recipient is not in whitelist"
+        );
+        recipientsWhitelist[_recipient] = false;
+        emit RecipientRemoved(_recipient);
+    }
+
+    function depositToStabilityPool(
+        uint256 _musdAmount
+    ) public onlyOwnerOrCouncilOrTreasury {
+        require(
+            _musdAmount <= musd.balanceOf(address(this)),
+            "PCV: not enough tokens"
+        );
+        require(
+            musd.approve(borrowerOperations.stabilityPoolAddress(), _musdAmount),
+            "PCV: Approval failed"
+        );
+        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
+            _musdAmount
+        );
+
+        // TODO Emit event
     }
 }
