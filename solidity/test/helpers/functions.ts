@@ -612,6 +612,19 @@ export function withdrawCollateralGainToTrove(
     .withdrawCollateralGainToTrove(ZERO_ADDRESS, ZERO_ADDRESS, NO_GAS)
 }
 
+export function withdrawCollateralGainToTroves(
+  contracts: Contracts,
+  users: User[],
+) {
+  return Promise.all(
+    users.map((user) =>
+      contracts.stabilityPool
+        .connect(user.wallet)
+        .withdrawCollateralGainToTrove(ZERO_ADDRESS, ZERO_ADDRESS, NO_GAS),
+    ),
+  )
+}
+
 /*
  * Drop the price enough to bring the provided user's ICR to the target ICR or to just below the MCR if no target
  * is provided.

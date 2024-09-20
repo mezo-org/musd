@@ -29,6 +29,7 @@ import {
   updateWalletSnapshot,
   dropPrice,
   withdrawCollateralGainToTrove,
+  withdrawCollateralGainToTroves,
   transferMUSD,
   openTroves,
   updatePendingSnapshot,
@@ -1336,8 +1337,8 @@ describe("StabilityPool in Normal Mode", () => {
       })
 
       it("withdrawFromSP(): Large liquidated coll/debt, deposits and BTC price", async () => {
-        // collateral:USD price is $2 quintillion per BTC
-        await contracts.mockAggregator.setPrice(2n * 10n ** 36n)
+        // collateral:USD price is $2 billion per BTC
+        await contracts.mockAggregator.setPrice(2n * 10n ** 27n)
 
         const users = [bob, carol]
         const amount = 1n * 10n ** 27n // $ 1 billion
@@ -1575,6 +1576,22 @@ describe("StabilityPool in Normal Mode", () => {
      *
      */
     context("Balance changes", () => {
+      let users: User[] = []
+      beforeEach(() => {
+        users = [bob, carol, dennis]
+      })
+
+      const expectCorrectCollateralGain = (user: User) => {
+        expect(user.stabilityPool.deposit.after).to.equal(
+          user.stabilityPool.compoundedDeposit.before,
+        )
+        expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+        expect(user.trove.collateral.after).to.equal(
+          user.trove.collateral.before +
+            user.stabilityPool.collateralGain.before,
+        )
+      }
+
       it("withdrawCollateralGainToTrove(): Applies MUSDLoss to user's deposit, and redirects collateral reward to user's Trove", async () => {
         await provideToSP(contracts, whale, to1e18("20,000"))
 
@@ -1588,6 +1605,405 @@ describe("StabilityPool in Normal Mode", () => {
         await updateTroveSnapshot(contracts, whale, "after")
         await updateStabilityPoolUserSnapshot(contracts, whale, "after")
 
+        expectCorrectCollateralGain(whale)
+      })
+
+      it("withdrawCollateralGainToTrove(): All depositors are able to withdraw their collateral gain from the SP to their Trove", async () => {
+        await openTrovesAndProvideStability(contracts, users, "5,000", "200")
+
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        users.forEach((user) => {
+          expectCorrectCollateralGain(user)
+        })
+      })
+
+      const expectCorrectCollateralGainWithEqualDeposits = () =>
+        users.forEach((user) => {
+          expectCorrectCollateralGain(user)
+          expect(user.trove.collateral.after).to.equal(
+            users[0].trove.collateral.after,
+          )
+        })
+
+      it("withdrawCollateralGainToTrove(): Depositors with equal initial deposit withdraw correct collateral Gain after one liquidation", async () => {
+        await openTrovesAndProvideStability(contracts, users, "10,000", "200")
+
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithEqualDeposits()
+      })
+
+      it("withdrawCollateralGainToTrove():  Depositors with equal initial deposit withdraw correct collateral Gain after three identical liquidations", async () => {
+        await openTrovesAndProvideStability(contracts, users, "10,000", "200")
+
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithEqualDeposits()
+      })
+
+      it("withdrawCollateralGainToTrove(): Depositors with equal initial deposit withdraw correct collateral Gain after two liquidations of increasing MUSD", async () => {
+        await openTrovesAndProvideStability(contracts, users, "10,000", "200")
+
+        await createLiquidationEvent(contracts, "5,000")
+        await createLiquidationEvent(contracts, "8,000")
+        await createLiquidationEvent(contracts, "11,000")
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithEqualDeposits()
+      })
+
+      const expectCorrectCollateralGainWithVaryingDeposits = () =>
+        users.forEach((user, i) => {
+          expectCorrectCollateralGain(user)
+
+          // Each subsequent user deposited more, and so should receive more collateral
+          if (i < users.length - 1) {
+            expect(users[i].trove.collateral.after).to.be.lessThan(
+              users[i + 1].trove.collateral.after,
+            )
+          }
+        })
+
+      it("withdrawCollateralGainToTrove(): Depositors with varying deposits withdraw correct collateral Gain after two identical liquidations", async () => {
+        await openTroveAndProvideStability(contracts, bob, "10,000", "200")
+        await openTroveAndProvideStability(contracts, carol, "20,000", "200")
+        await openTroveAndProvideStability(contracts, dennis, "30,000", "200")
+
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithVaryingDeposits()
+      })
+
+      it("withdrawCollateralGainToTrove(): Depositors with varying deposits withdraw correct collateral Gain after three identical liquidations", async () => {
+        await openTroveAndProvideStability(contracts, bob, "10,000", "200")
+        await openTroveAndProvideStability(contracts, carol, "20,000", "200")
+        await openTroveAndProvideStability(contracts, dennis, "30,000", "200")
+
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithVaryingDeposits()
+      })
+
+      it("withdrawCollateralGainToTrove(): Depositors with varying deposits withdraw correct collateral Gain after three varying liquidations", async () => {
+        await openTroveAndProvideStability(contracts, bob, "10,000", "200")
+        await openTroveAndProvideStability(contracts, carol, "20,000", "200")
+        await openTroveAndProvideStability(contracts, dennis, "30,000", "200")
+
+        await createLiquidationEvent(contracts, "4,500")
+        await createLiquidationEvent(contracts, "7,000")
+        await createLiquidationEvent(contracts, "12,345")
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithVaryingDeposits()
+      })
+
+      it("withdrawCollateralGainToTrove(): B, C, D Deposit -> 2 liquidations -> E deposits -> 1 liquidation. All deposits and liquidations = $2000.  B, C, D, E withdraw correct collateral Gain", async () => {
+        await openTrovesAndProvideStability(contracts, users, "2000", "200")
+
+        await createLiquidationEvent(contracts, "2000")
+        await createLiquidationEvent(contracts, "2000")
+
+        await openTroveAndProvideStability(contracts, eric, "2000", "200")
+
+        await createLiquidationEvent(contracts, "2000")
+
+        const allUsers = [...users, eric]
+        await updateTroveSnapshots(contracts, allUsers, "before")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+
+        await withdrawCollateralGainToTroves(contracts, allUsers)
+
+        await updateTroveSnapshots(contracts, allUsers, "after")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+
+        expectCorrectCollateralGainWithEqualDeposits()
+        expectCorrectCollateralGain(eric)
+        expect(eric.trove.collateral.after).to.be.lessThan(
+          bob.trove.collateral.after,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): B, C, D Deposit -> 2 liquidations -> E deposits -> 2 liquidations. All deposits and liquidations = $2000.  B, C, D, E withdraw correct collateral Gain", async () => {
+        // The whale provides so that the pool is not fully offset.
+        await provideToSP(contracts, whale, "20,000")
+        await openTrovesAndProvideStability(contracts, users, "2000", "200")
+
+        await createLiquidationEvent(contracts, "2000")
+        await createLiquidationEvent(contracts, "2000")
+
+        await openTroveAndProvideStability(contracts, eric, "2000", "200")
+
+        await createLiquidationEvent(contracts, "2000")
+        await createLiquidationEvent(contracts, "2000")
+
+        const allUsers = [...users, eric]
+        await updateTroveSnapshots(contracts, allUsers, "before")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+
+        await withdrawCollateralGainToTroves(contracts, allUsers)
+
+        await updateTroveSnapshots(contracts, allUsers, "after")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+
+        expectCorrectCollateralGainWithEqualDeposits()
+        expectCorrectCollateralGain(eric)
+        expect(eric.trove.collateral.after).to.be.lessThan(
+          bob.trove.collateral.after,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): B, C, D Deposit -> 2 liquidations -> E deposits -> 2 liquidations. Various deposit and liquidation vals.  B, C, D, E withdraw correct collateral Gain", async () => {
+        await provideToSP(contracts, whale, to1e18("20,000"))
+        await Promise.all(
+          [
+            { user: bob, amount: "5,000" },
+            { user: carol, amount: "40,929" },
+            { user: dennis, amount: "61,123" },
+          ].map(({ user, amount }) =>
+            openTroveAndProvideStability(contracts, user, amount, "200"),
+          ),
+        )
+
+        await createLiquidationEvent(contracts, "2000")
+        await createLiquidationEvent(contracts, "3456")
+
+        await openTroveAndProvideStability(contracts, eric, "2000", "200")
+
+        await createLiquidationEvent(contracts, "8899")
+        await createLiquidationEvent(contracts, "11234")
+
+        const allUsers = [...users, eric]
+        await updateTroveSnapshots(contracts, allUsers, "before")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+
+        await withdrawCollateralGainToTroves(contracts, allUsers)
+
+        await updateTroveSnapshots(contracts, allUsers, "after")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+
+        expectCorrectCollateralGainWithVaryingDeposits()
+        expectCorrectCollateralGain(eric)
+        expect(eric.trove.collateral.after).to.be.lessThan(
+          bob.trove.collateral.after,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): B, C, D, E deposit -> 2 liquidations -> E withdraws -> 2 liquidations. All deposits and liquidations = $2000.  B, C, D, E withdraw correct collateral Gain", async () => {
+        // The whale provides so that the pool is not fully offset.
+        await provideToSP(contracts, whale, "20,000")
+
+        const allUsers = [...users, eric]
+        await openTrovesAndProvideStability(contracts, allUsers, "2000", "200")
+
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshot(contracts, eric, "before")
+        await updateStabilityPoolUserSnapshot(contracts, eric, "before")
+
+        await withdrawCollateralGainToTrove(contracts, eric)
+
+        await updateTroveSnapshot(contracts, eric, "after")
+        await updateStabilityPoolUserSnapshot(contracts, eric, "after")
+
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithEqualDeposits()
+        expectCorrectCollateralGain(eric)
+        expect(eric.trove.collateral.after).to.be.lessThan(
+          bob.trove.collateral.after,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): B, C, D, E deposit -> 2 liquidations -> E withdraws -> 2 liquidations. Various deposit and liquidation vals. A, B, C, D withdraw correct collateral Gain", async () => {
+        // The whale provides so that the pool is not fully offset.
+        await provideToSP(contracts, whale, "20,000")
+
+        await Promise.all(
+          [
+            { user: bob, amount: "5,000" },
+            { user: carol, amount: "40,929" },
+            { user: dennis, amount: "61,123" },
+            { user: eric, amount: "81,123" },
+          ].map(({ user, amount }) =>
+            openTroveAndProvideStability(contracts, user, amount, "200"),
+          ),
+        )
+
+        await createLiquidationEvent(contracts, "2000")
+        await createLiquidationEvent(contracts, "3456")
+
+        await updateTroveSnapshot(contracts, eric, "before")
+        await updateStabilityPoolUserSnapshot(contracts, eric, "before")
+
+        await withdrawCollateralGainToTrove(contracts, eric)
+
+        await updateTroveSnapshot(contracts, eric, "after")
+        await updateStabilityPoolUserSnapshot(contracts, eric, "after")
+
+        await createLiquidationEvent(contracts, "5678")
+        await createLiquidationEvent(contracts, "7890")
+
+        await updateTroveSnapshots(contracts, users, "before")
+        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+
+        await withdrawCollateralGainToTroves(contracts, users)
+
+        await updateTroveSnapshots(contracts, users, "after")
+        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+
+        expectCorrectCollateralGainWithVaryingDeposits()
+        expectCorrectCollateralGain(eric)
+      })
+
+      it("withdrawCollateralGainToTrove(): Depositor withdraws correct compounded deposit after liquidation empties the pool", async () => {
+        await provideToSP(contracts, whale, "5,000")
+
+        // Empty the pool
+        await createLiquidationEvent(contracts, "6,000")
+
+        await updateTroveSnapshot(contracts, whale, "before")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+        await updatePendingSnapshot(contracts, whale, "before")
+
+        await withdrawCollateralGainToTrove(contracts, whale)
+
+        await updateTroveSnapshot(contracts, whale, "after")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+        await updatePendingSnapshot(contracts, whale, "after")
+
+        expect(whale.stabilityPool.deposit.after).to.equal(
+          whale.stabilityPool.compoundedDeposit.before,
+        )
+        expect(whale.stabilityPool.collateralGain.after).to.equal(0n)
+        expect(whale.trove.collateral.after).to.equal(
+          whale.trove.collateral.before +
+            whale.pending.collateral.before +
+            whale.stabilityPool.collateralGain.before,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): single deposit fully offset. After subsequent liquidations, depositor withdraws *only* the collateral Gain from one liquidation", async () => {
+        await provideToSP(contracts, whale, "5,000")
+
+        // Empty the pool
+        await createLiquidationEvent(contracts, "6,000")
+
+        const collateralGain =
+          await contracts.stabilityPool.getDepositorCollateralGain(whale.wallet)
+
+        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts)
+
+        await updateTroveSnapshot(contracts, whale, "before")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+        await updatePendingSnapshot(contracts, whale, "before")
+
+        await withdrawCollateralGainToTrove(contracts, whale)
+
+        await updateTroveSnapshot(contracts, whale, "after")
+        await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+        await updatePendingSnapshot(contracts, whale, "after")
+
+        expect(whale.stabilityPool.collateralGain.before).to.equal(
+          collateralGain,
+        )
+        expect(whale.stabilityPool.deposit.after).to.equal(
+          whale.stabilityPool.compoundedDeposit.before,
+        )
+        expect(whale.stabilityPool.collateralGain.after).to.equal(0n)
+        expect(whale.trove.collateral.after).to.equal(
+          whale.trove.collateral.before +
+            whale.pending.collateral.before +
+            whale.stabilityPool.collateralGain.before,
+        )
+      })
+
+      it("withdrawCollateralGainToTrove(): deposit spans one scale factor change: Single depositor withdraws correct collateral Gain after one liquidation", async () => {
+        // Add just enough MUSD to increase the scale
+        await provideToSP(contracts, whale, to1e18("10250") + 500000n)
+
+        await createLiquidationEvent(contracts, "10,000")
+
+        await updateStabilityPoolUserSnapshot(contracts, whale, "before")
+        await updateTroveSnapshot(contracts, whale, "before")
+        await updateStabilityPoolSnapshot(contracts, state, "before")
+
+        await withdrawCollateralGainToTrove(contracts, whale)
+
+        await updateStabilityPoolUserSnapshot(contracts, whale, "after")
+        await updateTroveSnapshot(contracts, whale, "after")
+
+        expect(state.stabilityPool.currentScale.before).to.equal(1n)
         expect(whale.stabilityPool.deposit.after).to.equal(
           whale.stabilityPool.compoundedDeposit.before,
         )
@@ -1598,31 +2014,26 @@ describe("StabilityPool in Normal Mode", () => {
         )
       })
 
-      it("withdrawCollateralGainToTrove(): All depositors are able to withdraw their collateral gain from the SP to their Trove", async () => {
-        const users = [bob, carol, dennis]
-        await Promise.all(
-          users.map(async (user) => {
-            await openTrove(contracts, {
-              musdAmount: "5,000",
-              ICR: "200",
-              sender: user.wallet,
-            })
-            await provideToSP(contracts, user, to1e18("5,000"))
-          }),
-        )
+      it("withdrawCollateralGainToTrove(): Several deposits of varying amounts span one scale factor change. Depositors withdraw correct compounded deposit and collateral Gain after one liquidation", async () => {
+        // Add just enough MUSD to increase the scale
+        await provideToSP(contracts, whale, to1e18("5250") + 500000n)
 
-        await createLiquidationEvent(contracts)
+        await openTroveAndProvideStability(contracts, bob, "3,000", "200")
+        await openTroveAndProvideStability(contracts, carol, "2,000", "200")
 
-        await updateTroveSnapshots(contracts, users, "before")
-        await updateStabilityPoolUserSnapshots(contracts, users, "before")
+        await createLiquidationEvent(contracts, "10,000")
 
-        await Promise.all(
-          users.map((user) => withdrawCollateralGainToTrove(contracts, user)),
-        )
+        const allUsers = [bob, carol, whale]
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+        await updateTroveSnapshots(contracts, allUsers, "before")
+        await updateStabilityPoolSnapshot(contracts, state, "before")
 
-        await updateTroveSnapshots(contracts, users, "after")
-        await updateStabilityPoolUserSnapshots(contracts, users, "after")
+        await withdrawCollateralGainToTroves(contracts, allUsers)
 
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+        await updateTroveSnapshots(contracts, allUsers, "after")
+
+        expect(state.stabilityPool.currentScale.before).to.equal(1n)
         users.forEach((user) => {
           expect(user.stabilityPool.deposit.after).to.equal(
             user.stabilityPool.compoundedDeposit.before,
@@ -1632,6 +2043,105 @@ describe("StabilityPool in Normal Mode", () => {
             user.trove.collateral.before +
               user.stabilityPool.collateralGain.before,
           )
+        })
+      })
+
+      it("withdrawCollateralGainToTrove(): 2 depositors can withdraw after each receiving half of a pool-emptying liquidation", async () => {
+        const allUsers = [bob, carol]
+
+        await openTrovesAndProvideStability(
+          contracts,
+          allUsers,
+          "10,000",
+          "200",
+        )
+
+        await createLiquidationEvent(contracts, "30,000")
+
+        await updatePendingSnapshots(contracts, allUsers, "before")
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+        await updateTroveSnapshots(contracts, allUsers, "before")
+
+        await withdrawCollateralGainToTroves(contracts, allUsers)
+
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+        await updateTroveSnapshots(contracts, allUsers, "after")
+
+        allUsers.forEach((user) => {
+          expect(user.stabilityPool.compoundedDeposit.before).to.equal(0n)
+          expect(user.stabilityPool.collateralGain.before).to.be.greaterThan(0n)
+
+          expect(user.stabilityPool.compoundedDeposit.after).to.equal(0n)
+          expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+
+          expect(user.trove.collateral.after).to.equal(
+            user.trove.collateral.before +
+              user.pending.collateral.before +
+              user.stabilityPool.collateralGain.before,
+          )
+          expect(user.trove.debt.after).to.equal(
+            user.trove.debt.before + user.pending.debt.before,
+          )
+        })
+      })
+
+      it("withdrawCollateralGainToTrove(): Large liquidated coll/debt, deposits and BTC price", async () => {
+        // collateral:USD price is $2 billion per BTC
+        await contracts.mockAggregator.setPrice(2n * 10n ** 27n)
+
+        const allUsers = [bob, carol]
+        const amount = 1n * 10n ** 27n // $ 1 billion
+        await openTrovesAndProvideStability(contracts, allUsers, amount, "200")
+
+        await createLiquidationEvent(contracts, amount)
+
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+        await updateTroveSnapshots(contracts, allUsers, "before")
+
+        await withdrawCollateralGainToTroves(contracts, allUsers)
+
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+        await updateTroveSnapshots(contracts, allUsers, "after")
+
+        allUsers.forEach((user) => {
+          expect(user.stabilityPool.collateralGain.before).to.be.greaterThan(0n)
+          expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+
+          expect(user.trove.collateral.after).to.equal(
+            user.trove.collateral.before +
+              user.stabilityPool.collateralGain.before,
+          )
+          expect(user.trove.debt.after).to.equal(user.trove.debt.before)
+        })
+      })
+
+      it("withdrawCollateralGainToTrove(): Small liquidated coll/debt, large deposits and collateral price", async () => {
+        // collateral:USD price is $2 billion per BTC
+        await contracts.mockAggregator.setPrice(2n * 10n ** 27n)
+
+        const allUsers = [bob, carol]
+        const amount = 1n * 10n ** 27n // $ 1 billion
+        await openTrovesAndProvideStability(contracts, allUsers, amount, "200")
+
+        await createLiquidationEvent(contracts, "2,000")
+
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
+        await updateTroveSnapshots(contracts, allUsers, "before")
+
+        await withdrawCollateralGainToTroves(contracts, allUsers)
+
+        await updateStabilityPoolUserSnapshots(contracts, allUsers, "after")
+        await updateTroveSnapshots(contracts, allUsers, "after")
+
+        allUsers.forEach((user) => {
+          expect(user.stabilityPool.collateralGain.before).to.be.greaterThan(0n)
+          expect(user.stabilityPool.collateralGain.after).to.equal(0n)
+
+          expect(user.trove.collateral.after).to.equal(
+            user.trove.collateral.before +
+              user.stabilityPool.collateralGain.before,
+          )
+          expect(user.trove.debt.after).to.equal(user.trove.debt.before)
         })
       })
     })
