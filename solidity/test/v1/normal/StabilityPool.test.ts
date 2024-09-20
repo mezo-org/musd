@@ -15,6 +15,8 @@ import {
   getAddresses,
   getEmittedLiquidationValues,
   openTrove,
+  openTroveAndProvideStability,
+  openTrovesAndProvideStability,
   provideToSP,
   updateContractsSnapshot,
   updateTroveManagerSnapshot,
@@ -27,6 +29,9 @@ import {
   dropPrice,
   withdrawCollateralGainToTrove,
   transferMUSD,
+  openTroves,
+  updatePendingSnapshot,
+  updatePendingSnapshots,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -80,17 +85,11 @@ describe("StabilityPool in Normal Mode", () => {
   describe("provideToSP()", () => {
     const setupTroveAndLiquidation = async () => {
       // Bob and Carol open troves and make Stability Pool deposits
-      await Promise.all(
-        [bob, carol].map(async (user) => {
-          const amount = to1e18("5,000")
-          await openTrove(contracts, {
-            musdAmount: amount,
-            ICR: "200",
-            sender: user.wallet,
-          })
-
-          await provideToSP(contracts, user, amount)
-        }),
+      await openTrovesAndProvideStability(
+        contracts,
+        [bob, carol],
+        "5,000",
+        "200",
       )
 
       // Dennis opens a trove but does not make a Stability Pool deposit
@@ -631,15 +630,11 @@ describe("StabilityPool in Normal Mode", () => {
 
       it("withdrawFromSP(): doesn't impact other users deposits or collateral gains", async () => {
         await provideToSP(contracts, alice, to1e18("3,000"))
-        await Promise.all(
-          [bob, carol].map(async (user) => {
-            await openTrove(contracts, {
-              musdAmount: "5000",
-              ICR: "200",
-              sender: user.wallet,
-            })
-            await provideToSP(contracts, user, to1e18("3,000"))
-          }),
+        await openTrovesAndProvideStability(
+          contracts,
+          [bob, carol],
+          "5,000",
+          "200",
         )
 
         await createLiquidationEvent(contracts)
@@ -726,15 +721,7 @@ describe("StabilityPool in Normal Mode", () => {
      */
     context("Individual Troves", () => {
       it("withdrawFromSP(): doesn't impact any troves, including the caller's trove", async () => {
-        await Promise.all(
-          [bob, carol].map(async (user) => {
-            await openTrove(contracts, {
-              musdAmount: "5000",
-              ICR: "200",
-              sender: user.wallet,
-            })
-          }),
-        )
+        await openTroves(contracts, [bob, carol], "5,000", "200")
 
         await createLiquidationEvent(contracts)
 
@@ -911,17 +898,7 @@ describe("StabilityPool in Normal Mode", () => {
       context("compounded deposit and collateral Gain", () => {
         const setupIdenticalDeposits = async () => {
           const users = [bob, carol, dennis]
-          const amount = to1e18("5,000")
-          await Promise.all(
-            users.map(async (user) => {
-              await openTrove(contracts, {
-                musdAmount: amount,
-                ICR: "200",
-                sender: user.wallet,
-              })
-              await provideToSP(contracts, user, amount)
-            }),
-          )
+          await openTrovesAndProvideStability(contracts, users, "5,000", "200")
         }
 
         const setupVaryingDeposits = async () => {
@@ -1108,16 +1085,7 @@ describe("StabilityPool in Normal Mode", () => {
           const users = [bob, carol, dennis]
           const amount = "2,000"
 
-          await Promise.all(
-            users.map(async (user) => {
-              await openTrove(contracts, {
-                musdAmount: amount,
-                ICR: "200",
-                sender: user.wallet,
-              })
-              await provideToSP(contracts, user, to1e18(amount))
-            }),
-          )
+          await openTrovesAndProvideStability(contracts, users, amount, "200")
 
           await createLiquidationEvent(contracts, amount)
           await createLiquidationEvent(contracts, amount)
@@ -1340,17 +1308,7 @@ describe("StabilityPool in Normal Mode", () => {
 
         const users = [bob, carol]
 
-        await Promise.all(
-          users.map(async (user) => {
-            const amount = "10,000"
-            await openTrove(contracts, {
-              musdAmount: amount,
-              ICR: "200",
-              sender: user.wallet,
-            })
-            await provideToSP(contracts, user, to1e18(amount))
-          }),
-        )
+        await openTrovesAndProvideStability(contracts, users, "10,000", "200")
 
         await createLiquidationEvent(contracts, "30,000")
 
@@ -1389,17 +1347,8 @@ describe("StabilityPool in Normal Mode", () => {
         await contracts.mockAggregator.setPrice(2n * 10n ** 36n)
 
         const users = [bob, carol]
-        const amount = 1n * 10n ** 36n // $ 1 quintillion
-        await Promise.all(
-          users.map(async (user) => {
-            await openTrove(contracts, {
-              musdAmount: amount,
-              ICR: "200",
-              sender: user.wallet,
-            })
-            await provideToSP(contracts, user, amount)
-          }),
-        )
+        const amount = 1n * 10n ** 27n // $ 1 billion
+        await openTrovesAndProvideStability(contracts, users, amount, "200")
 
         await createLiquidationEvent(contracts, amount)
 
