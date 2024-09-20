@@ -319,6 +319,13 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.stabilityPool.getAddress(),
     )
 
+  await contracts.gasPool
+    .connect(users.deployer.wallet)
+    .setAddresses(
+      await contracts.troveManager.getAddress(),
+      await contracts.musd.getAddress(),
+    )
+
   await contracts.sortedTroves
     .connect(users.deployer.wallet)
     .setParams(

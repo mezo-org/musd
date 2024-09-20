@@ -447,8 +447,8 @@ describe("TroveManager in Recovery Mode", () => {
         await updateWalletSnapshot(contracts, bob, "after")
 
         // Balances should remain unchanged
-        expect(alice.musd.before).to.equal(alice.musd.after)
-        expect(bob.musd.before).to.equal(bob.musd.after)
+        expect(alice.musd.after).to.equal(alice.musd.before + to1e18("200"))
+        expect(bob.musd.after).to.equal(bob.musd.before)
       })
 
       it("liquidateTroves(): Liquidating troves at 100 < ICR < 110 with SP deposits correctly impacts their SP deposit and collateral gains", async () => {
@@ -803,7 +803,7 @@ describe("TroveManager in Recovery Mode", () => {
         await setupTroveAndSnapshot(bob, "5000", "400")
         await dropPriceAndLiquidate(contracts, alice)
         expect(await contracts.musd.balanceOf(alice.wallet)).to.equal(
-          to1e18("5000"),
+          to1e18("5200"),
         )
       })
     })
