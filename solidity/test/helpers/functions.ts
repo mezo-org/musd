@@ -515,6 +515,23 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   }
 }
 
+export function openTroves(
+  contracts: Contracts,
+  users: User[],
+  amount: bigint | string,
+  icr: string,
+) {
+  return Promise.all(
+    users.map((user) =>
+      openTrove(contracts, {
+        musdAmount: amount,
+        ICR: icr,
+        sender: user.wallet,
+      }),
+    ),
+  )
+}
+
 export async function createLiquidationEvent(
   contracts: Contracts,
   amount: string | bigint = "2,000",
@@ -550,13 +567,40 @@ export function applyLiquidationFee(collateralAmount: bigint) {
 export async function provideToSP(
   contracts: Contracts,
   user: User,
-  amount: bigint,
+  amount: bigint | string,
 ) {
+  const bigintAmount = typeof amount === "bigint" ? amount : to1e18(amount)
   const stabilityPoolAddress = await contracts.stabilityPool.getAddress()
   await contracts.musd
     .connect(user.wallet)
-    .approve(stabilityPoolAddress, amount, NO_GAS)
-  await contracts.stabilityPool.connect(user.wallet).provideToSP(amount, NO_GAS)
+    .approve(stabilityPoolAddress, bigintAmount, NO_GAS)
+  await contracts.stabilityPool
+    .connect(user.wallet)
+    .provideToSP(bigintAmount, NO_GAS)
+}
+
+export async function openTroveAndProvideStability(
+  contracts: Contracts,
+  user: User,
+  amount: string | bigint,
+  icr: string,
+) {
+  await openTrove(contracts, {
+    musdAmount: amount,
+    ICR: icr,
+    sender: user.wallet,
+  })
+  await provideToSP(contracts, user, amount)
+}
+
+export async function openTrovesAndProvideStability(
+  contracts: Contracts,
+  users: User[],
+  amount: string | bigint,
+  icr: string,
+) {
+  await openTroves(contracts, users, amount, icr)
+  return Promise.all(users.map((user) => provideToSP(contracts, user, amount)))
 }
 
 export function withdrawCollateralGainToTrove(
@@ -566,6 +610,19 @@ export function withdrawCollateralGainToTrove(
   return contracts.stabilityPool
     .connect(user.wallet)
     .withdrawCollateralGainToTrove(ZERO_ADDRESS, ZERO_ADDRESS, NO_GAS)
+}
+
+export function withdrawCollateralGainToTroves(
+  contracts: Contracts,
+  users: User[],
+) {
+  return Promise.all(
+    users.map((user) =>
+      contracts.stabilityPool
+        .connect(user.wallet)
+        .withdrawCollateralGainToTrove(ZERO_ADDRESS, ZERO_ADDRESS, NO_GAS),
+    ),
+  )
 }
 
 /*
