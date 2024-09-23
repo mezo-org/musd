@@ -136,23 +136,15 @@ describe("DefaultPool", () => {
     })
 
     it("decreaseMUSDDebt(): decreases the recorded THUSD balance by the correct amount", async () => {
-      await updateContractsSnapshot(
-        contracts,
-        state,
-        "defaultPool",
-        "before",
-        addresses,
-      )
-
-      const amount = to1e18("100")
-
+      const originalAmount = to1e18("200")
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .increaseMUSDDebt(amount, NO_GAS)
+        .increaseMUSDDebt(originalAmount, NO_GAS)
 
+      const subtractedAmount = to1e18("50")
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .decreaseMUSDDebt(amount, NO_GAS)
+        .decreaseMUSDDebt(subtractedAmount, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -162,8 +154,8 @@ describe("DefaultPool", () => {
         addresses,
       )
 
-      expect(state.defaultPool.debt.before).to.equal(
-        state.defaultPool.debt.after,
+      expect(state.defaultPool.debt.after).to.equal(
+        originalAmount - subtractedAmount,
       )
     })
   })
