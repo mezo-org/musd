@@ -977,10 +977,9 @@ describe("TroveManager in Normal Mode", () => {
     context("Balance changes", () => {
       it("liquidate(): does not alter the liquidated user's token balance", async () => {
         await setupTroves()
-        await updateTroveSnapshot(contracts, alice, "before")
         await dropPriceAndLiquidate(contracts, alice)
         expect(await contracts.musd.balanceOf(alice.wallet)).to.equal(
-          to1e18("5000"),
+          to1e18("5200"),
         )
       })
     })
@@ -1312,9 +1311,9 @@ describe("TroveManager in Normal Mode", () => {
         await updateWalletSnapshot(contracts, alice, "after")
         await updateWalletSnapshot(contracts, bob, "after")
 
-        // Balances should remain unchanged
-        expect(alice.musd.before).to.equal(alice.musd.after)
-        expect(bob.musd.before).to.equal(bob.musd.after)
+        // Balances should remain unchanged except for gas compensation
+        expect(alice.musd.after).to.equal(alice.musd.before + to1e18("200"))
+        expect(bob.musd.after).to.equal(bob.musd.before)
       })
     })
 
