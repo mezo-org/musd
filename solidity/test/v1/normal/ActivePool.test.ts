@@ -112,7 +112,7 @@ describe("ActivePool", () => {
       ).to.equal(amount)
     })
 
-    it("decreaseMUSDDebt(): decreases the recorded THUSD balance by the correct amount", async () => {
+    it("decreaseMUSDDebt(): decreases the recorded MUSD balance by the correct amount", async () => {
       await updateContractsSnapshot(
         contracts,
         state,
