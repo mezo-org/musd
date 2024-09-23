@@ -33,13 +33,13 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
     // --- Fallback function ---
 
-    // This executes when the contract receives ETH
+    // This executes when the contract receives BTC
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsBorrowerOperationsOrDefaultPool();
         require(
             collateralAddress == address(0),
-            "ActivePool: ERC20 collateral needed, not ETH"
+            "ActivePool: ERC20 collateral needed, not BTC"
         );
         collateral += msg.value;
         emit ActivePoolCollateralBalanceUpdated(collateral);

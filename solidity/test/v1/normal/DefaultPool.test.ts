@@ -59,7 +59,7 @@ describe("DefaultPool", () => {
         contracts.defaultPool
           .connect(activePoolSigner)
           .updateCollateralBalance(0, NO_GAS),
-      ).to.be.revertedWith("DefaultPool: ETH collateral needed, not ERC20")
+      ).to.be.revertedWith("DefaultPool: BTC collateral needed, not ERC20")
     })
 
     it.skip("sendCollateralToActivePool(): fails if receiver cannot receive collateral", async () => {

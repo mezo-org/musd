@@ -142,7 +142,7 @@ contract CollSurplusPool is
         _requireCallerIsActivePool();
         require(
             collateralAddress != address(0),
-            "CollSurplusPool: ETH collateral needed, not ERC20"
+            "CollSurplusPool: BTC collateral needed, not ERC20"
         );
         // slither-disable-next-line events-maths
         collateral += _amount;
@@ -155,7 +155,7 @@ contract CollSurplusPool is
         _requireCallerIsActivePool();
         require(
             collateralAddress == address(0),
-            "CollSurplusPool: ERC20 collateral needed, not ETH"
+            "CollSurplusPool: ERC20 collateral needed, not BTC"
         );
         // slither-disable-next-line events-maths
         collateral += msg.value;

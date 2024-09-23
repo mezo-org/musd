@@ -151,7 +151,7 @@ interface IStabilityPool {
 
     /*
      * Fallback function
-     * Only callable by Active Pool, it just accounts for ETH received
+     * Only callable by Active Pool, it just accounts for BTC received
      * receive() external payable;
      */
 

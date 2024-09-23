@@ -30,7 +30,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         _requireCallerIsActivePool();
         require(
             collateralAddress == address(0),
-            "DefaultPool: ERC20 collateral needed, not ETH"
+            "DefaultPool: ERC20 collateral needed, not BTC"
         );
         collateral += msg.value;
         emit DefaultPoolCollateralBalanceUpdated(collateral);
@@ -100,7 +100,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         _requireCallerIsActivePool();
         require(
             collateralAddress != address(0),
-            "DefaultPool: ETH collateral needed, not ERC20"
+            "DefaultPool: BTC collateral needed, not ERC20"
         );
         collateral += _amount;
         emit DefaultPoolCollateralBalanceUpdated(collateral);
