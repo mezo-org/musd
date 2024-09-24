@@ -113,6 +113,12 @@ describe("ActivePool", () => {
     })
 
     it("decreaseMUSDDebt(): decreases the recorded MUSD balance by the correct amount", async () => {
+      const initialAmount = to1e18("100")
+
+      await contracts.activePool
+        .connect(borrowerOperationsSigner)
+        .increaseMUSDDebt(initialAmount, NO_GAS)
+
       await updateContractsSnapshot(
         contracts,
         state,
@@ -121,15 +127,11 @@ describe("ActivePool", () => {
         addresses,
       )
 
-      const amount = to1e18("100")
+      const subtractedAmount = to1e18("75")
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .increaseMUSDDebt(amount, NO_GAS)
-
-      await contracts.activePool
-        .connect(borrowerOperationsSigner)
-        .decreaseMUSDDebt(amount, NO_GAS)
+        .decreaseMUSDDebt(subtractedAmount, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -139,7 +141,9 @@ describe("ActivePool", () => {
         addresses,
       )
 
-      expect(state.activePool.debt.before).to.equal(state.activePool.debt.after)
+      expect(state.activePool.debt.after).to.equal(
+        state.activePool.debt.before - subtractedAmount,
+      )
     })
   })
 
