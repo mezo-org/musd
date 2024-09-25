@@ -142,7 +142,7 @@ contract BorrowerOperations is
         vars.compositeDebt = _getCompositeDebt(vars.netDebt);
         assert(vars.compositeDebt > 0);
 
-        // if ETH overwrite the asset value
+        // if BTC overwrite the asset value
         _assetAmount = getAssetAmount(_assetAmount);
         vars.ICR = LiquityMath._computeCR(
             _assetAmount,
@@ -758,7 +758,7 @@ contract BorrowerOperations is
 
         require(
             msg.value == 0,
-            "BorrowerOperations: ERC20 collateral needed, not ETH"
+            "BorrowerOperations: ERC20 collateral needed, not BTC"
         );
         return _assetAmount;
     }

@@ -17,7 +17,7 @@ contract SendCollateral {
         uint256 _amount
     ) internal {
         if (address(_collateralERC20) == address(0)) {
-            // ETH
+            // BTC
             // slither-disable-next-line low-level-calls
             (bool success, ) = _recipient.call{value: _amount}(""); // re-entry is fine here
             require(success, "Sending BTC failed");
