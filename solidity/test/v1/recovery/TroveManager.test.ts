@@ -93,6 +93,29 @@ describe("TroveManager in Recovery Mode", () => {
     )
   }
 
+  async function setupBatchLiquidation() {
+    await setupTroveAndSnapshot(alice, "5000", "200")
+    await setupTroveAndSnapshot(bob, "5000", "250")
+    await setupTroveAndSnapshot(carol, "5000", "254")
+    await setupTroveAndSnapshot(dennis, "5000", "256")
+    const totalDebtToBeLiquidated =
+      alice.trove.debt.before +
+      bob.trove.debt.before +
+      carol.trove.debt.before +
+      dennis.trove.debt.before
+    await openTrove(contracts, {
+      musdAmount: totalDebtToBeLiquidated + to1e18("5000"),
+      ICR: "260",
+      sender: eric.wallet,
+    })
+
+    await provideToSP(contracts, eric, totalDebtToBeLiquidated)
+
+    const price = await dropPrice(contracts, alice, to1e18("111"))
+
+    return { totalDebtToBeLiquidated, price }
+  }
+
   describe("liquidateTroves()", () => {
     /**
      *
@@ -1053,5 +1076,88 @@ describe("TroveManager in Recovery Mode", () => {
         expect(bob.btc.after).to.equal(bob.btc.before + surplus)
       })
     })
+  })
+
+  describe("batchLiquidateTroves()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("batchLiquidateTroves(): does not liquidate troves with ICR > TCR", async () => {
+        await setupBatchLiquidation()
+        await expect(
+          contracts.troveManager.batchLiquidateTroves([dennis.address]),
+        ).to.be.revertedWith("TroveManager: nothing to liquidate")
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("batchLiquidateTroves(): liquidating a single trove does not return to normal mode if TCR < MCR", async () => {
+        await setupBatchLiquidation()
+        await contracts.troveManager.batchLiquidateTroves([alice.address])
+        expect(await checkRecoveryMode()).to.equal(true)
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {
+      it("batchLiquidateTroves(): troves with ICR > MCR can be liquidated", async () => {
+        await setupBatchLiquidation()
+        await contracts.troveManager.batchLiquidateTroves([
+          alice.address,
+          bob.address,
+          carol.address,
+        ])
+
+        expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(
+          true,
+        )
+        expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
+          true,
+        )
+      })
+    })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
   })
 })

@@ -40,7 +40,6 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import { TroveManagerTester } from "../../../typechain"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
