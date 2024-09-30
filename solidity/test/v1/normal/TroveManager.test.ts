@@ -27,7 +27,7 @@ import {
   setBaseRate,
   TestingAddresses,
   TestSetup,
-  updateWalletSnapshot,
+  transferMUSD,
   updateContractsSnapshot,
   updatePCVSnapshot,
   updatePendingSnapshot,
@@ -36,8 +36,8 @@ import {
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateTroveSnapshots,
+  updateWalletSnapshot,
   User,
-  transferMUSD,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import { TroveManagerTester } from "../../../typechain"
@@ -1990,9 +1990,8 @@ describe("TroveManager in Normal Mode", () => {
         const attemptedRedemptionAmount = totalSupply / 10n
         const price = await contracts.priceFeed.fetchPrice()
         const collNeeded = to1e18(attemptedRedemptionAmount) / price
-        const fee = await (
-          contracts.troveManager as TroveManagerTester
-        ).callGetRedemptionFee(collNeeded)
+        const fee =
+          await contracts.troveManager.getRedemptionFeeWithDecay(collNeeded)
         const feePercentage = (to1e18(fee) / collNeeded) * 1000n
 
         // Convert the fee to a number to make it easier to work with
@@ -2634,9 +2633,8 @@ describe("TroveManager in Normal Mode", () => {
         const attemptedRedemptionAmount = totalSupply / 10n
         const price = await contracts.priceFeed.fetchPrice()
         const collNeeded = to1e18(attemptedRedemptionAmount) / price
-        const fee = await (
-          contracts.troveManager as TroveManagerTester
-        ).callGetRedemptionFee(collNeeded)
+        const fee =
+          await contracts.troveManager.getRedemptionFeeWithDecay(collNeeded)
         const baseRate = await contracts.troveManager.baseRate()
         const feePercentage = (to1e18(fee) / collNeeded) * 1000n + baseRate
         const feePercentageNumber = Number(feePercentage) / Number(1e18)
