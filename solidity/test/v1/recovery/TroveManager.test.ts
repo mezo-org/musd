@@ -207,34 +207,32 @@ describe("TroveManager in Recovery Mode", () => {
      *
      */
     context("Individual Troves", () => {
-      it.skip("liquidateTroves(): With all ICRs > 110%, Liquidates Troves until system leaves recovery mode", async () => {
-        // TODO This test involves a bit of algebra to determine the exact ICRs that will be achieved
+      it("liquidateTroves(): With all ICRs > 110%, Liquidates Troves until system leaves recovery mode", async () => {
         // Open 5 troves
         await setupTroveAndSnapshot(bob, "5000", "240")
         await setupTroveAndSnapshot(carol, "5000", "240")
-        await setupTroveAndSnapshot(dennis, "5000", "230")
-        await setupTroveAndSnapshot(eric, "5000", "240")
-        await setupTroveAndSnapshot(frank, "5000", "240")
+        await setupTroveAndSnapshot(dennis, "5000", "232")
+        await setupTroveAndSnapshot(eric, "5000", "230")
+        await setupTroveAndSnapshot(frank, "5000", "228")
 
-        // Open another trove for Eric that contains the total debt of the other troves plus min debt
-        const liquidationAmount =
-          bob.trove.debt.before +
-          carol.trove.debt.before +
+        // Open a trove for Alice that contains the debt of 3 other troves plus min debt
+        const amount =
           dennis.trove.debt.before +
           eric.trove.debt.before +
           frank.trove.debt.before
 
         await openTrove(contracts, {
-          musdAmount: liquidationAmount + to1e18("1800"),
+          musdAmount: amount + to1e18("1800"),
           sender: alice.wallet,
           ICR: "400",
         })
 
         // Alice provides the total debt to the SP
-        await provideToSP(contracts, alice, liquidationAmount)
+        await provideToSP(contracts, alice, amount)
 
         // Drop the price to put the system into recovery mode (TCR < 150%)
-        await dropPrice(contracts, dennis, to1e18("111"))
+        // Since frank has the lowest ICR, everyone else should have ICR > 111%
+        await dropPrice(contracts, frank, to1e18("111"))
         expect(await checkRecoveryMode()).to.equal(true)
 
         // Liquidate Troves until the system leaves recovery mode
@@ -243,8 +241,15 @@ describe("TroveManager in Recovery Mode", () => {
         // Check that we are no longer in recovery mode
         expect(await checkRecoveryMode()).to.equal(false)
 
-        // Check status of troves
+        // Only frank should be liquidated, everyone else is still active
         expect(await checkTroveActive(contracts, alice)).to.equal(true)
+        expect(await checkTroveActive(contracts, bob)).to.equal(true)
+        expect(await checkTroveActive(contracts, carol)).to.equal(true)
+        expect(await checkTroveActive(contracts, dennis)).to.equal(true)
+        expect(await checkTroveActive(contracts, eric)).to.equal(true)
+        expect(await checkTroveClosedByLiquidation(contracts, frank)).to.equal(
+          true,
+        )
       })
 
       it("liquidateTroves(): Liquidates Troves until 1) system has left recovery mode AND 2) it reaches a Trove with ICR >= 110%", async () => {
