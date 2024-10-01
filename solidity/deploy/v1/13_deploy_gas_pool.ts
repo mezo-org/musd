@@ -1,21 +1,21 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../../helpers/deploy-helpers.ts"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("MockAggregator")
+  const deployment = await deployments.getOrNull("GasPool")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using MockAggregator at ${deployment.address}`)
+    log(`Using GasPool at ${deployment.address}`)
   } else {
-    log("Deploying MockAggregator contract...")
+    log("Deploying GasPool contract...")
 
-    await deployments.deploy("MockAggregator", {
-      contract: "MockAggregator",
-      args: ["18"],
+    await deployments.deploy("GasPool", {
+      contract: "contracts/v1/GasPool.sol:GasPool",
+      args: [],
       from: deployer,
       log: true,
       waitConfirmations: waitConfirmationsNumber(hre),
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["MockAggregator"]
+func.tags = ["GasPool"]

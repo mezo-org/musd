@@ -1,20 +1,20 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../../helpers/deploy-helpers.ts"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("SortedTroves")
+  const deployment = await deployments.getOrNull("PriceFeed")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using SortedTroves at ${deployment.address}`)
+    log(`Using PriceFeed at ${deployment.address}`)
   } else {
-    log("Deploying SortedTroves contract...")
+    log("Deploying PriceFeed contract...")
 
-    await deployments.deploy("SortedTroves", {
-      contract: "SortedTroves",
+    await deployments.deploy("PriceFeed", {
+      contract: "contracts/v1/PriceFeed.sol:PriceFeed",
       args: [],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["SortedTroves"]
+func.tags = ["PriceFeed"]

@@ -1,20 +1,20 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../../helpers/deploy-helpers.ts"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("BorrowerOperations")
+  const deployment = await deployments.getOrNull("StabilityPool")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using BorrowerOperations at ${deployment.address}`)
+    log(`Using StabilityPool at ${deployment.address}`)
   } else {
-    log("Deploying BorrowerOperations contract...")
+    log("Deploying StabilityPool contract...")
 
-    await deployments.deploy("BorrowerOperations", {
-      contract: "BorrowerOperations",
+    await deployments.deploy("StabilityPool", {
+      contract: "contracts/v1/StabilityPool.sol:StabilityPool",
       args: [],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["BorrowerOperations"]
+func.tags = ["StabilityPool"]

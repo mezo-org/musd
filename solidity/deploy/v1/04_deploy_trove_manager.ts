@@ -1,6 +1,6 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../../helpers/deploy-helpers.ts"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying TroveManager contract...")
 
     await deployments.deploy("TroveManager", {
-      contract: "TroveManager",
+      contract: "contracts/v1/TroveManager.sol:TroveManager",
       args: [],
       from: deployer,
       log: true,
@@ -29,7 +29,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying TroveManagerTester contract...")
 
     await deployments.deploy("TroveManagerTester", {
-      contract: "TroveManagerTester",
+      contract: "contracts/v1/tests/TroveManagerTester.sol:TroveManagerTester",
       args: [],
       from: deployer,
       log: true,

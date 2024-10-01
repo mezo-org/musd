@@ -1,21 +1,21 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../../helpers/deploy-helpers.ts"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("GasPool")
+  const deployment = await deployments.getOrNull("PCV")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using GasPool at ${deployment.address}`)
+    log(`Using PCV at ${deployment.address}`)
   } else {
-    log("Deploying GasPool contract...")
+    log("Deploying PCV contract...")
 
-    await deployments.deploy("GasPool", {
-      contract: "GasPool",
-      args: [],
+    await deployments.deploy("PCV", {
+      contract: "contracts/v1/PCV.sol:PCV",
+      args: [7200],
       from: deployer,
       log: true,
       waitConfirmations: waitConfirmationsNumber(hre),
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["GasPool"]
+func.tags = ["PCV"]

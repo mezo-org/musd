@@ -23,7 +23,7 @@ describe("PriceFeed in Normal Mode", () => {
     args: string[],
   ): Promise<MockAggregator> {
     await deployments.deploy(name, {
-      contract: name,
+      contract: `contracts/v1/tests/${name}.sol:${name}`,
       args,
       from: deployer.wallet.address,
       log: true,

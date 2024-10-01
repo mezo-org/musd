@@ -1,7 +1,7 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import waitForTransaction from "../helpers/deploy-helpers"
-import { TokenAbility } from "../types"
+import waitForTransaction from "../../helpers/deploy-helpers.ts"
+import { TokenAbility } from "../../types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, network, getNamedAccounts } = hre
