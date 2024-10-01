@@ -3,10 +3,10 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/IReceiveApproval.sol";
-import "../interfaces/IApproveAndCall.sol";
+import "../interfaces/IReceiveApprovalV2.sol";
+import "../interfaces/IApproveAndCallV2.sol";
 
-contract MockERC20 is ERC20, IApproveAndCall, Ownable {
+contract MockERC20 is ERC20, IApproveAndCallV2, Ownable {
     constructor(
         string memory name,
         string memory symbol,
@@ -25,7 +25,7 @@ contract MockERC20 is ERC20, IApproveAndCall, Ownable {
         bytes memory extraData
     ) external returns (bool) {
         if (approve(spender, amount)) {
-            IReceiveApproval(spender).receiveApproval(
+            IReceiveApprovalV2(spender).receiveApproval(
                 msg.sender,
                 amount,
                 address(this),

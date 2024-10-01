@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import "../interfaces/ChainlinkAggregatorV3Interface.sol";
+import "../interfaces/ChainlinkAggregatorV3InterfaceV2.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
+contract MockAggregator is ChainlinkAggregatorV3InterfaceV2, Ownable {
     uint256 private _price;
     uint8 private immutable precision;
 

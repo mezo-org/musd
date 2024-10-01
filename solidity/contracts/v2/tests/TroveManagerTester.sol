@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.24;
 
-import "../TroveManager.sol";
+import "../TroveManagerV2.sol";
 
 /* Tester contract inherits from TroveManager, and provides external functions
 for testing the parent's internal functions. */
 
-contract TroveManagerTester is TroveManager {
+contract TroveManagerTester is TroveManagerV2 {
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
         assert(baseRate <= DECIMAL_PRECISION);
@@ -45,7 +45,7 @@ contract TroveManagerTester is TroveManager {
         uint256 _debt,
         uint256 _price
     ) external pure returns (uint) {
-        return LiquityMath._computeCR(_coll, _debt, _price);
+        return LiquityMathV2._computeCR(_coll, _debt, _price);
     }
 
     function getCollGasCompensation(
