@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("DefaultPool")
+  const deployment = await deployments.getOrNull("DefaultPoolV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using DefaultPool at ${deployment.address}`)
+    log(`Using DefaultPoolV2 at ${deployment.address}`)
   } else {
-    log("Deploying DefaultPool contract...")
+    log("Deploying DefaultPoolV2 contract...")
 
-    await deployments.deploy("DefaultPool", {
-      contract: "contracts/v1/DefaultPool.sol:DefaultPool",
+    await deployments.deploy("DefaultPoolV2", {
+      contract: "contracts/v2/DefaultPoolV2.sol:DefaultPoolV2",
       args: [],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["DefaultPool"]
+func.tags = ["DefaultPoolV2"]

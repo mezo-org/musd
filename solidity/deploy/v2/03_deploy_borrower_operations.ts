@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("BorrowerOperations")
+  const deployment = await deployments.getOrNull("BorrowerOperationsV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using BorrowerOperations at ${deployment.address}`)
+    log(`Using BorrowerOperationsV2 at ${deployment.address}`)
   } else {
-    log("Deploying BorrowerOperations contract...")
+    log("Deploying BorrowerOperationsV2 contract...")
 
-    await deployments.deploy("BorrowerOperations", {
-      contract: "contracts/v1/BorrowerOperations.sol:BorrowerOperations",
+    await deployments.deploy("BorrowerOperationsV2", {
+      contract: "contracts/v2/BorrowerOperationsV2.sol:BorrowerOperationsV2",
       args: [],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["BorrowerOperations"]
+func.tags = ["BorrowerOperationsV2"]

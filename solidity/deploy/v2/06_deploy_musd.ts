@@ -12,9 +12,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log(`Using MUSD at ${deployment.address}`)
   } else {
     log("Deploying MUSD contract...")
-    const borrowerOperations = await deployments.get("BorrowerOperations")
-    const stabilityPool = await deployments.get("StabilityPool")
-    const troveManager = await deployments.get("TroveManagerTester")
+    const borrowerOperations = await deployments.get("BorrowerOperationsV2")
+    const stabilityPool = await deployments.get("StabilityPoolV2")
+    const troveManager = await deployments.get("TroveManagerTesterV2")
     const ZERO_ADDRESS = `0x${"0".repeat(40)}`
     const delay = 90 * 24 * 60 * 60 // 90 days in seconds
 
@@ -36,8 +36,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       waitConfirmations: waitConfirmationsNumber(hre),
     })
 
-    await deployments.deploy("MUSDTester", {
-      contract: "contracts/v1/tests/MUSDTester.sol:MUSDTester",
+    await deployments.deploy("MUSDTesterV2", {
+      contract: "contracts/v2/tests/MUSDTesterV2.sol:MUSDTesterV2",
       args: [
         troveManager.address,
         stabilityPool.address,
@@ -54,4 +54,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MUSD"]
-func.dependencies = ["BorrowerOperations", "TroveManager", "StabilityPool"]
+func.dependencies = [
+  "BorrowerOperationsV2",
+  "TroveManagerV2",
+  "StabilityPoolV2",
+]

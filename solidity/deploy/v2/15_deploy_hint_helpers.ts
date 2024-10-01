@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("HintHelpers")
+  const deployment = await deployments.getOrNull("HintHelpersV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using HintHelpers at ${deployment.address}`)
+    log(`Using HintHelpersV2 at ${deployment.address}`)
   } else {
-    log("Deploying HintHelpers contract...")
+    log("Deploying HintHelpersV2 contract...")
 
-    await deployments.deploy("HintHelpers", {
-      contract: "contracts/v1/HintHelpers.sol:HintHelpers",
+    await deployments.deploy("HintHelpersV2", {
+      contract: "contracts/v2/HintHelpersV2.sol:HintHelpersV2",
       args: [],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["HintHelpers"]
+func.tags = ["HintHelpersV2"]

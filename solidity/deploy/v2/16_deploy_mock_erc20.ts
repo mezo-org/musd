@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("MockERC20")
+  const deployment = await deployments.getOrNull("MockERC20V2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using MockERC20 at ${deployment.address}`)
+    log(`Using MockERC20V2 at ${deployment.address}`)
   } else {
-    log("Deploying MockERC20 contract...")
+    log("Deploying MockERC20V2 contract...")
 
     await deployments.deploy("MockERC20", {
-      contract: "contracts/v1/tests/MockERC20.sol:MockERC20",
+      contract: "contracts/v2/tests/MockERC20V2.sol:MockERC20V2",
       args: ["ERC Test", "TST", 100000],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["MockERC20"]
+func.tags = ["MockERC20V2"]
