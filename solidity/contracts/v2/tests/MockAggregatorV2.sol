@@ -5,7 +5,7 @@ import "../interfaces/ChainlinkAggregatorV3InterfaceV2.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MockAggregator is ChainlinkAggregatorV3InterfaceV2, Ownable {
+contract MockAggregatorV2 is ChainlinkAggregatorV3InterfaceV2, Ownable {
     uint256 private _price;
     uint8 private immutable precision;
 
