@@ -77,7 +77,7 @@ describe("SortedTroves", () => {
       })
 
       it("contains(): returns false for addresses that opened and then closed a trove", async () => {
-        // Need to open two troves so that we can close Alice's. We cant close the clast trove.
+        // Need to open two troves so that we can close Alice's. We can't close the last trove.
         await openTroves(contracts, [alice, bob], "2,000", "200")
 
         // Give Alice extra MUSD to pay back fees.
@@ -91,7 +91,7 @@ describe("SortedTroves", () => {
       })
 
       it("contains(): returns true for addresses that opened, closed and then re-opened a trove", async () => {
-        // Need to open two troves so that we can close Alice's. We cant close the clast trove.
+        // Need to open two troves so that we can close Alice's. We can't close the last trove.
         await openTroves(contracts, [alice, bob], "2,000", "200")
 
         // Give Alice extra MUSD to pay back fees.
@@ -121,7 +121,7 @@ describe("SortedTroves", () => {
         )
       })
 
-      it("contains(): true when list size is 1 and the trove the only one in system", async () => {
+      it("contains(): true when list size is 1 and the trove is the only one in system", async () => {
         await openTrove(contracts, {
           musdAmount: "3,000",
           sender: whale.wallet,
