@@ -17,11 +17,11 @@ import "./interfaces/IStabilityPoolV2.sol";
 import "./interfaces/ITroveManagerV2.sol";
 
 contract StabilityPoolV2 is
-LiquityBaseV2,
+    LiquityBaseV2,
     Ownable,
-CheckContractV2,
-SendCollateralV2,
-IStabilityPoolV2
+    CheckContractV2,
+    SendCollateralV2,
+    IStabilityPoolV2
 {
     // --- Type Declarations ---
     struct Snapshots {

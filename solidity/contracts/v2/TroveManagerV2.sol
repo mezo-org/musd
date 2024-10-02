@@ -17,7 +17,12 @@ import "./interfaces/ISortedTrovesV2.sol";
 import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/IPCVV2.sol";
 
-contract TroveManagerV2 is LiquityBaseV2, Ownable, CheckContractV2, ITroveManagerV2 {
+contract TroveManagerV2 is
+    LiquityBaseV2,
+    Ownable,
+    CheckContractV2,
+    ITroveManagerV2
+{
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidateInNormalMode,
@@ -151,8 +156,8 @@ contract TroveManagerV2 is LiquityBaseV2, Ownable, CheckContractV2, ITroveManage
 
     uint256 public baseRate;
 
-    // The current interest rate in basis points
-    uint256 public interestRateBps;
+    // The current interest rate in basis points.
+    uint256 public constant interestRateBps = 0; // constant for now until we add a way to change it
 
     // The timestamp of the latest fee operation (redemption or new MUSD issuance)
     uint256 public lastFeeOperationTime;

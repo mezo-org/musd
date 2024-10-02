@@ -16,7 +16,12 @@ import "./interfaces/IActivePoolV2.sol";
  * When a trove makes an operation that applies its pending collateral and MUSD debt, its pending collateral and MUSD debt is moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPoolV2 is Ownable, CheckContractV2, SendCollateralV2, IDefaultPoolV2 {
+contract DefaultPoolV2 is
+    Ownable,
+    CheckContractV2,
+    SendCollateralV2,
+    IDefaultPoolV2
+{
     address public activePoolAddress;
     address public collateralAddress;
     address public troveManagerAddress;

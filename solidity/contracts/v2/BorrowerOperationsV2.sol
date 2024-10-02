@@ -14,11 +14,11 @@ import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/IPCVV2.sol";
 
 contract BorrowerOperationsV2 is
-LiquityBaseV2,
+    LiquityBaseV2,
     Ownable,
-CheckContractV2,
-SendCollateralV2,
-IBorrowerOperationsV2
+    CheckContractV2,
+    SendCollateralV2,
+    IBorrowerOperationsV2
 {
     /* --- Variable container structs  ---
 
@@ -462,7 +462,8 @@ IBorrowerOperationsV2
                 (Ownable(_activePoolAddress).owner() != address(0) ||
                     activePool.collateralAddress() == _collateralAddress) &&
                 (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPoolV2(stabilityPoolAddress).collateralAddress() ==
+                    IStabilityPoolV2(stabilityPoolAddress)
+                        .collateralAddress() ==
                     _collateralAddress) &&
                 (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
                     collSurplusPool.collateralAddress() ==
@@ -562,7 +563,11 @@ IBorrowerOperationsV2
         vars.coll = contractsCache.troveManager.getTroveColl(_borrower);
 
         // Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
-        vars.oldICR = LiquityMathV2._computeCR(vars.coll, vars.debt, vars.price);
+        vars.oldICR = LiquityMathV2._computeCR(
+            vars.coll,
+            vars.debt,
+            vars.price
+        );
         vars.newICR = _getNewICRFromTroveChange(
             vars.coll,
             vars.debt,

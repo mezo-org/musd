@@ -11,9 +11,9 @@ import "./interfaces/IActivePoolV2.sol";
 
 contract CollSurplusPoolV2 is
     Ownable,
-CheckContractV2,
-SendCollateralV2,
-ICollSurplusPoolV2
+    CheckContractV2,
+    SendCollateralV2,
+    ICollSurplusPoolV2
 {
     string public constant NAME = "CollSurplusPool";
 
@@ -28,6 +28,19 @@ ICollSurplusPoolV2
     mapping(address => uint) internal balances;
 
     constructor() Ownable(msg.sender) {}
+
+    // --- Fallback function ---
+
+    // solhint-disable no-complex-fallback
+    receive() external payable {
+        _requireCallerIsActivePool();
+        require(
+            collateralAddress == address(0),
+            "CollSurplusPool: ERC20 collateral needed, not BTC"
+        );
+        // slither-disable-next-line events-maths
+        collateral += msg.value;
+    }
 
     // --- Contract setters ---
 
@@ -102,6 +115,17 @@ ICollSurplusPoolV2
         sendCollateral(IERC20(collateralAddress), _account, claimableColl);
     }
 
+    // When ERC20 token collateral is received this function needs to be called
+    function updateCollateralBalance(uint256 _amount) external override {
+        _requireCallerIsActivePool();
+        require(
+            collateralAddress != address(0),
+            "CollSurplusPool: BTC collateral needed, not ERC20"
+        );
+        // slither-disable-next-line events-maths
+        collateral += _amount;
+    }
+
     function getCollateral(
         address _account
     ) external view override returns (uint) {
@@ -135,29 +159,5 @@ ICollSurplusPoolV2
             msg.sender == activePoolAddress,
             "CollSurplusPool: Caller is not Active Pool"
         );
-    }
-
-    // When ERC20 token collateral is received this function needs to be called
-    function updateCollateralBalance(uint256 _amount) external override {
-        _requireCallerIsActivePool();
-        require(
-            collateralAddress != address(0),
-            "CollSurplusPool: BTC collateral needed, not ERC20"
-        );
-        // slither-disable-next-line events-maths
-        collateral += _amount;
-    }
-
-    // --- Fallback function ---
-
-    // solhint-disable no-complex-fallback
-    receive() external payable {
-        _requireCallerIsActivePool();
-        require(
-            collateralAddress == address(0),
-            "CollSurplusPool: ERC20 collateral needed, not BTC"
-        );
-        // slither-disable-next-line events-maths
-        collateral += msg.value;
     }
 }

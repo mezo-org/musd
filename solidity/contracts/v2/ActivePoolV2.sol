@@ -19,7 +19,12 @@ import "./interfaces/IStabilityPoolV2.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePoolV2 is Ownable, CheckContractV2, SendCollateralV2, IActivePoolV2 {
+contract ActivePoolV2 is
+    Ownable,
+    CheckContractV2,
+    SendCollateralV2,
+    IActivePoolV2
+{
     address public borrowerOperationsAddress;
     address public collateralAddress;
     address public collSurplusPoolAddress;
@@ -89,7 +94,8 @@ contract ActivePoolV2 is Ownable, CheckContractV2, SendCollateralV2, IActivePool
                     IDefaultPoolV2(_defaultPoolAddress).collateralAddress() ==
                     _collateralAddress) &&
                 (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPoolV2(stabilityPoolAddress).collateralAddress() ==
+                    IStabilityPoolV2(stabilityPoolAddress)
+                        .collateralAddress() ==
                     _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"
         );
