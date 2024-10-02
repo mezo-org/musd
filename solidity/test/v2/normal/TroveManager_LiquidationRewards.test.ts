@@ -31,7 +31,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts } =
-      await setupTests())
+      await setupTests("v2"))
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {

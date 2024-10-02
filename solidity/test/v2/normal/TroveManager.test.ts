@@ -14,7 +14,7 @@ import {
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
-  fixture,
+  fixtureV2,
   getAddresses,
   getAllEventsByName,
   getDebtAndCollFromTroveUpdatedEvents,
@@ -203,7 +203,7 @@ describe("TroveManager in Normal Mode", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
+    cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state
@@ -3012,6 +3012,10 @@ describe("TroveManager in Normal Mode", () => {
       expect(
         await contracts.troveManager.hasPendingRewards(alice.address),
       ).to.equal(false)
+    })
+
+    it("getInterestRate(): Returns the interest rate", async () => {
+      expect(await contracts.troveManager.interestRateBps()).to.equal(0)
     })
   })
 })

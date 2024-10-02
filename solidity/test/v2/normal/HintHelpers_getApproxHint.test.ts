@@ -18,7 +18,7 @@ describe("HintHelpers", () => {
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts } =
-      await setupTests())
+      await setupTests("v2"))
   })
 
   async function setupTroves() {

@@ -3,37 +3,37 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import {
-  NO_GAS,
   CheckPoint,
+  connectContracts,
   Contracts,
   ContractsState,
-  TestSetup,
-  TestingAddresses,
-  User,
-  connectContracts,
   createLiquidationEvent,
-  fixture,
+  dropPrice,
+  fixtureV2,
   getAddresses,
   getEmittedLiquidationValues,
+  NO_GAS,
   openTrove,
   openTroveAndProvideStability,
+  openTroves,
   openTrovesAndProvideStability,
   provideToSP,
+  TestingAddresses,
+  TestSetup,
+  transferMUSD,
   updateContractsSnapshot,
-  updateTroveManagerSnapshot,
-  updateTroveSnapshot,
-  updateTroveSnapshots,
+  updatePendingSnapshot,
+  updatePendingSnapshots,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
+  updateTroveManagerSnapshot,
+  updateTroveSnapshot,
+  updateTroveSnapshots,
   updateWalletSnapshot,
-  dropPrice,
+  User,
   withdrawCollateralGainToTrove,
   withdrawCollateralGainToTroves,
-  transferMUSD,
-  openTroves,
-  updatePendingSnapshot,
-  updatePendingSnapshots,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
@@ -54,7 +54,7 @@ describe("StabilityPool in Normal Mode", () => {
   const pools: Pool[] = ["activePool", "defaultPool"]
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
+    cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

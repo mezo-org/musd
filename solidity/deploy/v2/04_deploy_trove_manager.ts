@@ -22,14 +22,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     })
   }
 
-  deployment = await deployments.getOrNull("TroveManagerTester")
+  deployment = await deployments.getOrNull("TroveManagerTesterV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using TroveManagerTester at ${deployment.address}`)
+    log(`Using TroveManagerTesterV2 at ${deployment.address}`)
   } else {
-    log("Deploying TroveManagerTester contract...")
+    log("Deploying TroveManagerTesterV2 contract...")
 
-    await deployments.deploy("TroveManagerTester", {
-      contract: "contracts/v1/tests/TroveManagerTester.sol:TroveManagerTester",
+    await deployments.deploy("TroveManagerTesterV2", {
+      contract:
+        "contracts/v2/tests/TroveManagerTesterV2.sol:TroveManagerTesterV2",
       args: [],
       from: deployer,
       log: true,

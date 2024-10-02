@@ -3,7 +3,7 @@ import { expect } from "chai"
 import {
   connectContracts,
   Contracts,
-  fixture,
+  fixtureV2,
   openTrove,
   openTroves,
   TestSetup,
@@ -23,7 +23,7 @@ describe("SortedTroves", () => {
   let testSetup: TestSetup
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
+    cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
 

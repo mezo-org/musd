@@ -1,32 +1,32 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { expect, assert } from "chai"
+import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
-  Contracts,
-  TestSetup,
-  TestingAddresses,
-  User,
   addColl,
   connectContracts,
-  fixture,
+  Contracts,
+  createLiquidationEvent,
   fastForwardTime,
+  fixtureV2,
+  getAddresses,
   getEventArgByName,
   getLatestBlockTimestamp,
   getTCR,
   getTroveEntireColl,
   getTroveEntireDebt,
-  getAddresses,
+  NO_GAS,
   openTrove,
   removeMintlist,
-  updateTroveSnapshot,
-  updateRewardSnapshot,
-  updatePendingSnapshot,
-  updateContractsSnapshot,
-  createLiquidationEvent,
-  updateTroveManagerSnapshot,
-  NO_GAS,
   setBaseRate,
+  TestingAddresses,
+  TestSetup,
+  updateContractsSnapshot,
+  updatePendingSnapshot,
+  updateRewardSnapshot,
+  updateTroveManagerSnapshot,
+  updateTroveSnapshot,
   updateWalletSnapshot,
+  User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
@@ -117,7 +117,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixture)
+    cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

@@ -151,6 +151,9 @@ contract TroveManagerV2 is LiquityBaseV2, Ownable, CheckContractV2, ITroveManage
 
     uint256 public baseRate;
 
+    // The current interest rate in basis points
+    uint256 public interestRateBps;
+
     // The timestamp of the latest fee operation (redemption or new MUSD issuance)
     uint256 public lastFeeOperationTime;
 

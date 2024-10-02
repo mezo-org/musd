@@ -6,7 +6,7 @@ import {
   connectContracts,
   Contracts,
   ContractsState,
-  fixture,
+  fixtureV2,
   getAddresses,
   NO_GAS,
   TestingAddresses,
@@ -25,7 +25,7 @@ describe("ActivePool", () => {
   let borrowerOperationsSigner: HardhatEthersSigner
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
+    cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

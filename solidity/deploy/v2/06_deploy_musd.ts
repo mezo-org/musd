@@ -8,7 +8,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const deployment = await deployments.getOrNull("MUSD")
-  if (deployment && helpers.address.isValid(deployment.address)) {
+  const musdTesterDeployment = await deployments.getOrNull("MUSDTesterV2")
+  if (
+    deployment &&
+    musdTesterDeployment &&
+    helpers.address.isValid(deployment.address)
+  ) {
     log(`Using MUSD at ${deployment.address}`)
   } else {
     log("Deploying MUSD contract...")
