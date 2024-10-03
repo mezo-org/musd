@@ -14,7 +14,5 @@ interface IDefaultPoolV2 is IPoolV2 {
     // --- Functions ---
     function sendCollateralToActivePool(uint256 _amount) external;
 
-    function updateCollateralBalance(uint256 _amount) external;
-
     function collateralAddress() external view returns (address);
 }

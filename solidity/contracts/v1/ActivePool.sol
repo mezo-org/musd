@@ -124,29 +124,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         collateral -= _amount;
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
-
         sendCollateral(IERC20(collateralAddress), _account, _amount);
-        if (collateralAddress == address(0)) {
-            return;
-        }
-        if (_account == defaultPoolAddress) {
-            IDefaultPool(_account).updateCollateralBalance(_amount);
-        } else if (_account == collSurplusPoolAddress) {
-            ICollSurplusPool(_account).updateCollateralBalance(_amount);
-        } else if (_account == stabilityPoolAddress) {
-            IStabilityPool(_account).updateCollateralBalance(_amount);
-        }
-    }
-
-    // When ERC20 token collateral is received this function needs to be called
-    function updateCollateralBalance(uint256 _amount) external override {
-        _requireCallerIsBorrowerOperationsOrDefaultPool();
-        require(
-            collateralAddress != address(0),
-            "ActivePool: BTC collateral needed, not ERC20"
-        );
-        collateral += _amount;
-        emit ActivePoolCollateralBalanceUpdated(collateral);
     }
 
     /*

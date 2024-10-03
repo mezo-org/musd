@@ -710,11 +710,6 @@ contract BorrowerOperationsV2 is
             address(_activePool),
             _amount
         );
-
-        if (collateralAddress == address(0)) {
-            return;
-        }
-        _activePool.updateCollateralBalance(_amount);
     }
 
     // Update trove's coll and debt based on whether they increase or decrease

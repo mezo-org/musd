@@ -18,7 +18,5 @@ interface IActivePoolV2 is IPoolV2 {
     // --- Functions ---
     function sendCollateral(address _account, uint256 _amount) external;
 
-    function updateCollateralBalance(uint256 _amount) external;
-
     function collateralAddress() external view returns (address);
 }
