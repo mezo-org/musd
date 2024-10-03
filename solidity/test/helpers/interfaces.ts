@@ -16,6 +16,7 @@ import {
   SortedTroves,
   StabilityPool,
   TroveManagerTester,
+  TroveManagerTesterV2,
 } from "../../typechain"
 
 export interface TestingAddresses {
@@ -103,7 +104,7 @@ export interface Contracts {
   priceFeed: PriceFeed
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
-  troveManager: TroveManagerTester
+  troveManager: TroveManagerTester & TroveManagerTesterV2
 }
 
 export interface User {

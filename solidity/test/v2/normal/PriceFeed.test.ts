@@ -5,14 +5,14 @@ import { to1e18 } from "../../utils"
 
 import {
   Contracts,
+  fixtureV2,
+  getDeployedContract,
   TestSetup,
   User,
-  fixture,
-  getDeployedContract,
 } from "../../helpers"
 import { MockAggregator } from "../../../typechain"
 
-describe("PriceFeed in Normal Mode", () => {
+describe("PriceFeedV2 in Normal Mode", () => {
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
@@ -23,7 +23,7 @@ describe("PriceFeed in Normal Mode", () => {
     args: string[],
   ): Promise<MockAggregator> {
     await deployments.deploy(name, {
-      contract: `contracts/v1/tests/${name}.sol:${name}`,
+      contract: `contracts/v2/tests/${name}.sol:${name}`,
       args,
       from: deployer.wallet.address,
       log: true,
@@ -34,7 +34,7 @@ describe("PriceFeed in Normal Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixture)
+    cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     // users
@@ -43,7 +43,7 @@ describe("PriceFeed in Normal Mode", () => {
 
   it("Handles an 8 decimal oracle", async () => {
     const mockAggregator: MockAggregator = await deployAndGetContract(
-      "MockAggregator",
+      "MockAggregatorV2",
       ["8"],
     )
 

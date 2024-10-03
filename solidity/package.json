@@ -16,8 +16,12 @@
     "lint:config:fix": "prettier --write '**/*.@(json|md)'",
     "prepare:env": "cp -n .env.example .env || true",
     "test": "npm run prepare:env && hardhat test",
+    "test:v1": "npm run prepare:env && hardhat test --grep \"^(?!.*V2).*\"",
+    "test:v2": "npm run prepare:env && hardhat test --grep \"V2\"",
     "node": "hardhat node",
     "deploy": "npm run prepare:env && hardhat deploy",
+    "deploy:v1": "npm run prepare:env && hardhat deploy --deploy-scripts deploy/v1",
+    "deploy:v2": "npm run prepare:env && hardhat deploy --deploy-scripts deploy/v2",
     "coverage": "hardhat coverage"
   },
   "devDependencies": {

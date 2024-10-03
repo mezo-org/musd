@@ -3,17 +3,17 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./dependencies/CheckContract.sol";
-import "./dependencies/SendCollateral.sol";
-import "./interfaces/ICollSurplusPool.sol";
-import "./interfaces/IBorrowerOperations.sol";
-import "./interfaces/IActivePool.sol";
+import "./dependencies/CheckContractV2.sol";
+import "./dependencies/SendCollateralV2.sol";
+import "./interfaces/ICollSurplusPoolV2.sol";
+import "./interfaces/IBorrowerOperationsV2.sol";
+import "./interfaces/IActivePoolV2.sol";
 
-contract CollSurplusPool is
+contract CollSurplusPoolV2 is
     Ownable,
-    CheckContract,
-    SendCollateral,
-    ICollSurplusPool
+    CheckContractV2,
+    SendCollateralV2,
+    ICollSurplusPoolV2
 {
     string public constant NAME = "CollSurplusPool";
 
@@ -67,10 +67,10 @@ contract CollSurplusPool is
 
         require(
             (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePool(_activePoolAddress).collateralAddress() ==
+                IActivePoolV2(_activePoolAddress).collateralAddress() ==
                 _collateralAddress) &&
                 (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                    IBorrowerOperations(_borrowerOperationsAddress)
+                    IBorrowerOperationsV2(_borrowerOperationsAddress)
                         .collateralAddress() ==
                     _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"
