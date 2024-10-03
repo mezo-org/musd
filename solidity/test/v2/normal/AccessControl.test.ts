@@ -12,7 +12,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("Access Control: Liquity functions with the caller restricted to Liquity contract(s)", () => {
+describe("Access Control V2: Liquity functions with the caller restricted to Liquity contract(s)", () => {
   let alice: User
   let bob: User
   let carol: User

@@ -15,7 +15,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("DefaultPool", () => {
+describe("DefaultPoolV2", () => {
   let addresses: TestingAddresses
   let contracts: Contracts
   let cachedTestSetup: TestSetup

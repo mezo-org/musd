@@ -41,7 +41,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("TroveManager in Normal Mode", () => {
+describe("TroveManagerV2 in Normal Mode", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User

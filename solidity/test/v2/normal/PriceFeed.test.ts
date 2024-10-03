@@ -12,7 +12,7 @@ import {
 } from "../../helpers"
 import { MockAggregator } from "../../../typechain"
 
-describe("PriceFeed in Normal Mode", () => {
+describe("PriceFeedV2 in Normal Mode", () => {
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup

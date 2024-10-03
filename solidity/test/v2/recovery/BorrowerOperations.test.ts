@@ -20,7 +20,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("BorrowerOperations in Recovery Mode", () => {
+describe("BorrowerOperationsV2 in Recovery Mode", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User

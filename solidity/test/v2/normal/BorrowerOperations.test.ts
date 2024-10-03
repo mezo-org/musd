@@ -31,7 +31,7 @@ import {
 import { to1e18 } from "../../utils"
 import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
 
-describe("BorrowerOperations in Normal Mode", () => {
+describe("BorrowerOperationsV2 in Normal Mode", () => {
   let addresses: TestingAddresses
   // users
   let alice: User

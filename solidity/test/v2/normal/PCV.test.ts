@@ -16,7 +16,7 @@ import {
 import { to1e18, ZERO_ADDRESS } from "../../utils"
 import { PCV } from "../../../typechain"
 
-describe("PCV", () => {
+describe("PCVV2", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User

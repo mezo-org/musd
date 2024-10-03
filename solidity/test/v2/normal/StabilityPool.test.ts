@@ -37,7 +37,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("StabilityPool in Normal Mode", () => {
+describe("StabilityPoolV2 in Normal Mode", () => {
   let addresses: TestingAddresses
   let alice: User
   let bob: User

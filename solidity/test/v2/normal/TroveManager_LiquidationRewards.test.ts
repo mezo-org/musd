@@ -20,7 +20,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("TroveManager - Redistribution reward calculations", () => {
+describe("TroveManagerV2 - Redistribution reward calculations", () => {
   let alice: User
   let bob: User
   let carol: User
