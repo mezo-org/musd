@@ -15,7 +15,7 @@ import {
   WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
-import { connectContracts, fixture, getAddresses } from "./context"
+import { connectContracts, fixture, fixtureV2, getAddresses } from "./context"
 
 export const NO_GAS = {
   maxFeePerGas: 0,
@@ -721,8 +721,9 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
   }
 }
 
-export async function setupTests() {
-  const cachedTestSetup = await loadFixture(fixture)
+export async function setupTests(version: "v1" | "v2" = "v1") {
+  const cachedTestSetup =
+    version === "v2" ? await loadFixture(fixtureV2) : await loadFixture(fixture)
   const testSetup = { ...cachedTestSetup }
   const { contracts, state } = testSetup
 
