@@ -120,11 +120,6 @@ interface IStabilityPool {
     function offset(uint256 _debt, uint256 _coll) external;
 
     /*
-     * Only callable by Active Pool, updates ERC20 tokens recieved
-     */
-    function updateCollateralBalance(uint256 _amount) external;
-
-    /*
      * Returns the total amount of collateral held by the pool, accounted in an internal variable instead of `balance`,
      * to exclude edge cases like collateral received from a self-destruct.
      */

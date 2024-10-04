@@ -286,13 +286,6 @@ contract StabilityPoolV2 is
         _moveOffsetCollAndDebt(_collToAdd, _debtToOffset);
     }
 
-    // When ERC20 token collateral is received this function needs to be called
-    function updateCollateralBalance(uint256 _amount) external override {
-        _requireCallerIsActivePool();
-        collateral += _amount;
-        emit StabilityPoolCollateralBalanceUpdated(collateral);
-    }
-
     // --- Getters for public variables. Required by IPool interface ---
 
     function getCollateralBalance() external view override returns (uint) {

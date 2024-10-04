@@ -22,7 +22,6 @@ describe("DefaultPool", () => {
   let state: ContractsState
   let testSetup: TestSetup
 
-  let activePoolSigner: HardhatEthersSigner
   let troveManagerSigner: HardhatEthersSigner
 
   beforeEach(async () => {
@@ -44,7 +43,6 @@ describe("DefaultPool", () => {
       params: [addresses.activePool],
     })
 
-    activePoolSigner = await ethers.getSigner(addresses.activePool)
     troveManagerSigner = await ethers.getSigner(addresses.troveManager)
   })
 
@@ -54,14 +52,6 @@ describe("DefaultPool", () => {
    *
    */
   context("Expected Reverts", () => {
-    it("updateCollateralBalance(): fails if pool receives token", async () => {
-      await expect(
-        contracts.defaultPool
-          .connect(activePoolSigner)
-          .updateCollateralBalance(0, NO_GAS),
-      ).to.be.revertedWith("DefaultPool: BTC collateral needed, not ERC20")
-    })
-
     it.skip("sendCollateralToActivePool(): fails if receiver cannot receive collateral", async () => {
       // TODO This requires the active pool to be a nonpayable address.  Skipping for now because the extra setup doesn't seem worth it.
       // THUSD Test link: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/DefaultPoolTest.js#L64
