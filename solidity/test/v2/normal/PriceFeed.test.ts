@@ -156,21 +156,21 @@ describe("PriceFeedV2 in Normal Mode", () => {
      *
      */
     context("System State Changes", () => {
-      it("Handles an 8 decimal oracle", async () => {
+      it("fetchPrice(): Handles an 8 decimal oracle", async () => {
         await contracts.mockAggregator.setPrecision(8n)
         expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
           to1e18("50,000"),
         )
       })
 
-      it("Handles an 18 decimal oracle", async () => {
+      it("fetchPrice(): Handles an 18 decimal oracle", async () => {
         await contracts.mockAggregator.setPrecision(18n)
         expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
           to1e18("50,000"),
         )
       })
 
-      it("Handles a 25 decimal oracle", async () => {
+      it("fetchPrice(): Handles a 25 decimal oracle", async () => {
         await contracts.mockAggregator.setPrecision(25n)
         expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
           to1e18("50,000"),
