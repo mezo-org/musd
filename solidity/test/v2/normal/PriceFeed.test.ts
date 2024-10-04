@@ -1,16 +1,16 @@
 import { expect } from "chai"
-import { deployments } from "hardhat"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { to1e18 } from "../../utils"
+import { ZERO_ADDRESS, to1e18 } from "../../utils"
 
 import {
   Contracts,
-  fixtureV2,
-  getDeployedContract,
   TestSetup,
   User,
+  connectContracts,
+  fixtureV2,
+  getDeployedContract,
 } from "../../helpers"
-import { MockAggregator } from "../../../typechain"
+import type { PriceFeed } from "../../../typechain"
 
 describe("PriceFeedV2 in Normal Mode", () => {
   let contracts: Contracts
@@ -18,59 +18,192 @@ describe("PriceFeedV2 in Normal Mode", () => {
   let testSetup: TestSetup
   let deployer: User
 
-  async function deployAndGetContract(
-    name: string,
-    args: string[],
-  ): Promise<MockAggregator> {
-    await deployments.deploy(name, {
-      contract: `contracts/v2/tests/${name}.sol:${name}`,
-      args,
-      from: deployer.wallet.address,
-      log: true,
-      waitConfirmations: 1,
-    })
-    return getDeployedContract(name)
-  }
-
   beforeEach(async () => {
-    // fixtureBorrowerOperations has a mock trove manager so we can change rates
     cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     // users
     deployer = testSetup.users.deployer
+
+    await connectContracts(contracts, testSetup.users)
   })
 
-  it("Handles an 8 decimal oracle", async () => {
-    const mockAggregator: MockAggregator = await deployAndGetContract(
-      "MockAggregatorV2",
-      ["8"],
-    )
+  describe("setOracle()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("setOracle(): Reverts when trying to set the oracle a second time", async () => {
+        await expect(
+          contracts.priceFeed.connect(deployer.wallet).setOracle(ZERO_ADDRESS),
+        )
+          .to.be.revertedWithCustomError(
+            contracts.pcv,
+            "OwnableUnauthorizedAccount",
+          )
+          .withArgs(deployer.address)
+      })
 
-    expect(await mockAggregator.decimals()).to.equal(8)
+      it("setOracle(): Reverts when the oracle has 0-decimal precision", async () => {
+        const priceFeed: PriceFeed = await getDeployedContract(
+          "UnconnectedPriceFeedV2",
+        )
 
-    await contracts.priceFeed
-      .connect(deployer.wallet)
-      .setOracle(await mockAggregator.getAddress())
-    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(to1e18("50,000"))
+        const mockAggregatorAddress =
+          await contracts.mockAggregator.getAddress()
 
-    const price = to1e18("25,000")
-    await mockAggregator.connect(deployer.wallet).setPrice(price)
-    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(price)
+        await contracts.mockAggregator.setPrecision(0n)
+
+        await expect(
+          priceFeed.connect(deployer.wallet).setOracle(mockAggregatorAddress),
+        ).to.be.revertedWith("Invalid Decimals from Oracle")
+      })
+
+      it("setOracle(): Reverts when the oracle has a price of 0", async () => {
+        const priceFeed: PriceFeed = await getDeployedContract(
+          "UnconnectedPriceFeedV2",
+        )
+
+        const mockAggregatorAddress =
+          await contracts.mockAggregator.getAddress()
+
+        await contracts.mockAggregator.setPrice(0n)
+
+        await expect(
+          priceFeed.connect(deployer.wallet).setOracle(mockAggregatorAddress),
+        ).to.be.revertedWith("Oracle returns 0 for price")
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("setOracle(): Updates the oracle address", async () => {
+        const priceFeed: PriceFeed = await getDeployedContract(
+          "UnconnectedPriceFeedV2",
+        )
+
+        const mockAggregatorAddress =
+          await contracts.mockAggregator.getAddress()
+
+        await priceFeed
+          .connect(deployer.wallet)
+          .setOracle(mockAggregatorAddress)
+
+        expect(await priceFeed.oracle()).to.equal(mockAggregatorAddress)
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
   })
 
-  it("Handles an 18 decimal oracle", async () => {
-    // default is 18
+  describe("fetchPrice()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
 
-    expect(await contracts.mockAggregator.decimals()).to.equal(18)
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
 
-    await contracts.priceFeed
-      .connect(deployer.wallet)
-      .setOracle(await contracts.mockAggregator.getAddress())
-    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(to1e18("50,000"))
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("fetchPrice(): Handles an 8 decimal oracle", async () => {
+        await contracts.mockAggregator.setPrecision(8n)
+        expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
+          to1e18("50,000"),
+        )
+      })
 
-    const price = to1e18("25,000")
-    await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
-    expect(await contracts.priceFeed.fetchPrice()).to.be.equal(price)
+      it("fetchPrice(): Handles an 18 decimal oracle", async () => {
+        await contracts.mockAggregator.setPrecision(18n)
+        expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
+          to1e18("50,000"),
+        )
+      })
+
+      it("fetchPrice(): Handles a 25 decimal oracle", async () => {
+        await contracts.mockAggregator.setPrecision(25n)
+        expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
+          to1e18("50,000"),
+        )
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
   })
 })

@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { waitConfirmationsNumber } from "../../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployments, helpers, getNamedAccounts } = hre
+  const { deployments, helpers, getNamedAccounts, network } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
@@ -15,6 +15,18 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
     await deployments.deploy("PriceFeedV2", {
       contract: "contracts/v2/PriceFeedV2.sol:PriceFeedV2",
+      args: [],
+      from: deployer,
+      log: true,
+      waitConfirmations: waitConfirmationsNumber(hre),
+    })
+  }
+
+  if (network.name === "hardhat") {
+    log("Deploying Unconnected PriceFeed contract...")
+
+    await deployments.deploy("UnconnectedPriceFeedV2", {
+      contract: "PriceFeed",
       args: [],
       from: deployer,
       log: true,

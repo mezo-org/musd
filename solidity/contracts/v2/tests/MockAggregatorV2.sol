@@ -7,17 +7,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockAggregatorV2 is ChainlinkAggregatorV3InterfaceV2, Ownable {
     uint256 private _price;
-    uint8 private immutable precision;
+    uint8 private precision;
 
     constructor(uint8 _decimals) Ownable(msg.sender) {
         precision = _decimals;
-        _price = 50000 * 1e18;
+        uint256 multiplier = 10 ** uint8(precision);
+        _price = 50000 * multiplier;
     }
 
     // Manual external price setter.
     function setPrice(uint256 price) external returns (bool) {
         // slither-disable-next-line events-maths
         _price = price;
+        return true;
+    }
+
+    function setPrecision(uint8 _precision) external returns (bool) {
+        uint256 oldMultiplier = 10 ** uint8(precision);
+        uint256 basePrice = uint256(_price / oldMultiplier);
+        uint256 multiplier = 10 ** uint8(_precision);
+        _price = basePrice * multiplier;
+        precision = _precision;
         return true;
     }
 
@@ -34,11 +44,7 @@ contract MockAggregatorV2 is ChainlinkAggregatorV3InterfaceV2, Ownable {
     {
         require(precision <= 77, "Decimals too large"); // Prevent overflow
 
-        uint256 basePrice = uint256(_price / 1e18);
-        uint256 multiplier = 10 ** uint8(precision);
-        int256 adjustedPrice = int256(basePrice * multiplier);
-
-        return (0, adjustedPrice, 0, 0, 0);
+        return (0, int256(_price), 0, 0, 0);
     }
 
     function decimals() public view returns (uint8) {
