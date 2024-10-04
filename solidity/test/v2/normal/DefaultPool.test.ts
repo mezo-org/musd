@@ -4,23 +4,23 @@ import { ethers, network } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import {
   connectContracts,
-  Contracts,
   ContractsState,
+  ContractsV2,
   fixtureV2,
   getAddresses,
   NO_GAS,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   updateContractsSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
 describe("DefaultPoolV2", () => {
   let addresses: TestingAddresses
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
   let state: ContractsState
-  let testSetup: TestSetup
+  let testSetup: TestSetupV2
 
   let troveManagerSigner: HardhatEthersSigner
 

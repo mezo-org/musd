@@ -15,6 +15,11 @@ interface ITroveManagerV2 {
         closedByRedemption
     }
 
+    struct InterestRateChange {
+        uint256 interestRate;
+        uint256 blockNumber;
+    }
+
     // --- Events ---
 
     event BorrowerOperationsAddressChanged(
@@ -65,6 +70,9 @@ interface ITroveManagerV2 {
     event LTermsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
     event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
+    event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
+    event InterestRateUpdated(uint256 _newInterestRate);
+    event MaxInterestRateUpdated(uint256 _newMaxInterestRate);
 
     // --- Functions ---
 
@@ -200,9 +208,33 @@ interface ITroveManagerV2 {
 
     function getTroveDebt(address _borrower) external view returns (uint);
 
+    function getTroveLastInterestUpdateTime(
+        address _borrower
+    ) external view returns (uint);
+
     function getTroveColl(address _borrower) external view returns (uint);
 
     function getTCR(uint256 _price) external view returns (uint);
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
+
+    function setTroveInterestRate(
+        address _borrower,
+        uint256 _rate
+    ) external;
+
+    function setTroveLastInterestUpdateTime(
+        address _borrower,
+        uint256 _timestamp
+    ) external;
+
+    function interestRate() external view returns (uint256);
+
+    function getInterestRateHistory() external view returns (InterestRateChange[] memory);
+
+    function approveInterestRate() external;
+
+    function proposeInterestRate(uint256 _newProposedInterestRate) external;
+
+    function setMaxInterestRate(uint256 _newMaxInterestRate) external;
 }

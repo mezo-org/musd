@@ -1,6 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
+import { ethers } from "hardhat"
 import {
   adjustTroveToICR,
   applyLiquidationFee,
@@ -9,8 +10,8 @@ import {
   checkTroveClosedByRedemption,
   checkTroveStatus,
   connectContracts,
-  Contracts,
   ContractsState,
+  ContractsV2,
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
@@ -21,6 +22,7 @@ import {
   getEmittedLiquidationValues,
   getEmittedRedemptionValues,
   getRedemptionHints,
+  getLatestBlockTimestamp,
   getTCR,
   NO_GAS,
   openTrove,
@@ -28,7 +30,7 @@ import {
   provideToSP,
   setBaseRate,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   transferMUSD,
   updateContractsSnapshot,
   updatePCVSnapshot,
@@ -48,12 +50,13 @@ describe("TroveManagerV2 in Normal Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let deployer: User
   let dennis: User
   let eric: User
   let state: ContractsState
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
+  let testSetup: TestSetupV2
 
   async function setupTroves() {
     // open two troves so that we don't go into recovery mode
@@ -204,6 +207,26 @@ describe("TroveManagerV2 in Normal Mode", () => {
     expect(await checkTroveActive(contracts, eric)).to.equal(true)
   }
 
+  async function setupTroveWithInterestRate(
+    interestRate: number,
+    daysToFastForward: number,
+  ) {
+    await contracts.troveManager
+      .connect(deployer.wallet)
+      .proposeInterestRate(interestRate)
+    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(timeToIncrease)
+    await contracts.troveManager.connect(deployer.wallet).approveInterestRate()
+
+    await openTrove(contracts, {
+      musdAmount: "10000",
+      sender: alice.wallet,
+    })
+
+    const daysInSeconds = daysToFastForward * 24 * 60 * 60
+    await fastForwardTime(daysInSeconds)
+  }
+
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixtureV2)
     testSetup = { ...cachedTestSetup }
@@ -218,6 +241,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
     carol = testSetup.users.carol
     dennis = testSetup.users.dennis
     eric = testSetup.users.eric
+    deployer = testSetup.users.deployer
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
@@ -2907,6 +2931,354 @@ describe("TroveManagerV2 in Normal Mode", () => {
     })
   })
 
+  describe("setMaxInterestRate()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("setMaxInterestRate(): reverts if a non-whitelisted address tries to set the maximum interest rate", async () => {
+        await expect(
+          contracts.troveManager.connect(alice.wallet).setMaxInterestRate(1),
+        ).to.be.revertedWith(
+          "TroveManager: Only governance can call this function",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {
+      it("setMaxInterestRate(): emits MaxInterestRateUpdated when the maximum interest rate is updated", async () => {
+        await expect(
+          contracts.troveManager
+            .connect(deployer.wallet)
+            .setMaxInterestRate(50),
+        )
+          .to.emit(contracts.troveManager, "MaxInterestRateUpdated")
+          .withArgs(50)
+      })
+    })
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("setMaxInterestRate(): sets the max interest rate", async () => {
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .setMaxInterestRate(5)
+        expect(await contracts.troveManager.maxInterestRate()).to.equal(5)
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("proposeInterestRate()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("proposeInterestRate(): reverts if the proposed rate exceeds the maximum interest rate", async () => {
+        await expect(
+          contracts.troveManager
+            .connect(deployer.wallet)
+            .proposeInterestRate(10001),
+        ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("approveInterestRate()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("approveInterestRate(): reverts if the time delay has not finished", async () => {
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .proposeInterestRate(100)
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.troveManager.connect(deployer.wallet).approveInterestRate(),
+        ).to.be.revertedWith("Proposal delay not met")
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("approveInterestRate(): requires two transactions to change the interest rate with a 7 day time delay", async () => {
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .proposeInterestRate(100)
+
+        // Simulate 7 days passing
+        const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .approveInterestRate()
+        expect(await contracts.troveManager.interestRate()).to.equal(100)
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("calculateInterestOwed()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {
+      it("calculateInterestOwed(): should calculate the interest owed for a trove after 15 days", async () => {
+        await setupTroveWithInterestRate(100, 15)
+        const interest = await contracts.troveManager.calculateInterestOwed(
+          alice.wallet,
+        )
+        expect(interest).to.be.equal(4212328755996000000n)
+      })
+
+      it("calculateInterestOwed(): should calculate the interest owed for a trove after 30 days", async () => {
+        await setupTroveWithInterestRate(100, 30)
+        const interest = await contracts.troveManager.calculateInterestOwed(
+          alice.wallet,
+        )
+        expect(interest).to.be.equal(8424657511992000000n)
+      })
+    })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("updateDebtWithInterest()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {
+      it("updateDebtWithInterest(): should update the trove with interest owed and set the lastInterestUpdatedTime", async () => {
+        await setupTroveWithInterestRate(100, 30)
+
+        await contracts.troveManager.updateDebtWithInterest(alice.wallet)
+        const debt = await contracts.troveManager.getTroveDebt(alice.wallet)
+        const getTroveLastInterestUpdateTime =
+          await contracts.troveManager.getTroveLastInterestUpdateTime(
+            alice.wallet,
+          )
+        expect(debt).to.be.equal(10258424660762245669750n)
+        expect(getTroveLastInterestUpdateTime).to.be.equal(
+          await getLatestBlockTimestamp(),
+        )
+      })
+    })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
   describe("Getters", () => {
     it("getTroveStake(): Returns stake", async () => {
       const { collateral } = await openTrove(contracts, {
@@ -2984,8 +3356,29 @@ describe("TroveManagerV2 in Normal Mode", () => {
       ).to.equal(false)
     })
 
-    it("getInterestRate(): Returns the interest rate", async () => {
-      expect(await contracts.troveManager.interestRateBps()).to.equal(0)
+    it("getInterestRateHistory(): Returns the interest rate values and the blocks they were set", async () => {
+      const blockNumbers = []
+
+      // Add three interest rates to the history
+      for (let i = 1; i <= 3; i++) {
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .proposeInterestRate(i)
+        await fastForwardTime(7 * 24 * 60 * 60) // 7 days in seconds
+        await contracts.troveManager
+          .connect(deployer.wallet)
+          .approveInterestRate()
+        blockNumbers.push(await ethers.provider.getBlockNumber())
+      }
+
+      const history = await contracts.troveManager.getInterestRateHistory()
+      expect(history.length).to.equal(3)
+      expect(history[0].interestRate).to.equal(1)
+      expect(history[0].blockNumber).to.equal(blockNumbers[0])
+      expect(history[1].interestRate).to.equal(2)
+      expect(history[1].blockNumber).to.equal(blockNumbers[1])
+      expect(history[2].interestRate).to.equal(3)
+      expect(history[2].blockNumber).to.equal(blockNumbers[2])
     })
   })
 })

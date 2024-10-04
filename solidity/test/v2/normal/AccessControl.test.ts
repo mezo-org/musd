@@ -2,12 +2,12 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
   connectContracts,
-  Contracts,
+  ContractsV2,
   fixtureV2,
   getAddresses,
   openTrove,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -19,9 +19,9 @@ describe("Access Control V2: Liquity functions with the caller restricted to Liq
   let deployer: User
 
   let addresses: TestingAddresses
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
+  let testSetup: TestSetupV2
 
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixtureV2)

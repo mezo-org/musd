@@ -181,6 +181,8 @@ contract BorrowerOperationsV2 is
             vars.compositeDebt
         );
 
+        contractsCache.troveManager.setTroveInterestRate(msg.sender, contractsCache.troveManager.interestRate());
+        contractsCache.troveManager.setTroveLastInterestUpdateTime(msg.sender, block.timestamp);
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
             msg.sender

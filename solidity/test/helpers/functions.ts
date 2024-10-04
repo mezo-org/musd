@@ -13,6 +13,7 @@ import {
   TestingAddresses,
   ContractsState,
   WithdrawCollParams,
+  ContractsV2,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
 import { connectContracts, fixture, fixtureV2, getAddresses } from "./context"
@@ -39,7 +40,7 @@ export async function removeMintlist(
  * So, it adds the gas compensation and the borrowing fee
  */
 export async function getOpenTroveTotalDebt(
-  contracts: Contracts,
+  contracts: Contracts | ContractsV2,
   musdAmount: bigint,
 ) {
   const fee = await contracts.troveManager.getBorrowingFee(musdAmount)
@@ -478,7 +479,10 @@ export async function adjustTroveToICR(
   return { requestedDebtIncrease, increasedTotalDebt }
 }
 
-export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
+export async function openTrove(
+  contracts: Contracts | ContractsV2,
+  inputs: OpenTroveParams,
+) {
   const params = inputs
 
   // fill in hints for searching trove list if not provided
@@ -739,9 +743,36 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
   }
 }
 
-export async function setupTests(version: "v1" | "v2" = "v1") {
-  const cachedTestSetup =
-    version === "v2" ? await loadFixture(fixtureV2) : await loadFixture(fixture)
+export async function setupTests() {
+  const cachedTestSetup = await loadFixture(fixture)
+  const testSetup = { ...cachedTestSetup }
+  const { contracts, state } = testSetup
+
+  await connectContracts(contracts, testSetup.users)
+
+  // users
+  const { alice, bob, carol, dennis, eric, frank } = testSetup.users
+
+  // readability helper
+  const addresses = await getAddresses(contracts, testSetup.users)
+
+  return {
+    contracts,
+    state,
+    cachedTestSetup,
+    testSetup,
+    addresses,
+    alice,
+    bob,
+    carol,
+    dennis,
+    eric,
+    frank,
+  }
+}
+
+export async function setupTestsV2() {
+  const cachedTestSetup = await loadFixture(fixtureV2)
   const testSetup = { ...cachedTestSetup }
   const { contracts, state } = testSetup
 
