@@ -262,7 +262,6 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.musd.getAddress(),
       await contracts.sortedTroves.getAddress(),
       await contracts.priceFeed.getAddress(),
-      ZERO_ADDRESS,
     )
 
   await contracts.hintHelpers
@@ -277,7 +276,6 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     .setAddresses(
       await contracts.musd.getAddress(),
       await contracts.borrowerOperations.getAddress(),
-      ZERO_ADDRESS,
     )
 
   await contracts.defaultPool
@@ -285,14 +283,12 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     .setAddresses(
       await contracts.troveManager.getAddress(),
       await contracts.activePool.getAddress(),
-      ZERO_ADDRESS,
     )
 
   await contracts.activePool
     .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.borrowerOperations.getAddress(),
-      ZERO_ADDRESS,
       await contracts.collSurplusPool.getAddress(),
       await contracts.defaultPool.getAddress(),
       await contracts.troveManager.getAddress(),
@@ -303,7 +299,6 @@ export async function connectContracts(contracts: Contracts, users: Users) {
     .connect(users.deployer.wallet)
     .setAddresses(
       await contracts.activePool.getAddress(),
-      ZERO_ADDRESS,
       await contracts.collSurplusPool.getAddress(),
       await contracts.defaultPool.getAddress(),
       await contracts.gasPool.getAddress(),
@@ -321,7 +316,6 @@ export async function connectContracts(contracts: Contracts, users: Users) {
       await contracts.borrowerOperations.getAddress(),
       await contracts.troveManager.getAddress(),
       await contracts.activePool.getAddress(),
-      ZERO_ADDRESS,
     )
 
   await contracts.troveManager

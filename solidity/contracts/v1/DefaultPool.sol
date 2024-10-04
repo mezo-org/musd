@@ -18,7 +18,6 @@ import "./interfaces/IActivePool.sol";
  */
 contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     address public activePoolAddress;
-    address public collateralAddress;
     address public troveManagerAddress;
     uint256 internal collateral; // deposited collateral tracker
     uint256 internal MUSDDebt; // debt
@@ -28,10 +27,6 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsActivePool();
-        require(
-            collateralAddress == address(0),
-            "DefaultPool: ERC20 collateral needed, not BTC"
-        );
         collateral += msg.value;
         emit DefaultPoolCollateralBalanceUpdated(collateral);
     }
@@ -40,31 +35,18 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
 
     function setAddresses(
         address _troveManagerAddress,
-        address _activePoolAddress,
-        address _collateralAddress
+        address _activePoolAddress
     ) external onlyOwner {
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
 
         // slither-disable-next-line missing-zero-check
         troveManagerAddress = _troveManagerAddress;
         // slither-disable-next-line missing-zero-check
         activePoolAddress = _activePoolAddress;
-        collateralAddress = _collateralAddress;
-
-        require(
-            (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePool(_activePoolAddress).collateralAddress() ==
-                _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
 
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
-        emit CollateralAddressChanged(_collateralAddress);
 
         renounceOwnership();
     }
@@ -88,7 +70,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         emit DefaultPoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(activePool, _amount);
 
-        sendCollateral(IERC20(collateralAddress), activePool, _amount);
+        sendCollateral(IERC20(address(0)), activePool, _amount);
         if (collateralAddress == address(0)) {
             return;
         }

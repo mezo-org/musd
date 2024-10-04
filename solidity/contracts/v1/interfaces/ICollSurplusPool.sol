@@ -10,7 +10,6 @@ interface ICollSurplusPool {
     );
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
 
     event CollBalanceUpdated(address indexed _account, uint256 _newBalance);
     event CollateralSent(address _to, uint256 _amount);
@@ -20,8 +19,7 @@ interface ICollSurplusPool {
     function setAddresses(
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
-        address _activePoolAddress,
-        address _collateralAddress
+        address _activePoolAddress
     ) external;
 
     function accountSurplus(address _account, uint256 _amount) external;
@@ -29,8 +27,6 @@ interface ICollSurplusPool {
     function claimColl(address _account) external;
 
     function updateCollateralBalance(uint256 _amount) external;
-
-    function collateralAddress() external view returns (address);
 
     function getCollateralBalance() external view returns (uint);
 

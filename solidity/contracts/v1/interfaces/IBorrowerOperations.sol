@@ -16,7 +16,6 @@ interface IBorrowerOperations {
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event PCVAddressChanged(address _pcvAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
 
     event TroveCreated(address indexed _borrower, uint256 arrayIndex);
     event TroveUpdated(
@@ -32,7 +31,6 @@ interface IBorrowerOperations {
 
     function setAddresses(
         address _activePoolAddress,
-        address _collateralAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -97,8 +95,6 @@ interface IBorrowerOperations {
     ) external payable;
 
     function claimCollateral() external;
-
-    function collateralAddress() external view returns (address);
 
     function getCompositeDebt(uint256 _debt) external pure returns (uint);
 }

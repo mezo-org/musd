@@ -16,7 +16,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     uint256 public immutable governanceTimeDelay;
 
     IMUSD public musd;
-    IERC20 public collateralERC20;
     BorrowerOperations public borrowerOperations;
 
     // TODO ideal initialization in constructor/setAddresses
@@ -60,13 +59,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
     }
 
-    receive() external payable {
-        require(
-            address(collateralERC20) == address(0),
-            "PCV: ERC20 collateral needed, not BTC"
-        );
-    }
-
     function payDebt(
         uint256 _musdToBurn
     ) external override onlyOwnerOrCouncilOrTreasury {
@@ -85,29 +77,17 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
 
     function setAddresses(
         address _musdTokenAddress,
-        address _borrowerOperations,
-        address _collateralERC20
+        address _borrowerOperations
     ) external override onlyOwner {
         require(address(musd) == address(0), "PCV: contacts already set");
         checkContract(_musdTokenAddress);
         checkContract(_borrowerOperations);
-        if (_collateralERC20 != address(0)) {
-            checkContract(_collateralERC20);
-        }
 
         musd = IMUSD(_musdTokenAddress);
-        collateralERC20 = IERC20(_collateralERC20);
         borrowerOperations = BorrowerOperations(_borrowerOperations);
-
-        require(
-            (Ownable(_borrowerOperations).owner() != address(0) ||
-                borrowerOperations.collateralAddress() == _collateralERC20),
-            "The same collateral address must be used for the entire set of contracts"
-        );
 
         emit MUSDTokenAddressSet(_musdTokenAddress);
         emit BorrowerOperationsAddressSet(_borrowerOperations);
-        emit CollateralAddressSet(_collateralERC20);
     }
 
     function initialize() external override onlyOwnerOrCouncilOrTreasury {
@@ -151,7 +131,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        sendCollateral(collateralERC20, _recipient, _collateralAmount);
+        sendCollateral(IERC20(address(0)), _recipient, _collateralAmount);
 
         emit CollateralWithdraw(_recipient, _collateralAmount);
     }

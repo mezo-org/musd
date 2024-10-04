@@ -21,7 +21,6 @@ import "./interfaces/IStabilityPool.sol";
  */
 contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public borrowerOperationsAddress;
-    address public collateralAddress;
     address public collSurplusPoolAddress;
     address public defaultPoolAddress;
     address public stabilityPoolAddress;
@@ -37,10 +36,6 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsBorrowerOperationsOrDefaultPool();
-        require(
-            collateralAddress == address(0),
-            "ActivePool: ERC20 collateral needed, not BTC"
-        );
         collateral += msg.value;
         emit ActivePoolCollateralBalanceUpdated(collateral);
     }
@@ -49,16 +44,12 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
     function setAddresses(
         address _borrowerOperationsAddress,
-        address _collateralAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _troveManagerAddress,
         address _stabilityPoolAddress
     ) external onlyOwner {
         checkContract(_borrowerOperationsAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_stabilityPoolAddress);
@@ -66,7 +57,6 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
-        collateralAddress = _collateralAddress;
         // slither-disable-next-line missing-zero-check
         collSurplusPoolAddress = _collSurplusPoolAddress;
         // slither-disable-next-line missing-zero-check
@@ -76,26 +66,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         // slither-disable-next-line missing-zero-check
         troveManagerAddress = _troveManagerAddress;
 
-        require(
-            (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                IBorrowerOperations(_borrowerOperationsAddress)
-                    .collateralAddress() ==
-                _collateralAddress) &&
-                (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
-                    ICollSurplusPool(_collSurplusPoolAddress)
-                        .collateralAddress() ==
-                    _collateralAddress) &&
-                (Ownable(_defaultPoolAddress).owner() != address(0) ||
-                    IDefaultPool(_defaultPoolAddress).collateralAddress() ==
-                    _collateralAddress) &&
-                (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPool(stabilityPoolAddress).collateralAddress() ==
-                    _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
-
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
-        emit CollateralAddressChanged(_collateralAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit StabilityPoolAddressChanged(_stabilityPoolAddress);
@@ -124,29 +95,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         collateral -= _amount;
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
-
-        sendCollateral(IERC20(collateralAddress), _account, _amount);
-        if (collateralAddress == address(0)) {
-            return;
-        }
-        if (_account == defaultPoolAddress) {
-            IDefaultPool(_account).updateCollateralBalance(_amount);
-        } else if (_account == collSurplusPoolAddress) {
-            ICollSurplusPool(_account).updateCollateralBalance(_amount);
-        } else if (_account == stabilityPoolAddress) {
-            IStabilityPool(_account).updateCollateralBalance(_amount);
-        }
-    }
-
-    // When ERC20 token collateral is received this function needs to be called
-    function updateCollateralBalance(uint256 _amount) external override {
-        _requireCallerIsBorrowerOperationsOrDefaultPool();
-        require(
-            collateralAddress != address(0),
-            "ActivePool: BTC collateral needed, not ERC20"
-        );
-        collateral += _amount;
-        emit ActivePoolCollateralBalanceUpdated(collateral);
+        sendCollateral(IERC20(address(0)), _account, _amount);
     }
 
     /*

@@ -37,7 +37,6 @@ interface IStabilityPool {
     event MUSDTokenAddressChanged(address _newMUSDTokenAddress);
     event SortedTrovesAddressChanged(address _newSortedTrovesAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
 
     event PUpdated(uint256 _P);
     event SUpdated(uint256 _S, uint128 _epoch, uint128 _scale);
@@ -70,8 +69,7 @@ interface IStabilityPool {
         address _activePoolAddress,
         address _musdTokenAddress,
         address _sortedTrovesAddress,
-        address _priceFeedAddress,
-        address _collateralAddress
+        address _priceFeedAddress
     ) external;
 
     /*
@@ -154,6 +152,4 @@ interface IStabilityPool {
      * Only callable by Active Pool, it just accounts for BTC received
      * receive() external payable;
      */
-
-    function collateralAddress() external view returns (address);
 }

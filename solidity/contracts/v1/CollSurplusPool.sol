@@ -19,7 +19,6 @@ contract CollSurplusPool is
 
     address public activePoolAddress;
     address public borrowerOperationsAddress;
-    address public collateralAddress;
     address public troveManagerAddress;
 
     // deposited collateral tracker
@@ -34,10 +33,6 @@ contract CollSurplusPool is
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsActivePool();
-        require(
-            collateralAddress == address(0),
-            "CollSurplusPool: ERC20 collateral needed, not BTC"
-        );
         // slither-disable-next-line events-maths
         collateral += msg.value;
     }
@@ -47,39 +42,22 @@ contract CollSurplusPool is
     function setAddresses(
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
-        address _activePoolAddress,
-        address _collateralAddress
+        address _activePoolAddress
     ) external override onlyOwner {
         checkContract(_borrowerOperationsAddress);
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
 
         // checkContract does the zero address check so disable slither warning
         // slither-disable-start missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
         troveManagerAddress = _troveManagerAddress;
         activePoolAddress = _activePoolAddress;
-        collateralAddress = _collateralAddress;
         // slither-disable-end missing-zero-check
-
-        require(
-            (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePool(_activePoolAddress).collateralAddress() ==
-                _collateralAddress) &&
-                (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                    IBorrowerOperations(_borrowerOperationsAddress)
-                        .collateralAddress() ==
-                    _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
-        emit CollateralAddressChanged(_collateralAddress);
 
         renounceOwnership();
     }
@@ -112,7 +90,7 @@ contract CollSurplusPool is
         collateral -= claimableColl;
         emit CollateralSent(_account, claimableColl);
 
-        sendCollateral(IERC20(collateralAddress), _account, claimableColl);
+        sendCollateral(IERC20(address(0)), _account, claimableColl);
     }
 
     // When ERC20 token collateral is received this function needs to be called
