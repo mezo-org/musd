@@ -30,8 +30,6 @@ import {
   TroveManagerTester,
   TroveManagerTesterV2,
 } from "../../typechain"
-// eslint-disable-next-line import/extensions
-import { MUSDTesterV2 } from "../../typechain/contracts/v2/tests/MUSDTesterV2.ts"
 
 export interface TestingAddresses {
   activePool: string
@@ -133,7 +131,7 @@ export interface ContractsV2 {
   hintHelpers: HintHelpersV2
   mockAggregator: MockAggregatorV2
   mockERC20: MockERC20V2
-  musd: MUSDTesterV2
+  musd: MUSDTester
   pcv: PCVV2
   priceFeed: PriceFeedV2
   sortedTroves: SortedTrovesV2

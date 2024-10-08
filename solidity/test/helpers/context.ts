@@ -43,8 +43,6 @@ import {
   StabilityPoolV2,
   TroveManagerTesterV2,
 } from "../../typechain"
-// eslint-disable-next-line import/extensions
-import { MUSDTesterV2 } from "../../typechain/contracts/v2/tests/MUSDTesterV2.ts"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
@@ -107,7 +105,7 @@ export async function deploymentV2() {
   const mockAggregator: MockAggregatorV2 =
     await getDeployedContract("MockAggregatorV2")
   const mockERC20: MockERC20V2 = await getDeployedContract("MockERC20V2")
-  const musd: MUSDTesterV2 = await getDeployedContract("MUSDTesterV2")
+  const musd: MUSDTester = await getDeployedContract("MUSDTesterV2")
   const pcv: PCVV2 = await getDeployedContract("PCVV2")
   const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")
   const sortedTroves: SortedTrovesV2 =
