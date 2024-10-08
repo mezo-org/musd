@@ -145,6 +145,19 @@ interface ITroveManagerV2 {
         uint256 _debtDecrease
     ) external returns (uint);
 
+    function setTroveInterestRate(address _borrower, uint256 _rate) external;
+
+    function setTroveLastInterestUpdateTime(
+        address _borrower,
+        uint256 _timestamp
+    ) external;
+
+    function approveInterestRate() external;
+
+    function proposeInterestRate(uint256 _newProposedInterestRate) external;
+
+    function setMaxInterestRate(uint256 _newMaxInterestRate) external;
+
     function stabilityPool() external view returns (IStabilityPoolV2);
 
     function pcv() external view returns (IPCVV2);
@@ -208,6 +221,10 @@ interface ITroveManagerV2 {
 
     function getTroveDebt(address _borrower) external view returns (uint);
 
+    function getTroveInterestRate(
+        address _borrower
+    ) external view returns (uint256);
+
     function getTroveLastInterestUpdateTime(
         address _borrower
     ) external view returns (uint);
@@ -218,23 +235,10 @@ interface ITroveManagerV2 {
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
 
-    function setTroveInterestRate(
-        address _borrower,
-        uint256 _rate
-    ) external;
-
-    function setTroveLastInterestUpdateTime(
-        address _borrower,
-        uint256 _timestamp
-    ) external;
-
     function interestRate() external view returns (uint256);
 
-    function getInterestRateHistory() external view returns (InterestRateChange[] memory);
-
-    function approveInterestRate() external;
-
-    function proposeInterestRate(uint256 _newProposedInterestRate) external;
-
-    function setMaxInterestRate(uint256 _newMaxInterestRate) external;
+    function getInterestRateHistory()
+        external
+        view
+        returns (InterestRateChange[] memory);
 }

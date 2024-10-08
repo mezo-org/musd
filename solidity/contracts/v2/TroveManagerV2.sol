@@ -212,7 +212,10 @@ contract TroveManagerV2 is
     uint256 public constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
 
     modifier onlyOwnerOrGovernance() {
-        require(msg.sender == owner() || msg.sender == pcv.council(), "TroveManager: Only governance can call this function");
+        require(
+            msg.sender == owner() || msg.sender == pcv.council(),
+            "TroveManager: Only governance can call this function"
+        );
         _;
     }
 
@@ -633,6 +636,49 @@ contract TroveManagerV2 is
         return newDebt;
     }
 
+    function setTroveInterestRate(address _borrower, uint256 _rate) external {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].interestRate = _rate;
+    }
+
+    function setTroveLastInterestUpdateTime(
+        address _borrower,
+        uint256 _timestamp
+    ) external {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].lastInterestUpdateTime = _timestamp;
+    }
+
+    function proposeInterestRate(
+        uint256 _newProposedInterestRate
+    ) external onlyOwnerOrGovernance {
+        require(
+            _newProposedInterestRate <= maxInterestRate,
+            "Interest rate exceeds the maximum interest rate"
+        );
+        proposedInterestRate = _newProposedInterestRate;
+
+        // solhint-disable-next-line not-rely-on-time
+        proposalTime = block.timestamp;
+        emit InterestRateProposed(proposedInterestRate, proposalTime);
+    }
+
+    function approveInterestRate() external onlyOwnerOrGovernance {
+        // solhint-disable-next-line not-rely-on-time
+        require(
+            block.timestamp >= proposalTime + MIN_DELAY,
+            "Proposal delay not met"
+        );
+        _setInterestRate(proposedInterestRate);
+    }
+
+    function setMaxInterestRate(
+        uint256 _newMaxInterestRate
+    ) external onlyOwnerOrGovernance {
+        maxInterestRate = _newMaxInterestRate;
+        emit MaxInterestRateUpdated(_newMaxInterestRate);
+    }
+
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -665,7 +711,11 @@ contract TroveManagerV2 is
             _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
     }
 
-    function getInterestRateHistory() external view returns (InterestRateChange[] memory) {
+    function getInterestRateHistory()
+        external
+        view
+        returns (InterestRateChange[] memory)
+    {
         return interestRateHistory;
     }
 
@@ -699,6 +749,18 @@ contract TroveManagerV2 is
         address _borrower
     ) external view override returns (uint) {
         return Troves[_borrower].debt;
+    }
+
+    function getTroveInterestRate(
+        address _borrower
+    ) external view returns (uint256) {
+        return Troves[_borrower].interestRate;
+    }
+
+    function getTroveLastInterestUpdateTime(
+        address _borrower
+    ) external view returns (uint) {
+        return Troves[_borrower].lastInterestUpdateTime;
     }
 
     function getTroveColl(
@@ -811,35 +873,25 @@ contract TroveManagerV2 is
         );
     }
 
-    function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwnerOrGovernance {
-        require(_newProposedInterestRate <= maxInterestRate, "Interest rate exceeds the maximum interest rate");
-        proposedInterestRate = _newProposedInterestRate;
-        proposalTime = block.timestamp;
-        emit InterestRateProposed(proposedInterestRate, proposalTime);
-    }
-
-    function approveInterestRate() external onlyOwnerOrGovernance {
-        require(block.timestamp >= proposalTime + MIN_DELAY, "Proposal delay not met");
-        _setInterestRate(proposedInterestRate);
-    }
-
-    function setMaxInterestRate(uint256 _newMaxInterestRate) external onlyOwnerOrGovernance {
-        maxInterestRate = _newMaxInterestRate;
-        emit MaxInterestRateUpdated(_newMaxInterestRate);
-    }
-
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);
         Troves[_borrower].debt += interestOwed;
+        // solhint-disable-next-line not-rely-on-time
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 
-    function calculateInterestOwed(address _borrower) public view returns (uint256) {
+    function calculateInterestOwed(
+        address _borrower
+    ) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
-        uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) / (10000 * SECONDS_IN_A_YEAR);
+        uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) /
+            (10000 * SECONDS_IN_A_YEAR);
+        // solhint-disable-next-line not-rely-on-time
         uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        uint256 interestOwed = (trove.debt * interestRatePerSecond * timeElapsed) / DECIMAL_PRECISION;
+        uint256 interestOwed = (trove.debt *
+            interestRatePerSecond *
+            timeElapsed) / DECIMAL_PRECISION;
         return interestOwed;
     }
 
@@ -957,38 +1009,15 @@ contract TroveManagerV2 is
 
     // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
     function _setInterestRate(uint256 _newInterestRate) internal {
-        require(_newInterestRate <= maxInterestRate, "Interest rate exceeds the maximum interest rate");
+        require(
+            _newInterestRate <= maxInterestRate,
+            "Interest rate exceeds the maximum interest rate"
+        );
         interestRate = _newInterestRate;
-        interestRateHistory.push(InterestRateChange(_newInterestRate, block.number));
+        interestRateHistory.push(
+            InterestRateChange(_newInterestRate, block.number)
+        );
         emit InterestRateUpdated(_newInterestRate);
-    }
-
-    function setTroveInterestRate(
-        address _borrower,
-        uint256 _rate
-    ) external {
-        _requireCallerIsBorrowerOperations();
-        Troves[_borrower].interestRate = _rate;
-    }
-
-    function getTroveInterestRate(
-        address _borrower
-    ) external view returns (uint256) {
-        return Troves[_borrower].interestRate;
-    }
-
-    function getTroveLastInterestUpdateTime(
-        address _borrower
-    ) external view returns (uint) {
-        return Troves[_borrower].lastInterestUpdateTime;
-    }
-
-    function setTroveLastInterestUpdateTime(
-        address _borrower,
-        uint256 _timestamp
-    ) external {
-        _requireCallerIsBorrowerOperations();
-        Troves[_borrower].lastInterestUpdateTime = _timestamp;
     }
 
     /*
