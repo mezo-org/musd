@@ -50,9 +50,11 @@ describe("TroveManagerV2 in Normal Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
   let deployer: User
   let dennis: User
   let eric: User
+  let treasury: User
   let state: ContractsState
   let contracts: ContractsV2
   let cachedTestSetup: TestSetupV2
@@ -212,11 +214,11 @@ describe("TroveManagerV2 in Normal Mode", () => {
     daysToFastForward: number,
   ) {
     await contracts.troveManager
-      .connect(deployer.wallet)
+      .connect(council.wallet)
       .proposeInterestRate(interestRate)
     const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(timeToIncrease)
-    await contracts.troveManager.connect(deployer.wallet).approveInterestRate()
+    await contracts.troveManager.connect(council.wallet).approveInterestRate()
 
     await openTrove(contracts, {
       musdAmount: "10000",
@@ -242,6 +244,14 @@ describe("TroveManagerV2 in Normal Mode", () => {
     dennis = testSetup.users.dennis
     eric = testSetup.users.eric
     deployer = testSetup.users.deployer
+    council = testSetup.users.council
+    treasury = testSetup.users.treasury
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
@@ -2955,9 +2965,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
     context("Emitted Events", () => {
       it("setMaxInterestRate(): emits MaxInterestRateUpdated when the maximum interest rate is updated", async () => {
         await expect(
-          contracts.troveManager
-            .connect(deployer.wallet)
-            .setMaxInterestRate(50),
+          contracts.troveManager.connect(council.wallet).setMaxInterestRate(50),
         )
           .to.emit(contracts.troveManager, "MaxInterestRateUpdated")
           .withArgs(50)
@@ -2972,7 +2980,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
     context("System State Changes", () => {
       it("setMaxInterestRate(): sets the max interest rate", async () => {
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .setMaxInterestRate(5)
         expect(await contracts.troveManager.maxInterestRate()).to.equal(5)
       })
@@ -3017,7 +3025,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
       it("proposeInterestRate(): reverts if the proposed rate exceeds the maximum interest rate", async () => {
         await expect(
           contracts.troveManager
-            .connect(deployer.wallet)
+            .connect(council.wallet)
             .proposeInterestRate(10001),
         ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
       })
@@ -3075,7 +3083,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
     context("Expected Reverts", () => {
       it("approveInterestRate(): reverts if the time delay has not finished", async () => {
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .proposeInterestRate(100)
 
         // Simulate 6 days passing
@@ -3083,7 +3091,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
         await fastForwardTime(timeToIncrease)
 
         await expect(
-          contracts.troveManager.connect(deployer.wallet).approveInterestRate(),
+          contracts.troveManager.connect(council.wallet).approveInterestRate(),
         ).to.be.revertedWith("Proposal delay not met")
       })
     })
@@ -3103,7 +3111,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
     context("System State Changes", () => {
       it("approveInterestRate(): requires two transactions to change the interest rate with a 7 day time delay", async () => {
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .proposeInterestRate(100)
 
         // Simulate 7 days passing
@@ -3111,7 +3119,7 @@ describe("TroveManagerV2 in Normal Mode", () => {
         await fastForwardTime(timeToIncrease)
 
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .approveInterestRate()
         expect(await contracts.troveManager.interestRate()).to.equal(100)
       })
@@ -3362,11 +3370,11 @@ describe("TroveManagerV2 in Normal Mode", () => {
       // Add three interest rates to the history
       for (let i = 1; i <= 3; i++) {
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .proposeInterestRate(i)
         await fastForwardTime(7 * 24 * 60 * 60) // 7 days in seconds
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .approveInterestRate()
         blockNumbers.push(await ethers.provider.getBlockNumber())
       }

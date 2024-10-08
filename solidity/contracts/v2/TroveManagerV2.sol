@@ -211,10 +211,8 @@ contract TroveManagerV2 is
 
     uint256 public constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
 
-    address public council;
-
     modifier onlyOwnerOrGovernance() {
-        require(msg.sender == owner() || msg.sender == council, "TroveManager: Only governance can call this function");
+        require(msg.sender == owner() || msg.sender == pcv.council(), "TroveManager: Only governance can call this function");
         _;
     }
 
@@ -267,8 +265,7 @@ contract TroveManagerV2 is
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit PCVAddressChanged(_pcvAddress);
 
-        // Commenting out the below for now, will add it back once we have a better way to test
-        // renounceOwnership();
+        renounceOwnership();
     }
 
     function liquidate(address _borrower) external override {
