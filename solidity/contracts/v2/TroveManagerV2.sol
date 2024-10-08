@@ -811,7 +811,6 @@ contract TroveManagerV2 is
         );
     }
 
-    // Propose a new interest rate  to be approved by governance
     function proposeInterestRate(uint256 _newProposedInterestRate) external onlyOwnerOrGovernance {
         require(_newProposedInterestRate <= maxInterestRate, "Interest rate exceeds the maximum interest rate");
         proposedInterestRate = _newProposedInterestRate;
@@ -819,7 +818,6 @@ contract TroveManagerV2 is
         emit InterestRateProposed(proposedInterestRate, proposalTime);
     }
 
-    // Approve and update the interest rate after the delay
     function approveInterestRate() external onlyOwnerOrGovernance {
         require(block.timestamp >= proposalTime + MIN_DELAY, "Proposal delay not met");
         _setInterestRate(proposedInterestRate);
@@ -830,12 +828,10 @@ contract TroveManagerV2 is
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
 
-    // Function to update the debt of a trove to include owed interest
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);
         Troves[_borrower].debt += interestOwed;
-        // Update the last interest update time to the current timestamp
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 

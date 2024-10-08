@@ -37,9 +37,11 @@ describe("BorrowerOperationsV2 in Normal Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
   let dennis: User
   let eric: User
   let deployer: User
+  let treasury: User
   let contracts: ContractsV2
   let cachedTestSetup: TestSetupV2
   let state: ContractsState
@@ -127,13 +129,21 @@ describe("BorrowerOperationsV2 in Normal Mode", () => {
     alice = testSetup.users.alice
     bob = testSetup.users.bob
     carol = testSetup.users.carol
+    council = testSetup.users.council
     dennis = testSetup.users.dennis
     eric = testSetup.users.eric
     deployer = testSetup.users.deployer
+    treasury = testSetup.users.treasury
 
     MIN_NET_DEBT = await contracts.borrowerOperations.MIN_NET_DEBT()
     MUSD_GAS_COMPENSATION =
       await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
@@ -621,12 +631,12 @@ describe("BorrowerOperationsV2 in Normal Mode", () => {
       it("openTrove(): opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
         // set the current interest rate to 100 bps
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .proposeInterestRate(100)
         const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
         await fastForwardTime(timeToIncrease)
         await contracts.troveManager
-          .connect(deployer.wallet)
+          .connect(council.wallet)
           .approveInterestRate()
 
         // open a new trove
