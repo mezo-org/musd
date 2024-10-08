@@ -3,6 +3,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { to1e18 } from "../../utils"
 
 import {
+  NO_GAS,
   Contracts,
   ContractsState,
   TestSetup,
@@ -13,6 +14,7 @@ import {
   performRedemption,
   updateCollSurplusSnapshot,
   updateTroveSnapshot,
+  updateWalletSnapshot,
 } from "../../helpers"
 
 describe("CollSurplusPool in Normal Mode", () => {
@@ -148,7 +150,41 @@ describe("CollSurplusPool in Normal Mode", () => {
      * Balance changes
      *
      */
-    context("Balance changes", () => {})
+    context("Balance changes", () => {
+      it("claimColl(): Allows a user to claim their collateral after their trove was redeemed", async () => {
+        await openTrove(contracts, {
+          musdAmount: "50,000",
+          ICR: "500",
+          sender: whale.wallet,
+        })
+
+        const { netDebt } = await openTrove(contracts, {
+          musdAmount: to1e18("2,000"),
+          sender: alice.wallet,
+        })
+
+        // Whale sends Bob enough MUSD to liquidate Alice
+        await contracts.musd.connect(whale.wallet).transfer(bob.wallet, netDebt)
+
+        await updateTroveSnapshot(contracts, alice, "before")
+        await updateWalletSnapshot(contracts, alice, "before")
+
+        await performRedemption(contracts, bob, alice, netDebt)
+
+        await contracts.borrowerOperations
+          .connect(alice.wallet)
+          .claimCollateral(NO_GAS)
+
+        await updateWalletSnapshot(contracts, alice, "after")
+
+        const liquidatedCollateral =
+          (netDebt * to1e18(1)) / (await contracts.priceFeed.fetchPrice())
+
+        expect(alice.btc.after - alice.btc.before).to.equal(
+          alice.trove.collateral.before - liquidatedCollateral,
+        )
+      })
+    })
 
     /**
      *
@@ -163,6 +199,47 @@ describe("CollSurplusPool in Normal Mode", () => {
      *
      */
     context("State change in other contracts", () => {})
+  })
+
+  it("getCollateral()", async () => {
+    it("getCollateral(): Retrieves how much collateral a user can redeem", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "500",
+        sender: whale.wallet,
+      })
+
+      const { netDebt } = await openTrove(contracts, {
+        musdAmount: to1e18("2,000"),
+        sender: alice.wallet,
+      })
+
+      // Whale sends Bob enough MUSD to liquidate Alice
+      await contracts.musd.connect(whale.wallet).transfer(bob.wallet, netDebt)
+
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      await performRedemption(contracts, bob, alice, netDebt)
+
+      const availableCollateral = await contracts.collSurplusPool.getCollateral(
+        alice.wallet,
+      )
+
+      const liquidatedCollateral =
+        (netDebt * to1e18(1)) / (await contracts.priceFeed.fetchPrice())
+
+      expect(availableCollateral).to.equal(
+        alice.trove.collateral.before - liquidatedCollateral,
+      )
+    })
+
+    it("getCollateral(): Returns 0 for users with no redeemable collateral", async () => {
+      const availableCollateral = await contracts.collSurplusPool.getCollateral(
+        bob.address,
+      )
+
+      expect(availableCollateral).to.equal(0n)
+    })
   })
 
   describe("fallback()", () => {
@@ -287,6 +364,69 @@ describe("CollSurplusPool in Normal Mode", () => {
         )
       })
     })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("receive()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("receive(): Reverts when the caller is not the Active Pool", async () => {
+        const collSurplusPoolAddress =
+          await contracts.collSurplusPool.getAddress()
+
+        await expect(
+          alice.wallet.sendTransaction({
+            to: collSurplusPoolAddress,
+            value: 100n,
+          }),
+        ).to.be.revertedWith("CollSurplusPool: Caller is not Active Pool")
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
 
     /**
      *
