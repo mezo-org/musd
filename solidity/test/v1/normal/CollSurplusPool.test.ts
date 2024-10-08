@@ -37,6 +37,197 @@ describe("CollSurplusPool in Normal Mode", () => {
     await connectContracts(contracts, testSetup.users)
   })
 
+  describe("accountSurplus()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("accountSurplus(): Reverts if caller is not Trove Manager", async () => {
+        await expect(
+          contracts.collSurplusPool
+            .connect(alice.wallet)
+            .accountSurplus(alice.wallet, to1e18(1)),
+        ).to.be.revertedWith("CollSurplusPool: Caller is not TroveManager")
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("claimColl()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("claimColl(): Reverts if caller is not Borrower Operations", async () => {
+        await expect(
+          contracts.collSurplusPool
+            .connect(alice.wallet)
+            .claimColl(alice.wallet),
+        ).to.be.revertedWith(
+          "CollSurplusPool: Caller is not Borrower Operations",
+        )
+      })
+
+      it("claimColl(): Reverts if nothing to claim", async () => {
+        await expect(
+          contracts.borrowerOperations.connect(alice.wallet).claimCollateral(),
+        ).to.be.revertedWith(
+          "CollSurplusPool: No collateral available to claim",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("fallback()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {
+      it("fallback(): Reverts when called by an account that is not Borrower Operations nor Default Pool", async () => {
+        const activePoolAddress = await contracts.activePool.getAddress()
+        await expect(
+          alice.wallet.sendTransaction({
+            to: activePoolAddress,
+            value: 100n,
+          }),
+        ).to.be.revertedWith(
+          "ActivePool: Caller is neither BorrowerOperations nor Default Pool",
+        )
+      })
+    })
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
   describe("getCollateralBalance()", () => {
     /**
      *
