@@ -30,7 +30,8 @@ import {
   TroveManagerTester,
   TroveManagerTesterV2,
 } from "../../typechain"
-import { MUSDTesterV2 } from "../../typechain/contracts/v2/tests/MUSDTesterV2"
+// eslint-disable-next-line import/extensions
+import { MUSDTesterV2 } from "../../typechain/contracts/v2/tests/MUSDTesterV2.ts"
 
 export interface TestingAddresses {
   activePool: string

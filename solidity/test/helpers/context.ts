@@ -19,18 +19,15 @@ import type {
   DefaultPool,
   GasPool,
   HintHelpers,
+  MockAggregator,
+  MockERC20,
+  MUSDTester,
   PCV,
   PriceFeed,
   SortedTroves,
   StabilityPool,
-} from "../../typechain/contracts/v1"
-
-import type {
-  MockAggregator,
-  MockERC20,
-  MUSDTester,
   TroveManagerTester,
-} from "../../typechain/contracts/v1/tests"
+} from "../../typechain"
 import {
   ActivePoolV2,
   BorrowerOperationsV2,
@@ -46,7 +43,8 @@ import {
   StabilityPoolV2,
   TroveManagerTesterV2,
 } from "../../typechain"
-import { MUSDTesterV2 } from "../../typechain/contracts/v2/tests/MUSDTesterV2"
+// eslint-disable-next-line import/extensions
+import { MUSDTesterV2 } from "../../typechain/contracts/v2/tests/MUSDTesterV2.ts"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
