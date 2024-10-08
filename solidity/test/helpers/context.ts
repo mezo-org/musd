@@ -118,6 +118,9 @@ function initializeContractState(): ContractsState {
       collateral: beforeAndAfter(),
       debt: beforeAndAfter(),
     },
+    collSurplusPool: {
+      collateral: beforeAndAfter(),
+    },
     pcv: {
       collateral: beforeAndAfter(),
       debt: beforeAndAfter(),

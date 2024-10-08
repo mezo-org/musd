@@ -70,6 +70,9 @@ export interface ContractsState {
     collateral: BeforeAndAfter
     debt: BeforeAndAfter
   }
+  collSurplusPool: {
+    collateral: BeforeAndAfter
+  }
   defaultPool: {
     btc: BeforeAndAfter
     collateral: BeforeAndAfter
