@@ -837,11 +837,9 @@ contract TroveManagerV2 is
 
     function calculateInterestOwed(address _borrower) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
-        uint256 interestRatePercentage = (interestRate * DECIMAL_PRECISION) / 10000; // convert from basis points to percentage
-        uint256 interestRatePerSecond = interestRatePercentage / SECONDS_IN_A_YEAR;
-        uint256 interestOwedPerSecond = (trove.debt * interestRatePerSecond) / DECIMAL_PRECISION;
+        uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) / (10000 * SECONDS_IN_A_YEAR);
         uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        uint256 interestOwed = interestOwedPerSecond * timeElapsed;
+        uint256 interestOwed = (trove.debt * interestRatePerSecond * timeElapsed) / DECIMAL_PRECISION;
         return interestOwed;
     }
 
