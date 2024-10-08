@@ -108,6 +108,15 @@ export async function updateContractsSnapshot(
   state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
 }
 
+export async function updateCollSurplusSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  checkPoint: CheckPoint,
+) {
+  state.collSurplusPool.collateral[checkPoint] =
+    await contracts.collSurplusPool.getCollateralBalance()
+}
+
 export async function updatePCVSnapshot(
   contracts: Contracts,
   state: ContractsState,
@@ -846,3 +855,58 @@ export const calculateSystemCollFromUsers =
     )
     return collArray.reduce((acc, coll) => acc + coll, 0n)
   }
+
+export async function getRedemptionHints(
+  contracts: Contracts,
+  user: User,
+  redemptionAmount: bigint,
+  price: bigint,
+) {
+  const { firstRedemptionHint, partialRedemptionHintNICR } =
+    await contracts.hintHelpers.getRedemptionHints(redemptionAmount, price, 0)
+
+  const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
+    await contracts.sortedTroves.findInsertPosition(
+      partialRedemptionHintNICR,
+      user.wallet,
+      user.wallet,
+    )
+
+  return {
+    firstRedemptionHint,
+    partialRedemptionHintNICR,
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint,
+  }
+}
+
+export async function performRedemption(
+  contracts: Contracts,
+  redeemingUser: User,
+  redeemedUser: User,
+  redemptionAmount: bigint,
+  maxIterations: number = 0,
+) {
+  const price = await contracts.priceFeed.fetchPrice()
+
+  const {
+    firstRedemptionHint,
+    partialRedemptionHintNICR,
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint,
+  } = await getRedemptionHints(contracts, redeemedUser, redemptionAmount, price)
+
+  // Don't pay for gas to make it easier to calculate the received collateral
+  return contracts.troveManager
+    .connect(redeemingUser.wallet)
+    .redeemCollateral(
+      redemptionAmount,
+      firstRedemptionHint,
+      upperPartialRedemptionHint,
+      lowerPartialRedemptionHint,
+      partialRedemptionHintNICR,
+      maxIterations,
+      to1e18("1"),
+      NO_GAS,
+    )
+}
