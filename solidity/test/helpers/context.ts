@@ -143,6 +143,9 @@ async function initializeUserObject(
   const user: User = {
     address: await wallet.getAddress(),
     btc: beforeAndAfter(),
+    collSurplusPool: {
+      collateral: beforeAndAfter(),
+    },
     musd: beforeAndAfter(),
     rewardSnapshot: {
       collateral: beforeAndAfter(),

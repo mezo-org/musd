@@ -113,6 +113,9 @@ export interface Contracts {
 export interface User {
   address: string
   btc: BeforeAndAfter
+  collSurplusPool: {
+    collateral: BeforeAndAfter
+  }
   musd: BeforeAndAfter
   trove: {
     collateral: BeforeAndAfter

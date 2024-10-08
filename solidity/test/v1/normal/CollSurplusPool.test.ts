@@ -15,6 +15,7 @@ import {
   updateCollSurplusSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
+  updateCollSurplusPoolUserSnapshot,
 } from "../../helpers"
 
 describe("CollSurplusPool in Normal Mode", () => {
@@ -221,24 +222,20 @@ describe("CollSurplusPool in Normal Mode", () => {
 
       await performRedemption(contracts, bob, alice, netDebt)
 
-      const availableCollateral = await contracts.collSurplusPool.getCollateral(
-        alice.wallet,
-      )
+      await updateCollSurplusPoolUserSnapshot(contracts, alice, "after")
 
       const liquidatedCollateral =
         (netDebt * to1e18(1)) / (await contracts.priceFeed.fetchPrice())
 
-      expect(availableCollateral).to.equal(
+      expect(alice.collSurplusPool.collateral.after).to.equal(
         alice.trove.collateral.before - liquidatedCollateral,
       )
     })
 
     it("getCollateral(): Returns 0 for users with no redeemable collateral", async () => {
-      const availableCollateral = await contracts.collSurplusPool.getCollateral(
-        bob.address,
-      )
+      await updateCollSurplusPoolUserSnapshot(contracts, bob, "after")
 
-      expect(availableCollateral).to.equal(0n)
+      expect(bob.collSurplusPool.collateral.after).to.equal(0n)
     })
   })
 

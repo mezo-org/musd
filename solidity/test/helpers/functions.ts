@@ -61,6 +61,24 @@ export async function getTCR(contracts: Contracts) {
 
 export type CheckPoint = "before" | "after"
 
+export async function updateCollSurplusSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  checkPoint: CheckPoint,
+) {
+  state.collSurplusPool.collateral[checkPoint] =
+    await contracts.collSurplusPool.getCollateralBalance()
+}
+
+export async function updateCollSurplusPoolUserSnapshot(
+  contracts: Contracts,
+  user: User,
+  checkPoint: CheckPoint,
+) {
+  user.collSurplusPool.collateral[checkPoint] =
+    await contracts.collSurplusPool.getCollateral(user.wallet)
+}
+
 export async function updateTroveSnapshot(
   contracts: Contracts,
   user: User,
@@ -106,15 +124,6 @@ export async function updateContractsSnapshot(
     addresses[pool],
   )
   state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
-}
-
-export async function updateCollSurplusSnapshot(
-  contracts: Contracts,
-  state: ContractsState,
-  checkPoint: CheckPoint,
-) {
-  state.collSurplusPool.collateral[checkPoint] =
-    await contracts.collSurplusPool.getCollateralBalance()
 }
 
 export async function updatePCVSnapshot(
