@@ -3094,6 +3094,22 @@ describe("TroveManagerV2 in Normal Mode", () => {
           contracts.troveManager.connect(council.wallet).approveInterestRate(),
         ).to.be.revertedWith("Proposal delay not met")
       })
+
+      it("approveInterestRate(): reverts if called by a non-governance address", async () => {
+        await contracts.troveManager
+          .connect(council.wallet)
+          .proposeInterestRate(100)
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.troveManager.connect(alice.wallet).approveInterestRate(),
+        ).to.be.revertedWith(
+          "TroveManager: Only governance can call this function",
+        )
+      })
     })
 
     /**
