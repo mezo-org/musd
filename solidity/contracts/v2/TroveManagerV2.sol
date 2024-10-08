@@ -885,6 +885,7 @@ contract TroveManagerV2 is
         address _borrower
     ) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
+        // slither-disable-start divide-before-multiply
         uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) /
             (10000 * SECONDS_IN_A_YEAR);
         // solhint-disable-next-line not-rely-on-time
@@ -892,6 +893,7 @@ contract TroveManagerV2 is
         uint256 interestOwed = (trove.debt *
             interestRatePerSecond *
             timeElapsed) / DECIMAL_PRECISION;
+        // slither-disable-end divide-before-multiply
         return interestOwed;
     }
 
