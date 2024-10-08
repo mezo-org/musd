@@ -4,7 +4,6 @@ import { ethers } from "hardhat"
 import {
   addColl,
   connectContracts,
-  ContractsV2,
   createLiquidationEvent,
   fastForwardTime,
   fixtureV2,
@@ -29,7 +28,11 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
+import {
+  ContractsV2,
+  ContractsState,
+  OpenTroveParams,
+} from "../../helpers/interfaces"
 
 describe("BorrowerOperationsV2 in Normal Mode", () => {
   let addresses: TestingAddresses
