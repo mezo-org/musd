@@ -4,16 +4,15 @@ import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
 import { assert } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
+import { GOVERNANCE_TIME_DELAY, to1e18, ZERO_ADDRESS } from "../utils"
 import {
-  Contracts,
-  OpenTroveParams,
   AddCollParams,
-  User,
-  TestingAddresses,
+  Contracts,
   ContractsState,
+  OpenTroveParams,
+  TestingAddresses,
+  User,
   WithdrawCollParams,
-  ContractsV2,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
 import { connectContracts, fixture, fixtureV2, getAddresses } from "./context"
@@ -36,11 +35,11 @@ export async function removeMintlist(
 }
 
 /*
- * given the requested MUSD amomunt in openTrove, returns the total debt
+ * given the requested MUSD amount in openTrove, returns the total debt
  * So, it adds the gas compensation and the borrowing fee
  */
 export async function getOpenTroveTotalDebt(
-  contracts: Contracts | ContractsV2,
+  contracts: Contracts,
   musdAmount: bigint,
 ) {
   const fee = await contracts.troveManager.getBorrowingFee(musdAmount)
@@ -479,10 +478,7 @@ export async function adjustTroveToICR(
   return { requestedDebtIncrease, increasedTotalDebt }
 }
 
-export async function openTrove(
-  contracts: Contracts | ContractsV2,
-  inputs: OpenTroveParams,
-) {
+export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const params = inputs
 
   // fill in hints for searching trove list if not provided
