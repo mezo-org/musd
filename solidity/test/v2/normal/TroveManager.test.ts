@@ -3203,6 +3203,16 @@ describe("TroveManagerV2 in Normal Mode", () => {
         const interest = await contracts.troveManager.calculateInterestOwed(
           alice.wallet,
         )
+
+        /*
+         * Annual interest rate: 100 bps (or 0.01)
+         * Seconds in a year: 31536000
+         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
+         * Total debt: 10250
+         * Interest owed after 15 days: 3.17097919e-10 * 10250 * 15 * 60 * 60 * 24 = 4.212328755996
+         *
+         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
+         */
         expect(interest).to.be.equal(4212328755996000000n)
       })
 
@@ -3211,6 +3221,16 @@ describe("TroveManagerV2 in Normal Mode", () => {
         const interest = await contracts.troveManager.calculateInterestOwed(
           alice.wallet,
         )
+
+        /*
+         * Annual interest rate: 100 bps (or 0.01)
+         * Seconds in a year: 31536000
+         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
+         * Total debt: 10250
+         * Interest owed after 30 days: 3.17097919e-10 * 10250 * 30 * 60 * 60 * 24 = 8.424657511992
+         *
+         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
+         */
         expect(interest).to.be.equal(8424657511992000000n)
       })
     })

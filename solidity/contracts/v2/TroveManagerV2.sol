@@ -881,6 +881,7 @@ contract TroveManagerV2 is
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 
+    // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
     function calculateInterestOwed(
         address _borrower
     ) public view returns (uint256) {
