@@ -37,7 +37,7 @@ contract TroveManagerV2 is
         uint256 stake;
         Status status;
         uint128 arrayIndex;
-        uint256 interestRate;
+        uint16 interestRate;
         uint256 lastInterestUpdateTime;
     }
 
@@ -197,13 +197,13 @@ contract TroveManagerV2 is
     InterestRateChange[] public interestRateHistory;
 
     // Current interest rate per year in basis points
-    uint256 public interestRate;
+    uint16 public interestRate;
 
     // Maximum interest rate that can be set, defaults to 100% (10000 bps)
-    uint256 public maxInterestRate = 10000;
+    uint16 public maxInterestRate = 10000;
 
     // Proposed interest rate -- must be approved by governance after a minimum delay
-    uint256 public proposedInterestRate;
+    uint16 public proposedInterestRate;
     uint256 public proposalTime;
 
     // Minimum time delay between interest rate proposal and approval
@@ -636,7 +636,7 @@ contract TroveManagerV2 is
         return newDebt;
     }
 
-    function setTroveInterestRate(address _borrower, uint256 _rate) external {
+    function setTroveInterestRate(address _borrower, uint16 _rate) external {
         _requireCallerIsBorrowerOperations();
         Troves[_borrower].interestRate = _rate;
     }
@@ -650,7 +650,7 @@ contract TroveManagerV2 is
     }
 
     function proposeInterestRate(
-        uint256 _newProposedInterestRate
+        uint16 _newProposedInterestRate
     ) external onlyOwnerOrGovernance {
         require(
             _newProposedInterestRate <= maxInterestRate,
@@ -673,7 +673,7 @@ contract TroveManagerV2 is
     }
 
     function setMaxInterestRate(
-        uint256 _newMaxInterestRate
+        uint16 _newMaxInterestRate
     ) external onlyOwnerOrGovernance {
         maxInterestRate = _newMaxInterestRate;
         emit MaxInterestRateUpdated(_newMaxInterestRate);
@@ -753,7 +753,7 @@ contract TroveManagerV2 is
 
     function getTroveInterestRate(
         address _borrower
-    ) external view returns (uint256) {
+    ) external view returns (uint16) {
         return Troves[_borrower].interestRate;
     }
 
@@ -1010,7 +1010,7 @@ contract TroveManagerV2 is
     }
 
     // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
-    function _setInterestRate(uint256 _newInterestRate) internal {
+    function _setInterestRate(uint16 _newInterestRate) internal {
         require(
             _newInterestRate <= maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
