@@ -118,6 +118,9 @@ function initializeContractState(): ContractsState {
       collateral: beforeAndAfter(),
       debt: beforeAndAfter(),
     },
+    collSurplusPool: {
+      collateral: beforeAndAfter(),
+    },
     pcv: {
       collateral: beforeAndAfter(),
       debt: beforeAndAfter(),
@@ -140,6 +143,9 @@ async function initializeUserObject(
   const user: User = {
     address: await wallet.getAddress(),
     btc: beforeAndAfter(),
+    collSurplusPool: {
+      collateral: beforeAndAfter(),
+    },
     musd: beforeAndAfter(),
     rewardSnapshot: {
       collateral: beforeAndAfter(),

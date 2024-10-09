@@ -70,6 +70,9 @@ export interface ContractsState {
     collateral: BeforeAndAfter
     debt: BeforeAndAfter
   }
+  collSurplusPool: {
+    collateral: BeforeAndAfter
+  }
   defaultPool: {
     btc: BeforeAndAfter
     collateral: BeforeAndAfter
@@ -110,6 +113,9 @@ export interface Contracts {
 export interface User {
   address: string
   btc: BeforeAndAfter
+  collSurplusPool: {
+    collateral: BeforeAndAfter
+  }
   musd: BeforeAndAfter
   trove: {
     collateral: BeforeAndAfter
