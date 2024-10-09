@@ -3416,13 +3416,10 @@ describe("TroveManagerV2 in Normal Mode", () => {
       }
 
       const history = await contracts.troveManager.getInterestRateHistory()
-      expect(history.length).to.equal(3)
-      expect(history[0].interestRate).to.equal(1)
-      expect(history[0].blockNumber).to.equal(blockNumbers[0])
-      expect(history[1].interestRate).to.equal(2)
-      expect(history[1].blockNumber).to.equal(blockNumbers[1])
-      expect(history[2].interestRate).to.equal(3)
-      expect(history[2].blockNumber).to.equal(blockNumbers[2])
+      for (let i = 0; i < 3; i++) {
+        expect(history[i].interestRate).to.equal(i + 1)
+        expect(history[i].blockNumber).to.equal(blockNumbers[i])
+      }
     })
   })
 })
