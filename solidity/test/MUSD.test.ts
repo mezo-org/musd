@@ -13,7 +13,7 @@ import {
   User,
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
-import { BorrowerOperations, TroveManager } from "../typechain"
+import { BorrowerOperationsV2, TroveManagerV2 } from "../typechain"
 import { StabilityPoolV2 } from "../typechain/contracts/v2/StabilityPoolV2"
 
 describe("MUSD", () => {
@@ -25,9 +25,9 @@ describe("MUSD", () => {
   let contracts: Contracts
   let testSetup: TestSetup
   let addresses: TestingAddresses
-  let newBorrowerOperations: BorrowerOperations
+  let newBorrowerOperations: BorrowerOperationsV2
   let newStabilityPool: StabilityPoolV2
-  let newTroveManager: TroveManager
+  let newTroveManager: TroveManagerV2
 
   beforeEach(async () => {
     testSetup = await loadFixture(fixtureV2)
@@ -36,13 +36,13 @@ describe("MUSD", () => {
 
     // new contracts to add.
     newBorrowerOperations = await (
-      await ethers.getContractFactory("BorrowerOperations")
+      await ethers.getContractFactory("BorrowerOperationsV2")
     ).deploy()
     newStabilityPool = await (
-      await ethers.getContractFactory("StabilityPool")
+      await ethers.getContractFactory("StabilityPoolV2")
     ).deploy()
     newTroveManager = await (
-      await ethers.getContractFactory("TroveManager")
+      await ethers.getContractFactory("TroveManagerV2")
     ).deploy()
 
     // users
