@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
-import "./dependencies/SendCollateralV2.sol";
+import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePoolV2.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
@@ -19,12 +19,7 @@ import "./interfaces/IStabilityPoolV2.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePoolV2 is
-    Ownable,
-    CheckContract,
-    SendCollateralV2,
-    IActivePoolV2
-{
+contract ActivePoolV2 is Ownable, CheckContract, SendCollateral, IActivePoolV2 {
     address public borrowerOperationsAddress;
     address public collateralAddress;
     address public collSurplusPoolAddress;

@@ -102,7 +102,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
 
             if (netMUSDDebt > remainingMUSD) {
                 if (netMUSDDebt > MIN_NET_DEBT) {
-                    uint256 maxRedeemableMUSD = LiquityMathV2._min(
+                    uint256 maxRedeemableMUSD = LiquityMath._min(
                         remainingMUSD,
                         netMUSDDebt - MIN_NET_DEBT
                     );
@@ -119,10 +119,10 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
                     uint256 newDebt = netMUSDDebt - maxRedeemableMUSD;
 
                     uint256 compositeDebt = _getCompositeDebt(newDebt);
-                    partialRedemptionHintNICR = LiquityMathV2._computeNominalCR(
-                            newColl,
-                            compositeDebt
-                        );
+                    partialRedemptionHintNICR = LiquityMath._computeNominalCR(
+                        newColl,
+                        compositeDebt
+                    );
 
                     remainingMUSD -= maxRedeemableMUSD;
                 }
@@ -163,7 +163,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
         }
 
         hintAddress = sortedTroves.getLast();
-        diff = LiquityMathV2._getAbsoluteDifference(
+        diff = LiquityMath._getAbsoluteDifference(
             _CR,
             troveManager.getNominalICR(hintAddress)
         );
@@ -184,7 +184,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
             uint256 currentNICR = troveManager.getNominalICR(currentAddress);
 
             // check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
-            uint256 currentDiff = LiquityMathV2._getAbsoluteDifference(
+            uint256 currentDiff = LiquityMath._getAbsoluteDifference(
                 currentNICR,
                 _CR
             );
@@ -202,7 +202,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
         uint256 _coll,
         uint256 _debt
     ) external pure returns (uint) {
-        return LiquityMathV2._computeNominalCR(_coll, _debt);
+        return LiquityMath._computeNominalCR(_coll, _debt);
     }
 
     function computeCR(
@@ -210,6 +210,6 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
         uint256 _debt,
         uint256 _price
     ) external pure returns (uint) {
-        return LiquityMathV2._computeCR(_coll, _debt, _price);
+        return LiquityMath._computeCR(_coll, _debt, _price);
     }
 }

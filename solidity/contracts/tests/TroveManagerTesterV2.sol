@@ -45,7 +45,7 @@ contract TroveManagerTesterV2 is TroveManagerV2 {
         uint256 _debt,
         uint256 _price
     ) external pure returns (uint) {
-        return LiquityMathV2._computeCR(_coll, _debt, _price);
+        return LiquityMath._computeCR(_coll, _debt, _price);
     }
 
     function getCollGasCompensation(

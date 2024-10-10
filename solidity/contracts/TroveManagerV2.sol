@@ -697,7 +697,7 @@ contract TroveManagerV2 is
             uint256 currentMUSDDebt
         ) = _getCurrentTroveAmounts(_borrower);
 
-        uint256 NICR = LiquityMathV2._computeNominalCR(
+        uint256 NICR = LiquityMath._computeNominalCR(
             currentCollateral,
             currentMUSDDebt
         );
@@ -910,7 +910,7 @@ contract TroveManagerV2 is
             uint256 currentCollateral,
             uint256 currentMUSDDebt
         ) = _getCurrentTroveAmounts(_borrower);
-        uint256 ICR = LiquityMathV2._computeCR(
+        uint256 ICR = LiquityMath._computeCR(
             currentCollateral,
             currentMUSDDebt,
             _price
@@ -1056,7 +1056,7 @@ contract TroveManagerV2 is
                     break;
                 }
 
-                uint256 TCR = LiquityMathV2._computeCR(
+                uint256 TCR = LiquityMath._computeCR(
                     vars.entireSystemColl,
                     vars.entireSystemDebt,
                     _price
@@ -1168,7 +1168,7 @@ contract TroveManagerV2 is
             _totalMUSDDebt;
 
         uint256 newBaseRate = decayedBaseRate + (redeemedMUSDFraction / BETA);
-        newBaseRate = LiquityMathV2._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
+        newBaseRate = LiquityMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
         //assert(newBaseRate <= DECIMAL_PRECISION); // This is already enforced in the line above
         assert(newBaseRate > 0); // Base rate is always non-zero after redemption
 
@@ -1454,7 +1454,7 @@ contract TroveManagerV2 is
                     continue;
                 }
 
-                uint256 TCR = LiquityMathV2._computeCR(
+                uint256 TCR = LiquityMath._computeCR(
                     vars.entireSystemColl,
                     vars.entireSystemDebt,
                     _price
@@ -1700,7 +1700,7 @@ contract TroveManagerV2 is
         uint256 _partialRedemptionHintNICR
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
-        singleRedemption.MUSDLot = LiquityMathV2._min(
+        singleRedemption.MUSDLot = LiquityMath._min(
             _maxMUSDamount,
             Troves[_borrower].debt - MUSD_GAS_COMPENSATION
         );
@@ -1733,7 +1733,7 @@ contract TroveManagerV2 is
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
-            uint256 newNICR = LiquityMathV2._computeNominalCR(newColl, newDebt);
+            uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
 
             /*
              * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
@@ -1976,7 +1976,7 @@ contract TroveManagerV2 is
 
     function _calcDecayedBaseRate() internal view returns (uint) {
         uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
-        uint256 decayFactor = LiquityMathV2._decPow(
+        uint256 decayFactor = LiquityMath._decPow(
             MINUTE_DECAY_FACTOR,
             minutesPassed
         );
@@ -2031,7 +2031,7 @@ contract TroveManagerV2 is
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            debtToOffset = LiquityMathV2._min(_debt, _MUSDInStabPool);
+            debtToOffset = LiquityMath._min(_debt, _MUSDInStabPool);
             collToSendToSP = (_coll * debtToOffset) / _debt;
             debtToRedistribute = _debt - debtToOffset;
             collToRedistribute = _coll - collToSendToSP;
@@ -2063,7 +2063,7 @@ contract TroveManagerV2 is
         uint256 _entireSystemDebt,
         uint256 _price
     ) internal pure returns (bool) {
-        uint256 TCR = LiquityMathV2._computeCR(
+        uint256 TCR = LiquityMath._computeCR(
             _entireSystemColl,
             _entireSystemDebt,
             _price
@@ -2145,7 +2145,7 @@ contract TroveManagerV2 is
         uint256 _baseRate
     ) internal pure returns (uint) {
         return
-            LiquityMathV2._min(
+            LiquityMath._min(
                 BORROWING_FEE_FLOOR + _baseRate,
                 MAX_BORROWING_FEE
             );
@@ -2168,7 +2168,7 @@ contract TroveManagerV2 is
         uint256 _baseRate
     ) internal pure returns (uint) {
         return
-            LiquityMathV2._min(
+            LiquityMath._min(
                 REDEMPTION_FEE_FLOOR + _baseRate,
                 DECIMAL_PRECISION // cap at a maximum of 100%
             );

@@ -9,7 +9,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
-import "./dependencies/SendCollateralV2.sol";
+import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTrovesV2.sol";
@@ -20,7 +20,7 @@ contract StabilityPoolV2 is
     LiquityBase,
     Ownable,
     CheckContract,
-    SendCollateralV2,
+    SendCollateral,
     IStabilityPoolV2
 {
     // --- Type Declarations ---
@@ -186,7 +186,7 @@ contract StabilityPoolV2 is
         );
 
         uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
-        uint256 MUSDtoWithdraw = LiquityMathV2._min(
+        uint256 MUSDtoWithdraw = LiquityMath._min(
             _amount,
             compoundedMUSDDeposit
         );

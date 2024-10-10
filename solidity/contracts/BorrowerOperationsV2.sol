@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
-import "./dependencies/SendCollateralV2.sol";
+import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
 import "./token/IMUSD.sol";
@@ -17,7 +17,7 @@ contract BorrowerOperationsV2 is
     LiquityBase,
     Ownable,
     CheckContract,
-    SendCollateralV2,
+    SendCollateral,
     IBorrowerOperationsV2
 {
     /* --- Variable container structs  ---
@@ -144,12 +144,12 @@ contract BorrowerOperationsV2 is
 
         // if BTC overwrite the asset value
         _assetAmount = getAssetAmount(_assetAmount);
-        vars.ICR = LiquityMathV2._computeCR(
+        vars.ICR = LiquityMath._computeCR(
             _assetAmount,
             vars.compositeDebt,
             vars.price
         );
-        vars.NICR = LiquityMathV2._computeNominalCR(
+        vars.NICR = LiquityMath._computeNominalCR(
             _assetAmount,
             vars.compositeDebt
         );
@@ -572,11 +572,7 @@ contract BorrowerOperationsV2 is
         vars.coll = contractsCache.troveManager.getTroveColl(_borrower);
 
         // Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
-        vars.oldICR = LiquityMathV2._computeCR(
-            vars.coll,
-            vars.debt,
-            vars.price
-        );
+        vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
         vars.newICR = _getNewICRFromTroveChange(
             vars.coll,
             vars.debt,
@@ -807,7 +803,7 @@ contract BorrowerOperationsV2 is
             ? totalDebt + _debtChange
             : totalDebt - _debtChange;
 
-        uint256 newTCR = LiquityMathV2._computeCR(totalColl, totalDebt, _price);
+        uint256 newTCR = LiquityMath._computeCR(totalColl, totalDebt, _price);
         return newTCR;
     }
 
@@ -910,7 +906,7 @@ contract BorrowerOperationsV2 is
             _debtChange,
             _isDebtIncrease
         );
-        uint256 newICR = LiquityMathV2._computeCR(newColl, newDebt, _price);
+        uint256 newICR = LiquityMath._computeCR(newColl, newDebt, _price);
         return newICR;
     }
 
@@ -949,7 +945,7 @@ contract BorrowerOperationsV2 is
             _isDebtIncrease
         );
 
-        uint256 newNICR = LiquityMathV2._computeNominalCR(newColl, newDebt);
+        uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
         return newNICR;
     }
 

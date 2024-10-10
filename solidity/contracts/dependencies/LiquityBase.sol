@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import "./BaseMath.sol";
-import "./LiquityMathV2.sol";
+import "./LiquityMath.sol";
 import "../interfaces/IActivePoolV2.sol";
 import "../interfaces/IDefaultPoolV2.sol";
 import "../interfaces/IPriceFeedV2.sol";
@@ -71,7 +71,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         uint256 entireSystemColl = getEntireSystemColl();
         uint256 entireSystemDebt = getEntireSystemDebt();
 
-        TCR = LiquityMathV2._computeCR(
+        TCR = LiquityMath._computeCR(
             entireSystemColl,
             entireSystemDebt,
             _price
