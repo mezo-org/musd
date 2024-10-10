@@ -11,7 +11,7 @@ import "./dependencies/CheckContractV2.sol";
 import "./dependencies/LiquityBaseV2.sol";
 import "./dependencies/SendCollateralV2.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
-import "../token/IMUSD.sol";
+import "./token/IMUSD.sol";
 import "./interfaces/ISortedTrovesV2.sol";
 import "./interfaces/IStabilityPoolV2.sol";
 import "./interfaces/ITroveManagerV2.sol";

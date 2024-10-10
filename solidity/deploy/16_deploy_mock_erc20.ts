@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying MockERC20V2 contract...")
 
     await deployments.deploy("MockERC20V2", {
-      contract: "contracts/v2/tests/MockERC20V2.sol:MockERC20V2",
+      contract: "contracts/tests/MockERC20V2.sol:MockERC20V2",
       args: ["ERC Test", "TST", 100000],
       from: deployer,
       log: true,

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import "../../token/MUSD.sol";
+import "../token/MUSD.sol";
 
 contract MUSDTesterV2 is MUSD {
     constructor(

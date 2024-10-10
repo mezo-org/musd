@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying PCVV2 contract...")
 
     await deployments.deploy("PCVV2", {
-      contract: "contracts/v2/PCVV2.sol:PCVV2",
+      contract: "contracts/PCVV2.sol:PCVV2",
       args: [7200],
       from: deployer,
       log: true,

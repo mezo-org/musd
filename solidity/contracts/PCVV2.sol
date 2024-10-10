@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContractV2.sol";
 import "./dependencies/SendCollateralV2.sol";
-import "../token/IMUSD.sol";
+import "./token/IMUSD.sol";
 import "./interfaces/IPCVV2.sol";
 import "./BorrowerOperationsV2.sol";
 
@@ -261,8 +261,8 @@ contract PCVV2 is IPCVV2, Ownable, CheckContractV2, SendCollateralV2 {
             "PCV: Approval failed"
         );
         IStabilityPoolV2(borrowerOperations.stabilityPoolAddress()).provideToSP(
-            _musdAmount
-        );
+                _musdAmount
+            );
 
         // TODO Emit event
     }

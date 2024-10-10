@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying TroveManagervV2 contract...")
 
     await deployments.deploy("TroveManagerV2", {
-      contract: "contracts/v2/TroveManagerV2.sol:TroveManagerV2",
+      contract: "contracts/TroveManagerV2.sol:TroveManagerV2",
       args: [],
       from: deployer,
       log: true,
@@ -29,8 +29,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying TroveManagerTesterV2 contract...")
 
     await deployments.deploy("TroveManagerTesterV2", {
-      contract:
-        "contracts/v2/tests/TroveManagerTesterV2.sol:TroveManagerTesterV2",
+      contract: "contracts/tests/TroveManagerTesterV2.sol:TroveManagerTesterV2",
       args: [],
       from: deployer,
       log: true,

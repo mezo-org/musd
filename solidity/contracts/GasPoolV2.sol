@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContractV2.sol";
 import "./interfaces/IGasPoolV2.sol";
-import "../token/MUSD.sol";
+import "./token/MUSD.sol";
 
 /**
  * The purpose of this contract is to hold THUSD tokens for gas compensation:

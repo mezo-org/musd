@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying PriceFeedV2 contract...")
 
     await deployments.deploy("PriceFeedV2", {
-      contract: "contracts/v2/PriceFeedV2.sol:PriceFeedV2",
+      contract: "contracts/PriceFeedV2.sol:PriceFeedV2",
       args: [],
       from: deployer,
       log: true,
@@ -26,7 +26,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying Unconnected PriceFeed contract...")
 
     await deployments.deploy("UnconnectedPriceFeedV2", {
-      contract: "contracts/v2/PriceFeedV2.sol:PriceFeedV2",
+      contract: "contracts/PriceFeedV2.sol:PriceFeedV2",
       args: [],
       from: deployer,
       log: true,

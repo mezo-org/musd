@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying StabilityPoolV2 contract...")
 
     await deployments.deploy("StabilityPoolV2", {
-      contract: "contracts/v2/StabilityPoolV2.sol:StabilityPoolV2",
+      contract: "contracts/StabilityPoolV2.sol:StabilityPoolV2",
       args: [],
       from: deployer,
       log: true,
