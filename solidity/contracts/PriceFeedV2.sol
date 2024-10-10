@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./interfaces/ChainlinkAggregatorV3InterfaceV2.sol";
+import "./interfaces/ChainlinkAggregatorV3Interface.sol";
 import "./interfaces/IPriceFeedV2.sol";
 
 contract PriceFeedV2 is IPriceFeedV2, Ownable {
@@ -12,14 +12,14 @@ contract PriceFeedV2 is IPriceFeedV2, Ownable {
     uint8 public constant TARGET_DIGITS = 18;
 
     // State ------------------------------------------------------------------------------------------------------------
-    ChainlinkAggregatorV3InterfaceV2 public oracle;
+    ChainlinkAggregatorV3Interface public oracle;
 
     constructor() Ownable(msg.sender) {}
 
     // Admin routines ---------------------------------------------------------------------------------------------------
 
     function setOracle(address _oracle) external onlyOwner {
-        ChainlinkAggregatorV3InterfaceV2 chainLinkOracle = ChainlinkAggregatorV3InterfaceV2(
+        ChainlinkAggregatorV3Interface chainLinkOracle = ChainlinkAggregatorV3Interface(
                 _oracle
             );
 

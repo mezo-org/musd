@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.17;
 
-interface ChainlinkAggregatorV3InterfaceV2 {
+interface ChainlinkAggregatorV3Interface {
     function decimals() external view returns (uint8);
 
     function latestRoundData()
