@@ -13,7 +13,7 @@ import "../interfaces/ILiquityBaseV2.sol";
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-abstract contract LiquityBaseV2 is BaseMath, ILiquityBaseV2 {
+abstract contract LiquityBase is BaseMath, ILiquityBase {
     uint256 public constant _100pct = 1e18; // 1e18 == 100%
 
     // Minimum collateral ratio for individual troves

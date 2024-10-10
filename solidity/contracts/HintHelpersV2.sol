@@ -5,10 +5,10 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/ISortedTrovesV2.sol";
-import "./dependencies/LiquityBaseV2.sol";
+import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
 
-contract HintHelpersV2 is LiquityBaseV2, Ownable, CheckContract {
+contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
 
     ISortedTrovesV2 public sortedTroves;
