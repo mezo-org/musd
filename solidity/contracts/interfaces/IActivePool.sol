@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import "./IPoolV2.sol";
 
-interface IActivePoolV2 is IPoolV2 {
+interface IActivePool is IPoolV2 {
     // --- Events ---
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress

@@ -96,7 +96,7 @@ contract TroveManagerV2 is
     }
 
     struct ContractsCache {
-        IActivePoolV2 activePool;
+        IActivePool activePool;
         IDefaultPoolV2 defaultPool;
         IMUSD musdToken;
         IPCVV2 pcv;
@@ -246,7 +246,7 @@ contract TroveManagerV2 is
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
-        activePool = IActivePoolV2(_activePoolAddress);
+        activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPoolV2(_defaultPoolAddress);
         stabilityPool = IStabilityPoolV2(_stabilityPoolAddress);
         // slither-disable-next-line missing-zero-check
@@ -790,7 +790,7 @@ contract TroveManagerV2 is
             "TroveManager: Calldata address array must not be empty"
         );
 
-        IActivePoolV2 activePoolCached = activePool;
+        IActivePool activePoolCached = activePool;
         IDefaultPoolV2 defaultPoolCached = defaultPool;
         IStabilityPoolV2 stabilityPoolCached = stabilityPool;
 
@@ -1113,7 +1113,7 @@ contract TroveManagerV2 is
     }
 
     function _getTotalsFromLiquidateTrovesSequenceNormalMode(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
@@ -1183,7 +1183,7 @@ contract TroveManagerV2 is
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
     function _applyPendingRewards(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         address _borrower
     ) internal {
@@ -1221,7 +1221,7 @@ contract TroveManagerV2 is
     }
 
     function _sendGasCompensation(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         address _liquidator,
         uint256 _MUSD,
         uint256 _collateral
@@ -1246,7 +1246,7 @@ contract TroveManagerV2 is
      * The collateral as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
      */
     function _updateSystemSnapshotsExcludeCollRemainder(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         uint256 _collRemainder
     ) internal {
         totalStakesSnapshot = totalStakes;
@@ -1262,7 +1262,7 @@ contract TroveManagerV2 is
     }
 
     function _redistributeDebtAndColl(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         uint256 _debt,
         uint256 _coll
@@ -1317,7 +1317,7 @@ contract TroveManagerV2 is
 
     // Liquidate one trove, in Normal Mode.
     function _liquidateNormalMode(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         address _borrower,
         uint256 _MUSDInStabPool
@@ -1384,7 +1384,7 @@ contract TroveManagerV2 is
     }
 
     function _getTotalsFromBatchLiquidateNormalMode(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
@@ -1424,7 +1424,7 @@ contract TroveManagerV2 is
      * handle the case where the system *leaves* Recovery Mode, part way through the liquidation sequence
      */
     function _getTotalFromBatchLiquidateRecoveryMode(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
@@ -1509,7 +1509,7 @@ contract TroveManagerV2 is
 
     // Liquidate one trove, in Recovery Mode.
     function _liquidateRecoveryMode(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         address _borrower,
         uint256 _ICR,
@@ -1824,7 +1824,7 @@ contract TroveManagerV2 is
 
     // Move a Trove's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
     function _movePendingTroveRewardsToActivePool(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IDefaultPoolV2 _defaultPool,
         uint256 _MUSD,
         uint256 _collateral

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import "./BaseMath.sol";
 import "./LiquityMath.sol";
-import "../interfaces/IActivePoolV2.sol";
+import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPoolV2.sol";
 import "../interfaces/IPriceFeedV2.sol";
 import "../interfaces/ILiquityBaseV2.sol";
@@ -35,7 +35,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         1000); // 0.5%
 
     // slither-disable-next-line all
-    IActivePoolV2 public activePool;
+    IActivePool public activePool;
 
     // slither-disable-next-line all
     IDefaultPoolV2 public defaultPool;

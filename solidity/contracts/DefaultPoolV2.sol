@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IDefaultPoolV2.sol";
-import "./interfaces/IActivePoolV2.sol";
+import "./interfaces/IActivePool.sol";
 
 /*
  * The Default Pool holds the collateral and MUSD debt (but not MUSD tokens) from liquidations that have been redistributed
@@ -62,7 +62,7 @@ contract DefaultPoolV2 is
 
         require(
             (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePoolV2(_activePoolAddress).collateralAddress() ==
+                IActivePool(_activePoolAddress).collateralAddress() ==
                 _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"
         );

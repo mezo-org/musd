@@ -54,7 +54,7 @@ contract BorrowerOperationsV2 is
 
     struct ContractsCache {
         ITroveManagerV2 troveManager;
-        IActivePoolV2 activePool;
+        IActivePool activePool;
         IMUSD musd;
     }
 
@@ -330,7 +330,7 @@ contract BorrowerOperationsV2 is
 
     function closeTrove() external override {
         ITroveManagerV2 troveManagerCached = troveManager;
-        IActivePoolV2 activePoolCached = activePool;
+        IActivePool activePoolCached = activePool;
         IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
 
@@ -450,7 +450,7 @@ contract BorrowerOperationsV2 is
         checkContract(_troveManagerAddress);
 
         troveManager = ITroveManagerV2(_troveManagerAddress);
-        activePool = IActivePoolV2(_activePoolAddress);
+        activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPoolV2(_defaultPoolAddress);
         // slither-disable-next-line missing-zero-check
         stabilityPoolAddress = _stabilityPoolAddress;
@@ -654,7 +654,7 @@ contract BorrowerOperationsV2 is
 
     // Issue the specified amount of MUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
     function _withdrawMUSD(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IMUSD _musd,
         address _account,
         uint256 _debtAmount,
@@ -666,7 +666,7 @@ contract BorrowerOperationsV2 is
 
     // Burn the specified amount of MUSD from _account and decreases the total active debt
     function _repayMUSD(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IMUSD _musd,
         address _account,
         uint256 _MUSD
@@ -676,7 +676,7 @@ contract BorrowerOperationsV2 is
     }
 
     function _moveTokensAndCollateralfromAdjustment(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         IMUSD _musd,
         address _borrower,
         uint256 _collChange,
@@ -706,7 +706,7 @@ contract BorrowerOperationsV2 is
 
     // Send collateral to Active Pool and increase its recorded collateral balance
     function _activePoolAddColl(
-        IActivePoolV2 _activePool,
+        IActivePool _activePool,
         uint256 _amount
     ) internal {
         sendCollateralFrom(

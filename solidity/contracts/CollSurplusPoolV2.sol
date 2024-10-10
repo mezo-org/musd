@@ -7,7 +7,7 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
-import "./interfaces/IActivePoolV2.sol";
+import "./interfaces/IActivePool.sol";
 
 contract CollSurplusPoolV2 is
     Ownable,
@@ -67,7 +67,7 @@ contract CollSurplusPoolV2 is
 
         require(
             (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePoolV2(_activePoolAddress).collateralAddress() ==
+                IActivePool(_activePoolAddress).collateralAddress() ==
                 _collateralAddress) &&
                 (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
                     IBorrowerOperationsV2(_borrowerOperationsAddress)

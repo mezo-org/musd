@@ -112,7 +112,7 @@ contract StabilityPoolV2 is
 
         borrowerOperations = IBorrowerOperationsV2(_borrowerOperationsAddress);
         troveManager = ITroveManagerV2(_troveManagerAddress);
-        activePool = IActivePoolV2(_activePoolAddress);
+        activePool = IActivePool(_activePoolAddress);
         musd = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
         priceFeed = IPriceFeedV2(_priceFeedAddress);
@@ -477,7 +477,7 @@ contract StabilityPoolV2 is
         uint256 _collToAdd,
         uint256 _debtToOffset
     ) internal {
-        IActivePoolV2 activePoolCached = activePool;
+        IActivePool activePoolCached = activePool;
 
         // Cancel the liquidated MUSD debt with the MUSD in the stability pool
         activePoolCached.decreaseMUSDDebt(_debtToOffset);
