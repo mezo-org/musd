@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import "./BaseMathV2.sol";
+import "./BaseMath.sol";
 import "./LiquityMathV2.sol";
 import "../interfaces/IActivePoolV2.sol";
 import "../interfaces/IDefaultPoolV2.sol";
@@ -13,7 +13,7 @@ import "../interfaces/ILiquityBaseV2.sol";
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
  * common functions.
  */
-abstract contract LiquityBaseV2 is BaseMathV2, ILiquityBaseV2 {
+abstract contract LiquityBaseV2 is BaseMath, ILiquityBaseV2 {
     uint256 public constant _100pct = 1e18; // 1e18 == 100%
 
     // Minimum collateral ratio for individual troves
