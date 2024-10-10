@@ -4,15 +4,15 @@ import { expect } from "chai"
 import {
   addColl,
   connectContracts,
-  Contracts,
   ContractsState,
+  ContractsV2,
   fixtureV2,
   getAddresses,
   getEventArgByName,
   openTrove,
   removeMintlist,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveSnapshot,
@@ -26,9 +26,9 @@ describe("BorrowerOperationsV2 in Recovery Mode", () => {
   let bob: User
   let carol: User
   let deployer: User
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
+  let testSetup: TestSetupV2
   let state: ContractsState
 
   async function recoveryModeSetup() {

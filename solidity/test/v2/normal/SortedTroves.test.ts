@@ -2,11 +2,11 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
   connectContracts,
-  Contracts,
+  ContractsV2,
   fixtureV2,
   openTrove,
   openTroves,
-  TestSetup,
+  TestSetupV2,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -18,9 +18,9 @@ describe("SortedTrovesV2", () => {
   let dennis: User
   let eric: User
   let whale: User
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
+  let testSetup: TestSetupV2
 
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixtureV2)

@@ -57,4 +57,8 @@ interface IPCVV2 {
     function collateralERC20() external view returns (IERC20);
 
     function musd() external view returns (IMUSD);
+
+    function council() external view returns (address);
+
+    function treasury() external view returns (address);
 }

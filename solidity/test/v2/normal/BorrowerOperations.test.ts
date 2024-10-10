@@ -4,7 +4,6 @@ import { ethers } from "hardhat"
 import {
   addColl,
   connectContracts,
-  Contracts,
   createLiquidationEvent,
   fastForwardTime,
   fixtureV2,
@@ -19,7 +18,7 @@ import {
   removeMintlist,
   setBaseRate,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   updateContractsSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
@@ -29,7 +28,11 @@ import {
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
-import { ContractsState, OpenTroveParams } from "../../helpers/interfaces"
+import {
+  ContractsV2,
+  ContractsState,
+  OpenTroveParams,
+} from "../../helpers/interfaces"
 
 describe("BorrowerOperationsV2 in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -37,13 +40,15 @@ describe("BorrowerOperationsV2 in Normal Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
   let dennis: User
   let eric: User
   let deployer: User
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
+  let treasury: User
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
   let state: ContractsState
-  let testSetup: TestSetup
+  let testSetup: TestSetupV2
   let MIN_NET_DEBT: bigint
   let MUSD_GAS_COMPENSATION: bigint
 
@@ -127,13 +132,21 @@ describe("BorrowerOperationsV2 in Normal Mode", () => {
     alice = testSetup.users.alice
     bob = testSetup.users.bob
     carol = testSetup.users.carol
+    council = testSetup.users.council
     dennis = testSetup.users.dennis
     eric = testSetup.users.eric
     deployer = testSetup.users.deployer
+    treasury = testSetup.users.treasury
 
     MIN_NET_DEBT = await contracts.borrowerOperations.MIN_NET_DEBT()
     MUSD_GAS_COMPENSATION =
       await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
 
     // readability helper
     addresses = await getAddresses(contracts, testSetup.users)
@@ -616,6 +629,40 @@ describe("BorrowerOperationsV2 in Normal Mode", () => {
         expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
           true,
         )
+      })
+
+      it("openTrove(): opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
+        // set the current interest rate to 100 bps
+        await contracts.troveManager
+          .connect(council.wallet)
+          .proposeInterestRate(100)
+        const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+        await fastForwardTime(timeToIncrease)
+        await contracts.troveManager
+          .connect(council.wallet)
+          .approveInterestRate()
+
+        // open a new trove
+        await openTrove(contracts, {
+          musdAmount: "100,000",
+          sender: dennis.wallet,
+        })
+
+        // check that the interest rate on the trove is the current interest rate
+        const interestRate = await contracts.troveManager.getTroveInterestRate(
+          dennis.wallet,
+        )
+        expect(interestRate).is.equal(100)
+
+        // check that the lastInterestUpdatedTime on the Trove is the current time
+        const lastInterestUpdatedTime =
+          await contracts.troveManager.getTroveLastInterestUpdateTime(
+            dennis.wallet,
+          )
+
+        const currentTime = await getLatestBlockTimestamp()
+
+        expect(lastInterestUpdatedTime).is.equal(currentTime)
       })
     })
 

@@ -5,8 +5,8 @@ import { ContractTransactionResponse } from "ethers"
 import {
   CheckPoint,
   connectContracts,
-  Contracts,
   ContractsState,
+  ContractsV2,
   createLiquidationEvent,
   dropPrice,
   fixtureV2,
@@ -19,7 +19,7 @@ import {
   openTrovesAndProvideStability,
   provideToSP,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   transferMUSD,
   updateContractsSnapshot,
   updatePendingSnapshot,
@@ -46,9 +46,9 @@ describe("StabilityPoolV2 in Normal Mode", () => {
   let eric: User
   let whale: User
   let state: ContractsState
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
+  let testSetup: TestSetupV2
 
   type Pool = "activePool" | "defaultPool"
   const pools: Pool[] = ["activePool", "defaultPool"]

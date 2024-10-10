@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { Contracts, openTrove, setupTests, User } from "../../helpers"
+import { Contracts, openTrove, setupTestsV2, User } from "../../helpers"
 import { to1e18 } from "../../utils"
 
 describe("HintHelpersV2", () => {
@@ -18,7 +18,7 @@ describe("HintHelpersV2", () => {
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts } =
-      await setupTests("v2"))
+      await setupTestsV2())
   })
 
   async function setupTroves() {

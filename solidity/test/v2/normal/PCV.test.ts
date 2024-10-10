@@ -3,13 +3,13 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
   connectContracts,
-  Contracts,
+  ContractsV2,
   fastForwardTime,
   fixtureV2,
   getAddresses,
   getLatestBlockTimestamp,
   TestingAddresses,
-  TestSetup,
+  TestSetupV2,
   updateWalletSnapshot,
   User,
 } from "../../helpers"
@@ -22,10 +22,10 @@ describe("PCVV2", () => {
   let bob: User
   let council: User
   let deployer: User
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
   let treasury: User
-  let testSetup: TestSetup
+  let testSetup: TestSetupV2
 
   let bootstrapLoan: bigint
   let delay: bigint

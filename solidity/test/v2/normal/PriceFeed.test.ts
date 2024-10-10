@@ -3,19 +3,19 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { ZERO_ADDRESS, to1e18 } from "../../utils"
 
 import {
-  Contracts,
-  TestSetup,
-  User,
-  connectContracts,
+  ContractsV2,
   fixtureV2,
   getDeployedContract,
+  TestSetupV2,
+  connectContracts,
+  User,
 } from "../../helpers"
 import type { PriceFeed } from "../../../typechain"
 
 describe("PriceFeedV2 in Normal Mode", () => {
-  let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
+  let contracts: ContractsV2
+  let cachedTestSetup: TestSetupV2
+  let testSetup: TestSetupV2
   let deployer: User
 
   beforeEach(async () => {

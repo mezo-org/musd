@@ -3,8 +3,8 @@ import {
   applyLiquidationFee,
   checkTroveActive,
   checkTroveClosedByLiquidation,
-  Contracts,
   ContractsState,
+  ContractsV2,
   dropPrice,
   dropPriceAndLiquidate,
   getEmittedLiquidationValues,
@@ -12,7 +12,7 @@ import {
   NO_GAS,
   openTrove,
   provideToSP,
-  setupTests,
+  setupTestsV2,
   updatePendingSnapshot,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshots,
@@ -32,11 +32,11 @@ describe("TroveManagerV2 in Recovery Mode", () => {
   let eric: User
   let frank: User
   let state: ContractsState
-  let contracts: Contracts
+  let contracts: ContractsV2
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts, state } =
-      await setupTests("v2"))
+      await setupTestsV2())
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {

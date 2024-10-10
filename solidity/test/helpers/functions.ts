@@ -4,14 +4,14 @@ import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
 import { assert } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "../utils"
+import { GOVERNANCE_TIME_DELAY, to1e18, ZERO_ADDRESS } from "../utils"
 import {
-  Contracts,
-  OpenTroveParams,
   AddCollParams,
-  User,
-  TestingAddresses,
+  Contracts,
   ContractsState,
+  OpenTroveParams,
+  TestingAddresses,
+  User,
   WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
@@ -35,7 +35,7 @@ export async function removeMintlist(
 }
 
 /*
- * given the requested MUSD amomunt in openTrove, returns the total debt
+ * given the requested MUSD amount in openTrove, returns the total debt
  * So, it adds the gas compensation and the borrowing fee
  */
 export async function getOpenTroveTotalDebt(
@@ -739,9 +739,36 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
   }
 }
 
-export async function setupTests(version: "v1" | "v2" = "v1") {
-  const cachedTestSetup =
-    version === "v2" ? await loadFixture(fixtureV2) : await loadFixture(fixture)
+export async function setupTests() {
+  const cachedTestSetup = await loadFixture(fixture)
+  const testSetup = { ...cachedTestSetup }
+  const { contracts, state } = testSetup
+
+  await connectContracts(contracts, testSetup.users)
+
+  // users
+  const { alice, bob, carol, dennis, eric, frank } = testSetup.users
+
+  // readability helper
+  const addresses = await getAddresses(contracts, testSetup.users)
+
+  return {
+    contracts,
+    state,
+    cachedTestSetup,
+    testSetup,
+    addresses,
+    alice,
+    bob,
+    carol,
+    dennis,
+    eric,
+    frank,
+  }
+}
+
+export async function setupTestsV2() {
+  const cachedTestSetup = await loadFixture(fixtureV2)
   const testSetup = { ...cachedTestSetup }
   const { contracts, state } = testSetup
 

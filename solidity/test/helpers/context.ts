@@ -4,11 +4,13 @@ import { getDeployedContract } from "./contract"
 import { ZERO_ADDRESS } from "../utils"
 import {
   Contracts,
-  Users,
-  TestSetup,
-  TestingAddresses,
-  User,
   ContractsState,
+  ContractsV2,
+  TestingAddresses,
+  TestSetup,
+  TestSetupV2,
+  User,
+  Users,
 } from "./interfaces"
 import type {
   ActivePool,
@@ -17,61 +19,104 @@ import type {
   DefaultPool,
   GasPool,
   HintHelpers,
+  MockAggregator,
+  MockERC20,
+  MUSDTester,
   PCV,
   PriceFeed,
   SortedTroves,
   StabilityPool,
-} from "../../typechain/contracts/v1"
-
-import type {
-  MockAggregator,
-  MockERC20,
-  MUSDTester,
   TroveManagerTester,
-} from "../../typechain/contracts/v1/tests"
-import { TroveManagerTesterV2 } from "../../typechain"
+} from "../../typechain"
+import {
+  ActivePoolV2,
+  BorrowerOperationsV2,
+  CollSurplusPoolV2,
+  DefaultPoolV2,
+  GasPoolV2,
+  HintHelpersV2,
+  MockAggregatorV2,
+  MockERC20V2,
+  PCVV2,
+  PriceFeedV2,
+  SortedTrovesV2,
+  StabilityPoolV2,
+  TroveManagerTesterV2,
+} from "../../typechain"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
 // eslint-disable-next-line import/prefer-default-export
-export async function deployment(version: "v1" | "v2" = "v1") {
+export async function deployment() {
   await deployments.fixture()
 
-  const suffix = version === "v2" ? "V2" : ""
-
-  const activePool: ActivePool = await getDeployedContract(
-    `ActivePool${suffix}`,
-  )
-  const borrowerOperations: BorrowerOperations = await getDeployedContract(
-    `BorrowerOperations${suffix}`,
-  )
-  const collSurplusPool: CollSurplusPool = await getDeployedContract(
-    `CollSurplusPool${suffix}`,
-  )
-  const defaultPool: DefaultPool = await getDeployedContract(
-    `DefaultPool${suffix}`,
-  )
-  const gasPool: GasPool = await getDeployedContract(`GasPool${suffix}`)
-  const hintHelpers: HintHelpers = await getDeployedContract(
-    `HintHelpers${suffix}`,
-  )
-  const mockAggregator: MockAggregator = await getDeployedContract(
-    `MockAggregator${suffix}`,
-  )
-  const mockERC20: MockERC20 = await getDeployedContract(`MockERC20${suffix}`)
-  const musd: MUSDTester = await getDeployedContract(`MUSDTester${suffix}`)
-  const pcv: PCV = await getDeployedContract(`PCV${suffix}`)
-  const priceFeed: PriceFeed = await getDeployedContract(`PriceFeed${suffix}`)
-  const sortedTroves: SortedTroves = await getDeployedContract(
-    `SortedTroves${suffix}`,
-  )
-  const stabilityPool: StabilityPool = await getDeployedContract(
-    `StabilityPool${suffix}`,
-  )
-  const troveManager: TroveManagerTester & TroveManagerTesterV2 =
-    await getDeployedContract(`TroveManagerTester${suffix}`)
+  const activePool: ActivePool = await getDeployedContract("ActivePool")
+  const borrowerOperations: BorrowerOperations =
+    await getDeployedContract("BorrowerOperations")
+  const collSurplusPool: CollSurplusPool =
+    await getDeployedContract("CollSurplusPool")
+  const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
+  const gasPool: GasPool = await getDeployedContract("GasPool")
+  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
+  const mockAggregator: MockAggregator =
+    await getDeployedContract("MockAggregator")
+  const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
+  const musd: MUSDTester = await getDeployedContract("MUSDTester")
+  const pcv: PCV = await getDeployedContract("PCV")
+  const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
+  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
+  const stabilityPool: StabilityPool =
+    await getDeployedContract("StabilityPool")
+  const troveManager: TroveManagerTester =
+    await getDeployedContract("TroveManagerTester")
 
   const contracts: Contracts = {
+    activePool,
+    borrowerOperations,
+    collSurplusPool,
+    defaultPool,
+    gasPool,
+    hintHelpers,
+    mockAggregator,
+    mockERC20,
+    musd,
+    pcv,
+    priceFeed,
+    sortedTroves,
+    stabilityPool,
+    troveManager,
+  }
+
+  return contracts
+}
+
+export async function deploymentV2() {
+  await deployments.fixture()
+
+  const activePool: ActivePoolV2 = await getDeployedContract("ActivePoolV2")
+  const borrowerOperations: BorrowerOperationsV2 = await getDeployedContract(
+    "BorrowerOperationsV2",
+  )
+  const collSurplusPool: CollSurplusPoolV2 =
+    await getDeployedContract("CollSurplusPoolV2")
+  const defaultPool: DefaultPoolV2 = await getDeployedContract("DefaultPoolV2")
+  const gasPool: GasPoolV2 = await getDeployedContract("GasPoolV2")
+  const hintHelpers: HintHelpersV2 = await getDeployedContract("HintHelpersV2")
+  const mockAggregator: MockAggregatorV2 =
+    await getDeployedContract("MockAggregatorV2")
+  const mockERC20: MockERC20V2 = await getDeployedContract("MockERC20V2")
+  const musd: MUSDTester = await getDeployedContract("MUSDTesterV2")
+  const pcv: PCVV2 = await getDeployedContract("PCVV2")
+  const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")
+  const sortedTroves: SortedTrovesV2 =
+    await getDeployedContract("SortedTrovesV2")
+  const stabilityPool: StabilityPoolV2 =
+    await getDeployedContract("StabilityPoolV2")
+  const troveManager: TroveManagerTesterV2 = await getDeployedContract(
+    "TroveManagerTesterV2",
+  )
+
+  const contracts: ContractsV2 = {
     activePool,
     borrowerOperations,
     collSurplusPool,
@@ -179,7 +224,7 @@ async function initializeUserObject(
  * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
  */
 
-export async function fixture(version: "v1" | "v2" = "v1"): Promise<TestSetup> {
+export async function fixture(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [
     aliceWallet,
@@ -192,7 +237,7 @@ export async function fixture(version: "v1" | "v2" = "v1"): Promise<TestSetup> {
     councilWallet,
     treasuryWallet,
   ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deployment(version)
+  const contracts = await deployment()
 
   const users: Users = {
     alice: await initializeUserObject(aliceWallet),
@@ -219,8 +264,43 @@ export async function fixture(version: "v1" | "v2" = "v1"): Promise<TestSetup> {
 }
 
 // Needed because loadFixture cannot take an anonymous function as a parameter
-export async function fixtureV2() {
-  return fixture("v2")
+export async function fixtureV2(): Promise<TestSetupV2> {
+  const { deployer } = await helpers.signers.getNamedSigners()
+  const [
+    aliceWallet,
+    bobWallet,
+    carolWallet,
+    dennisWallet,
+    ericWallet,
+    frankWallet,
+    whaleWallet,
+    councilWallet,
+    treasuryWallet,
+  ] = await helpers.signers.getUnnamedSigners()
+  const contracts = await deploymentV2()
+
+  const users: Users = {
+    alice: await initializeUserObject(aliceWallet),
+    bob: await initializeUserObject(bobWallet),
+    carol: await initializeUserObject(carolWallet),
+    dennis: await initializeUserObject(dennisWallet),
+    eric: await initializeUserObject(ericWallet),
+    frank: await initializeUserObject(frankWallet),
+    whale: await initializeUserObject(whaleWallet),
+    deployer: await initializeUserObject(deployer),
+    council: await initializeUserObject(councilWallet),
+    treasury: await initializeUserObject(treasuryWallet),
+  }
+
+  const state: ContractsState = initializeContractState()
+
+  const testSetup: TestSetupV2 = {
+    users,
+    state,
+    contracts,
+  }
+
+  return testSetup
 }
 
 export async function getAddresses(contracts: Contracts, users: Users) {
