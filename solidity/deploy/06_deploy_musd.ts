@@ -1,6 +1,6 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
@@ -8,13 +8,18 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const deployment = await deployments.getOrNull("MUSD")
-  if (deployment && helpers.address.isValid(deployment.address)) {
+  const musdTesterDeployment = await deployments.getOrNull("MUSDTesterV2")
+  if (
+    deployment &&
+    musdTesterDeployment &&
+    helpers.address.isValid(deployment.address)
+  ) {
     log(`Using MUSD at ${deployment.address}`)
   } else {
     log("Deploying MUSD contract...")
-    const borrowerOperations = await deployments.get("BorrowerOperations")
-    const stabilityPool = await deployments.get("StabilityPool")
-    const troveManager = await deployments.get("TroveManagerTester")
+    const borrowerOperations = await deployments.get("BorrowerOperationsV2")
+    const stabilityPool = await deployments.get("StabilityPoolV2")
+    const troveManager = await deployments.get("TroveManagerTesterV2")
     const ZERO_ADDRESS = `0x${"0".repeat(40)}`
     const delay = 90 * 24 * 60 * 60 // 90 days in seconds
 
@@ -36,7 +41,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       waitConfirmations: waitConfirmationsNumber(hre),
     })
 
-    await deployments.deploy("MUSDTester", {
+    // Reuse the contract code but with a different name since we need to pass the V2 contracts
+    await deployments.deploy("MUSDTesterV2", {
       contract: "contracts/v1/tests/MUSDTester.sol:MUSDTester",
       args: [
         troveManager.address,
@@ -54,4 +60,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MUSD"]
-func.dependencies = ["BorrowerOperations", "TroveManager", "StabilityPool"]
+func.dependencies = [
+  "BorrowerOperationsV2",
+  "TroveManagerV2",
+  "StabilityPoolV2",
+]

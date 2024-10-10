@@ -1,20 +1,20 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  let deployment = await deployments.getOrNull("TroveManager")
+  let deployment = await deployments.getOrNull("TroveManagerV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using TroveManager at ${deployment.address}`)
+    log(`Using TroveManagerV2 at ${deployment.address}`)
   } else {
-    log("Deploying TroveManager contract...")
+    log("Deploying TroveManagervV2 contract...")
 
-    await deployments.deploy("TroveManager", {
-      contract: "contracts/v1/TroveManager.sol:TroveManager",
+    await deployments.deploy("TroveManagerV2", {
+      contract: "contracts/v2/TroveManagerV2.sol:TroveManagerV2",
       args: [],
       from: deployer,
       log: true,
@@ -22,14 +22,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     })
   }
 
-  deployment = await deployments.getOrNull("TroveManagerTester")
+  deployment = await deployments.getOrNull("TroveManagerTesterV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using TroveManagerTester at ${deployment.address}`)
+    log(`Using TroveManagerTesterV2 at ${deployment.address}`)
   } else {
-    log("Deploying TroveManagerTester contract...")
+    log("Deploying TroveManagerTesterV2 contract...")
 
-    await deployments.deploy("TroveManagerTester", {
-      contract: "contracts/v1/tests/TroveManagerTester.sol:TroveManagerTester",
+    await deployments.deploy("TroveManagerTesterV2", {
+      contract:
+        "contracts/v2/tests/TroveManagerTesterV2.sol:TroveManagerTesterV2",
       args: [],
       from: deployer,
       log: true,
@@ -40,4 +41,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["TroveManager"]
+func.tags = ["TroveManagerV2"]

@@ -1,21 +1,21 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../../helpers/deploy-helpers"
+import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, helpers, getNamedAccounts } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("MockERC20")
+  const deployment = await deployments.getOrNull("CollSurplusPoolV2")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using MockERC20 at ${deployment.address}`)
+    log(`Using CollSurplusPoolV2 at ${deployment.address}`)
   } else {
-    log("Deploying MockERC20 contract...")
+    log("Deploying CollSurplusPoolV2 contract...")
 
-    await deployments.deploy("MockERC20", {
-      contract: "contracts/v1/tests/MockERC20.sol:MockERC20",
-      args: ["ERC Test", "TST", 100000],
+    await deployments.deploy("CollSurplusPoolV2", {
+      contract: "contracts/v2/CollSurplusPoolV2.sol:CollSurplusPoolV2",
+      args: [],
       from: deployer,
       log: true,
       waitConfirmations: waitConfirmationsNumber(hre),
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["MockERC20"]
+func.tags = ["CollSurplusPoolV2"]
