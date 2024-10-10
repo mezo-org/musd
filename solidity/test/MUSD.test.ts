@@ -4,7 +4,7 @@ import { expect, assert } from "chai"
 import {
   Contracts,
   TestSetup,
-  fixture,
+  fixtureV2,
   getLatestBlockTimestamp,
   fastForwardTime,
   connectContracts,
@@ -14,7 +14,7 @@ import {
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
 import { BorrowerOperations, TroveManager } from "../typechain"
-import { StabilityPool } from "../typechain/contracts/v1/StabilityPool"
+import { StabilityPoolV2 } from "../typechain/contracts/v2/StabilityPoolV2"
 
 describe("MUSD", () => {
   let alice: User
@@ -26,11 +26,11 @@ describe("MUSD", () => {
   let testSetup: TestSetup
   let addresses: TestingAddresses
   let newBorrowerOperations: BorrowerOperations
-  let newStabilityPool: StabilityPool
+  let newStabilityPool: StabilityPoolV2
   let newTroveManager: TroveManager
 
   beforeEach(async () => {
-    testSetup = await loadFixture(fixture)
+    testSetup = await loadFixture(fixtureV2)
     contracts = testSetup.contracts
     await connectContracts(contracts, testSetup.users)
 
