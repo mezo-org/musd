@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./dependencies/CheckContractV2.sol";
+import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateralV2.sol";
 import "./interfaces/IActivePoolV2.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
@@ -21,7 +21,7 @@ import "./interfaces/IStabilityPoolV2.sol";
  */
 contract ActivePoolV2 is
     Ownable,
-    CheckContractV2,
+    CheckContract,
     SendCollateralV2,
     IActivePoolV2
 {

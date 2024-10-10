@@ -7,7 +7,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./dependencies/CheckContractV2.sol";
+import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBaseV2.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
 import "./interfaces/IGasPoolV2.sol";
@@ -20,7 +20,7 @@ import "./interfaces/IPCVV2.sol";
 contract TroveManagerV2 is
     LiquityBaseV2,
     Ownable,
-    CheckContractV2,
+    CheckContract,
     ITroveManagerV2
 {
     enum TroveManagerOperation {

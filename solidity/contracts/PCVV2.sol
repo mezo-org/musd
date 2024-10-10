@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./dependencies/CheckContractV2.sol";
+import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateralV2.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IPCVV2.sol";
 import "./BorrowerOperationsV2.sol";
 
-contract PCVV2 is IPCVV2, Ownable, CheckContractV2, SendCollateralV2 {
+contract PCVV2 is IPCVV2, Ownable, CheckContract, SendCollateralV2 {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M MUSD
 
     uint256 public immutable governanceTimeDelay;

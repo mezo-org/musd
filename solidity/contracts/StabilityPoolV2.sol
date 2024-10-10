@@ -7,7 +7,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./dependencies/CheckContractV2.sol";
+import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBaseV2.sol";
 import "./dependencies/SendCollateralV2.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
@@ -19,7 +19,7 @@ import "./interfaces/ITroveManagerV2.sol";
 contract StabilityPoolV2 is
     LiquityBaseV2,
     Ownable,
-    CheckContractV2,
+    CheckContract,
     SendCollateralV2,
     IStabilityPoolV2
 {

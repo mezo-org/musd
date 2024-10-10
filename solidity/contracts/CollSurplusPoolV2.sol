@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./dependencies/CheckContractV2.sol";
+import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateralV2.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
 import "./interfaces/IBorrowerOperationsV2.sol";
@@ -11,7 +11,7 @@ import "./interfaces/IActivePoolV2.sol";
 
 contract CollSurplusPoolV2 is
     Ownable,
-    CheckContractV2,
+    CheckContract,
     SendCollateralV2,
     ICollSurplusPoolV2
 {

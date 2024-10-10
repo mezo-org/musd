@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/ISortedTrovesV2.sol";
 import "./dependencies/LiquityBaseV2.sol";
-import "./dependencies/CheckContractV2.sol";
+import "./dependencies/CheckContract.sol";
 
-contract HintHelpersV2 is LiquityBaseV2, Ownable, CheckContractV2 {
+contract HintHelpersV2 is LiquityBaseV2, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
 
     ISortedTrovesV2 public sortedTroves;
@@ -120,9 +120,9 @@ contract HintHelpersV2 is LiquityBaseV2, Ownable, CheckContractV2 {
 
                     uint256 compositeDebt = _getCompositeDebt(newDebt);
                     partialRedemptionHintNICR = LiquityMathV2._computeNominalCR(
-                        newColl,
-                        compositeDebt
-                    );
+                            newColl,
+                            compositeDebt
+                        );
 
                     remainingMUSD -= maxRedeemableMUSD;
                 }
