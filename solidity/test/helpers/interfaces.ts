@@ -15,7 +15,7 @@ import {
   HintHelpers,
   HintHelpersV2,
   MockAggregator,
-  MockAggregatorV2,
+  MockAggregator,
   MockERC20,
   MockERC20V2,
   MUSDTester,
@@ -129,7 +129,7 @@ export interface ContractsV2 {
   defaultPool: DefaultPoolV2
   gasPool: GasPoolV2
   hintHelpers: HintHelpersV2
-  mockAggregator: MockAggregatorV2
+  mockAggregator: MockAggregator
   mockERC20: MockERC20V2
   musd: MUSDTester
   pcv: PCVV2
