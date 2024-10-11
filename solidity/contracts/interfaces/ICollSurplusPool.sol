@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-interface ICollSurplusPoolV2 {
+interface ICollSurplusPool {
     // --- Events ---
 
     event BorrowerOperationsAddressChanged(

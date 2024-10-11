@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
-import "./interfaces/ICollSurplusPoolV2.sol";
+import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IActivePool.sol";
 
@@ -13,7 +13,7 @@ contract CollSurplusPoolV2 is
     Ownable,
     CheckContract,
     SendCollateral,
-    ICollSurplusPoolV2
+    ICollSurplusPool
 {
     string public constant NAME = "CollSurplusPool";
 

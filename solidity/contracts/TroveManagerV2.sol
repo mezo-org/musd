@@ -9,7 +9,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
-import "./interfaces/ICollSurplusPoolV2.sol";
+import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPoolV2.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IStabilityPoolV2.sol";
@@ -101,7 +101,7 @@ contract TroveManagerV2 is
         IMUSD musdToken;
         IPCVV2 pcv;
         ISortedTrovesV2 sortedTroves;
-        ICollSurplusPoolV2 collSurplusPool;
+        ICollSurplusPool collSurplusPool;
         address gasPoolAddress;
     }
 
@@ -130,7 +130,7 @@ contract TroveManagerV2 is
 
     address public gasPoolAddress;
 
-    ICollSurplusPoolV2 public collSurplusPool;
+    ICollSurplusPool public collSurplusPool;
 
     IMUSD public musdToken;
 
@@ -251,7 +251,7 @@ contract TroveManagerV2 is
         stabilityPool = IStabilityPoolV2(_stabilityPoolAddress);
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
-        collSurplusPool = ICollSurplusPoolV2(_collSurplusPoolAddress);
+        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeedV2(_priceFeedAddress);
         musdToken = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
@@ -286,7 +286,7 @@ contract TroveManagerV2 is
             IMUSD(address(0)),
             IPCVV2(address(0)),
             sortedTroves,
-            ICollSurplusPoolV2(address(0)),
+            ICollSurplusPool(address(0)),
             address(0)
         );
         IStabilityPoolV2 stabilityPoolCached = stabilityPool;

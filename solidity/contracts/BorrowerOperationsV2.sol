@@ -7,7 +7,7 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
-import "./interfaces/ICollSurplusPoolV2.sol";
+import "./interfaces/ICollSurplusPool.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTrovesV2.sol";
 import "./interfaces/ITroveManagerV2.sol";
@@ -75,7 +75,7 @@ contract BorrowerOperationsV2 is
     address public pcvAddress;
     address public stabilityPoolAddress;
 
-    ICollSurplusPoolV2 public collSurplusPool;
+    ICollSurplusPool public collSurplusPool;
 
     IMUSD public musd;
 
@@ -456,7 +456,7 @@ contract BorrowerOperationsV2 is
         stabilityPoolAddress = _stabilityPoolAddress;
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
-        collSurplusPool = ICollSurplusPoolV2(_collSurplusPoolAddress);
+        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeedV2(_priceFeedAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
         musd = IMUSD(_musdTokenAddress);
