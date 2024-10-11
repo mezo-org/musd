@@ -252,7 +252,7 @@ contract TroveManagerV2 is
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        priceFeed = IPriceFeedV2(_priceFeedAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
         musdToken = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
         pcv = IPCV(_pcvAddress);

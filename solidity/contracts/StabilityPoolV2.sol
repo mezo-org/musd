@@ -115,7 +115,7 @@ contract StabilityPoolV2 is
         activePool = IActivePool(_activePoolAddress);
         musd = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
-        priceFeed = IPriceFeedV2(_priceFeedAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
         collateralAddress = _collateralAddress;
 
         require(

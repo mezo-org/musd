@@ -457,7 +457,7 @@ contract BorrowerOperationsV2 is
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        priceFeed = IPriceFeedV2(_priceFeedAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
         musd = IMUSD(_musdTokenAddress);
         // slither-disable-next-line missing-zero-check

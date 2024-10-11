@@ -6,7 +6,7 @@ import "./BaseMath.sol";
 import "./LiquityMath.sol";
 import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPool.sol";
-import "../interfaces/IPriceFeedV2.sol";
+import "../interfaces/IPriceFeed.sol";
 import "../interfaces/ILiquityBase.sol";
 
 /*
@@ -41,7 +41,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     IDefaultPool public defaultPool;
 
     // slither-disable-next-line all
-    IPriceFeedV2 public override priceFeed;
+    IPriceFeed public override priceFeed;
 
     // --- Gas compensation functions ---
 

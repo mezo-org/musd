@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.24;
 
-import "./IPriceFeedV2.sol";
+import "./IPriceFeed.sol";
 
 interface ILiquityBase {
-    function priceFeed() external view returns (IPriceFeedV2);
+    function priceFeed() external view returns (IPriceFeed);
 }

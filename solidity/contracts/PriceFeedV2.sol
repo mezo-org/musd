@@ -5,9 +5,9 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./interfaces/ChainlinkAggregatorV3Interface.sol";
-import "./interfaces/IPriceFeedV2.sol";
+import "./interfaces/IPriceFeed.sol";
 
-contract PriceFeedV2 is IPriceFeedV2, Ownable {
+contract PriceFeedV2 is IPriceFeed, Ownable {
     /// @dev Used to convert an oracle price answer to an 18-digit precision uint
     uint8 public constant TARGET_DIGITS = 18;
 

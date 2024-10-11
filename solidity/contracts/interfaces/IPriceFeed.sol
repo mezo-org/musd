@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-interface IPriceFeedV2 {
+interface IPriceFeed {
     // --- Events ---
     event LastGoodPriceUpdated(uint256 _lastGoodPrice);
 
