@@ -33,7 +33,7 @@ import {
   BorrowerOperations,
   CollSurplusPool,
   DefaultPool,
-  GasPoolV2,
+  GasPool,
   HintHelpersV2,
   MockAggregator,
   MockERC20,
@@ -99,7 +99,7 @@ export async function deploymentV2() {
   const collSurplusPool: CollSurplusPool =
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
-  const gasPool: GasPoolV2 = await getDeployedContract("GasPoolV2")
+  const gasPool: GasPool = await getDeployedContract("GasPool")
   const hintHelpers: HintHelpersV2 = await getDeployedContract("HintHelpersV2")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")

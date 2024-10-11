@@ -17,7 +17,7 @@ import "./token/MUSD.sol";
  * 50 THUSD debt on the trove is cancelled.
  * See this issue for more context: https://github.com/liquity/dev/issues/186
  */
-contract GasPoolV2 is Ownable, CheckContract, IGasPool {
+contract GasPool is Ownable, CheckContract, IGasPool {
     address public troveManagerAddress;
     IMUSD public musdToken;
 

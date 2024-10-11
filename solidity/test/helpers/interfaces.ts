@@ -11,7 +11,7 @@ import {
   DefaultPool,
   DefaultPool,
   GasPool,
-  GasPoolV2,
+  GasPool,
   HintHelpers,
   HintHelpersV2,
   MockAggregator,
@@ -127,7 +127,7 @@ export interface ContractsV2 {
   borrowerOperations: BorrowerOperations
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
-  gasPool: GasPoolV2
+  gasPool: GasPool
   hintHelpers: HintHelpersV2
   mockAggregator: MockAggregator
   mockERC20: MockERC20
