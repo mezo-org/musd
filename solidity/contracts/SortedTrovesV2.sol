@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
-import "./interfaces/ISortedTrovesV2.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManagerV2.sol";
 
 /*
@@ -40,7 +40,7 @@ import "./interfaces/ITroveManagerV2.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedTrovesV2 is Ownable, CheckContract, ISortedTrovesV2 {
+contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
     // Information for a node in the list
     struct Node {
         bool exists;

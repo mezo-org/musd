@@ -13,7 +13,7 @@ import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IStabilityPoolV2.sol";
-import "./interfaces/ISortedTrovesV2.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/IPCV.sol";
 
@@ -100,7 +100,7 @@ contract TroveManagerV2 is
         IDefaultPool defaultPool;
         IMUSD musdToken;
         IPCV pcv;
-        ISortedTrovesV2 sortedTroves;
+        ISortedTroves sortedTroves;
         ICollSurplusPool collSurplusPool;
         address gasPoolAddress;
     }
@@ -137,7 +137,7 @@ contract TroveManagerV2 is
     IPCV public override pcv;
 
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
-    ISortedTrovesV2 public sortedTroves;
+    ISortedTroves public sortedTroves;
 
     // --- Data structures ---
 
@@ -254,7 +254,7 @@ contract TroveManagerV2 is
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         musdToken = IMUSD(_musdTokenAddress);
-        sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
         pcv = IPCV(_pcvAddress);
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
@@ -1122,7 +1122,7 @@ contract TroveManagerV2 is
         // slither-disable-next-line uninitialized-local
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
-        ISortedTrovesV2 sortedTrovesCached = sortedTroves;
+        ISortedTroves sortedTrovesCached = sortedTroves;
 
         vars.remainingMUSDInStabPool = _MUSDInStabPool;
 
@@ -1891,7 +1891,7 @@ contract TroveManagerV2 is
     }
 
     function _isValidFirstRedemptionHint(
-        ISortedTrovesV2 _sortedTroves,
+        ISortedTroves _sortedTroves,
         address _firstRedemptionHint,
         uint256 _price
     ) internal view returns (bool) {

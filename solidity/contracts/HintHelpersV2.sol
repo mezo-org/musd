@@ -4,14 +4,14 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ITroveManagerV2.sol";
-import "./interfaces/ISortedTrovesV2.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
 
 contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
 
-    ISortedTrovesV2 public sortedTroves;
+    ISortedTroves public sortedTroves;
     ITroveManagerV2 public troveManager;
 
     // --- Events ---
@@ -30,7 +30,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
         checkContract(_sortedTrovesAddress);
         checkContract(_troveManagerAddress);
 
-        sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
         troveManager = ITroveManagerV2(_troveManagerAddress);
 
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
@@ -71,7 +71,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
             uint256 truncatedMUSDamount
         )
     {
-        ISortedTrovesV2 sortedTrovesCached = sortedTroves;
+        ISortedTroves sortedTrovesCached = sortedTroves;
 
         uint256 remainingMUSD = _MUSDamount;
         address currentTroveuser = sortedTrovesCached.getLast();

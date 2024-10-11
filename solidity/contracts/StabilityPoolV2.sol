@@ -12,7 +12,7 @@ import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./token/IMUSD.sol";
-import "./interfaces/ISortedTrovesV2.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPoolV2.sol";
 import "./interfaces/ITroveManagerV2.sol";
 
@@ -43,7 +43,7 @@ contract StabilityPoolV2 is
     ITroveManagerV2 public troveManager;
     IMUSD public musd;
     // Needed to check if there are pending liquidations
-    ISortedTrovesV2 public sortedTroves;
+    ISortedTroves public sortedTroves;
     // Tracker for MUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
     uint256 internal totalMUSDDeposits;
     uint256 internal collateral; // deposited collateral tracker
@@ -114,7 +114,7 @@ contract StabilityPoolV2 is
         troveManager = ITroveManagerV2(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
         musd = IMUSD(_musdTokenAddress);
-        sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         collateralAddress = _collateralAddress;
 

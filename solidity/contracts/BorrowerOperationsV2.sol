@@ -9,7 +9,7 @@ import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./token/IMUSD.sol";
-import "./interfaces/ISortedTrovesV2.sol";
+import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/IPCV.sol";
 
@@ -80,7 +80,7 @@ contract BorrowerOperationsV2 is
     IMUSD public musd;
 
     // A doubly linked list of Troves, sorted by their collateral ratios
-    ISortedTrovesV2 public sortedTroves;
+    ISortedTroves public sortedTroves;
 
     constructor() Ownable(msg.sender) {}
 
@@ -458,7 +458,7 @@ contract BorrowerOperationsV2 is
         gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
-        sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
         musd = IMUSD(_musdTokenAddress);
         // slither-disable-next-line missing-zero-check
         pcvAddress = _pcvAddress;
