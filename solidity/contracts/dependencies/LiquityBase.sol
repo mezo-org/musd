@@ -7,7 +7,7 @@ import "./LiquityMath.sol";
 import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPool.sol";
 import "../interfaces/IPriceFeedV2.sol";
-import "../interfaces/ILiquityBaseV2.sol";
+import "../interfaces/ILiquityBase.sol";
 
 /*
  * Base contract for TroveManager, BorrowerOperations and StabilityPool. Contains global system constants and
