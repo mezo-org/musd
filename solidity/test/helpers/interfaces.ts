@@ -20,7 +20,7 @@ import {
   MockERC20,
   MUSDTester,
   PCV,
-  PCVV2,
+  PCV,
   PriceFeed,
   PriceFeedV2,
   SortedTroves,
@@ -132,7 +132,7 @@ export interface ContractsV2 {
   mockAggregator: MockAggregator
   mockERC20: MockERC20
   musd: MUSDTester
-  pcv: PCVV2
+  pcv: PCV
   priceFeed: PriceFeedV2
   sortedTroves: SortedTrovesV2
   stabilityPool: StabilityPoolV2

@@ -10,7 +10,7 @@ import "./token/IMUSD.sol";
 import "./interfaces/IPCV.sol";
 import "./BorrowerOperations.sol";
 
-contract PCVV2 is IPCV, Ownable, CheckContract, SendCollateral {
+contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M MUSD
 
     uint256 public immutable governanceTimeDelay;

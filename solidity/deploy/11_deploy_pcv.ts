@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("PCVV2")
+  const deployment = await deployments.getOrNull("PCV")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using PCVV2 at ${deployment.address}`)
+    log(`Using PCV at ${deployment.address}`)
   } else {
-    log("Deploying PCVV2 contract...")
+    log("Deploying PCV contract...")
 
-    await deployments.deploy("PCVV2", {
-      contract: "contracts/PCVV2.sol:PCVV2",
+    await deployments.deploy("PCV", {
+      contract: "contracts/PCV.sol:PCV",
       args: [7200],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["PCVV2"]
+func.tags = ["PCV"]
