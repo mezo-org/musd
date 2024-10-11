@@ -22,7 +22,7 @@ import {
   PCV,
   PCV,
   PriceFeed,
-  PriceFeedV2,
+  PriceFeed,
   SortedTroves,
   SortedTrovesV2,
   StabilityPool,
@@ -133,7 +133,7 @@ export interface ContractsV2 {
   mockERC20: MockERC20
   musd: MUSDTester
   pcv: PCV
-  priceFeed: PriceFeedV2
+  priceFeed: PriceFeed
   sortedTroves: SortedTrovesV2
   stabilityPool: StabilityPoolV2
   troveManager: TroveManagerTester

@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/ChainlinkAggregatorV3Interface.sol";
 import "./interfaces/IPriceFeed.sol";
 
-contract PriceFeedV2 is IPriceFeed, Ownable {
+contract PriceFeed is IPriceFeed, Ownable {
     /// @dev Used to convert an oracle price answer to an 18-digit precision uint
     uint8 public constant TARGET_DIGITS = 18;
 

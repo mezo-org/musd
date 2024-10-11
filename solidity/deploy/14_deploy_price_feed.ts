@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("PriceFeedV2")
+  const deployment = await deployments.getOrNull("PriceFeed")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using PriceFeedV2 at ${deployment.address}`)
+    log(`Using PriceFeed at ${deployment.address}`)
   } else {
-    log("Deploying PriceFeedV2 contract...")
+    log("Deploying PriceFeed contract...")
 
-    await deployments.deploy("PriceFeedV2", {
-      contract: "contracts/PriceFeedV2.sol:PriceFeedV2",
+    await deployments.deploy("PriceFeed", {
+      contract: "contracts/PriceFeed.sol:PriceFeed",
       args: [],
       from: deployer,
       log: true,
@@ -25,8 +25,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (network.name === "hardhat") {
     log("Deploying Unconnected PriceFeed contract...")
 
-    await deployments.deploy("UnconnectedPriceFeedV2", {
-      contract: "contracts/PriceFeedV2.sol:PriceFeedV2",
+    await deployments.deploy("UnconnectedPriceFeed", {
+      contract: "contracts/PriceFeed.sol:PriceFeed",
       args: [],
       from: deployer,
       log: true,
@@ -37,4 +37,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["PriceFeedV2"]
+func.tags = ["PriceFeed"]

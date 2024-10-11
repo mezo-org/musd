@@ -12,7 +12,7 @@ import {
 } from "../../helpers"
 import type { PriceFeed } from "../../../typechain"
 
-describe("PriceFeedV2 in Normal Mode", () => {
+describe("PriceFeed in Normal Mode", () => {
   let contracts: ContractsV2
   let cachedTestSetup: TestSetupV2
   let testSetup: TestSetupV2
@@ -48,7 +48,7 @@ describe("PriceFeedV2 in Normal Mode", () => {
 
       it("setOracle(): Reverts when the oracle has 0-decimal precision", async () => {
         const priceFeed: PriceFeed = await getDeployedContract(
-          "UnconnectedPriceFeedV2",
+          "UnconnectedPriceFeed",
         )
 
         const mockAggregatorAddress =
@@ -63,7 +63,7 @@ describe("PriceFeedV2 in Normal Mode", () => {
 
       it("setOracle(): Reverts when the oracle has a price of 0", async () => {
         const priceFeed: PriceFeed = await getDeployedContract(
-          "UnconnectedPriceFeedV2",
+          "UnconnectedPriceFeed",
         )
 
         const mockAggregatorAddress =
@@ -92,7 +92,7 @@ describe("PriceFeedV2 in Normal Mode", () => {
     context("System State Changes", () => {
       it("setOracle(): Updates the oracle address", async () => {
         const priceFeed: PriceFeed = await getDeployedContract(
-          "UnconnectedPriceFeedV2",
+          "UnconnectedPriceFeed",
         )
 
         const mockAggregatorAddress =
