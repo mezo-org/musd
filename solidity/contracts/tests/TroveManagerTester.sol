@@ -7,7 +7,7 @@ import "../TroveManagerV2.sol";
 /* Tester contract inherits from TroveManager, and provides external functions
 for testing the parent's internal functions. */
 
-contract TroveManagerTesterV2 is TroveManagerV2 {
+contract TroveManagerTester is TroveManagerV2 {
     function unprotectedDecayBaseRateFromBorrowing() external returns (uint) {
         baseRate = _calcDecayedBaseRate();
         assert(baseRate <= DECIMAL_PRECISION);

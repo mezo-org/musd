@@ -41,7 +41,7 @@ import {
   PriceFeedV2,
   SortedTrovesV2,
   StabilityPoolV2,
-  TroveManagerTesterV2,
+  TroveManagerTester,
 } from "../../typechain"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
@@ -112,9 +112,8 @@ export async function deploymentV2() {
     await getDeployedContract("SortedTrovesV2")
   const stabilityPool: StabilityPoolV2 =
     await getDeployedContract("StabilityPoolV2")
-  const troveManager: TroveManagerTesterV2 = await getDeployedContract(
-    "TroveManagerTesterV2",
-  )
+  const troveManager: TroveManagerTester =
+    await getDeployedContract("TroveManagerTester")
 
   const contracts: ContractsV2 = {
     activePool,

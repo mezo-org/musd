@@ -28,7 +28,7 @@ import {
   StabilityPool,
   StabilityPoolV2,
   TroveManagerTester,
-  TroveManagerTesterV2,
+  TroveManagerTester,
 } from "../../typechain"
 
 export interface TestingAddresses {
@@ -136,7 +136,7 @@ export interface ContractsV2 {
   priceFeed: PriceFeedV2
   sortedTroves: SortedTrovesV2
   stabilityPool: StabilityPoolV2
-  troveManager: TroveManagerTesterV2
+  troveManager: TroveManagerTester
 }
 
 export type Contracts = ContractsV1 | ContractsV2
