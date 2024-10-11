@@ -36,7 +36,7 @@ import {
   GasPoolV2,
   HintHelpersV2,
   MockAggregator,
-  MockERC20V2,
+  MockERC20,
   PCVV2,
   PriceFeedV2,
   SortedTrovesV2,
@@ -104,7 +104,7 @@ export async function deploymentV2() {
   const hintHelpers: HintHelpersV2 = await getDeployedContract("HintHelpersV2")
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
-  const mockERC20: MockERC20V2 = await getDeployedContract("MockERC20V2")
+  const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
   const musd: MUSDTester = await getDeployedContract("MUSDTesterV2")
   const pcv: PCVV2 = await getDeployedContract("PCVV2")
   const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")

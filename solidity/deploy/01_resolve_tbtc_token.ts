@@ -21,7 +21,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (network.name === "hardhat") {
     log("Deploying mock TBTC contract...")
     await deployments.deploy("TBTC", {
-      contract: "contracts/tests/MockERC20V2.sol:MockERC20V2",
+      contract: "contracts/tests/MockERC20.sol:MockERC20",
       from: deployer,
       args: ["TBTC", "TBTC", ethers.parseEther("100")],
       log: true,

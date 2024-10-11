@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interfaces/IReceiveApproval.sol";
 import "../interfaces/IApproveAndCall.sol";
 
-contract MockERC20V2 is ERC20, IApproveAndCall, Ownable {
+contract MockERC20 is ERC20, IApproveAndCall, Ownable {
     constructor(
         string memory name,
         string memory symbol,
