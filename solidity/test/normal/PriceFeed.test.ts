@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { ZERO_ADDRESS, to1e18 } from "../../utils"
+import { ZERO_ADDRESS, to1e18 } from "../utils"
 
 import {
   Contracts,
@@ -9,8 +9,8 @@ import {
   TestSetup,
   connectContracts,
   User,
-} from "../../helpers"
-import type { PriceFeed } from "../../../typechain"
+} from "../helpers"
+import type { PriceFeed } from "../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
   let contracts: Contracts

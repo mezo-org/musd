@@ -9,8 +9,8 @@ import {
   TestingAddresses,
   TestSetup,
   User,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("Access Control: Liquity functions with the caller restricted to Liquity contract(s)", () => {
   let alice: User

@@ -8,8 +8,8 @@ import {
   openTroves,
   TestSetup,
   User,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("SortedTroves", () => {
   let alice: User

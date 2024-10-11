@@ -17,8 +17,8 @@ import {
   updateRewardSnapshot,
   updateTroveSnapshot,
   User,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("BorrowerOperations in Recovery Mode", () => {
   let addresses: TestingAddresses

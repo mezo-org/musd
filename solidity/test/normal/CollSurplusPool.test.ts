@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-import { to1e18 } from "../../utils"
+import { to1e18 } from "../utils"
 
 import {
   NO_GAS,
@@ -16,7 +16,7 @@ import {
   updateTroveSnapshot,
   updateWalletSnapshot,
   updateCollSurplusPoolUserSnapshot,
-} from "../../helpers"
+} from "../helpers"
 
 describe("CollSurplusPool in Normal Mode", () => {
   let contracts: Contracts

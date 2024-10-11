@@ -12,9 +12,9 @@ import {
   TestSetup,
   updateWalletSnapshot,
   User,
-} from "../../helpers"
-import { to1e18, ZERO_ADDRESS } from "../../utils"
-import { PCV } from "../../../typechain"
+} from "../helpers"
+import { to1e18, ZERO_ADDRESS } from "../utils"
+import { PCV } from "../../typechain"
 
 describe("PCV", () => {
   let addresses: TestingAddresses

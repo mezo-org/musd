@@ -17,8 +17,8 @@ import {
   updateTroveSnapshots,
   User,
   withdrawColl,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("TroveManager - Redistribution reward calculations", () => {
   let alice: User

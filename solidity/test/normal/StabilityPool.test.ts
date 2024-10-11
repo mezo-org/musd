@@ -34,8 +34,8 @@ import {
   User,
   withdrawCollateralGainToTrove,
   withdrawCollateralGainToTroves,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("StabilityPool in Normal Mode", () => {
   let addresses: TestingAddresses

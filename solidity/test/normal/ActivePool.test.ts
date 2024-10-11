@@ -12,8 +12,8 @@ import {
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("ActivePool", () => {
   let addresses: TestingAddresses

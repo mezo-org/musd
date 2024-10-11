@@ -26,13 +26,13 @@ import {
   updateTroveSnapshot,
   updateWalletSnapshot,
   User,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 import {
   Contracts,
   ContractsState,
   OpenTroveParams,
-} from "../../helpers/interfaces"
+} from "../helpers/interfaces"
 
 describe("BorrowerOperations in Normal Mode", () => {
   let addresses: TestingAddresses

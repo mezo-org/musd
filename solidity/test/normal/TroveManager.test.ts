@@ -42,8 +42,8 @@ import {
   updateTroveSnapshots,
   updateWalletSnapshot,
   User,
-} from "../../helpers"
-import { to1e18 } from "../../utils"
+} from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses

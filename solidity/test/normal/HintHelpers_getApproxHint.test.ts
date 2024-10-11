@@ -1,6 +1,6 @@
 import { expect } from "chai"
-import { Contracts, openTrove, setupTests, User } from "../../helpers"
-import { to1e18 } from "../../utils"
+import { Contracts, openTrove, setupTests, User } from "../helpers"
+import { to1e18 } from "../utils"
 
 describe("HintHelpers", () => {
   let alice: User
