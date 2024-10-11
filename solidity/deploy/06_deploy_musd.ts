@@ -18,7 +18,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   } else {
     log("Deploying MUSD contract...")
     const borrowerOperations = await deployments.get("BorrowerOperations")
-    const stabilityPool = await deployments.get("StabilityPoolV2")
+    const stabilityPool = await deployments.get("StabilityPool")
     const troveManager = await deployments.get("TroveManagerTester")
     const ZERO_ADDRESS = `0x${"0".repeat(40)}`
     const delay = 90 * 24 * 60 * 60 // 90 days in seconds
@@ -60,4 +60,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MUSD"]
-func.dependencies = ["BorrowerOperations", "TroveManagerV2", "StabilityPoolV2"]
+func.dependencies = ["BorrowerOperations", "TroveManagerV2", "StabilityPool"]

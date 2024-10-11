@@ -40,7 +40,7 @@ import {
   PCV,
   PriceFeed,
   SortedTroves,
-  StabilityPoolV2,
+  StabilityPool,
   TroveManagerTester,
 } from "../../typechain"
 
@@ -108,8 +108,8 @@ export async function deploymentV2() {
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
-  const stabilityPool: StabilityPoolV2 =
-    await getDeployedContract("StabilityPoolV2")
+  const stabilityPool: StabilityPool =
+    await getDeployedContract("StabilityPool")
   const troveManager: TroveManagerTester =
     await getDeployedContract("TroveManagerTester")
 

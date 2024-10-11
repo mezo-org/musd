@@ -16,7 +16,7 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";
 
-contract StabilityPoolV2 is
+contract StabilityPool is
     LiquityBase,
     Ownable,
     CheckContract,

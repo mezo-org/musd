@@ -14,7 +14,7 @@ import {
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
 import { BorrowerOperations, TroveManagerV2 } from "../typechain"
-import { StabilityPoolV2 } from "../typechain/contracts/v2/StabilityPoolV2"
+import { StabilityPool } from "../typechain/contracts/v2/StabilityPool"
 
 describe("MUSD", () => {
   let alice: User
@@ -26,7 +26,7 @@ describe("MUSD", () => {
   let testSetup: TestSetup
   let addresses: TestingAddresses
   let newBorrowerOperations: BorrowerOperations
-  let newStabilityPool: StabilityPoolV2
+  let newStabilityPool: StabilityPool
   let newTroveManager: TroveManagerV2
 
   beforeEach(async () => {
@@ -39,7 +39,7 @@ describe("MUSD", () => {
       await ethers.getContractFactory("BorrowerOperations")
     ).deploy()
     newStabilityPool = await (
-      await ethers.getContractFactory("StabilityPoolV2")
+      await ethers.getContractFactory("StabilityPool")
     ).deploy()
     newTroveManager = await (
       await ethers.getContractFactory("TroveManagerV2")

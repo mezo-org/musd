@@ -26,7 +26,7 @@ import {
   SortedTroves,
   SortedTroves,
   StabilityPool,
-  StabilityPoolV2,
+  StabilityPool,
   TroveManagerTester,
   TroveManagerTester,
 } from "../../typechain"
@@ -135,7 +135,7 @@ export interface ContractsV2 {
   pcv: PCV
   priceFeed: PriceFeed
   sortedTroves: SortedTroves
-  stabilityPool: StabilityPoolV2
+  stabilityPool: StabilityPool
   troveManager: TroveManagerTester
 }
 
