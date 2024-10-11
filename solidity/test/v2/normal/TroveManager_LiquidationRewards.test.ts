@@ -10,7 +10,7 @@ import {
   getTroveEntireColl,
   getTroveEntireDebt,
   openTrove,
-  setupTestsV2,
+  setupTests,
   updatePendingSnapshot,
   updatePendingSnapshots,
   updateTroveSnapshot,
@@ -31,7 +31,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts } =
-      await setupTestsV2())
+      await setupTests())
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {

@@ -739,7 +739,7 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
   }
 }
 
-export async function setupTestsV2() {
+export async function setupTests() {
   const cachedTestSetup = await loadFixture(fixture)
   const testSetup = { ...cachedTestSetup }
   const { contracts, state } = testSetup

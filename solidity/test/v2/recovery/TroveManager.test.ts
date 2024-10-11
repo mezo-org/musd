@@ -12,7 +12,7 @@ import {
   NO_GAS,
   openTrove,
   provideToSP,
-  setupTestsV2,
+  setupTests,
   updatePendingSnapshot,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshots,
@@ -36,7 +36,7 @@ describe("TroveManager in Recovery Mode", () => {
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts, state } =
-      await setupTestsV2())
+      await setupTests())
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {
