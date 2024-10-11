@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 // Common interface for the Pools.
-interface IPoolV2 {
+interface IPool {
     // --- Events ---
 
     event CollateralBalanceUpdated(uint256 _newBalance);
