@@ -14,7 +14,7 @@ import {
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
 import { BorrowerOperations, TroveManager } from "../typechain"
-import { StabilityPool } from "../typechain/contracts/v2/StabilityPool"
+import { StabilityPool } from "../typechain/contracts/StabilityPool"
 
 describe("MUSD", () => {
   let alice: User
