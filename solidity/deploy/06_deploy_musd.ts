@@ -41,7 +41,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       waitConfirmations: waitConfirmationsNumber(hre),
     })
 
-    // Reuse the contract code but with a different name since we need to pass the V2 contracts
     await deployments.deploy("MUSDTester", {
       contract: "MUSDTester",
       args: [
