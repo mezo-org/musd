@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
-import "./interfaces/IBorrowerOperationsV2.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTrovesV2.sol";
@@ -18,7 +18,7 @@ contract BorrowerOperationsV2 is
     Ownable,
     CheckContract,
     SendCollateral,
-    IBorrowerOperationsV2
+    IBorrowerOperations
 {
     /* --- Variable container structs  ---
 

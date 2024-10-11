@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 // Common interface for the Trove Manager.
-interface IBorrowerOperationsV2 {
+interface IBorrowerOperations {
     // --- Events ---
 
     event TroveManagerAddressChanged(address _newTroveManagerAddress);

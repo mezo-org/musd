@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
-import "./interfaces/IBorrowerOperationsV2.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTrovesV2.sol";
 import "./interfaces/IStabilityPoolV2.sol";
@@ -39,7 +39,7 @@ contract StabilityPoolV2 is
     // --- State ---
 
     address public collateralAddress;
-    IBorrowerOperationsV2 public borrowerOperations;
+    IBorrowerOperations public borrowerOperations;
     ITroveManagerV2 public troveManager;
     IMUSD public musd;
     // Needed to check if there are pending liquidations
@@ -110,7 +110,7 @@ contract StabilityPoolV2 is
             checkContract(_collateralAddress);
         }
 
-        borrowerOperations = IBorrowerOperationsV2(_borrowerOperationsAddress);
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         troveManager = ITroveManagerV2(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
         musd = IMUSD(_musdTokenAddress);

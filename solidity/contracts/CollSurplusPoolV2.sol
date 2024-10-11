@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
-import "./interfaces/IBorrowerOperationsV2.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IActivePool.sol";
 
 contract CollSurplusPoolV2 is
@@ -70,7 +70,7 @@ contract CollSurplusPoolV2 is
                 IActivePool(_activePoolAddress).collateralAddress() ==
                 _collateralAddress) &&
                 (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                    IBorrowerOperationsV2(_borrowerOperationsAddress)
+                    IBorrowerOperations(_borrowerOperationsAddress)
                         .collateralAddress() ==
                     _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"

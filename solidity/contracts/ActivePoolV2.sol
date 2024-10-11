@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePool.sol";
-import "./interfaces/IBorrowerOperationsV2.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPoolV2.sol";
 import "./interfaces/IDefaultPoolV2.sol";
 import "./interfaces/IStabilityPoolV2.sol";
@@ -78,7 +78,7 @@ contract ActivePoolV2 is Ownable, CheckContract, SendCollateral, IActivePool {
 
         require(
             (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                IBorrowerOperationsV2(_borrowerOperationsAddress)
+                IBorrowerOperations(_borrowerOperationsAddress)
                     .collateralAddress() ==
                 _collateralAddress) &&
                 (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
