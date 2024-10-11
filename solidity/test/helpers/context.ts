@@ -159,8 +159,6 @@ async function initializeUserObject(
  * For explanation on why each testcontract has its own fixture function
  * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
  */
-
-// Needed because loadFixture cannot take an anonymous function as a parameter
 export async function fixture(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [
