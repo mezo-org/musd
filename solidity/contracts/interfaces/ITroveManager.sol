@@ -6,7 +6,7 @@ import "./IStabilityPool.sol";
 import "./IPCV.sol";
 
 // Common interface for the Trove Manager.
-interface ITroveManagerV2 {
+interface ITroveManager {
     enum Status {
         nonExistent,
         active,

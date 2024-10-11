@@ -14,15 +14,10 @@ import "./interfaces/IGasPool.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManagerV2.sol";
+import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
-contract TroveManagerV2 is
-    LiquityBase,
-    Ownable,
-    CheckContract,
-    ITroveManagerV2
-{
+contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidateInNormalMode,

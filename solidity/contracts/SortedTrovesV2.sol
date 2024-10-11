@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManagerV2.sol";
+import "./interfaces/ITroveManager.sol";
 
 /*
  * A sorted doubly linked list with nodes sorted in descending order.
@@ -58,7 +58,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
     }
 
     address public borrowerOperationsAddress;
-    ITroveManagerV2 public troveManager;
+    ITroveManager public troveManager;
     Data public data;
 
     event TroveManagerAddressChanged(address _troveManagerAddress);
@@ -78,7 +78,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
 
         data.maxSize = _size;
 
-        troveManager = ITroveManagerV2(_troveManagerAddress);
+        troveManager = ITroveManager(_troveManagerAddress);
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
 
@@ -94,7 +94,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
         address _prevId,
         address _nextId
     ) external override {
-        ITroveManagerV2 troveManagerCached = troveManager;
+        ITroveManager troveManagerCached = troveManager;
 
         _requireCallerIsBOorTroveM(troveManagerCached);
         _insert(troveManagerCached, _id, _NICR, _prevId, _nextId);
@@ -118,7 +118,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
         address _prevId,
         address _nextId
     ) external override {
-        ITroveManagerV2 troveManagerCached = troveManager;
+        ITroveManager troveManagerCached = troveManager;
 
         _requireCallerIsBOorTroveM(troveManagerCached);
         // List must contain the node
@@ -271,7 +271,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
     }
 
     function _insert(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         address _id,
         uint256 _NICR,
         address _prevId,
@@ -335,7 +335,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
      * @param _startId Id of node to start descending the list from
      */
     function _descendList(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         uint256 _NICR,
         address _startId
     ) internal view returns (address, address) {
@@ -369,7 +369,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
      * @param _startId Id of node to start ascending the list from
      */
     function _ascendList(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         uint256 _NICR,
         address _startId
     ) internal view returns (address, address) {
@@ -403,7 +403,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
      * @param _nextId Id of next node for the insert position
      */
     function _findInsertPosition(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         uint256 _NICR,
         address _prevId,
         address _nextId
@@ -445,7 +445,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
     }
 
     function _validInsertPosition(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         uint256 _NICR,
         address _prevId,
         address _nextId
@@ -481,7 +481,7 @@ contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
     }
 
     function _requireCallerIsBOorTroveM(
-        ITroveManagerV2 _troveManager
+        ITroveManager _troveManager
     ) internal view {
         require(
             msg.sender == borrowerOperationsAddress ||

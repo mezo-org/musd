@@ -10,7 +10,7 @@ import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManagerV2.sol";
+import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
 contract BorrowerOperationsV2 is
@@ -53,7 +53,7 @@ contract BorrowerOperationsV2 is
     }
 
     struct ContractsCache {
-        ITroveManagerV2 troveManager;
+        ITroveManager troveManager;
         IActivePool activePool;
         IMUSD musd;
     }
@@ -68,7 +68,7 @@ contract BorrowerOperationsV2 is
 
     // --- Connected contract declarations ---
 
-    ITroveManagerV2 public troveManager;
+    ITroveManager public troveManager;
 
     address public collateralAddress;
     address public gasPoolAddress;
@@ -171,7 +171,7 @@ contract BorrowerOperationsV2 is
         // Set the trove struct's properties
         contractsCache.troveManager.setTroveStatus(
             msg.sender,
-            ITroveManagerV2.Status.active
+            ITroveManager.Status.active
         );
         // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveColl(msg.sender, _assetAmount);
@@ -329,7 +329,7 @@ contract BorrowerOperationsV2 is
     }
 
     function closeTrove() external override {
-        ITroveManagerV2 troveManagerCached = troveManager;
+        ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
         IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
@@ -449,7 +449,7 @@ contract BorrowerOperationsV2 is
         checkContract(_sortedTrovesAddress);
         checkContract(_troveManagerAddress);
 
-        troveManager = ITroveManagerV2(_troveManagerAddress);
+        troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         // slither-disable-next-line missing-zero-check
@@ -718,7 +718,7 @@ contract BorrowerOperationsV2 is
 
     // Update trove's coll and debt based on whether they increase or decrease
     function _updateTroveFromAdjustment(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         address _borrower,
         uint256 _collChange,
         bool _isCollIncrease,
@@ -738,7 +738,7 @@ contract BorrowerOperationsV2 is
     // --- Helper functions ---
 
     function _triggerBorrowingFee(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         IMUSD _musd,
         uint256 _MUSDAmount,
         uint256 _maxFeePercentage
@@ -775,12 +775,12 @@ contract BorrowerOperationsV2 is
     }
 
     function _requireTroveisNotActive(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         address _borrower
     ) internal view {
-        ITroveManagerV2.Status status = _troveManager.getTroveStatus(_borrower);
+        ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
         require(
-            status != ITroveManagerV2.Status.active,
+            status != ITroveManager.Status.active,
             "BorrowerOps: Trove is active"
         );
     }
@@ -814,13 +814,13 @@ contract BorrowerOperationsV2 is
     }
 
     function _requireTroveisActive(
-        ITroveManagerV2 _troveManager,
+        ITroveManager _troveManager,
         address _borrower
     ) internal view {
-        ITroveManagerV2.Status status = _troveManager.getTroveStatus(_borrower);
+        ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
 
         require(
-            status == ITroveManagerV2.Status.active,
+            status == ITroveManager.Status.active,
             "BorrowerOps: Trove does not exist or is closed"
         );
     }

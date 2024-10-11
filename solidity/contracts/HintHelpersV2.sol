@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/ITroveManagerV2.sol";
+import "./interfaces/ITroveManager.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
@@ -12,7 +12,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
 
     ISortedTroves public sortedTroves;
-    ITroveManagerV2 public troveManager;
+    ITroveManager public troveManager;
 
     // --- Events ---
 
@@ -31,7 +31,7 @@ contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
         checkContract(_troveManagerAddress);
 
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        troveManager = ITroveManagerV2(_troveManagerAddress);
+        troveManager = ITroveManager(_troveManagerAddress);
 
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);

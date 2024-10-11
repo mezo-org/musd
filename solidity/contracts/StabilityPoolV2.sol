@@ -14,7 +14,7 @@ import "./interfaces/IBorrowerOperations.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
-import "./interfaces/ITroveManagerV2.sol";
+import "./interfaces/ITroveManager.sol";
 
 contract StabilityPoolV2 is
     LiquityBase,
@@ -40,7 +40,7 @@ contract StabilityPoolV2 is
 
     address public collateralAddress;
     IBorrowerOperations public borrowerOperations;
-    ITroveManagerV2 public troveManager;
+    ITroveManager public troveManager;
     IMUSD public musd;
     // Needed to check if there are pending liquidations
     ISortedTroves public sortedTroves;
@@ -111,7 +111,7 @@ contract StabilityPoolV2 is
         }
 
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
-        troveManager = ITroveManagerV2(_troveManagerAddress);
+        troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
         musd = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -659,7 +659,7 @@ contract StabilityPoolV2 is
     function _requireUserHasTrove(address _depositor) internal view {
         require(
             troveManager.getTroveStatus(_depositor) ==
-                ITroveManagerV2.Status.active,
+                ITroveManager.Status.active,
             "StabilityPool: caller must have an active trove to withdraw collateralGain to"
         );
     }
