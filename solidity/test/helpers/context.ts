@@ -29,7 +29,7 @@ import {
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
-export async function deploymentV2() {
+export async function deployment() {
   await deployments.fixture()
 
   const activePool: ActivePool = await getDeployedContract("ActivePool")
@@ -174,7 +174,7 @@ export async function fixtureV2(): Promise<TestSetup> {
     councilWallet,
     treasuryWallet,
   ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deploymentV2()
+  const contracts = await deployment()
 
   const users: Users = {
     alice: await initializeUserObject(aliceWallet),
