@@ -13,7 +13,7 @@ import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTroves.sol";
-import "./interfaces/IStabilityPoolV2.sol";
+import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManagerV2.sol";
 
 contract StabilityPoolV2 is
@@ -21,7 +21,7 @@ contract StabilityPoolV2 is
     Ownable,
     CheckContract,
     SendCollateral,
-    IStabilityPoolV2
+    IStabilityPool
 {
     // --- Type Declarations ---
     struct Snapshots {

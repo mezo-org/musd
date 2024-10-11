@@ -22,7 +22,7 @@ pragma solidity ^0.8.24;
  * https://github.com/liquity/liquity/blob/master/papers/Scalable_Reward_Distribution_with_Compounding_Stakes.pdf
  *
  */
-interface IStabilityPoolV2 {
+interface IStabilityPool {
     // --- Events ---
 
     event StabilityPoolCollateralBalanceUpdated(uint256 _newBalance);

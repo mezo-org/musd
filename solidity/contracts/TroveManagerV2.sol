@@ -12,7 +12,7 @@ import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
 import "./token/IMUSD.sol";
-import "./interfaces/IStabilityPoolV2.sol";
+import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManagerV2.sol";
 import "./interfaces/IPCV.sol";
@@ -126,7 +126,7 @@ contract TroveManagerV2 is
 
     address public borrowerOperationsAddress;
 
-    IStabilityPoolV2 public override stabilityPool;
+    IStabilityPool public override stabilityPool;
 
     address public gasPoolAddress;
 
@@ -248,7 +248,7 @@ contract TroveManagerV2 is
         borrowerOperationsAddress = _borrowerOperationsAddress;
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        stabilityPool = IStabilityPoolV2(_stabilityPoolAddress);
+        stabilityPool = IStabilityPool(_stabilityPoolAddress);
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
@@ -289,7 +289,7 @@ contract TroveManagerV2 is
             ICollSurplusPool(address(0)),
             address(0)
         );
-        IStabilityPoolV2 stabilityPoolCached = stabilityPool;
+        IStabilityPool stabilityPoolCached = stabilityPool;
 
         // slither-disable-next-line uninitialized-local
         LocalVariables_OuterLiquidationFunction memory vars;
@@ -792,7 +792,7 @@ contract TroveManagerV2 is
 
         IActivePool activePoolCached = activePool;
         IDefaultPool defaultPoolCached = defaultPool;
-        IStabilityPoolV2 stabilityPoolCached = stabilityPool;
+        IStabilityPool stabilityPoolCached = stabilityPool;
 
         // slither-disable-next-line uninitialized-local
         LocalVariables_OuterLiquidationFunction memory vars;

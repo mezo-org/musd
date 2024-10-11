@@ -260,9 +260,9 @@ contract PCVV2 is IPCV, Ownable, CheckContract, SendCollateral {
             ),
             "PCV: Approval failed"
         );
-        IStabilityPoolV2(borrowerOperations.stabilityPoolAddress()).provideToSP(
-                _musdAmount
-            );
+        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
+            _musdAmount
+        );
 
         // TODO Emit event
     }

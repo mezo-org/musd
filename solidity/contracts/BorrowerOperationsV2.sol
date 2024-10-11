@@ -471,8 +471,7 @@ contract BorrowerOperationsV2 is
                 (Ownable(_activePoolAddress).owner() != address(0) ||
                     activePool.collateralAddress() == _collateralAddress) &&
                 (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPoolV2(stabilityPoolAddress)
-                        .collateralAddress() ==
+                    IStabilityPool(stabilityPoolAddress).collateralAddress() ==
                     _collateralAddress) &&
                 (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
                     collSurplusPool.collateralAddress() ==

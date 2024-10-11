@@ -10,7 +10,7 @@ import "./interfaces/IActivePool.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IDefaultPool.sol";
-import "./interfaces/IStabilityPoolV2.sol";
+import "./interfaces/IStabilityPool.sol";
 
 /*
  * The Active Pool holds the collateral and MUSD debt (but not MUSD tokens) for all active troves.
@@ -89,8 +89,7 @@ contract ActivePoolV2 is Ownable, CheckContract, SendCollateral, IActivePool {
                     IDefaultPool(_defaultPoolAddress).collateralAddress() ==
                     _collateralAddress) &&
                 (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPoolV2(stabilityPoolAddress)
-                        .collateralAddress() ==
+                    IStabilityPool(stabilityPoolAddress).collateralAddress() ==
                     _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"
         );
