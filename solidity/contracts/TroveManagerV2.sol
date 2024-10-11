@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
-import "./interfaces/IGasPoolV2.sol";
+import "./interfaces/IGasPool.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IStabilityPoolV2.sol";
 import "./interfaces/ISortedTrovesV2.sol";
@@ -1227,7 +1227,7 @@ contract TroveManagerV2 is
         uint256 _collateral
     ) internal {
         if (_MUSD > 0) {
-            IGasPoolV2(gasPoolAddress).sendMUSD(_liquidator, _MUSD);
+            IGasPool(gasPoolAddress).sendMUSD(_liquidator, _MUSD);
         }
 
         if (_collateral > 0) {

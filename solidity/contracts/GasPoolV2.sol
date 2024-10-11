@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
-import "./interfaces/IGasPoolV2.sol";
+import "./interfaces/IGasPool.sol";
 import "./token/MUSD.sol";
 
 /**
@@ -17,7 +17,7 @@ import "./token/MUSD.sol";
  * 50 THUSD debt on the trove is cancelled.
  * See this issue for more context: https://github.com/liquity/dev/issues/186
  */
-contract GasPoolV2 is Ownable, CheckContract, IGasPoolV2 {
+contract GasPoolV2 is Ownable, CheckContract, IGasPool {
     address public troveManagerAddress;
     IMUSD public musdToken;
 
