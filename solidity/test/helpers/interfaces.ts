@@ -9,7 +9,7 @@ import {
   CollSurplusPool,
   CollSurplusPool,
   DefaultPool,
-  DefaultPoolV2,
+  DefaultPool,
   GasPool,
   GasPoolV2,
   HintHelpers,
@@ -126,7 +126,7 @@ export interface ContractsV2 {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
   collSurplusPool: CollSurplusPool
-  defaultPool: DefaultPoolV2
+  defaultPool: DefaultPool
   gasPool: GasPoolV2
   hintHelpers: HintHelpersV2
   mockAggregator: MockAggregator
