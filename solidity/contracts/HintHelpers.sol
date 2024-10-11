@@ -8,7 +8,7 @@ import "./interfaces/ISortedTroves.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
 
-contract HintHelpersV2 is LiquityBase, Ownable, CheckContract {
+contract HintHelpers is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
 
     ISortedTroves public sortedTroves;

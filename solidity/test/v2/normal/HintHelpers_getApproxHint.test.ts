@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { Contracts, openTrove, setupTestsV2, User } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("HintHelpersV2", () => {
+describe("HintHelpers", () => {
   let alice: User
   let bob: User
   let carol: User
