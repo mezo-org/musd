@@ -11,7 +11,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (deployment && helpers.address.isValid(deployment.address)) {
     log(`Using TroveManager at ${deployment.address}`)
   } else {
-    log("Deploying TroveManagervV2 contract...")
+    log("Deploying TroveManager contract...")
 
     await deployments.deploy("TroveManager", {
       contract: "TroveManager",
