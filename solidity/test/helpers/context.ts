@@ -30,7 +30,7 @@ import type {
 } from "../../typechain"
 import {
   ActivePool,
-  BorrowerOperationsV2,
+  BorrowerOperations,
   CollSurplusPoolV2,
   DefaultPoolV2,
   GasPoolV2,
@@ -94,9 +94,8 @@ export async function deploymentV2() {
   await deployments.fixture()
 
   const activePool: ActivePool = await getDeployedContract("ActivePool")
-  const borrowerOperations: BorrowerOperationsV2 = await getDeployedContract(
-    "BorrowerOperationsV2",
-  )
+  const borrowerOperations: BorrowerOperations =
+    await getDeployedContract("BorrowerOperations")
   const collSurplusPool: CollSurplusPoolV2 =
     await getDeployedContract("CollSurplusPoolV2")
   const defaultPool: DefaultPoolV2 = await getDeployedContract("DefaultPoolV2")

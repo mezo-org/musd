@@ -8,7 +8,7 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IPCV.sol";
-import "./BorrowerOperationsV2.sol";
+import "./BorrowerOperations.sol";
 
 contract PCVV2 is IPCV, Ownable, CheckContract, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M MUSD
@@ -17,7 +17,7 @@ contract PCVV2 is IPCV, Ownable, CheckContract, SendCollateral {
 
     IMUSD public musd;
     IERC20 public collateralERC20;
-    BorrowerOperationsV2 public borrowerOperations;
+    BorrowerOperations public borrowerOperations;
 
     // TODO ideal initialization in constructor/setAddresses
     uint256 public debtToPay;
@@ -97,7 +97,7 @@ contract PCVV2 is IPCV, Ownable, CheckContract, SendCollateral {
 
         musd = IMUSD(_musdTokenAddress);
         collateralERC20 = IERC20(_collateralERC20);
-        borrowerOperations = BorrowerOperationsV2(_borrowerOperations);
+        borrowerOperations = BorrowerOperations(_borrowerOperations);
 
         require(
             (Ownable(_borrowerOperations).owner() != address(0) ||

@@ -34,7 +34,7 @@ import {
   OpenTroveParams,
 } from "../../helpers/interfaces"
 
-describe("BorrowerOperationsV2 in Normal Mode", () => {
+describe("BorrowerOperations in Normal Mode", () => {
   let addresses: TestingAddresses
   // users
   let alice: User

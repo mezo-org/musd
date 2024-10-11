@@ -13,7 +13,7 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
-contract BorrowerOperationsV2 is
+contract BorrowerOperations is
     LiquityBase,
     Ownable,
     CheckContract,
