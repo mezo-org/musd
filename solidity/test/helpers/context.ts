@@ -39,7 +39,7 @@ import {
   MockERC20,
   PCV,
   PriceFeed,
-  SortedTrovesV2,
+  SortedTroves,
   StabilityPoolV2,
   TroveManagerTester,
 } from "../../typechain"
@@ -107,8 +107,7 @@ export async function deploymentV2() {
   const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
-  const sortedTroves: SortedTrovesV2 =
-    await getDeployedContract("SortedTrovesV2")
+  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPoolV2 =
     await getDeployedContract("StabilityPoolV2")
   const troveManager: TroveManagerTester =

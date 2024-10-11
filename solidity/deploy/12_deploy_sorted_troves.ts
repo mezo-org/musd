@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const deployment = await deployments.getOrNull("SortedTrovesV2")
+  const deployment = await deployments.getOrNull("SortedTroves")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using SortedTrovesV2 at ${deployment.address}`)
+    log(`Using SortedTroves at ${deployment.address}`)
   } else {
-    log("Deploying SortedTrovesV2 contract...")
+    log("Deploying SortedTroves contract...")
 
-    await deployments.deploy("SortedTrovesV2", {
-      contract: "contracts/SortedTrovesV2.sol:SortedTrovesV2",
+    await deployments.deploy("SortedTroves", {
+      contract: "contracts/SortedTroves.sol:SortedTroves",
       args: [],
       from: deployer,
       log: true,
@@ -25,4 +25,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["SortedTrovesV2"]
+func.tags = ["SortedTroves"]

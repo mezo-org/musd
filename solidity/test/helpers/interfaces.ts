@@ -24,7 +24,7 @@ import {
   PriceFeed,
   PriceFeed,
   SortedTroves,
-  SortedTrovesV2,
+  SortedTroves,
   StabilityPool,
   StabilityPoolV2,
   TroveManagerTester,
@@ -134,7 +134,7 @@ export interface ContractsV2 {
   musd: MUSDTester
   pcv: PCV
   priceFeed: PriceFeed
-  sortedTroves: SortedTrovesV2
+  sortedTroves: SortedTroves
   stabilityPool: StabilityPoolV2
   troveManager: TroveManagerTester
 }

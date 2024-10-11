@@ -40,7 +40,7 @@ import "./interfaces/ITroveManager.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedTrovesV2 is Ownable, CheckContract, ISortedTroves {
+contract SortedTroves is Ownable, CheckContract, ISortedTroves {
     // Information for a node in the list
     struct Node {
         bool exists;

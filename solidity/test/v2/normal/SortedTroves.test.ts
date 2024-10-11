@@ -11,7 +11,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 
-describe("SortedTrovesV2", () => {
+describe("SortedTroves", () => {
   let alice: User
   let bob: User
   let carol: User
