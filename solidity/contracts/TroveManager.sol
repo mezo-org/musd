@@ -17,7 +17,7 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
 
-contract TroveManagerV2 is LiquityBase, Ownable, CheckContract, ITroveManager {
+contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidateInNormalMode,

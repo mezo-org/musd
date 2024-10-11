@@ -60,4 +60,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MUSD"]
-func.dependencies = ["BorrowerOperations", "TroveManagerV2", "StabilityPool"]
+func.dependencies = ["BorrowerOperations", "TroveManager", "StabilityPool"]

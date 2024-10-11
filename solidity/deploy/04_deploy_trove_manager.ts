@@ -7,14 +7,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  let deployment = await deployments.getOrNull("TroveManagerV2")
+  let deployment = await deployments.getOrNull("TroveManager")
   if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using TroveManagerV2 at ${deployment.address}`)
+    log(`Using TroveManager at ${deployment.address}`)
   } else {
     log("Deploying TroveManagervV2 contract...")
 
-    await deployments.deploy("TroveManagerV2", {
-      contract: "contracts/TroveManagerV2.sol:TroveManagerV2",
+    await deployments.deploy("TroveManager", {
+      contract: "contracts/TroveManager.sol:TroveManager",
       args: [],
       from: deployer,
       log: true,
@@ -40,4 +40,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["TroveManagerV2"]
+func.tags = ["TroveManager"]
