@@ -31,7 +31,7 @@ import type {
 import {
   ActivePool,
   BorrowerOperations,
-  CollSurplusPoolV2,
+  CollSurplusPool,
   DefaultPoolV2,
   GasPoolV2,
   HintHelpersV2,
@@ -96,8 +96,8 @@ export async function deploymentV2() {
   const activePool: ActivePool = await getDeployedContract("ActivePool")
   const borrowerOperations: BorrowerOperations =
     await getDeployedContract("BorrowerOperations")
-  const collSurplusPool: CollSurplusPoolV2 =
-    await getDeployedContract("CollSurplusPoolV2")
+  const collSurplusPool: CollSurplusPool =
+    await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPoolV2 = await getDeployedContract("DefaultPoolV2")
   const gasPool: GasPoolV2 = await getDeployedContract("GasPoolV2")
   const hintHelpers: HintHelpersV2 = await getDeployedContract("HintHelpersV2")

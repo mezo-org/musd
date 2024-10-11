@@ -9,7 +9,7 @@ import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IActivePool.sol";
 
-contract CollSurplusPoolV2 is
+contract CollSurplusPool is
     Ownable,
     CheckContract,
     SendCollateral,

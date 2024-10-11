@@ -7,7 +7,7 @@ import {
   BorrowerOperations,
   BorrowerOperations,
   CollSurplusPool,
-  CollSurplusPoolV2,
+  CollSurplusPool,
   DefaultPool,
   DefaultPoolV2,
   GasPool,
@@ -125,7 +125,7 @@ export interface ContractsV1 {
 export interface ContractsV2 {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
-  collSurplusPool: CollSurplusPoolV2
+  collSurplusPool: CollSurplusPool
   defaultPool: DefaultPoolV2
   gasPool: GasPoolV2
   hintHelpers: HintHelpersV2

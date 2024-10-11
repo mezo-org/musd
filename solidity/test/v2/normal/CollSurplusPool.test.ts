@@ -18,7 +18,7 @@ import {
   updateCollSurplusPoolUserSnapshot,
 } from "../../helpers"
 
-describe("CollSurplusPoolV2 in Normal Mode", () => {
+describe("CollSurplusPool in Normal Mode", () => {
   let contracts: Contracts
   let cachedTestSetup: TestSetup
   let testSetup: TestSetup
