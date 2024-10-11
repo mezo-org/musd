@@ -19,7 +19,7 @@ import "./interfaces/IStabilityPool.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePoolV2 is Ownable, CheckContract, SendCollateral, IActivePool {
+contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public borrowerOperationsAddress;
     address public collateralAddress;
     address public collSurplusPoolAddress;

@@ -3,7 +3,7 @@ import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signer
 
 import {
   ActivePool,
-  ActivePoolV2,
+  ActivePool,
   BorrowerOperations,
   BorrowerOperationsV2,
   CollSurplusPool,
@@ -123,7 +123,7 @@ export interface ContractsV1 {
 }
 
 export interface ContractsV2 {
-  activePool: ActivePoolV2
+  activePool: ActivePool
   borrowerOperations: BorrowerOperationsV2
   collSurplusPool: CollSurplusPoolV2
   defaultPool: DefaultPoolV2

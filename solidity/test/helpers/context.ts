@@ -29,7 +29,7 @@ import type {
   TroveManagerTester,
 } from "../../typechain"
 import {
-  ActivePoolV2,
+  ActivePool,
   BorrowerOperationsV2,
   CollSurplusPoolV2,
   DefaultPoolV2,
@@ -93,7 +93,7 @@ export async function deployment() {
 export async function deploymentV2() {
   await deployments.fixture()
 
-  const activePool: ActivePoolV2 = await getDeployedContract("ActivePoolV2")
+  const activePool: ActivePool = await getDeployedContract("ActivePool")
   const borrowerOperations: BorrowerOperationsV2 = await getDeployedContract(
     "BorrowerOperationsV2",
   )
