@@ -6,7 +6,7 @@ import {
   connectContracts,
   ContractsState,
   Contracts,
-  fixtureV2,
+  fixture,
   getAddresses,
   NO_GAS,
   TestingAddresses,
@@ -25,7 +25,7 @@ describe("DefaultPool", () => {
   let troveManagerSigner: HardhatEthersSigner
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

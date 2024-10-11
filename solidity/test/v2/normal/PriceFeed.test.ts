@@ -4,7 +4,7 @@ import { ZERO_ADDRESS, to1e18 } from "../../utils"
 
 import {
   Contracts,
-  fixtureV2,
+  fixture,
   getDeployedContract,
   TestSetup,
   connectContracts,
@@ -19,7 +19,7 @@ describe("PriceFeed in Normal Mode", () => {
   let deployer: User
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     // users

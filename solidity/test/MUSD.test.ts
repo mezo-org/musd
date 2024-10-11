@@ -4,7 +4,7 @@ import { expect, assert } from "chai"
 import {
   Contracts,
   TestSetup,
-  fixtureV2,
+  fixture,
   getLatestBlockTimestamp,
   fastForwardTime,
   connectContracts,
@@ -30,7 +30,7 @@ describe("MUSD", () => {
   let newTroveManager: TroveManager
 
   beforeEach(async () => {
-    testSetup = await loadFixture(fixtureV2)
+    testSetup = await loadFixture(fixture)
     contracts = testSetup.contracts
     await connectContracts(contracts, testSetup.users)
 

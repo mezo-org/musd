@@ -161,7 +161,7 @@ async function initializeUserObject(
  */
 
 // Needed because loadFixture cannot take an anonymous function as a parameter
-export async function fixtureV2(): Promise<TestSetup> {
+export async function fixture(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [
     aliceWallet,

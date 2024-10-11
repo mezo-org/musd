@@ -15,7 +15,7 @@ import {
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
-  fixtureV2,
+  fixture,
   getAddresses,
   getAllEventsByName,
   getDebtAndCollFromTroveUpdatedEvents,
@@ -230,7 +230,7 @@ describe("TroveManager in Normal Mode", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

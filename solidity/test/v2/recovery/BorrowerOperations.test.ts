@@ -6,7 +6,7 @@ import {
   connectContracts,
   ContractsState,
   Contracts,
-  fixtureV2,
+  fixture,
   getAddresses,
   getEventArgByName,
   openTrove,
@@ -64,7 +64,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

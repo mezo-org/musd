@@ -3,7 +3,7 @@ import { expect } from "chai"
 import {
   connectContracts,
   Contracts,
-  fixtureV2,
+  fixture,
   getAddresses,
   openTrove,
   TestingAddresses,
@@ -24,7 +24,7 @@ describe("Access Control V2: Liquity functions with the caller restricted to Liq
   let testSetup: TestSetup
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
 

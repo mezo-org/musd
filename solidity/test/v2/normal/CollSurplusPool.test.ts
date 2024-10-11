@@ -9,7 +9,7 @@ import {
   TestSetup,
   User,
   connectContracts,
-  fixtureV2,
+  fixture,
   openTrove,
   performRedemption,
   updateCollSurplusSnapshot,
@@ -30,7 +30,7 @@ describe("CollSurplusPool in Normal Mode", () => {
   let state: ContractsState
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     // users

@@ -6,7 +6,7 @@ import {
   connectContracts,
   createLiquidationEvent,
   fastForwardTime,
-  fixtureV2,
+  fixture,
   getAddresses,
   getEventArgByName,
   getLatestBlockTimestamp,
@@ -122,7 +122,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state

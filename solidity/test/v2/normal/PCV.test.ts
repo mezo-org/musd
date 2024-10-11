@@ -5,7 +5,7 @@ import {
   connectContracts,
   Contracts,
   fastForwardTime,
-  fixtureV2,
+  fixture,
   getAddresses,
   getLatestBlockTimestamp,
   TestingAddresses,
@@ -39,7 +39,7 @@ describe("PCV", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
 

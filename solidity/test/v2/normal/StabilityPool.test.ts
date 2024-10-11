@@ -9,7 +9,7 @@ import {
   Contracts,
   createLiquidationEvent,
   dropPrice,
-  fixtureV2,
+  fixture,
   getAddresses,
   getEmittedLiquidationValues,
   NO_GAS,
@@ -54,7 +54,7 @@ describe("StabilityPool in Normal Mode", () => {
   const pools: Pool[] = ["activePool", "defaultPool"]
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixtureV2)
+    cachedTestSetup = await loadFixture(fixture)
     testSetup = { ...cachedTestSetup }
     contracts = testSetup.contracts
     state = testSetup.state
