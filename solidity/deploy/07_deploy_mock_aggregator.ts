@@ -14,7 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log("Deploying MockAggregator.sol contract...")
 
     await deployments.deploy("MockAggregator", {
-      contract: "contracts/tests/MockAggregator.sol:MockAggregator",
+      contract: "MockAggregator",
       args: ["18"],
       from: deployer,
       log: true,
