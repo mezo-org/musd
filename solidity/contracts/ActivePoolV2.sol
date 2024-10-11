@@ -9,7 +9,7 @@ import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePool.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
-import "./interfaces/IDefaultPoolV2.sol";
+import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IStabilityPoolV2.sol";
 
 /*
@@ -86,7 +86,7 @@ contract ActivePoolV2 is Ownable, CheckContract, SendCollateral, IActivePool {
                         .collateralAddress() ==
                     _collateralAddress) &&
                 (Ownable(_defaultPoolAddress).owner() != address(0) ||
-                    IDefaultPoolV2(_defaultPoolAddress).collateralAddress() ==
+                    IDefaultPool(_defaultPoolAddress).collateralAddress() ==
                     _collateralAddress) &&
                 (Ownable(_stabilityPoolAddress).owner() != address(0) ||
                     IStabilityPoolV2(stabilityPoolAddress)

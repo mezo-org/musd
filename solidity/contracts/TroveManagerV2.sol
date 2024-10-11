@@ -97,7 +97,7 @@ contract TroveManagerV2 is
 
     struct ContractsCache {
         IActivePool activePool;
-        IDefaultPoolV2 defaultPool;
+        IDefaultPool defaultPool;
         IMUSD musdToken;
         IPCVV2 pcv;
         ISortedTrovesV2 sortedTroves;
@@ -247,7 +247,7 @@ contract TroveManagerV2 is
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
         activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPoolV2(_defaultPoolAddress);
+        defaultPool = IDefaultPool(_defaultPoolAddress);
         stabilityPool = IStabilityPoolV2(_stabilityPoolAddress);
         // slither-disable-next-line missing-zero-check
         gasPoolAddress = _gasPoolAddress;
@@ -791,7 +791,7 @@ contract TroveManagerV2 is
         );
 
         IActivePool activePoolCached = activePool;
-        IDefaultPoolV2 defaultPoolCached = defaultPool;
+        IDefaultPool defaultPoolCached = defaultPool;
         IStabilityPoolV2 stabilityPoolCached = stabilityPool;
 
         // slither-disable-next-line uninitialized-local
@@ -1114,7 +1114,7 @@ contract TroveManagerV2 is
 
     function _getTotalsFromLiquidateTrovesSequenceNormalMode(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
         uint256 _n
@@ -1184,7 +1184,7 @@ contract TroveManagerV2 is
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
     function _applyPendingRewards(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         address _borrower
     ) internal {
         if (hasPendingRewards(_borrower)) {
@@ -1263,7 +1263,7 @@ contract TroveManagerV2 is
 
     function _redistributeDebtAndColl(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         uint256 _debt,
         uint256 _coll
     ) internal {
@@ -1318,7 +1318,7 @@ contract TroveManagerV2 is
     // Liquidate one trove, in Normal Mode.
     function _liquidateNormalMode(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         address _borrower,
         uint256 _MUSDInStabPool
     ) internal returns (LiquidationValues memory singleLiquidation) {
@@ -1385,7 +1385,7 @@ contract TroveManagerV2 is
 
     function _getTotalsFromBatchLiquidateNormalMode(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
         address[] memory _troveArray
@@ -1425,7 +1425,7 @@ contract TroveManagerV2 is
      */
     function _getTotalFromBatchLiquidateRecoveryMode(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         uint256 _price,
         uint256 _MUSDInStabPool,
         address[] memory _troveArray
@@ -1510,7 +1510,7 @@ contract TroveManagerV2 is
     // Liquidate one trove, in Recovery Mode.
     function _liquidateRecoveryMode(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         address _borrower,
         uint256 _ICR,
         uint256 _MUSDInStabPool,
@@ -1825,7 +1825,7 @@ contract TroveManagerV2 is
     // Move a Trove's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
     function _movePendingTroveRewardsToActivePool(
         IActivePool _activePool,
-        IDefaultPoolV2 _defaultPool,
+        IDefaultPool _defaultPool,
         uint256 _MUSD,
         uint256 _collateral
     ) internal {

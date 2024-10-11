@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
-import "./interfaces/IDefaultPoolV2.sol";
+import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IActivePool.sol";
 
 /*
@@ -16,12 +16,7 @@ import "./interfaces/IActivePool.sol";
  * When a trove makes an operation that applies its pending collateral and MUSD debt, its pending collateral and MUSD debt is moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPoolV2 is
-    Ownable,
-    CheckContract,
-    SendCollateral,
-    IDefaultPoolV2
-{
+contract DefaultPoolV2 is Ownable, CheckContract, SendCollateral, IDefaultPool {
     address public activePoolAddress;
     address public collateralAddress;
     address public troveManagerAddress;

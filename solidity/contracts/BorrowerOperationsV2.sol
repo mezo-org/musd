@@ -451,7 +451,7 @@ contract BorrowerOperationsV2 is
 
         troveManager = ITroveManagerV2(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPoolV2(_defaultPoolAddress);
+        defaultPool = IDefaultPool(_defaultPoolAddress);
         // slither-disable-next-line missing-zero-check
         stabilityPoolAddress = _stabilityPoolAddress;
         // slither-disable-next-line missing-zero-check
