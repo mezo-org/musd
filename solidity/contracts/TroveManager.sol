@@ -32,8 +32,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 stake;
         Status status;
         uint128 arrayIndex;
-        uint16 interestRate;
-        uint256 lastInterestUpdateTime;
+        uint256 lastUpdatedDebtIndex;
     }
 
     // Object containing the collateral and MUSD snapshots for a given active trove
@@ -188,17 +187,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
+    uint256 public globalDebtIndex = 1e18; // Start at 1 (no interest), scaled by 1e18 for precision
+    uint256 public lastUpdatedTime;
+    uint256 public annualInterestRate; // annual interest rate in basis points
+
     // Array of historical interest rate changes
     InterestRateChange[] public interestRateHistory;
 
-    // Current interest rate per year in basis points
-    uint16 public interestRate;
-
     // Maximum interest rate that can be set, defaults to 100% (10000 bps)
-    uint16 public maxInterestRate = 10000;
+    uint256 public maxInterestRate = 10000;
 
     // Proposed interest rate -- must be approved by governance after a minimum delay
-    uint16 public proposedInterestRate;
+    uint256 public proposedInterestRate;
     uint256 public proposalTime;
 
     // Minimum time delay between interest rate proposal and approval
@@ -214,7 +214,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _;
     }
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) {
+        lastUpdatedTime = block.timestamp;
+    }
 
     function setAddresses(
         address _activePoolAddress,
@@ -631,21 +633,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return newDebt;
     }
 
-    function setTroveInterestRate(address _borrower, uint16 _rate) external {
+    function setTroveDebtIndex(address _borrower) external {
         _requireCallerIsBorrowerOperations();
-        Troves[_borrower].interestRate = _rate;
-    }
-
-    function setTroveLastInterestUpdateTime(
-        address _borrower,
-        uint256 _timestamp
-    ) external {
-        _requireCallerIsBorrowerOperations();
-        Troves[_borrower].lastInterestUpdateTime = _timestamp;
+        Troves[_borrower].lastUpdatedDebtIndex = globalDebtIndex;
     }
 
     function proposeInterestRate(
-        uint16 _newProposedInterestRate
+        uint256 _newProposedInterestRate
     ) external onlyOwnerOrGovernance {
         require(
             _newProposedInterestRate <= maxInterestRate,
@@ -668,7 +662,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function setMaxInterestRate(
-        uint16 _newMaxInterestRate
+        uint256 _newMaxInterestRate
     ) external onlyOwnerOrGovernance {
         maxInterestRate = _newMaxInterestRate;
         emit MaxInterestRateUpdated(_newMaxInterestRate);
@@ -748,14 +742,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getTroveInterestRate(
         address _borrower
-    ) external view returns (uint16) {
-        return Troves[_borrower].interestRate;
-    }
-
-    function getTroveLastInterestUpdateTime(
-        address _borrower
-    ) external view returns (uint) {
-        return Troves[_borrower].lastInterestUpdateTime;
+    ) external view returns (uint256) {
+        return Troves[_borrower].lastUpdatedDebtIndex;
     }
 
     function getTroveColl(
@@ -868,29 +856,36 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
-    // TODO Change access modifier to limit calls to the contracts that need to call this
-    function updateDebtWithInterest(address _borrower) public {
-        uint256 interestOwed = calculateInterestOwed(_borrower);
-        Troves[_borrower].debt += interestOwed;
-        // solhint-disable-next-line not-rely-on-time
-        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
+    function updateGlobalDebtIndex() public {
+        uint256 timeElapsed = block.timestamp - lastUpdatedTime;
+        if (timeElapsed > 0) {
+            uint256 daysElapsed = timeElapsed / 1 days;
+
+            // Convert annual interest rate from basis points to a daily factor in fixed-point form
+            uint256 dailyInterestRate = ((annualInterestRate * 1e14) / 365) / 1e4;
+
+            // Calculate the new global debt index using a loop for exponentiation to prevent overflow
+            for (uint256 i = 0; i < daysElapsed; i++) {
+                globalDebtIndex = (globalDebtIndex * (1e18 + dailyInterestRate)) / 1e18;
+            }
+
+            lastUpdatedTime = block.timestamp;
+        }
     }
 
-    // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
-    function calculateInterestOwed(
-        address _borrower
-    ) public view returns (uint256) {
+    function updateDebtWithInterest(address _borrower) public {
+        updateGlobalDebtIndex();
+        uint256 interestOwed = calculateInterestOwed(_borrower);
+        Troves[_borrower].debt += interestOwed;
+        Troves[_borrower].lastUpdatedDebtIndex = globalDebtIndex;
+    }
+
+    function calculateInterestOwed(address _borrower) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
-        // slither-disable-start divide-before-multiply
-        uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) /
-            (10000 * SECONDS_IN_A_YEAR);
-        // solhint-disable-next-line not-rely-on-time
-        uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        uint256 interestOwed = (trove.debt *
-            interestRatePerSecond *
-            timeElapsed) / DECIMAL_PRECISION;
-        // slither-disable-end divide-before-multiply
-        return interestOwed;
+        uint256 interestFactor = globalDebtIndex * DECIMAL_PRECISION / trove.lastUpdatedDebtIndex;
+        // Calculate the interest and convert from basis points to fixed point
+        uint256 interest = trove.debt * (interestFactor - DECIMAL_PRECISION) * 1e4 / DECIMAL_PRECISION;
+        return interest;
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
@@ -1005,13 +1000,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
-    // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
-    function _setInterestRate(uint16 _newInterestRate) internal {
+    function _setInterestRate(uint256 _newInterestRate) internal {
         require(
             _newInterestRate <= maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
         );
-        interestRate = _newInterestRate;
+        updateGlobalDebtIndex();
+        annualInterestRate = _newInterestRate;
         interestRateHistory.push(
             InterestRateChange(_newInterestRate, block.number)
         );

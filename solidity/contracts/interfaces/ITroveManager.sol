@@ -16,7 +16,7 @@ interface ITroveManager {
     }
 
     struct InterestRateChange {
-        uint16 interestRate;
+        uint256 interestRate;
         uint256 blockNumber;
     }
 
@@ -145,18 +145,13 @@ interface ITroveManager {
         uint256 _debtDecrease
     ) external returns (uint);
 
-    function setTroveInterestRate(address _borrower, uint16 _rate) external;
-
-    function setTroveLastInterestUpdateTime(
-        address _borrower,
-        uint256 _timestamp
-    ) external;
+    function setTroveDebtIndex(address _borrower) external;
 
     function approveInterestRate() external;
 
-    function proposeInterestRate(uint16 _newProposedInterestRate) external;
+    function proposeInterestRate(uint256 _newProposedInterestRate) external;
 
-    function setMaxInterestRate(uint16 _newMaxInterestRate) external;
+    function setMaxInterestRate(uint256 _newMaxInterestRate) external;
 
     function stabilityPool() external view returns (IStabilityPool);
 
@@ -221,21 +216,11 @@ interface ITroveManager {
 
     function getTroveDebt(address _borrower) external view returns (uint);
 
-    function getTroveInterestRate(
-        address _borrower
-    ) external view returns (uint16);
-
-    function getTroveLastInterestUpdateTime(
-        address _borrower
-    ) external view returns (uint);
-
     function getTroveColl(address _borrower) external view returns (uint);
 
     function getTCR(uint256 _price) external view returns (uint);
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
-
-    function interestRate() external view returns (uint16);
 
     function getInterestRateHistory()
         external

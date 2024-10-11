@@ -10,8 +10,8 @@ import {
   checkTroveClosedByRedemption,
   checkTroveStatus,
   connectContracts,
-  ContractsState,
   Contracts,
+  ContractsState,
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
@@ -22,7 +22,6 @@ import {
   getEmittedLiquidationValues,
   getEmittedRedemptionValues,
   getRedemptionHints,
-  getLatestBlockTimestamp,
   getTCR,
   NO_GAS,
   openTrove,
@@ -209,16 +208,20 @@ describe("TroveManager in Normal Mode", () => {
     expect(await checkTroveActive(contracts, eric)).to.equal(true)
   }
 
-  async function setupTroveWithInterestRate(
-    interestRate: number,
-    daysToFastForward: number,
-  ) {
+  async function setInterestRate(interestRate: number) {
     await contracts.troveManager
       .connect(council.wallet)
       .proposeInterestRate(interestRate)
     const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(timeToIncrease)
     await contracts.troveManager.connect(council.wallet).approveInterestRate()
+  }
+
+  async function setupTroveWithInterestRate(
+    interestRate: number,
+    daysToFastForward: number,
+  ) {
+    await setInterestRate(interestRate)
 
     await openTrove(contracts, {
       musdAmount: "10000",
@@ -3137,7 +3140,7 @@ describe("TroveManager in Normal Mode", () => {
         await contracts.troveManager
           .connect(council.wallet)
           .approveInterestRate()
-        expect(await contracts.troveManager.interestRate()).to.equal(100)
+        expect(await contracts.troveManager.annualInterestRate()).to.equal(100)
       })
     })
 
@@ -3200,38 +3203,37 @@ describe("TroveManager in Normal Mode", () => {
     context("Individual Troves", () => {
       it("calculateInterestOwed(): should calculate the interest owed for a trove after 15 days", async () => {
         await setupTroveWithInterestRate(100, 15)
+        await contracts.troveManager.updateGlobalDebtIndex()
         const interest = await contracts.troveManager.calculateInterestOwed(
           alice.wallet,
         )
 
         /*
          * Annual interest rate: 100 bps (or 0.01)
-         * Seconds in a year: 31536000
-         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
+         * Daily interest rate: 0.01 / 365 = 2.739726027e-5
          * Total debt: 10250
-         * Interest owed after 15 days: 3.17097919e-10 * 10250 * 15 * 60 * 60 * 24 = 4.212328755996
-         *
-         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
+         * Interest after 15 days: 10250 * (1 + 2.739726027e-5)^15 - 10250 ~= 4.20992369
          */
-        expect(interest).to.be.equal(4212328755996000000n)
+
+        // TODO Update to better precision
+        expect(interest).to.be.closeTo(4209923690000000000n, to1e18(0.01))
       })
 
       it("calculateInterestOwed(): should calculate the interest owed for a trove after 30 days", async () => {
         await setupTroveWithInterestRate(100, 30)
+        await contracts.troveManager.updateGlobalDebtIndex()
         const interest = await contracts.troveManager.calculateInterestOwed(
           alice.wallet,
         )
 
         /*
          * Annual interest rate: 100 bps (or 0.01)
-         * Seconds in a year: 31536000
-         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
+         * Daily interest rate: 0.01 / 365 = 2.739726027e-5
          * Total debt: 10250
-         * Interest owed after 30 days: 3.17097919e-10 * 10250 * 30 * 60 * 60 * 24 = 8.424657511992
-         *
-         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
+         * Interest after 30 days: 10250 * (1 + 2.739726027e-5)^30 - 10250 ~= 8.4534397
          */
-        expect(interest).to.be.equal(8424657511992000000n)
+
+        expect(interest).to.be.closeTo(8453439700000000000n, to1e18(0.05))
       })
     })
 
@@ -3285,21 +3287,92 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
     context("Individual Troves", () => {
-      it("updateDebtWithInterest(): should update the trove with interest owed and set the lastInterestUpdatedTime", async () => {
+      it("updateDebtWithInterest(): should update the trove with interest owed and set the lastUpdatedDebtIndex", async () => {
         await setupTroveWithInterestRate(100, 30)
 
         await contracts.troveManager.updateDebtWithInterest(alice.wallet)
         const debt = await contracts.troveManager.getTroveDebt(alice.wallet)
-        const getTroveLastInterestUpdateTime =
-          await contracts.troveManager.getTroveLastInterestUpdateTime(
-            alice.wallet,
-          )
-        expect(debt).to.be.equal(10258424660762245669750n)
-        expect(getTroveLastInterestUpdateTime).to.be.equal(
-          await getLatestBlockTimestamp(),
+        const lastUpdatedDebtIndex =
+          await contracts.troveManager.getTroveInterestRate(alice.wallet)
+
+        /*
+         * Annual interest rate: 100 bps (or 0.01)
+         * Daily interest rate: 0.01 / 365 = 2.739726027e-5
+         * Total debt: 10250
+         * Interest after 30 days: 10250 * (1 + 2.739726027e-5)^30 ~= 10258.4534397
+         */
+
+        expect(debt).to.be.closeTo(10258453439700000000000n, to1e18(0.05))
+        expect(lastUpdatedDebtIndex).to.be.equal(
+          await contracts.troveManager.globalDebtIndex(),
         )
       })
     })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("updateGlobalDebtIndex()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("updateGlobalDebtIndex(): should update to reflect interest accumulated after 30 days", async () => {
+        const annualRateBasisPoints = 500n
+        const annualRate = annualRateBasisPoints * 10n ** 14n // Convert basis points to 1e18 scale
+        const dailyRate = annualRate / 365n / 10n ** 4n // Approximate the daily rate
+        let index = 10n ** 18n
+        for (let i = 0; i < 30; i++) {
+          index = (index * (10n ** 18n + dailyRate)) / 10n ** 18n
+        }
+        await setInterestRate(Number(annualRateBasisPoints)) // set interest rate to 500 bps
+        await fastForwardTime(30 * 24 * 60 * 60) // 30 days in seconds
+        await contracts.troveManager.updateGlobalDebtIndex()
+        expect(await contracts.troveManager.globalDebtIndex()).to.equal(index)
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
 
     /**
      *

@@ -631,38 +631,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("openTrove(): opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
-        // set the current interest rate to 100 bps
-        await contracts.troveManager
-          .connect(council.wallet)
-          .proposeInterestRate(100)
-        const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-        await fastForwardTime(timeToIncrease)
-        await contracts.troveManager
-          .connect(council.wallet)
-          .approveInterestRate()
-
+      it("openTrove(): opens a new Trove and sets the lastUpdatedDebtIndex", async () => {
         // open a new trove
         await openTrove(contracts, {
           musdAmount: "100,000",
           sender: dennis.wallet,
         })
 
-        // check that the interest rate on the trove is the current interest rate
-        const interestRate = await contracts.troveManager.getTroveInterestRate(
-          dennis.wallet,
+        const troveDebtIndex =
+          await contracts.troveManager.getTroveInterestRate(dennis.wallet)
+        expect(troveDebtIndex).is.equal(
+          await contracts.troveManager.globalDebtIndex(),
         )
-        expect(interestRate).is.equal(100)
-
-        // check that the lastInterestUpdatedTime on the Trove is the current time
-        const lastInterestUpdatedTime =
-          await contracts.troveManager.getTroveLastInterestUpdateTime(
-            dennis.wallet,
-          )
-
-        const currentTime = await getLatestBlockTimestamp()
-
-        expect(lastInterestUpdatedTime).is.equal(currentTime)
       })
     })
 

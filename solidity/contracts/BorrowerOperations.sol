@@ -181,15 +181,8 @@ contract BorrowerOperations is
             vars.compositeDebt
         );
 
-        contractsCache.troveManager.setTroveInterestRate(
-            msg.sender,
-            contractsCache.troveManager.interestRate()
-        );
-        // solhint-disable-next-line not-rely-on-time
-        contractsCache.troveManager.setTroveLastInterestUpdateTime(
-            msg.sender,
-            block.timestamp
-        );
+        contractsCache.troveManager.setTroveDebtIndex(msg.sender);
+
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
             msg.sender
