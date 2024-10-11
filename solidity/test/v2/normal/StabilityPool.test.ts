@@ -6,7 +6,7 @@ import {
   CheckPoint,
   connectContracts,
   ContractsState,
-  ContractsV2,
+  Contracts,
   createLiquidationEvent,
   dropPrice,
   fixtureV2,
@@ -46,7 +46,7 @@ describe("StabilityPool in Normal Mode", () => {
   let eric: User
   let whale: User
   let state: ContractsState
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let testSetup: TestSetupV2
 

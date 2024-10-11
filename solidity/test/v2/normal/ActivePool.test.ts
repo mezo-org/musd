@@ -5,7 +5,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import {
   connectContracts,
   ContractsState,
-  ContractsV2,
+  Contracts,
   fixtureV2,
   getAddresses,
   NO_GAS,
@@ -17,7 +17,7 @@ import { to1e18 } from "../../utils"
 
 describe("ActivePool", () => {
   let addresses: TestingAddresses
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let state: ContractsState
   let testSetup: TestSetupV2

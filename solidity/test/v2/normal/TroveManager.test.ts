@@ -11,7 +11,7 @@ import {
   checkTroveStatus,
   connectContracts,
   ContractsState,
-  ContractsV2,
+  Contracts,
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
@@ -56,7 +56,7 @@ describe("TroveManager in Normal Mode", () => {
   let eric: User
   let treasury: User
   let state: ContractsState
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let testSetup: TestSetupV2
 

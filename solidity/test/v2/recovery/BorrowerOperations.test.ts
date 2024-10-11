@@ -5,7 +5,7 @@ import {
   addColl,
   connectContracts,
   ContractsState,
-  ContractsV2,
+  Contracts,
   fixtureV2,
   getAddresses,
   getEventArgByName,
@@ -26,7 +26,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
   let bob: User
   let carol: User
   let deployer: User
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let testSetup: TestSetupV2
   let state: ContractsState

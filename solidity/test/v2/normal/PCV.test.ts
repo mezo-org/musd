@@ -3,7 +3,7 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
   connectContracts,
-  ContractsV2,
+  Contracts,
   fastForwardTime,
   fixtureV2,
   getAddresses,
@@ -22,7 +22,7 @@ describe("PCV", () => {
   let bob: User
   let council: User
   let deployer: User
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let treasury: User
   let testSetup: TestSetupV2

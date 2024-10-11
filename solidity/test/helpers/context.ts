@@ -5,7 +5,6 @@ import { ZERO_ADDRESS } from "../utils"
 import {
   Contracts,
   ContractsState,
-  ContractsV2,
   TestingAddresses,
   TestSetupV2,
   User,
@@ -53,7 +52,7 @@ export async function deploymentV2() {
   const troveManager: TroveManagerTester =
     await getDeployedContract("TroveManagerTester")
 
-  const contracts: ContractsV2 = {
+  const contracts: Contracts = {
     activePool,
     borrowerOperations,
     collSurplusPool,

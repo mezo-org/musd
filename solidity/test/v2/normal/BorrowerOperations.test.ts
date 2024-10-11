@@ -29,7 +29,7 @@ import {
 } from "../../helpers"
 import { to1e18 } from "../../utils"
 import {
-  ContractsV2,
+  Contracts,
   ContractsState,
   OpenTroveParams,
 } from "../../helpers/interfaces"
@@ -45,7 +45,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   let eric: User
   let deployer: User
   let treasury: User
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let state: ContractsState
   let testSetup: TestSetupV2

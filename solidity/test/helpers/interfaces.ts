@@ -92,7 +92,7 @@ export interface ContractsState {
   }
 }
 
-export interface ContractsV2 {
+export interface Contracts {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
   collSurplusPool: CollSurplusPool
@@ -108,8 +108,6 @@ export interface ContractsV2 {
   stabilityPool: StabilityPool
   troveManager: TroveManagerTester
 }
-
-export type Contracts = ContractsV2
 
 export interface User {
   address: string
@@ -163,7 +161,7 @@ export interface TestSetup {
 }
 
 export interface TestSetupV2 {
-  contracts: ContractsV2
+  contracts: Contracts
   state: ContractsState
   users: Users
 }

@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
   connectContracts,
-  ContractsV2,
+  Contracts,
   fixtureV2,
   getAddresses,
   openTrove,
@@ -19,7 +19,7 @@ describe("Access Control V2: Liquity functions with the caller restricted to Liq
   let deployer: User
 
   let addresses: TestingAddresses
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let testSetup: TestSetupV2
 

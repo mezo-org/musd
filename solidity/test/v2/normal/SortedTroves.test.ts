@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
   connectContracts,
-  ContractsV2,
+  Contracts,
   fixtureV2,
   openTrove,
   openTroves,
@@ -18,7 +18,7 @@ describe("SortedTroves", () => {
   let dennis: User
   let eric: User
   let whale: User
-  let contracts: ContractsV2
+  let contracts: Contracts
   let cachedTestSetup: TestSetupV2
   let testSetup: TestSetupV2
 

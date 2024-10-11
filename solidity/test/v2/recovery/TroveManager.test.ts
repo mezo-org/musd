@@ -4,7 +4,7 @@ import {
   checkTroveActive,
   checkTroveClosedByLiquidation,
   ContractsState,
-  ContractsV2,
+  Contracts,
   dropPrice,
   dropPriceAndLiquidate,
   getEmittedLiquidationValues,
@@ -32,7 +32,7 @@ describe("TroveManager in Recovery Mode", () => {
   let eric: User
   let frank: User
   let state: ContractsState
-  let contracts: ContractsV2
+  let contracts: Contracts
 
   beforeEach(async () => {
     ;({ alice, bob, carol, dennis, eric, frank, contracts, state } =
