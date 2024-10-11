@@ -11,7 +11,7 @@ import "./interfaces/ICollSurplusPool.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/ISortedTrovesV2.sol";
 import "./interfaces/ITroveManagerV2.sol";
-import "./interfaces/IPCVV2.sol";
+import "./interfaces/IPCV.sol";
 
 contract BorrowerOperationsV2 is
     LiquityBase,
@@ -477,8 +477,8 @@ contract BorrowerOperationsV2 is
                 (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
                     collSurplusPool.collateralAddress() ==
                     _collateralAddress) &&
-                (address(IPCVV2(pcvAddress).musd()) == address(0) ||
-                    address(IPCVV2(pcvAddress).collateralERC20()) ==
+                (address(IPCV(pcvAddress).musd()) == address(0) ||
+                    address(IPCV(pcvAddress).collateralERC20()) ==
                     _collateralAddress),
             "The same collateral address must be used for the entire set of contracts"
         );

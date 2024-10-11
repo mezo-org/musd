@@ -7,10 +7,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./token/IMUSD.sol";
-import "./interfaces/IPCVV2.sol";
+import "./interfaces/IPCV.sol";
 import "./BorrowerOperationsV2.sol";
 
-contract PCVV2 is IPCVV2, Ownable, CheckContract, SendCollateral {
+contract PCVV2 is IPCV, Ownable, CheckContract, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M MUSD
 
     uint256 public immutable governanceTimeDelay;

@@ -15,7 +15,7 @@ import "./token/IMUSD.sol";
 import "./interfaces/IStabilityPoolV2.sol";
 import "./interfaces/ISortedTrovesV2.sol";
 import "./interfaces/ITroveManagerV2.sol";
-import "./interfaces/IPCVV2.sol";
+import "./interfaces/IPCV.sol";
 
 contract TroveManagerV2 is
     LiquityBase,
@@ -99,7 +99,7 @@ contract TroveManagerV2 is
         IActivePool activePool;
         IDefaultPool defaultPool;
         IMUSD musdToken;
-        IPCVV2 pcv;
+        IPCV pcv;
         ISortedTrovesV2 sortedTroves;
         ICollSurplusPool collSurplusPool;
         address gasPoolAddress;
@@ -134,7 +134,7 @@ contract TroveManagerV2 is
 
     IMUSD public musdToken;
 
-    IPCVV2 public override pcv;
+    IPCV public override pcv;
 
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTrovesV2 public sortedTroves;
@@ -255,7 +255,7 @@ contract TroveManagerV2 is
         priceFeed = IPriceFeedV2(_priceFeedAddress);
         musdToken = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTrovesV2(_sortedTrovesAddress);
-        pcv = IPCVV2(_pcvAddress);
+        pcv = IPCV(_pcvAddress);
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -284,7 +284,7 @@ contract TroveManagerV2 is
             activePool,
             defaultPool,
             IMUSD(address(0)),
-            IPCVV2(address(0)),
+            IPCV(address(0)),
             sortedTroves,
             ICollSurplusPool(address(0)),
             address(0)

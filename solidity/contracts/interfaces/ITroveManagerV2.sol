@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import "./IStabilityPoolV2.sol";
-import "./IPCVV2.sol";
+import "./IPCV.sol";
 
 // Common interface for the Trove Manager.
 interface ITroveManagerV2 {
@@ -160,7 +160,7 @@ interface ITroveManagerV2 {
 
     function stabilityPool() external view returns (IStabilityPoolV2);
 
-    function pcv() external view returns (IPCVV2);
+    function pcv() external view returns (IPCV);
 
     function getTroveOwnersCount() external view returns (uint);
 
