@@ -7,12 +7,11 @@ import {
   ContractsState,
   ContractsV2,
   TestingAddresses,
-  TestSetup,
   TestSetupV2,
   User,
   Users,
 } from "./interfaces"
-import type {
+import {
   ActivePool,
   BorrowerOperations,
   CollSurplusPool,
@@ -28,67 +27,8 @@ import type {
   StabilityPool,
   TroveManagerTester,
 } from "../../typechain"
-import {
-  ActivePool,
-  BorrowerOperations,
-  CollSurplusPool,
-  DefaultPool,
-  GasPool,
-  HintHelpers,
-  MockAggregator,
-  MockERC20,
-  PCV,
-  PriceFeed,
-  SortedTroves,
-  StabilityPool,
-  TroveManagerTester,
-} from "../../typechain"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
-
-// eslint-disable-next-line import/prefer-default-export
-export async function deployment() {
-  await deployments.fixture()
-
-  const activePool: ActivePool = await getDeployedContract("ActivePool")
-  const borrowerOperations: BorrowerOperations =
-    await getDeployedContract("BorrowerOperations")
-  const collSurplusPool: CollSurplusPool =
-    await getDeployedContract("CollSurplusPool")
-  const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
-  const gasPool: GasPool = await getDeployedContract("GasPool")
-  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
-  const mockAggregator: MockAggregator =
-    await getDeployedContract("MockAggregator")
-  const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
-  const musd: MUSDTester = await getDeployedContract("MUSDTester")
-  const pcv: PCV = await getDeployedContract("PCV")
-  const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
-  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
-  const stabilityPool: StabilityPool =
-    await getDeployedContract("StabilityPool")
-  const troveManager: TroveManagerTester =
-    await getDeployedContract("TroveManagerTester")
-
-  const contracts: Contracts = {
-    activePool,
-    borrowerOperations,
-    collSurplusPool,
-    defaultPool,
-    gasPool,
-    hintHelpers,
-    mockAggregator,
-    mockERC20,
-    musd,
-    pcv,
-    priceFeed,
-    sortedTroves,
-    stabilityPool,
-    troveManager,
-  }
-
-  return contracts
-}
 
 export async function deploymentV2() {
   await deployments.fixture()
@@ -220,45 +160,6 @@ async function initializeUserObject(
  * For explanation on why each testcontract has its own fixture function
  * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
  */
-
-export async function fixture(): Promise<TestSetup> {
-  const { deployer } = await helpers.signers.getNamedSigners()
-  const [
-    aliceWallet,
-    bobWallet,
-    carolWallet,
-    dennisWallet,
-    ericWallet,
-    frankWallet,
-    whaleWallet,
-    councilWallet,
-    treasuryWallet,
-  ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deployment()
-
-  const users: Users = {
-    alice: await initializeUserObject(aliceWallet),
-    bob: await initializeUserObject(bobWallet),
-    carol: await initializeUserObject(carolWallet),
-    dennis: await initializeUserObject(dennisWallet),
-    eric: await initializeUserObject(ericWallet),
-    frank: await initializeUserObject(frankWallet),
-    whale: await initializeUserObject(whaleWallet),
-    deployer: await initializeUserObject(deployer),
-    council: await initializeUserObject(councilWallet),
-    treasury: await initializeUserObject(treasuryWallet),
-  }
-
-  const state: ContractsState = initializeContractState()
-
-  const testSetup: TestSetup = {
-    users,
-    state,
-    contracts,
-  }
-
-  return testSetup
-}
 
 // Needed because loadFixture cannot take an anonymous function as a parameter
 export async function fixtureV2(): Promise<TestSetupV2> {
