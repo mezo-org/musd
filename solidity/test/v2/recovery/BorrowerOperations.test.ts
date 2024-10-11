@@ -12,7 +12,7 @@ import {
   openTrove,
   removeMintlist,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveSnapshot,
@@ -27,8 +27,8 @@ describe("BorrowerOperations in Recovery Mode", () => {
   let carol: User
   let deployer: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
-  let testSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
   let state: ContractsState
 
   async function recoveryModeSetup() {

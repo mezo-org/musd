@@ -18,7 +18,7 @@ import {
   removeMintlist,
   setBaseRate,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   updateContractsSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
@@ -46,9 +46,9 @@ describe("BorrowerOperations in Normal Mode", () => {
   let deployer: User
   let treasury: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
   let state: ContractsState
-  let testSetup: TestSetupV2
+  let testSetup: TestSetup
   let MIN_NET_DEBT: bigint
   let MUSD_GAS_COMPENSATION: bigint
 

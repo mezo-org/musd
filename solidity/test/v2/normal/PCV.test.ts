@@ -9,7 +9,7 @@ import {
   getAddresses,
   getLatestBlockTimestamp,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   updateWalletSnapshot,
   User,
 } from "../../helpers"
@@ -23,9 +23,9 @@ describe("PCV", () => {
   let council: User
   let deployer: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
   let treasury: User
-  let testSetup: TestSetupV2
+  let testSetup: TestSetup
 
   let bootstrapLoan: bigint
   let delay: bigint

@@ -6,7 +6,7 @@ import {
   fixtureV2,
   openTrove,
   openTroves,
-  TestSetupV2,
+  TestSetup,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -19,8 +19,8 @@ describe("SortedTroves", () => {
   let eric: User
   let whale: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
-  let testSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
 
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixtureV2)

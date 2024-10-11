@@ -19,7 +19,7 @@ import {
   openTrovesAndProvideStability,
   provideToSP,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   transferMUSD,
   updateContractsSnapshot,
   updatePendingSnapshot,
@@ -47,8 +47,8 @@ describe("StabilityPool in Normal Mode", () => {
   let whale: User
   let state: ContractsState
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
-  let testSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
 
   type Pool = "activePool" | "defaultPool"
   const pools: Pool[] = ["activePool", "defaultPool"]

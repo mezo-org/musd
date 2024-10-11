@@ -7,7 +7,7 @@ import {
   getAddresses,
   openTrove,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   User,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -20,8 +20,8 @@ describe("Access Control V2: Liquity functions with the caller restricted to Liq
 
   let addresses: TestingAddresses
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
-  let testSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
 
   beforeEach(async () => {
     cachedTestSetup = await loadFixture(fixtureV2)

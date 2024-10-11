@@ -6,7 +6,7 @@ import {
   Contracts,
   ContractsState,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   User,
   Users,
 } from "./interfaces"
@@ -161,7 +161,7 @@ async function initializeUserObject(
  */
 
 // Needed because loadFixture cannot take an anonymous function as a parameter
-export async function fixtureV2(): Promise<TestSetupV2> {
+export async function fixtureV2(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [
     aliceWallet,
@@ -191,7 +191,7 @@ export async function fixtureV2(): Promise<TestSetupV2> {
 
   const state: ContractsState = initializeContractState()
 
-  const testSetup: TestSetupV2 = {
+  const testSetup: TestSetup = {
     users,
     state,
     contracts,

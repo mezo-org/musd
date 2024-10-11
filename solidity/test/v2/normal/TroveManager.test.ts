@@ -30,7 +30,7 @@ import {
   provideToSP,
   setBaseRate,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   transferMUSD,
   updateContractsSnapshot,
   updatePCVSnapshot,
@@ -57,8 +57,8 @@ describe("TroveManager in Normal Mode", () => {
   let treasury: User
   let state: ContractsState
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
-  let testSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
 
   async function setupTroves() {
     // open two troves so that we don't go into recovery mode

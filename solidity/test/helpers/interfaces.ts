@@ -160,12 +160,6 @@ export interface TestSetup {
   users: Users
 }
 
-export interface TestSetupV2 {
-  contracts: Contracts
-  state: ContractsState
-  users: Users
-}
-
 export interface AddCollParams {
   amount: string | bigint
   lowerHint?: string

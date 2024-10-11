@@ -10,7 +10,7 @@ import {
   getAddresses,
   NO_GAS,
   TestingAddresses,
-  TestSetupV2,
+  TestSetup,
   updateContractsSnapshot,
 } from "../../helpers"
 import { to1e18 } from "../../utils"
@@ -18,9 +18,9 @@ import { to1e18 } from "../../utils"
 describe("DefaultPool", () => {
   let addresses: TestingAddresses
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
   let state: ContractsState
-  let testSetup: TestSetupV2
+  let testSetup: TestSetup
 
   let troveManagerSigner: HardhatEthersSigner
 

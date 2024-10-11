@@ -6,7 +6,7 @@ import {
   Contracts,
   fixtureV2,
   getDeployedContract,
-  TestSetupV2,
+  TestSetup,
   connectContracts,
   User,
 } from "../../helpers"
@@ -14,8 +14,8 @@ import type { PriceFeed } from "../../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
   let contracts: Contracts
-  let cachedTestSetup: TestSetupV2
-  let testSetup: TestSetupV2
+  let cachedTestSetup: TestSetup
+  let testSetup: TestSetup
   let deployer: User
 
   beforeEach(async () => {
