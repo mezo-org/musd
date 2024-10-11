@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import "../token/MUSD.sol";
 
-contract MUSDTesterV2 is MUSD {
+contract MUSDTester is MUSD {
     constructor(
         address _troveManagerAddress,
         address _stabilityPoolAddress,

@@ -105,7 +105,7 @@ export async function deploymentV2() {
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
   const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
-  const musd: MUSDTester = await getDeployedContract("MUSDTesterV2")
+  const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCVV2 = await getDeployedContract("PCVV2")
   const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")
   const sortedTroves: SortedTrovesV2 =

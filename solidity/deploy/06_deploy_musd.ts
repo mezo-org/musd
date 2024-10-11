@@ -8,7 +8,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const deployment = await deployments.getOrNull("MUSD")
-  const musdTesterDeployment = await deployments.getOrNull("MUSDTesterV2")
+  const musdTesterDeployment = await deployments.getOrNull("MUSDTester")
   if (
     deployment &&
     musdTesterDeployment &&
@@ -42,8 +42,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     })
 
     // Reuse the contract code but with a different name since we need to pass the V2 contracts
-    await deployments.deploy("MUSDTesterV2", {
-      contract: "contracts/tests/MUSDTesterV2.sol:MUSDTesterV2",
+    await deployments.deploy("MUSDTester", {
+      contract: "contracts/tests/MUSDTester.sol:MUSDTester",
       args: [
         troveManager.address,
         stabilityPool.address,
