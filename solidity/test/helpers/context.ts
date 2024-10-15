@@ -5,14 +5,12 @@ import { ZERO_ADDRESS } from "../utils"
 import {
   Contracts,
   ContractsState,
-  ContractsV2,
   TestingAddresses,
   TestSetup,
-  TestSetupV2,
   User,
   Users,
 } from "./interfaces"
-import type {
+import {
   ActivePool,
   BorrowerOperations,
   CollSurplusPool,
@@ -28,25 +26,9 @@ import type {
   StabilityPool,
   TroveManagerTester,
 } from "../../typechain"
-import {
-  ActivePoolV2,
-  BorrowerOperationsV2,
-  CollSurplusPoolV2,
-  DefaultPoolV2,
-  GasPoolV2,
-  HintHelpersV2,
-  MockAggregatorV2,
-  MockERC20V2,
-  PCVV2,
-  PriceFeedV2,
-  SortedTrovesV2,
-  StabilityPoolV2,
-  TroveManagerTesterV2,
-} from "../../typechain"
 
 const maxBytes32 = `0x${"f".repeat(64)}`
 
-// eslint-disable-next-line import/prefer-default-export
 export async function deployment() {
   await deployments.fixture()
 
@@ -71,52 +53,6 @@ export async function deployment() {
     await getDeployedContract("TroveManagerTester")
 
   const contracts: Contracts = {
-    activePool,
-    borrowerOperations,
-    collSurplusPool,
-    defaultPool,
-    gasPool,
-    hintHelpers,
-    mockAggregator,
-    mockERC20,
-    musd,
-    pcv,
-    priceFeed,
-    sortedTroves,
-    stabilityPool,
-    troveManager,
-  }
-
-  return contracts
-}
-
-export async function deploymentV2() {
-  await deployments.fixture()
-
-  const activePool: ActivePoolV2 = await getDeployedContract("ActivePoolV2")
-  const borrowerOperations: BorrowerOperationsV2 = await getDeployedContract(
-    "BorrowerOperationsV2",
-  )
-  const collSurplusPool: CollSurplusPoolV2 =
-    await getDeployedContract("CollSurplusPoolV2")
-  const defaultPool: DefaultPoolV2 = await getDeployedContract("DefaultPoolV2")
-  const gasPool: GasPoolV2 = await getDeployedContract("GasPoolV2")
-  const hintHelpers: HintHelpersV2 = await getDeployedContract("HintHelpersV2")
-  const mockAggregator: MockAggregatorV2 =
-    await getDeployedContract("MockAggregatorV2")
-  const mockERC20: MockERC20V2 = await getDeployedContract("MockERC20V2")
-  const musd: MUSDTester = await getDeployedContract("MUSDTesterV2")
-  const pcv: PCVV2 = await getDeployedContract("PCVV2")
-  const priceFeed: PriceFeedV2 = await getDeployedContract("PriceFeedV2")
-  const sortedTroves: SortedTrovesV2 =
-    await getDeployedContract("SortedTrovesV2")
-  const stabilityPool: StabilityPoolV2 =
-    await getDeployedContract("StabilityPoolV2")
-  const troveManager: TroveManagerTesterV2 = await getDeployedContract(
-    "TroveManagerTesterV2",
-  )
-
-  const contracts: ContractsV2 = {
     activePool,
     borrowerOperations,
     collSurplusPool,
@@ -223,7 +159,6 @@ async function initializeUserObject(
  * For explanation on why each testcontract has its own fixture function
  * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
  */
-
 export async function fixture(): Promise<TestSetup> {
   const { deployer } = await helpers.signers.getNamedSigners()
   const [
@@ -255,46 +190,6 @@ export async function fixture(): Promise<TestSetup> {
   const state: ContractsState = initializeContractState()
 
   const testSetup: TestSetup = {
-    users,
-    state,
-    contracts,
-  }
-
-  return testSetup
-}
-
-// Needed because loadFixture cannot take an anonymous function as a parameter
-export async function fixtureV2(): Promise<TestSetupV2> {
-  const { deployer } = await helpers.signers.getNamedSigners()
-  const [
-    aliceWallet,
-    bobWallet,
-    carolWallet,
-    dennisWallet,
-    ericWallet,
-    frankWallet,
-    whaleWallet,
-    councilWallet,
-    treasuryWallet,
-  ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deploymentV2()
-
-  const users: Users = {
-    alice: await initializeUserObject(aliceWallet),
-    bob: await initializeUserObject(bobWallet),
-    carol: await initializeUserObject(carolWallet),
-    dennis: await initializeUserObject(dennisWallet),
-    eric: await initializeUserObject(ericWallet),
-    frank: await initializeUserObject(frankWallet),
-    whale: await initializeUserObject(whaleWallet),
-    deployer: await initializeUserObject(deployer),
-    council: await initializeUserObject(councilWallet),
-    treasury: await initializeUserObject(treasuryWallet),
-  }
-
-  const state: ContractsState = initializeContractState()
-
-  const testSetup: TestSetupV2 = {
     users,
     state,
     contracts,

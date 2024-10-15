@@ -3,32 +3,19 @@ import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signer
 
 import {
   ActivePool,
-  ActivePoolV2,
   BorrowerOperations,
-  BorrowerOperationsV2,
   CollSurplusPool,
-  CollSurplusPoolV2,
   DefaultPool,
-  DefaultPoolV2,
   GasPool,
-  GasPoolV2,
   HintHelpers,
-  HintHelpersV2,
   MockAggregator,
-  MockAggregatorV2,
   MockERC20,
-  MockERC20V2,
   MUSDTester,
   PCV,
-  PCVV2,
   PriceFeed,
-  PriceFeedV2,
   SortedTroves,
-  SortedTrovesV2,
   StabilityPool,
-  StabilityPoolV2,
   TroveManagerTester,
-  TroveManagerTesterV2,
 } from "../../typechain"
 
 export interface TestingAddresses {
@@ -105,7 +92,7 @@ export interface ContractsState {
   }
 }
 
-export interface ContractsV1 {
+export interface Contracts {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
   collSurplusPool: CollSurplusPool
@@ -121,25 +108,6 @@ export interface ContractsV1 {
   stabilityPool: StabilityPool
   troveManager: TroveManagerTester
 }
-
-export interface ContractsV2 {
-  activePool: ActivePoolV2
-  borrowerOperations: BorrowerOperationsV2
-  collSurplusPool: CollSurplusPoolV2
-  defaultPool: DefaultPoolV2
-  gasPool: GasPoolV2
-  hintHelpers: HintHelpersV2
-  mockAggregator: MockAggregatorV2
-  mockERC20: MockERC20V2
-  musd: MUSDTester
-  pcv: PCVV2
-  priceFeed: PriceFeedV2
-  sortedTroves: SortedTrovesV2
-  stabilityPool: StabilityPoolV2
-  troveManager: TroveManagerTesterV2
-}
-
-export type Contracts = ContractsV1 | ContractsV2
 
 export interface User {
   address: string
@@ -188,12 +156,6 @@ export interface Users {
 
 export interface TestSetup {
   contracts: Contracts
-  state: ContractsState
-  users: Users
-}
-
-export interface TestSetupV2 {
-  contracts: ContractsV2
   state: ContractsState
   users: Users
 }

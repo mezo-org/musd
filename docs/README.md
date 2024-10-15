@@ -92,19 +92,3 @@ _**Total collateralization ratio (TCR):**_ the ratio of the dollar value of the 
 _**Critical collateralization ratio (CCR):**_ 150%. When the TCR is below the CCR, the system enters Recovery Mode.
 
 _**Gas compensation:**_ A refund, in MUSD and collateral, automatically paid to the caller of a liquidation function, intended to at least cover the gas cost of the transaction. Designed to ensure that liquidators are not dissuaded by potentially high gas costs.
-
-## V2
-
-### Overview
-
-The "V2" contracts located at solidity/contracts/v2 add additional functionality to the V1 contracts.  They can be deployed
-and tested separately (with respective pnpm commands `deploy:v2` and `test:v2`).  The setup for tests is largely the same,
-although some functions have "v2" versions (e.g. `setupTestsV2`, `fixtureV2`, etc.).  The goal is to reuse as much as possible
-between the two versions' testing framework while avoiding any dependencies between the actual smart contracts.  This approach
-may need to be iterated on as we build out additional functionality in V2.
-
-### Additional Functionality
-
-#### Interest Rates
-
-TODO: Add documentation for interest rate public functions once they are finalized.
