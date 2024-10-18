@@ -3396,6 +3396,68 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
+  describe("calculateTotalSystemInterest()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {
+      it.only("calculateTotalSystemInterest(): should calculate the total system interest after 30 days", async () => {
+        await setupTroveWithInterestRate(100, 30)
+        await contracts.troveManager.updateGlobalDebtIndex()
+        const aliceInterest =
+          await contracts.troveManager.calculateInterestOwed(alice.wallet)
+        const systemInterest =
+          await contracts.troveManager.calculateTotalSystemInterest()
+
+        expect(aliceInterest).to.equal(systemInterest)
+      })
+    })
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
   describe("Getters", () => {
     it("getTroveStake(): Returns stake", async () => {
       const { collateral } = await openTrove(contracts, {

@@ -210,6 +210,8 @@ interface ITroveManager {
         uint256 _MUSDDebt
     ) external view returns (uint);
 
+    function calculateInterestOwed(address _borrower) external view returns (uint256);
+
     function getTroveStatus(address _borrower) external view returns (Status);
 
     function getTroveStake(address _borrower) external view returns (uint);

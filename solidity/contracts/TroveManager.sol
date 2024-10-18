@@ -880,6 +880,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[_borrower].lastUpdatedDebtIndex = globalDebtIndex;
     }
 
+    function calculateTotalSystemInterest() public view returns (uint256) {
+        return 0;
+    }
+
     function calculateInterestOwed(address _borrower) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
         uint256 interestFactor = globalDebtIndex * DECIMAL_PRECISION / trove.lastUpdatedDebtIndex;
