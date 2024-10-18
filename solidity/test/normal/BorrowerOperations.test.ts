@@ -20,6 +20,7 @@ import {
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
+  updatePCVSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
@@ -3466,5 +3467,68 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
     })
+  })
+
+  describe("mintInterest()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {
+      it.only("mintInterest(): mints calculated interest and sends to PCV", async () => {
+        // Snapshot PCV balance before
+        await updatePCVSnapshot(contracts, state, "before")
+        // Call harvestInterest with arbitrary amount
+        await contracts.borrowerOperations.mintInterest(to1e18("100"))
+        // Check PCV balance after
+        await updatePCVSnapshot(contracts, state, "after")
+        expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
+          to1e18("100"),
+        )
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
   })
 })

@@ -134,7 +134,10 @@ export async function updatePCVSnapshot(
   state.pcv.collateral[checkPoint] = await ethers.provider.getBalance(
     await contracts.pcv.getAddress(),
   )
-  // More fields can be added as needed
+  state.pcv.musd[checkPoint] = await contracts.musd.balanceOf(
+    await contracts.pcv.getAddress(),
+  )
+  // TODO Update debt
 }
 
 export async function updatePendingSnapshot(

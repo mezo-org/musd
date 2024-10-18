@@ -3438,7 +3438,7 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
     context("Fees", () => {
-      it.only("calculateTotalSystemInterest(): should calculate the total system interest after 30 days", async () => {
+      it("calculateTotalSystemInterest(): should calculate the total system interest after 30 days", async () => {
         await setupTroveWithInterestRate(100, 30)
         await contracts.troveManager.updateGlobalDebtIndex()
         const aliceInterest =

@@ -188,6 +188,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
     uint256 public globalDebtIndex = 1e18; // Start at 1 (no interest), scaled by 1e18 for precision
+    uint256 public lastUpdatedDebtIndex = 1e18;
     uint256 public lastUpdatedTime;
     uint256 public annualInterestRate; // annual interest rate in basis points
 
@@ -857,6 +858,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function updateGlobalDebtIndex() public {
+        lastUpdatedDebtIndex = globalDebtIndex;
         uint256 timeElapsed = block.timestamp - lastUpdatedTime;
         if (timeElapsed > 0) {
             uint256 daysElapsed = timeElapsed / 1 days;
@@ -881,7 +883,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function calculateTotalSystemInterest() public view returns (uint256) {
-        return 0;
+        // Assumes debt index is updateDebtWithInterest() before this function is called
+        uint256 interestFactor = globalDebtIndex * DECIMAL_PRECISION / lastUpdatedDebtIndex;
+        uint256 interest = getEntireSystemDebt() * (interestFactor - DECIMAL_PRECISION) * 1e4 / DECIMAL_PRECISION;
+        return interest;
     }
 
     function calculateInterestOwed(address _borrower) public view returns (uint256) {

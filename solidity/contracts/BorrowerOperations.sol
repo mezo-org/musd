@@ -93,6 +93,11 @@ contract BorrowerOperations is
         musd.mint(pcvAddress, _musdToMint);
     }
 
+    function mintInterest(uint256 _musdToMint) external {
+        // TODO Require caller is trove manager
+        musd.mint(pcvAddress, _musdToMint);
+    }
+
     function burnDebtFromPCV(uint256 _musdToBurn) external {
         require(
             msg.sender == pcvAddress,
