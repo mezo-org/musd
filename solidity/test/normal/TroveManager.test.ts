@@ -3315,6 +3315,29 @@ describe("TroveManager in Normal Mode", () => {
           to1e18(0.01),
         )
       })
+
+      it.only("harvestInterest(): correctly updates total system debt", async () => {
+        await setInterestRate(100)
+
+        await openTrove(contracts, {
+          musdAmount: "10,000",
+          sender: alice.wallet,
+        })
+
+        // Fast-forward 15 days
+        await fastForwardTime(15 * 24 * 60 * 60)
+
+        // TODO Add to TroveManager state
+        const beforeDebt = await contracts.troveManager.getEntireSystemDebt()
+        await contracts.troveManager.harvestInterest()
+        const afterDebt = await contracts.troveManager.getEntireSystemDebt()
+
+        // Check that the system debt has increased by the correct amount
+        expect(afterDebt - beforeDebt).to.be.closeTo(
+          4209923690000000000n,
+          to1e18(0.01),
+        )
+      })
     })
 
     /**
