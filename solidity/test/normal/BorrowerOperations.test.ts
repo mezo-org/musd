@@ -3504,12 +3504,12 @@ describe("BorrowerOperations in Normal Mode", () => {
      *
      */
     context("Balance changes", () => {
-      it.only("mintInterest(): mints calculated interest and sends to PCV", async () => {
-        // Snapshot PCV balance before
+      it("mintInterest(): mints calculated interest and sends to PCV", async () => {
         await updatePCVSnapshot(contracts, state, "before")
-        // Call harvestInterest with arbitrary amount
+
+        // Call mintInterest with arbitrary amount
         await contracts.borrowerOperations.mintInterest(to1e18("100"))
-        // Check PCV balance after
+
         await updatePCVSnapshot(contracts, state, "after")
         expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
           to1e18("100"),

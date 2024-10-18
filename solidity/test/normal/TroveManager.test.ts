@@ -3259,6 +3259,79 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
+  describe("harvestInterest()", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {})
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {
+      it("harvestInterest(): calculates interest on total system debt and sends it to the PCV", async () => {
+        await setInterestRate(100)
+
+        await openTrove(contracts, {
+          musdAmount: "10,000",
+          sender: alice.wallet,
+        })
+
+        // Fast-forward 15 days
+        await fastForwardTime(15 * 24 * 60 * 60)
+
+        await updatePCVSnapshot(contracts, state, "before")
+        await contracts.troveManager.harvestInterest()
+        await updatePCVSnapshot(contracts, state, "after")
+
+        // Check that the PCV has received the interest
+        expect(state.pcv.musd.after - state.pcv.musd.before).to.be.closeTo(
+          4209923690000000000n,
+          to1e18(0.01),
+        )
+      })
+    })
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
   describe("updateDebtWithInterest()", () => {
     /**
      *

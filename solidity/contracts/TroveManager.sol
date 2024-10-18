@@ -16,6 +16,7 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "./interfaces/IBorrowerOperations.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -119,6 +120,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // --- Connected contract declarations ---
 
     address public borrowerOperationsAddress;
+
+    IBorrowerOperations public borrowerOperations;
+
+    address public pcvAddress;
 
     IStabilityPool public override stabilityPool;
 
@@ -244,7 +249,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
+        pcvAddress = _pcvAddress;
         activePool = IActivePool(_activePoolAddress);
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         stabilityPool = IStabilityPool(_stabilityPoolAddress);
         // slither-disable-next-line missing-zero-check
@@ -873,6 +880,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             lastUpdatedTime = block.timestamp;
         }
+    }
+
+    function harvestInterest() public {
+        updateGlobalDebtIndex();
+        uint256 interest = calculateTotalSystemInterest();
+        borrowerOperations.mintInterest(interest);
     }
 
     function updateDebtWithInterest(address _borrower) public {

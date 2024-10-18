@@ -65,6 +65,8 @@ interface IBorrowerOperations {
         address _lowerHint
     ) external payable;
 
+    function mintInterest(uint256 _musdToMint) external;
+
     function withdrawColl(
         uint256 _amount,
         address _upperHint,
