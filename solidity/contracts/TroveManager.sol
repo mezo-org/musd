@@ -36,6 +36,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 lastInterestUpdateTime;
     }
 
+    // Store the total debt and last computation timestamps for an interest rate
+    struct InterestRateInfo {
+        uint256 totalDebt; // The total debt at this interest rate
+        uint256 lastUpdatedTime; // The last time interest was computed and added to total debt for this rate
+    }
+
     // Object containing the collateral and MUSD snapshots for a given active trove
     struct RewardSnapshot {
         uint256 collateral;
@@ -205,6 +211,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public constant MIN_DELAY = 7 days;
 
     uint256 public constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
+
+    // Mapping from interest rate to total debt at that rate
+    mapping(uint16 => InterestRateInfo) public interestRateData;
+
+    // Array to store all interest rates for iteration
+    uint16[] public interestRates;
 
     modifier onlyOwnerOrGovernance() {
         require(
