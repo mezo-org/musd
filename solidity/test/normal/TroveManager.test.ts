@@ -215,7 +215,7 @@ describe("TroveManager in Normal Mode", () => {
       .proposeInterestRate(interestRate)
     const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(timeToIncrease)
-    await contracts.troveManager.connect(council.wallet).approveInterestRate()
+    return contracts.troveManager.connect(council.wallet).approveInterestRate()
   }
 
   async function setupTroveWithInterestRate(
@@ -3137,6 +3137,18 @@ describe("TroveManager in Normal Mode", () => {
       it("approveInterestRate(): adds a new interest rate to the interest rates array and mapping if that rate does not exist", async () => {
         await setInterestRate(100)
         expect(await contracts.troveManager.interestRates(0)).to.equal(100)
+
+        const interestRateInfo =
+          await contracts.troveManager.interestRateData(100)
+
+        // Total debt should be 0 since we just added the interest rate
+        expect(interestRateInfo.totalDebt).to.equal(0)
+
+        // lastUpdatedTime is set to the block timestamp of the approval
+
+        expect(interestRateInfo.lastUpdatedTime).to.equal(
+          await getLatestBlockTimestamp(),
+        )
       })
     })
 
