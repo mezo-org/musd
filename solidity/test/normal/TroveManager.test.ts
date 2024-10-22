@@ -3144,11 +3144,29 @@ describe("TroveManager in Normal Mode", () => {
         // Total debt should be 0 since we just added the interest rate
         expect(interestRateInfo.totalDebt).to.equal(0)
 
-        // lastUpdatedTime is set to the block timestamp of the approval
-
+        // lastUpdatedTime is set to the block timestamp of the approval if the interest rate is new
         expect(interestRateInfo.lastUpdatedTime).to.equal(
           await getLatestBlockTimestamp(),
         )
+      })
+
+      it("approveInterestRate(): does not add a new interest rate to interest rates array and mapping if that rate already exists", async () => {
+        await setInterestRate(100)
+        const timestampBefore = await getLatestBlockTimestamp()
+
+        // Try setting the same interest rate again
+        await setInterestRate(100)
+
+        expect(await contracts.troveManager.interestRates(0)).to.equal(100)
+
+        const interestRateInfo =
+          await contracts.troveManager.interestRateData(100)
+
+        // Total debt should still be 0 since no debt has been accrued
+        expect(interestRateInfo.totalDebt).to.equal(0)
+
+        // lastUpdatedTime is not changed if the interest rate already exists
+        expect(interestRateInfo.lastUpdatedTime).to.equal(timestampBefore)
       })
     })
 
