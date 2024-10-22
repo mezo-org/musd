@@ -209,16 +209,20 @@ describe("TroveManager in Normal Mode", () => {
     expect(await checkTroveActive(contracts, eric)).to.equal(true)
   }
 
-  async function setupTroveWithInterestRate(
-    interestRate: number,
-    daysToFastForward: number,
-  ) {
+  async function setInterestRate(interestRate: number) {
     await contracts.troveManager
       .connect(council.wallet)
       .proposeInterestRate(interestRate)
     const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(timeToIncrease)
     await contracts.troveManager.connect(council.wallet).approveInterestRate()
+  }
+
+  async function setupTroveWithInterestRate(
+    interestRate: number,
+    daysToFastForward: number,
+  ) {
+    await setInterestRate(interestRate)
 
     await openTrove(contracts, {
       musdAmount: "10000",
@@ -3074,7 +3078,7 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
-  describe("approveInterestRate()", () => {
+  describe.only("approveInterestRate()", () => {
     /**
      *
      * Expected Reverts
@@ -3126,18 +3130,13 @@ describe("TroveManager in Normal Mode", () => {
      */
     context("System State Changes", () => {
       it("approveInterestRate(): requires two transactions to change the interest rate with a 7 day time delay", async () => {
-        await contracts.troveManager
-          .connect(council.wallet)
-          .proposeInterestRate(100)
-
-        // Simulate 7 days passing
-        const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-        await fastForwardTime(timeToIncrease)
-
-        await contracts.troveManager
-          .connect(council.wallet)
-          .approveInterestRate()
+        await setInterestRate(100)
         expect(await contracts.troveManager.interestRate()).to.equal(100)
+      })
+
+      it("approveInterestRate(): adds a new interest rate to the interest rates array and mapping if that rate does not exist", async () => {
+        await setInterestRate(100)
+        expect(await contracts.troveManager.interestRates(0)).to.equal(100)
       })
     })
 

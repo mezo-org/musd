@@ -1027,6 +1027,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateHistory.push(
             InterestRateChange(_newInterestRate, block.number)
         );
+        interestRates.push(_newInterestRate);
         emit InterestRateUpdated(_newInterestRate);
     }
 
