@@ -50,12 +50,11 @@ Each trove stores:
 
 1. Add the new trove's debt to the total debt for its interest rate.
 2. Store the trove's initial debt, interest rate, and current timestamp.
-3. Charge the user a full day's interest for the opening day.
 
 ### Calculating Interest for a Trove
 
 1. Retrieve the trove's current debt, interest rate, and opening/last modification timestamp.
-2. Calculate the number of full days elapsed since the opening/last modification.
+2. Calculate the number of full days elapsed since the opening/last modification, rounded up so a full day's interest is paid for the opening day.
 3. Apply the daily interest rate to the trove's debt for the number of days elapsed.
 4. Update the trove's debt and timestamp.
 
