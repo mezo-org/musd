@@ -40,11 +40,11 @@ Each trove stores:
 ### Updating Total System Debt (Daily)
 
 1. For each interest rate:
-   a. Retrieve the total debt and last computation time.
-   b. Calculate the interest for one day.
-   c. Add the calculated interest to the total debt.
-   d. Mint the calculated interest amount in MUSD and send it to the PCV contract.
-   e. Update the last computation timestamp to the current date.
+   1. Retrieve the total debt and last computation time.
+   2. Calculate the interest for one day.
+   3. Add the calculated interest to the total debt.
+   4. Mint the calculated interest amount in MUSD and send it to the PCV contract.
+   5. Update the last computation timestamp to the current date.
 
 ### Opening a New Trove
 
