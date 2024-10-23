@@ -52,6 +52,15 @@ describe("BorrowerOperations in Normal Mode", () => {
   let MIN_NET_DEBT: bigint
   let MUSD_GAS_COMPENSATION: bigint
 
+  async function setInterestRate(interestRate: number) {
+    await contracts.troveManager
+      .connect(council.wallet)
+      .proposeInterestRate(interestRate)
+    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+    await fastForwardTime(timeToIncrease)
+    return contracts.troveManager.connect(council.wallet).approveInterestRate()
+  }
+
   async function checkOpenTroveEvents(
     transactions: OpenTroveParams[],
     abi: string[],
@@ -733,6 +742,19 @@ describe("BorrowerOperations in Normal Mode", () => {
         expect(await contracts.activePool.getMUSDDebt()).to.equal(
           dennis.trove.debt.after + carol.trove.debt.after + debtBefore,
         )
+      })
+
+      it("openTrove(): Adds the new Trove's debt to the total debt for its interest rate", async () => {
+        await setInterestRate(100)
+        const { totalDebt } = await openTrove(contracts, {
+          musdAmount: to1e18("10,000"),
+          sender: carol.wallet,
+        })
+
+        const dataForDebtAtRate =
+          await contracts.troveManager.interestRateData(100)
+        const debtAtRate = dataForDebtAtRate.totalDebt
+        expect(debtAtRate).to.equal(totalDebt)
       })
     })
 

@@ -880,6 +880,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
+    function addDebtToInterestRate(uint16 _rate, uint256 _debt) external {
+        interestRateData[_rate].totalDebt += _debt;
+    }
+
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);

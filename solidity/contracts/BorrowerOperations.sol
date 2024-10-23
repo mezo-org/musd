@@ -190,6 +190,10 @@ contract BorrowerOperations is
             msg.sender,
             block.timestamp
         );
+        contractsCache.troveManager.addDebtToInterestRate(
+            contractsCache.troveManager.interestRate(),
+            vars.compositeDebt
+        );
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
             msg.sender

@@ -241,4 +241,6 @@ interface ITroveManager {
         external
         view
         returns (InterestRateChange[] memory);
+
+    function addDebtToInterestRate(uint16 _rate, uint256 _debt) external;
 }
