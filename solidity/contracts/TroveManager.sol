@@ -16,6 +16,7 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "./debugging/console.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -893,20 +894,27 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
-    function calculateInterestOwed(
-        address _borrower
-    ) public view returns (uint256) {
+    function calculateInterestOwed(address _borrower) public view returns (uint256) {
         Trove storage trove = Troves[_borrower];
-        // slither-disable-start divide-before-multiply
-        uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) /
-            (10000 * SECONDS_IN_A_YEAR);
-        // solhint-disable-next-line not-rely-on-time
         uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        uint256 interestOwed = (trove.debt *
-            interestRatePerSecond *
-            timeElapsed) / DECIMAL_PRECISION;
-        // slither-disable-end divide-before-multiply
-        return interestOwed;
+        if (timeElapsed > 0) {
+            uint256 daysElapsed = timeElapsed / 1 days + 1;
+            // Convert annual interest rate from basis points to a daily factor in fixed-point form
+            uint256 dailyInterestRate;
+            unchecked {
+                dailyInterestRate = (interestRate * DECIMAL_PRECISION) / 365e4;
+            }
+            console.log("dailyInterestRate:", dailyInterestRate);
+            uint256 debtOwed = trove.debt;
+            for (uint256 i = 0; i < daysElapsed; i++) {
+                unchecked {
+                    debtOwed = (debtOwed * (1e18 + dailyInterestRate)) / 1e18;
+                }
+            }
+            return debtOwed - trove.debt;
+        }
+        // No interest is owed if no time has passed
+        return 0;
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {

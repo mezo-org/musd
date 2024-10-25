@@ -3199,7 +3199,7 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
-  describe("calculateInterestOwed()", () => {
+  describe.only("calculateInterestOwed()", () => {
     /**
      *
      * Expected Reverts
@@ -3227,7 +3227,7 @@ describe("TroveManager in Normal Mode", () => {
      *
      */
     context("Individual Troves", () => {
-      it("calculateInterestOwed(): should calculate the interest owed for a trove after 15 days", async () => {
+      it.only("calculateInterestOwed(): should calculate the interest owed for a trove after 15 days", async () => {
         await setupTroveWithInterestRate(100, 15)
         const interest = await contracts.troveManager.calculateInterestOwed(
           alice.wallet,
@@ -3235,10 +3235,10 @@ describe("TroveManager in Normal Mode", () => {
 
         /*
          * Annual interest rate: 100 bps (or 0.01)
-         * Seconds in a year: 31536000
-         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
-         * Total debt: 10250
-         * Interest owed after 15 days: 3.17097919e-10 * 10250 * 15 * 60 * 60 * 24 = 4.212328755996
+         * Days in a year: 365
+         * Per day interest rate: 0.01 / 365 ~= 0.000027397260273972
+         * Total debt: 10250 * 0.000027397260273972 * 15 = 4212328767123195000n
+         * Interest owed after 15 days: 10250 * 0.000027397260273972 * 15 = 4212328767123195000n
          *
          * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
          */
@@ -3260,6 +3260,17 @@ describe("TroveManager in Normal Mode", () => {
          *
          * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
          */
+        expect(interest).to.be.equal(8424657511992000000n)
+      })
+
+      it("calculateInterestOwed(): should calculate the interest owed for a partial day as a full day", async () => {
+        await setupTroveWithInterestRate(100, 29)
+        await fastForwardTime(12 * 60 * 60) // Fast-forward 12 hours, putting us at 29.5 days
+        const interest = await contracts.troveManager.calculateInterestOwed(
+          alice.wallet,
+        )
+
+        // Interest owed should be the same as for the 30 day case
         expect(interest).to.be.equal(8424657511992000000n)
       })
     })
