@@ -122,6 +122,11 @@ export interface User {
     icr: BeforeAndAfter
     stake: BeforeAndAfter
     status: BeforeAndAfter
+    interestRate: BeforeAndAfter
+    lastInterestUpdateTime: BeforeAndAfter
+    interestAccrued: BeforeAndAfter
+    interestMinted: BeforeAndAfter
+    maxBorrowingCapacity: BeforeAndAfter
   }
   rewardSnapshot: {
     collateral: BeforeAndAfter

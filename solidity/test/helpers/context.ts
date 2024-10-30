@@ -149,6 +149,11 @@ async function initializeUserObject(
       icr: beforeAndAfter(),
       stake: beforeAndAfter(),
       status: beforeAndAfter(),
+      interestRate: beforeAndAfter(),
+      lastInterestUpdateTime: beforeAndAfter(),
+      interestAccrued: beforeAndAfter(),
+      interestMinted: beforeAndAfter(),
+      maxBorrowingCapacity: beforeAndAfter(),
     },
     wallet,
   }
