@@ -762,6 +762,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return Troves[_borrower].debt;
     }
 
+    function getTroveInterestAccrued(
+        address _borrower
+    ) external view returns (uint) {
+        return Troves[_borrower].interestAccrued;
+    }
+
     function getTroveInterestRate(
         address _borrower
     ) external view returns (uint16) {
@@ -889,9 +895,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     // TODO Change access modifier to limit calls to the contracts that need to call this
-    function updateDebtWithInterest(address _borrower) public {
+    function updateTroveWithInterest(address _borrower) public {
         uint256 interestOwed = calculateInterestOwed(_borrower);
-        Troves[_borrower].debt += interestOwed;
+        Troves[_borrower].interestAccrued += interestOwed;
         // solhint-disable-next-line not-rely-on-time
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
