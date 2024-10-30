@@ -3237,12 +3237,9 @@ describe("TroveManager in Normal Mode", () => {
          * Annual interest rate: 100 bps (or 0.01)
          * Days in a year: 365
          * Per day interest rate: 0.01 / 365 ~= 0.000027397260273972
-         * Total debt: 10250 * 0.000027397260273972 * 15 = 4212328767123195000n
-         * Interest owed after 15 days: 10250 * 0.000027397260273972 * 15 = 4212328767123195000n
-         *
-         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
+         * Interest owed after 15 days: 10250 * 0.000027397260273972 * 15 ~= 4212328767123195000n
          */
-        expect(interest).to.be.equal(4212328755996000000n)
+        expect(interest).to.be.equal(4212328767123195000n)
       })
 
       it("calculateInterestOwed(): should calculate the interest owed for a trove after 30 days", async () => {

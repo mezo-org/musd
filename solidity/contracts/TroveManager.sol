@@ -898,20 +898,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Trove storage trove = Troves[_borrower];
         uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
         if (timeElapsed > 0) {
-            uint256 daysElapsed = timeElapsed / 1 days + 1;
+            uint256 daysElapsed = timeElapsed / 1 days;
             // Convert annual interest rate from basis points to a daily factor in fixed-point form
-            uint256 dailyInterestRate;
-            unchecked {
-                dailyInterestRate = (interestRate * DECIMAL_PRECISION) / 365e4;
-            }
+            uint256 dailyInterestRate = (interestRate * DECIMAL_PRECISION) / 365e4;
             console.log("dailyInterestRate:", dailyInterestRate);
-            uint256 debtOwed = trove.debt;
-            for (uint256 i = 0; i < daysElapsed; i++) {
-                unchecked {
-                    debtOwed = (debtOwed * (1e18 + dailyInterestRate)) / 1e18;
-                }
-            }
-            return debtOwed - trove.debt;
+            return trove.debt * dailyInterestRate * daysElapsed / DECIMAL_PRECISION;
         }
         // No interest is owed if no time has passed
         return 0;
