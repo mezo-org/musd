@@ -688,6 +688,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           sender: dennis.wallet,
         })
         await updateTroveSnapshot(contracts, dennis, "before")
+        console.log(await contracts.troveManager.Troves(dennis.address))
 
         // Dennis borrowed the maximum amount so his debt should equal his borrowing capacity
         expect(dennis.trove.maxBorrowingCapacity.before).is.equal(

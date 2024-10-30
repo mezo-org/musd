@@ -2,16 +2,17 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./debugging/console.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
-import "./token/IMUSD.sol";
+import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
-import "./interfaces/IPCV.sol";
+import "./token/IMUSD.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BorrowerOperations is
     LiquityBase,
@@ -194,6 +195,14 @@ contract BorrowerOperations is
             contractsCache.troveManager.interestRate(),
             vars.compositeDebt
         );
+
+        // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
+        uint256 maxBorrowingCapacity = (_assetAmount * vars.price) / (110 * 1e16);
+        contractsCache.troveManager.setTroveMaxBorrowingCapacity(
+            msg.sender,
+            maxBorrowingCapacity
+        );
+
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
             msg.sender

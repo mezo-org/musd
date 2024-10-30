@@ -612,6 +612,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _maxBorrowingCapacity
     ) external override {
         _requireCallerIsBorrowerOperations();
+        console.log("called");
         Troves[_borrower].maxBorrowingCapacity = _maxBorrowingCapacity;
     }
 

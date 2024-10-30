@@ -89,6 +89,8 @@ export async function updateTroveSnapshot(
     collateral,
     stake,
     status,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    arrayIndex,
     interestRate,
     lastInterestUpdateTime,
     interestAccrued,

@@ -3280,7 +3280,7 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
-  describe.only("updateTroveWithInterest()", () => {
+  describe("updateTroveWithInterest()", () => {
     /**
      *
      * Expected Reverts
