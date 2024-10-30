@@ -901,7 +901,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 daysElapsed = timeElapsed / 1 days;
             // Convert annual interest rate from basis points to a daily factor in fixed-point form
             uint256 dailyInterestRate = (interestRate * DECIMAL_PRECISION) / 365e4;
-            console.log("dailyInterestRate:", dailyInterestRate);
             return trove.debt * dailyInterestRate * daysElapsed / DECIMAL_PRECISION;
         }
         // No interest is owed if no time has passed
