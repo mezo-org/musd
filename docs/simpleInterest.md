@@ -71,7 +71,7 @@ For each interest rate:
 ### Trove Interactions (Borrowing/Repaying/Adjusting)
 1. Calculate new interest owed up to current timestamp
 2. Add new interest to stored interest
-3. Process the requested operation
+3. Process the requested operation (note that repayments will first be applied to accrued interest before paying off principal)
 4. Optionally mint and distribute accumulated unminted interest to PCV and gauge pool
 5. Update minted interest tracking if distribution occurs
 
