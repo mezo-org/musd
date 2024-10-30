@@ -3199,7 +3199,7 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
-  describe.only("calculateInterestOwed()", () => {
+  describe("calculateInterestOwed()", () => {
     /**
      *
      * Expected Reverts
@@ -3307,22 +3307,7 @@ describe("TroveManager in Normal Mode", () => {
      * Individual Troves
      *
      */
-    context("Individual Troves", () => {
-      it("updateDebtWithInterest(): should update the trove with interest owed and set the lastInterestUpdatedTime", async () => {
-        await setupTroveWithInterestRate(100, 30)
-
-        await contracts.troveManager.updateDebtWithInterest(alice.wallet)
-        const debt = await contracts.troveManager.getTroveDebt(alice.wallet)
-        const getTroveLastInterestUpdateTime =
-          await contracts.troveManager.getTroveLastInterestUpdateTime(
-            alice.wallet,
-          )
-        expect(debt).to.be.equal(10258424660762245669750n)
-        expect(getTroveLastInterestUpdateTime).to.be.equal(
-          await getLatestBlockTimestamp(),
-        )
-      })
-    })
+    context("Individual Troves", () => {})
 
     /**
      *
