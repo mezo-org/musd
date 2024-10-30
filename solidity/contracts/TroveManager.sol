@@ -35,6 +35,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint128 arrayIndex;
         uint16 interestRate;
         uint256 lastInterestUpdateTime;
+        uint256 interestAccrued;
+        uint256 interestMinted;
+        uint256 maxBorrowingCapacity;
     }
 
     // Store the total debt and last computation timestamps for an interest rate
