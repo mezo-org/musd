@@ -42,6 +42,9 @@ Each trove stores:
 ## Key Operations
 
 ### Updating Total System Debt
+
+For each interest rate:
+
 1. Calculate new interest:
    ```
    new_interest = total_debt * (current_timestamp - last_update_timestamp) * interest_rate_per_second
