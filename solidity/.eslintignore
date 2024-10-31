@@ -1,5 +1,7 @@
 build/
 cache/
+coverage/
+coverage.json
 deployments/
 export.json
 export/
