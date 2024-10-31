@@ -124,6 +124,7 @@ export interface User {
     status: BeforeAndAfter
     interestRate: BeforeAndAfter
     lastInterestUpdateTime: BeforeAndAfter
+    maxBorrowingCapacity: BeforeAndAfter
     arrayIndex: BeforeAndAfter
     icr: BeforeAndAfter
   }

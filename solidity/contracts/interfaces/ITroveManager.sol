@@ -125,6 +125,8 @@ interface ITroveManager {
 
     function setTroveStatus(address _borrower, Status _status) external;
 
+    function setTroveMaxBorrowingCapacity(address _borrower, uint256 _maxBorrowingCapacity) external;
+
     function increaseTroveColl(
         address _borrower,
         uint256 _collIncrease

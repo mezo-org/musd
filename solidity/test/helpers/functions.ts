@@ -91,6 +91,7 @@ export async function updateTroveSnapshot(
     status,
     interestRate,
     lastInterestUpdateTime,
+    maxBorrowingCapacity,
     arrayIndex,
   ] = await contracts.troveManager.Troves(user.address)
 
@@ -104,6 +105,7 @@ export async function updateTroveSnapshot(
   user.trove.status[checkPoint] = status
   user.trove.interestRate[checkPoint] = interestRate
   user.trove.lastInterestUpdateTime[checkPoint] = lastInterestUpdateTime
+  user.trove.maxBorrowingCapacity[checkPoint] = maxBorrowingCapacity
   user.trove.arrayIndex[checkPoint] = arrayIndex
   user.trove.icr[checkPoint] = icr
 }
