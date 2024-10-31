@@ -27,13 +27,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Store the necessary data for a trove
     struct Trove {
-        uint256 debt;
         uint256 coll;
+        uint256 debt;
+        uint256 interestOwed;
         uint256 stake;
         Status status;
-        uint128 arrayIndex;
         uint16 interestRate;
         uint256 lastInterestUpdateTime;
+        uint128 arrayIndex;
     }
 
     // Object containing the collateral and MUSD snapshots for a given active trove
@@ -744,6 +745,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _borrower
     ) external view override returns (uint) {
         return Troves[_borrower].debt;
+    }
+
+    function getTroveInterestOwed(
+        address _borrower
+    ) external view returns (uint) {
+        return Troves[_borrower].interestOwed;
     }
 
     function getTroveInterestRate(

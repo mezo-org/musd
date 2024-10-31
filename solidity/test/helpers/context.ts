@@ -147,9 +147,13 @@ async function initializeUserObject(
     trove: {
       collateral: beforeAndAfter(),
       debt: beforeAndAfter(),
-      icr: beforeAndAfter(),
+      interestOwed: beforeAndAfter(),
       stake: beforeAndAfter(),
       status: beforeAndAfter(),
+      interestRate: beforeAndAfter(),
+      lastInterestUpdateTime: beforeAndAfter(),
+      arrayIndex: beforeAndAfter(),
+      icr: beforeAndAfter(),
     },
     wallet,
   }

@@ -737,7 +737,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const newRate = to1e18(5) / 100n
         await setNewRate(newRate)
 
-        fastForwardTime(7200)
+        await fastForwardTime(7200)
 
         await openTrove(contracts, {
           musdAmount: "40,000",
