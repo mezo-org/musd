@@ -733,8 +733,8 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
         await contracts.borrowerOperations.connect(bob.wallet).closeTrove()
 
-        const trove = await contracts.troveManager.Troves(bob.wallet)
-        expect(trove[3]).to.equal(2)
+        await updateTroveSnapshot(contracts, bob, "after")
+        expect(bob.trove.status.after).to.equal(2)
         expect(await contracts.sortedTroves.contains(bob.wallet)).to.equal(
           false,
         )

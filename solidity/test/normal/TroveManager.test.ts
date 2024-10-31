@@ -358,15 +358,16 @@ describe("TroveManager in Normal Mode", () => {
         ])
 
         // Check that the correct indices are recorded on the active trove structs
-        const troveStructs = await Promise.all(
-          [alice, bob, eric, dennis].map((user) =>
-            contracts.troveManager.Troves(user.address),
-          ),
+        await updateTroveSnapshots(
+          contracts,
+          [alice, bob, eric, dennis],
+          "after",
         )
-        expect(troveStructs[0][4]).to.equal(0)
-        expect(troveStructs[1][4]).to.equal(1)
-        expect(troveStructs[2][4]).to.equal(2)
-        expect(troveStructs[3][4]).to.equal(3)
+
+        expect(alice.trove.arrayIndex.after).to.equal(0)
+        expect(bob.trove.arrayIndex.after).to.equal(1)
+        expect(eric.trove.arrayIndex.after).to.equal(2)
+        expect(dennis.trove.arrayIndex.after).to.equal(3)
       })
 
       it(
@@ -837,10 +838,8 @@ describe("TroveManager in Normal Mode", () => {
         await contracts.troveManager.liquidate(alice.wallet.address)
 
         // check the Trove is successfully closed, and removed from sortedList
-        const status = (
-          await contracts.troveManager.Troves(alice.wallet.address)
-        )[3]
-        expect(status).to.equal(3) // status enum 3 corresponds to "Closed by liquidation"
+        await updateTroveSnapshot(contracts, alice, "after")
+        expect(alice.trove.status.after).to.equal(3) // status enum 3 corresponds to "Closed by liquidation"
 
         const aliceTroveIsInSortedList = await contracts.sortedTroves.contains(
           alice.wallet.address,

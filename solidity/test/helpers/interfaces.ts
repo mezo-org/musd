@@ -119,9 +119,13 @@ export interface User {
   trove: {
     collateral: BeforeAndAfter
     debt: BeforeAndAfter
-    icr: BeforeAndAfter
+    interestOwed: BeforeAndAfter
     stake: BeforeAndAfter
     status: BeforeAndAfter
+    interestRate: BeforeAndAfter
+    lastInterestUpdateTime: BeforeAndAfter
+    arrayIndex: BeforeAndAfter
+    icr: BeforeAndAfter
   }
   rewardSnapshot: {
     collateral: BeforeAndAfter

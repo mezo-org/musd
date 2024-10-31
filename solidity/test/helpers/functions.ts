@@ -83,17 +83,28 @@ export async function updateTroveSnapshot(
   user: User,
   checkPoint: CheckPoint,
 ) {
-  const [debt, collateral, stake, status] = await contracts.troveManager.Troves(
-    user.address,
-  )
+  const [
+    collateral,
+    debt,
+    interestOwed,
+    stake,
+    status,
+    interestRate,
+    lastInterestUpdateTime,
+    arrayIndex,
+  ] = await contracts.troveManager.Troves(user.address)
 
   const price = await contracts.priceFeed.fetchPrice()
   const icr = await contracts.troveManager.getCurrentICR(user.address, price)
 
-  user.trove.debt[checkPoint] = debt
   user.trove.collateral[checkPoint] = collateral
+  user.trove.debt[checkPoint] = debt
+  user.trove.interestOwed[checkPoint] = interestOwed
   user.trove.stake[checkPoint] = stake
   user.trove.status[checkPoint] = status
+  user.trove.interestRate[checkPoint] = interestRate
+  user.trove.lastInterestUpdateTime[checkPoint] = lastInterestUpdateTime
+  user.trove.arrayIndex[checkPoint] = arrayIndex
   user.trove.icr[checkPoint] = icr
 }
 
