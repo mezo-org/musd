@@ -1,15 +1,16 @@
 import { expect } from "chai"
 import {
+  NO_GAS,
+  Contracts,
+  ContractsState,
+  User,
   applyLiquidationFee,
   checkTroveActive,
   checkTroveClosedByLiquidation,
-  ContractsState,
-  Contracts,
   dropPrice,
   dropPriceAndLiquidate,
   getEmittedLiquidationValues,
   getTroveEntireColl,
-  NO_GAS,
   openTrove,
   provideToSP,
   setupTests,
@@ -20,7 +21,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 

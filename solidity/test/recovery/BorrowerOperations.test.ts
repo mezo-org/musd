@@ -1,22 +1,18 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 
 import {
-  addColl,
-  connectContracts,
-  ContractsState,
   Contracts,
-  fixture,
-  getAddresses,
+  ContractsState,
+  TestingAddresses,
+  User,
+  addColl,
   getEventArgByName,
   openTrove,
   removeMintlist,
-  TestingAddresses,
-  TestSetup,
+  setupTests,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveSnapshot,
-  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -27,8 +23,6 @@ describe("BorrowerOperations in Recovery Mode", () => {
   let carol: User
   let deployer: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
   let state: ContractsState
 
   async function recoveryModeSetup() {
@@ -63,23 +57,10 @@ describe("BorrowerOperations in Recovery Mode", () => {
   }
 
   beforeEach(async () => {
-    // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
-    // users
-    alice = testSetup.users.alice
-    bob = testSetup.users.bob
-    carol = testSetup.users.carol
-    deployer = testSetup.users.deployer
+    ;({ alice, bob, carol, deployer, contracts, state, addresses } =
+      await setupTests())
 
     await recoveryModeSetup()
-
-    // readability helper
-    addresses = await getAddresses(contracts, testSetup.users)
   })
 
   describe("openTrove()", () => {

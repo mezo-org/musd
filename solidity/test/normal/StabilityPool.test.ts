@@ -1,25 +1,21 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import {
+  NO_GAS,
   CheckPoint,
-  connectContracts,
-  ContractsState,
   Contracts,
+  ContractsState,
+  TestingAddresses,
+  User,
   createLiquidationEvent,
   dropPrice,
-  fixture,
-  getAddresses,
   getEmittedLiquidationValues,
-  NO_GAS,
   openTrove,
   openTroveAndProvideStability,
   openTroves,
   openTrovesAndProvideStability,
   provideToSP,
-  TestingAddresses,
-  TestSetup,
+  setupTests,
   transferMUSD,
   updateContractsSnapshot,
   updatePendingSnapshot,
@@ -31,7 +27,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  User,
   withdrawCollateralGainToTrove,
   withdrawCollateralGainToTroves,
 } from "../helpers"
@@ -47,26 +42,13 @@ describe("StabilityPool in Normal Mode", () => {
   let whale: User
   let state: ContractsState
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
 
   type Pool = "activePool" | "defaultPool"
   const pools: Pool[] = ["activePool", "defaultPool"]
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
-    alice = testSetup.users.alice
-    bob = testSetup.users.bob
-    carol = testSetup.users.carol
-    dennis = testSetup.users.dennis
-    eric = testSetup.users.eric
-    whale = testSetup.users.whale
-    addresses = await getAddresses(contracts, testSetup.users)
+    ;({ alice, bob, carol, dennis, eric, whale, contracts, state, addresses } =
+      await setupTests())
 
     await openTrove(contracts, {
       musdAmount: "5,000",

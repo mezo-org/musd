@@ -1,17 +1,13 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
-  connectContracts,
   Contracts,
-  fastForwardTime,
-  fixture,
-  getAddresses,
-  getLatestBlockTimestamp,
   TestingAddresses,
-  TestSetup,
-  updateWalletSnapshot,
   User,
+  fastForwardTime,
+  getLatestBlockTimestamp,
+  setupTests,
+  updateWalletSnapshot,
 } from "../helpers"
 import { to1e18, ZERO_ADDRESS } from "../utils"
 import { PCV } from "../../typechain"
@@ -23,9 +19,7 @@ describe("PCV", () => {
   let council: User
   let deployer: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let treasury: User
-  let testSetup: TestSetup
 
   let bootstrapLoan: bigint
   let delay: bigint
@@ -39,15 +33,8 @@ describe("PCV", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-
-    await connectContracts(contracts, testSetup.users)
-    ;({ alice, bob, council, deployer, treasury } = testSetup.users)
-
-    // readability helper
-    addresses = await getAddresses(contracts, testSetup.users)
+    ;({ alice, bob, council, deployer, treasury, contracts, addresses } =
+      await setupTests())
 
     // for ease of use when calling onlyOwner* functions
     PCVDeployer = contracts.pcv.connect(deployer.wallet)

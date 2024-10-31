@@ -1,5 +1,6 @@
 import { deployments, helpers } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
+import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { getDeployedContract } from "./contract"
 import { ZERO_ADDRESS } from "../utils"
 import {
@@ -155,11 +156,9 @@ async function initializeUserObject(
   return user
 }
 
-/*
- * For explanation on why each testcontract has its own fixture function
- * https://hardhat.org/hardhat-network-helpers/docs/reference#fixtures
- */
-export async function fixture(): Promise<TestSetup> {
+export async function loadTestSetup(): Promise<TestSetup> {
+  const contracts = await loadFixture(deployment)
+
   const { deployer } = await helpers.signers.getNamedSigners()
   const [
     aliceWallet,
@@ -172,7 +171,6 @@ export async function fixture(): Promise<TestSetup> {
     councilWallet,
     treasuryWallet,
   ] = await helpers.signers.getUnnamedSigners()
-  const contracts = await deployment()
 
   const users: Users = {
     alice: await initializeUserObject(aliceWallet),
@@ -189,13 +187,11 @@ export async function fixture(): Promise<TestSetup> {
 
   const state: ContractsState = initializeContractState()
 
-  const testSetup: TestSetup = {
+  return {
     users,
     state,
     contracts,
   }
-
-  return testSetup
 }
 
 export async function getAddresses(contracts: Contracts, users: Users) {

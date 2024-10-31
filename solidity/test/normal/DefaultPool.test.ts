@@ -1,16 +1,12 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ethers, network } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import {
-  connectContracts,
-  ContractsState,
-  Contracts,
-  fixture,
-  getAddresses,
   NO_GAS,
+  Contracts,
+  ContractsState,
   TestingAddresses,
-  TestSetup,
+  setupTests,
   updateContractsSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
@@ -18,20 +14,12 @@ import { to1e18 } from "../utils"
 describe("DefaultPool", () => {
   let addresses: TestingAddresses
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let state: ContractsState
-  let testSetup: TestSetup
 
   let troveManagerSigner: HardhatEthersSigner
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
-    addresses = await getAddresses(contracts, testSetup.users)
+    ;({ state, contracts, addresses } = await setupTests())
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",

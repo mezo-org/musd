@@ -1,16 +1,12 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { ethers } from "hardhat"
 import { expect, assert } from "chai"
 import {
   Contracts,
-  TestSetup,
-  fixture,
-  getLatestBlockTimestamp,
-  fastForwardTime,
-  connectContracts,
-  getAddresses,
   TestingAddresses,
   User,
+  fastForwardTime,
+  getLatestBlockTimestamp,
+  setupTests,
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
 import { BorrowerOperations, TroveManager } from "../typechain"
@@ -23,16 +19,14 @@ describe("MUSD", () => {
   let dennis: User
   let deployer: User
   let contracts: Contracts
-  let testSetup: TestSetup
   let addresses: TestingAddresses
   let newBorrowerOperations: BorrowerOperations
   let newStabilityPool: StabilityPool
   let newTroveManager: TroveManager
 
   beforeEach(async () => {
-    testSetup = await loadFixture(fixture)
-    contracts = testSetup.contracts
-    await connectContracts(contracts, testSetup.users)
+    ;({ alice, bob, carol, dennis, deployer, contracts, addresses } =
+      await setupTests())
 
     // new contracts to add.
     newBorrowerOperations = await (
@@ -45,20 +39,10 @@ describe("MUSD", () => {
       await ethers.getContractFactory("TroveManager")
     ).deploy()
 
-    // users
-    alice = testSetup.users.alice
-    bob = testSetup.users.bob
-    carol = testSetup.users.carol
-    dennis = testSetup.users.dennis
-    deployer = testSetup.users.deployer
-
     // Mint using tester functions.
     await contracts.musd.unprotectedMint(alice.wallet, to1e18(150))
     await contracts.musd.unprotectedMint(bob.wallet, to1e18(100))
     await contracts.musd.unprotectedMint(carol.wallet, to1e18(50))
-
-    // readability helper
-    addresses = await getAddresses(contracts, testSetup.users)
   })
 
   describe("Initial State", () => {

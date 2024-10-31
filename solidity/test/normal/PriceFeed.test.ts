@@ -1,31 +1,15 @@
 import { expect } from "chai"
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { ZERO_ADDRESS, to1e18 } from "../utils"
 
-import {
-  Contracts,
-  fixture,
-  getDeployedContract,
-  TestSetup,
-  connectContracts,
-  User,
-} from "../helpers"
+import { Contracts, User, getDeployedContract, setupTests } from "../helpers"
 import type { PriceFeed } from "../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
   let deployer: User
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    // users
-    deployer = testSetup.users.deployer
-
-    await connectContracts(contracts, testSetup.users)
+    ;({ deployer, contracts } = await setupTests())
   })
 
   describe("setOracle()", () => {

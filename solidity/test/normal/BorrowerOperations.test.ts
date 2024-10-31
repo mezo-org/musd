@@ -1,31 +1,27 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
+  NO_GAS,
+  TestingAddresses,
+  User,
   addColl,
-  connectContracts,
   createLiquidationEvent,
   fastForwardTime,
-  fixture,
-  getAddresses,
   getEventArgByName,
   getLatestBlockTimestamp,
   getTCR,
   getTroveEntireColl,
   getTroveEntireDebt,
-  NO_GAS,
   openTrove,
   removeMintlist,
   setBaseRate,
-  TestingAddresses,
-  TestSetup,
+  setupTests,
   updateContractsSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
-  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import {
@@ -46,9 +42,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   let deployer: User
   let treasury: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let state: ContractsState
-  let testSetup: TestSetup
   let MIN_NET_DEBT: bigint
   let MUSD_GAS_COMPENSATION: bigint
 
@@ -121,22 +115,19 @@ describe("BorrowerOperations in Normal Mode", () => {
   }
 
   beforeEach(async () => {
-    // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
-    // users
-    alice = testSetup.users.alice
-    bob = testSetup.users.bob
-    carol = testSetup.users.carol
-    council = testSetup.users.council
-    dennis = testSetup.users.dennis
-    eric = testSetup.users.eric
-    deployer = testSetup.users.deployer
-    treasury = testSetup.users.treasury
+    ;({
+      alice,
+      bob,
+      carol,
+      council,
+      dennis,
+      eric,
+      deployer,
+      treasury,
+      state,
+      contracts,
+      addresses,
+    } = await setupTests())
 
     MIN_NET_DEBT = await contracts.borrowerOperations.MIN_NET_DEBT()
     MUSD_GAS_COMPENSATION =
@@ -147,9 +138,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
-
-    // readability helper
-    addresses = await getAddresses(contracts, testSetup.users)
 
     await defaultTrovesSetup()
   })

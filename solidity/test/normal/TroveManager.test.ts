@@ -1,4 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import { ethers } from "hardhat"
@@ -9,14 +8,11 @@ import {
   checkTroveClosedByLiquidation,
   checkTroveClosedByRedemption,
   checkTroveStatus,
-  connectContracts,
   ContractsState,
   Contracts,
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
-  fixture,
-  getAddresses,
   getAllEventsByName,
   getDebtAndCollFromTroveUpdatedEvents,
   getEmittedLiquidationValues,
@@ -30,7 +26,6 @@ import {
   provideToSP,
   setBaseRate,
   TestingAddresses,
-  TestSetup,
   transferMUSD,
   updateContractsSnapshot,
   updatePCVSnapshot,
@@ -42,6 +37,7 @@ import {
   updateTroveSnapshots,
   updateWalletSnapshot,
   User,
+  setupTests,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -57,8 +53,6 @@ describe("TroveManager in Normal Mode", () => {
   let treasury: User
   let state: ContractsState
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
-  let testSetup: TestSetup
 
   async function setupTroves() {
     // open two troves so that we don't go into recovery mode
@@ -230,31 +224,25 @@ describe("TroveManager in Normal Mode", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
-    contracts = testSetup.contracts
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
-
-    // users
-    alice = testSetup.users.alice
-    bob = testSetup.users.bob
-    carol = testSetup.users.carol
-    dennis = testSetup.users.dennis
-    eric = testSetup.users.eric
-    deployer = testSetup.users.deployer
-    council = testSetup.users.council
-    treasury = testSetup.users.treasury
+    ;({
+      alice,
+      bob,
+      carol,
+      dennis,
+      eric,
+      deployer,
+      council,
+      treasury,
+      contracts,
+      state,
+      addresses,
+    } = await setupTests())
 
     // Setup PCV governance addresses
     await contracts.pcv
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
-
-    // readability helper
-    addresses = await getAddresses(contracts, testSetup.users)
   })
 
   describe("liquidate()", () => {
