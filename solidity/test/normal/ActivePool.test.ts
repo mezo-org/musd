@@ -1,4 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ethers, network } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
@@ -6,27 +5,25 @@ import {
   connectContracts,
   ContractsState,
   Contracts,
-  fixture,
   getAddresses,
   NO_GAS,
   TestingAddresses,
   TestSetup,
   updateContractsSnapshot,
+  loadTestSetup,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
 describe("ActivePool", () => {
   let addresses: TestingAddresses
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let state: ContractsState
   let testSetup: TestSetup
 
   let borrowerOperationsSigner: HardhatEthersSigner
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     state = testSetup.state
 

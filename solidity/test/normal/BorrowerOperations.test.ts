@@ -1,4 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
@@ -6,13 +5,13 @@ import {
   connectContracts,
   createLiquidationEvent,
   fastForwardTime,
-  fixture,
   getAddresses,
   getEventArgByName,
   getLatestBlockTimestamp,
   getTCR,
   getTroveEntireColl,
   getTroveEntireDebt,
+  loadTestSetup,
   NO_GAS,
   openTrove,
   removeMintlist,
@@ -46,7 +45,6 @@ describe("BorrowerOperations in Normal Mode", () => {
   let deployer: User
   let treasury: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let state: ContractsState
   let testSetup: TestSetup
   let MIN_NET_DEBT: bigint
@@ -122,8 +120,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     state = testSetup.state
 

@@ -3,7 +3,6 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
 import { assert } from "chai"
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { GOVERNANCE_TIME_DELAY, to1e18, ZERO_ADDRESS } from "../utils"
 import {
   AddCollParams,
@@ -15,7 +14,7 @@ import {
   WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
-import { connectContracts, fixture, getAddresses } from "./context"
+import { connectContracts, getAddresses, loadTestSetup } from "./context"
 
 export const NO_GAS = {
   maxFeePerGas: 0,
@@ -740,8 +739,7 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
 }
 
 export async function setupTests() {
-  const cachedTestSetup = await loadFixture(fixture)
-  const testSetup = { ...cachedTestSetup }
+  const testSetup = await loadTestSetup()
   const { contracts, state } = testSetup
 
   await connectContracts(contracts, testSetup.users)
@@ -755,7 +753,6 @@ export async function setupTests() {
   return {
     contracts,
     state,
-    cachedTestSetup,
     testSetup,
     addresses,
     alice,

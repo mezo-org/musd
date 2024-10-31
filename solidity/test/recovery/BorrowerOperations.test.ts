@@ -1,4 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 
 import {
@@ -6,7 +5,6 @@ import {
   connectContracts,
   ContractsState,
   Contracts,
-  fixture,
   getAddresses,
   getEventArgByName,
   openTrove,
@@ -17,6 +15,7 @@ import {
   updateRewardSnapshot,
   updateTroveSnapshot,
   User,
+  loadTestSetup,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -27,7 +26,6 @@ describe("BorrowerOperations in Recovery Mode", () => {
   let carol: User
   let deployer: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let testSetup: TestSetup
   let state: ContractsState
 
@@ -64,8 +62,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
   beforeEach(async () => {
     // fixtureBorrowerOperations has a mock trove manager so we can change rates
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     state = testSetup.state
 

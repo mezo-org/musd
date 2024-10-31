@@ -1,16 +1,15 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { ethers } from "hardhat"
 import { expect, assert } from "chai"
 import {
   Contracts,
   TestSetup,
-  fixture,
   getLatestBlockTimestamp,
   fastForwardTime,
   connectContracts,
   getAddresses,
   TestingAddresses,
   User,
+  loadTestSetup,
 } from "./helpers"
 import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
 import { BorrowerOperations, TroveManager } from "../typechain"
@@ -30,7 +29,7 @@ describe("MUSD", () => {
   let newTroveManager: TroveManager
 
   beforeEach(async () => {
-    testSetup = await loadFixture(fixture)
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     await connectContracts(contracts, testSetup.users)
 

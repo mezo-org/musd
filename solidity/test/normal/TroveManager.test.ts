@@ -1,4 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import { ethers } from "hardhat"
@@ -15,7 +14,6 @@ import {
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
-  fixture,
   getAddresses,
   getAllEventsByName,
   getDebtAndCollFromTroveUpdatedEvents,
@@ -42,6 +40,7 @@ import {
   updateTroveSnapshots,
   updateWalletSnapshot,
   User,
+  loadTestSetup,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -57,7 +56,6 @@ describe("TroveManager in Normal Mode", () => {
   let treasury: User
   let state: ContractsState
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
   async function setupTroves() {
@@ -230,8 +228,7 @@ describe("TroveManager in Normal Mode", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     state = testSetup.state
 

@@ -1,5 +1,4 @@
 import { expect } from "chai"
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { to1e18 } from "../utils"
 
 import {
@@ -9,18 +8,17 @@ import {
   TestSetup,
   User,
   connectContracts,
-  fixture,
   openTrove,
   performRedemption,
   updateCollSurplusSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
   updateCollSurplusPoolUserSnapshot,
+  loadTestSetup,
 } from "../helpers"
 
 describe("CollSurplusPool in Normal Mode", () => {
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
   let alice: User
@@ -30,8 +28,7 @@ describe("CollSurplusPool in Normal Mode", () => {
   let state: ContractsState
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     // users
     ;({ alice, bob, whale } = testSetup.users)

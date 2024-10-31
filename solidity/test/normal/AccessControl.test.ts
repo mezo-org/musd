@@ -1,10 +1,9 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
   connectContracts,
   Contracts,
-  fixture,
   getAddresses,
+  loadTestSetup,
   openTrove,
   TestingAddresses,
   TestSetup,
@@ -20,12 +19,10 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
   let addresses: TestingAddresses
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
 
     await connectContracts(contracts, testSetup.users)

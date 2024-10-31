@@ -1,13 +1,12 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
   connectContracts,
   Contracts,
   fastForwardTime,
-  fixture,
   getAddresses,
   getLatestBlockTimestamp,
+  loadTestSetup,
   TestingAddresses,
   TestSetup,
   updateWalletSnapshot,
@@ -23,7 +22,6 @@ describe("PCV", () => {
   let council: User
   let deployer: User
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let treasury: User
   let testSetup: TestSetup
 
@@ -39,8 +37,7 @@ describe("PCV", () => {
   }
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
 
     await connectContracts(contracts, testSetup.users)

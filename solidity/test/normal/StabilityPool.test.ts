@@ -1,5 +1,3 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
-
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import {
@@ -9,7 +7,6 @@ import {
   Contracts,
   createLiquidationEvent,
   dropPrice,
-  fixture,
   getAddresses,
   getEmittedLiquidationValues,
   NO_GAS,
@@ -34,6 +31,7 @@ import {
   User,
   withdrawCollateralGainToTrove,
   withdrawCollateralGainToTroves,
+  loadTestSetup,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -47,15 +45,13 @@ describe("StabilityPool in Normal Mode", () => {
   let whale: User
   let state: ContractsState
   let contracts: Contracts
-  let cachedTestSetup: TestSetup
   let testSetup: TestSetup
 
   type Pool = "activePool" | "defaultPool"
   const pools: Pool[] = ["activePool", "defaultPool"]
 
   beforeEach(async () => {
-    cachedTestSetup = await loadFixture(fixture)
-    testSetup = { ...cachedTestSetup }
+    testSetup = await loadTestSetup()
     contracts = testSetup.contracts
     state = testSetup.state
 
