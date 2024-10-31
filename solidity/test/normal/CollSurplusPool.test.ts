@@ -5,21 +5,18 @@ import {
   NO_GAS,
   Contracts,
   ContractsState,
-  TestSetup,
   User,
-  connectContracts,
   openTrove,
   performRedemption,
+  setupTests,
+  updateCollSurplusPoolUserSnapshot,
   updateCollSurplusSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
-  updateCollSurplusPoolUserSnapshot,
-  loadTestSetup,
 } from "../helpers"
 
 describe("CollSurplusPool in Normal Mode", () => {
   let contracts: Contracts
-  let testSetup: TestSetup
 
   let alice: User
   let bob: User
@@ -28,13 +25,7 @@ describe("CollSurplusPool in Normal Mode", () => {
   let state: ContractsState
 
   beforeEach(async () => {
-    testSetup = await loadTestSetup()
-    contracts = testSetup.contracts
-    // users
-    ;({ alice, bob, whale } = testSetup.users)
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
+    ;({ alice, bob, whale, state, contracts } = await setupTests())
   })
 
   describe("accountSurplus()", () => {

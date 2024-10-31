@@ -1,16 +1,13 @@
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
-  connectContracts,
   Contracts,
-  fastForwardTime,
-  getAddresses,
-  getLatestBlockTimestamp,
-  loadTestSetup,
   TestingAddresses,
-  TestSetup,
-  updateWalletSnapshot,
   User,
+  fastForwardTime,
+  getLatestBlockTimestamp,
+  setupTests,
+  updateWalletSnapshot,
 } from "../helpers"
 import { to1e18, ZERO_ADDRESS } from "../utils"
 import { PCV } from "../../typechain"
@@ -23,7 +20,6 @@ describe("PCV", () => {
   let deployer: User
   let contracts: Contracts
   let treasury: User
-  let testSetup: TestSetup
 
   let bootstrapLoan: bigint
   let delay: bigint
@@ -37,14 +33,8 @@ describe("PCV", () => {
   }
 
   beforeEach(async () => {
-    testSetup = await loadTestSetup()
-    contracts = testSetup.contracts
-
-    await connectContracts(contracts, testSetup.users)
-    ;({ alice, bob, council, deployer, treasury } = testSetup.users)
-
-    // readability helper
-    addresses = await getAddresses(contracts, testSetup.users)
+    ;({ alice, bob, council, deployer, treasury, contracts, addresses } =
+      await setupTests())
 
     // for ease of use when calling onlyOwner* functions
     PCVDeployer = contracts.pcv.connect(deployer.wallet)

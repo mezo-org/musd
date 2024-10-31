@@ -1,28 +1,15 @@
 import { expect } from "chai"
 import { ZERO_ADDRESS, to1e18 } from "../utils"
 
-import {
-  Contracts,
-  getDeployedContract,
-  TestSetup,
-  connectContracts,
-  User,
-  loadTestSetup,
-} from "../helpers"
+import { Contracts, User, getDeployedContract, setupTests } from "../helpers"
 import type { PriceFeed } from "../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
   let contracts: Contracts
-  let testSetup: TestSetup
   let deployer: User
 
   beforeEach(async () => {
-    testSetup = await loadTestSetup()
-    contracts = testSetup.contracts
-    // users
-    deployer = testSetup.users.deployer
-
-    await connectContracts(contracts, testSetup.users)
+    ;({ deployer, contracts } = await setupTests())
   })
 
   describe("setOracle()", () => {

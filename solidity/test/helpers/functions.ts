@@ -745,7 +745,18 @@ export async function setupTests() {
   await connectContracts(contracts, testSetup.users)
 
   // users
-  const { alice, bob, carol, dennis, eric, frank } = testSetup.users
+  const {
+    alice,
+    bob,
+    carol,
+    council,
+    dennis,
+    deployer,
+    eric,
+    frank,
+    treasury,
+    whale,
+  } = testSetup.users
 
   // readability helper
   const addresses = await getAddresses(contracts, testSetup.users)
@@ -758,9 +769,13 @@ export async function setupTests() {
     alice,
     bob,
     carol,
+    council,
     dennis,
+    deployer,
     eric,
     frank,
+    treasury,
+    whale,
   }
 }
 

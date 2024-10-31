@@ -2,15 +2,12 @@ import { expect } from "chai"
 import { ethers, network } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import {
-  connectContracts,
-  ContractsState,
-  Contracts,
-  getAddresses,
   NO_GAS,
+  Contracts,
+  ContractsState,
   TestingAddresses,
-  TestSetup,
+  setupTests,
   updateContractsSnapshot,
-  loadTestSetup,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -18,17 +15,11 @@ describe("DefaultPool", () => {
   let addresses: TestingAddresses
   let contracts: Contracts
   let state: ContractsState
-  let testSetup: TestSetup
 
   let troveManagerSigner: HardhatEthersSigner
 
   beforeEach(async () => {
-    testSetup = await loadTestSetup()
-    contracts = testSetup.contracts
-    state = testSetup.state
-
-    await connectContracts(contracts, testSetup.users)
-    addresses = await getAddresses(contracts, testSetup.users)
+    ;({ state, contracts, addresses } = await setupTests())
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",

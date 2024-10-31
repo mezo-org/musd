@@ -1,13 +1,10 @@
 import { expect } from "chai"
 import {
-  connectContracts,
   Contracts,
-  getAddresses,
-  loadTestSetup,
-  openTrove,
   TestingAddresses,
-  TestSetup,
   User,
+  openTrove,
+  setupTests,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -19,16 +16,10 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
   let addresses: TestingAddresses
   let contracts: Contracts
-  let testSetup: TestSetup
 
   beforeEach(async () => {
-    testSetup = await loadTestSetup()
-    contracts = testSetup.contracts
-
-    await connectContracts(contracts, testSetup.users)
-    ;({ alice, bob, carol, deployer } = testSetup.users)
-
-    addresses = await getAddresses(contracts, testSetup.users)
+    ;({ alice, bob, carol, deployer, contracts, addresses } =
+      await setupTests())
 
     await Promise.all(
       [alice, bob, carol].map((user) =>
