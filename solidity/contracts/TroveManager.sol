@@ -34,6 +34,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Status status;
         uint16 interestRate;
         uint256 lastInterestUpdateTime;
+        uint256 maxBorrowingCapacity;
         uint128 arrayIndex;
     }
 
@@ -612,6 +613,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return newColl;
     }
 
+    function setTroveMaxBorrowingCapacity(
+        address _borrower,
+        uint256 _maxBorrowingCapacity
+    ) external override {
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].maxBorrowingCapacity = _maxBorrowingCapacity;
+    }
+
     function increaseTroveDebt(
         address _borrower,
         uint256 _debtIncrease
@@ -773,6 +782,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getTCR(uint256 _price) external view override returns (uint) {
         return _getTCR(_price);
+    }
+
+    function getTroveMaxBorrowingCapacity(
+        address _borrower
+    ) external view returns (uint256) {
+        return Troves[_borrower].maxBorrowingCapacity;
     }
 
     function checkRecoveryMode(

@@ -722,6 +722,27 @@ describe("BorrowerOperations in Normal Mode", () => {
           dennis.trove.debt.after + carol.trove.debt.after + debtBefore,
         )
       })
+
+      it("openTrove(): Sets the maximum borrowing capacity on a trove when it is opened", async () => {
+        // Open a large trove for Alice with high ICR so we don't go into recovery mode
+        await openTrove(contracts, {
+          musdAmount: "100,000",
+          ICR: "500",
+          sender: eric.wallet,
+        })
+
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "110",
+          sender: dennis.wallet,
+        })
+        await updateTroveSnapshot(contracts, dennis, "before")
+
+        // Dennis borrowed the maximum amount so his debt should equal his borrowing capacity
+        expect(dennis.trove.maxBorrowingCapacity.before).is.equal(
+          dennis.trove.debt.before,
+        )
+      })
     })
 
     /**

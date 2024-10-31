@@ -190,6 +190,13 @@ contract BorrowerOperations is
             msg.sender,
             block.timestamp
         );
+
+        // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
+        uint256 maxBorrowingCapacity = (_assetAmount * vars.price) / (110 * 1e16);
+        contractsCache.troveManager.setTroveMaxBorrowingCapacity(
+            msg.sender,
+            maxBorrowingCapacity
+        );
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
             msg.sender
