@@ -7,6 +7,8 @@ solidity/external/
 solidity/typechain/
 solidity/typechain-types/
 solidity/artifacts/
+solidity/coverage
+solidity/coverage.json
 
 # Auto-generated files.
 pnpm-lock.yaml
