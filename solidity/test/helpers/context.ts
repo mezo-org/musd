@@ -152,6 +152,7 @@ async function initializeUserObject(
       status: beforeAndAfter(),
       interestRate: beforeAndAfter(),
       lastInterestUpdateTime: beforeAndAfter(),
+      maxBorrowingCapacity: beforeAndAfter(),
       arrayIndex: beforeAndAfter(),
       icr: beforeAndAfter(),
     },

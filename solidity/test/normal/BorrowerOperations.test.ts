@@ -722,6 +722,75 @@ describe("BorrowerOperations in Normal Mode", () => {
           dennis.trove.debt.after + carol.trove.debt.after + debtBefore,
         )
       })
+
+      it("openTrove(): Sets the maximum borrowing capacity on a trove when it is opened", async () => {
+        // Open a large trove for Alice with high ICR so we don't go into recovery mode
+        await openTrove(contracts, {
+          musdAmount: "100,000",
+          ICR: "500",
+          sender: eric.wallet,
+        })
+
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "110",
+          sender: dennis.wallet,
+        })
+        await updateTroveSnapshot(contracts, dennis, "before")
+
+        // Dennis borrowed the maximum amount so his debt should equal his borrowing capacity
+        expect(dennis.trove.maxBorrowingCapacity.before).is.equal(
+          dennis.trove.debt.before,
+        )
+      })
+
+      it("openTrove(): Sets the maximum borrowing capacity on a trove when it is opened at higher than 110% ICR", async () => {
+        // Open a large trove for Alice with high ICR so we don't go into recovery mode
+        await openTrove(contracts, {
+          musdAmount: "100,000",
+          ICR: "500",
+          sender: eric.wallet,
+        })
+
+        const { collateral } = await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "200",
+          sender: dennis.wallet,
+        })
+
+        const price = await contracts.priceFeed.fetchPrice()
+
+        const expectedBorrowingCapacity =
+          (collateral * price * 100n) / to1e18(110)
+
+        await updateTroveSnapshot(contracts, dennis, "before")
+
+        // Dennis borrowed the maximum amount so his debt should equal his borrowing capacity
+        expect(dennis.trove.maxBorrowingCapacity.before).is.equal(
+          expectedBorrowingCapacity,
+        )
+      })
+
+      it("openTrove(): Adds the trove's principal to the principal for its interest rate", async () => {
+        const principalBefore = (
+          await contracts.troveManager.interestRateData(0)
+        ).principal
+
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "400",
+          sender: dennis.wallet,
+        })
+
+        const principalAfter = (
+          await contracts.troveManager.interestRateData(0)
+        ).principal
+
+        await updateTroveSnapshot(contracts, dennis, "before")
+        expect(principalAfter - principalBefore).to.equal(
+          dennis.trove.debt.before,
+        )
+      })
     })
 
     /**
