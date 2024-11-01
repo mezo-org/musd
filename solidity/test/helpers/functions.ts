@@ -948,10 +948,11 @@ export function calculateInterestOwed(
   startTimeSeconds: bigint,
   endTimeSeconds: bigint,
 ) {
-  const secondsInOneYear = 31536000n
   const elapsedSeconds = endTimeSeconds - startTimeSeconds
-  const interestRatePerSecond =
-    to1e18(interestRateBips) / (10000n * secondsInOneYear)
+  const secondsInOneYear = 31536000n
 
-  return (principal * interestRatePerSecond * elapsedSeconds) / to1e18(1)
+  return (
+    (principal * BigInt(interestRateBips) * elapsedSeconds) /
+    (10000n * secondsInOneYear)
+  )
 }

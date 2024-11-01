@@ -895,13 +895,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 startTime,
         uint256 endTime
     ) public pure returns (uint256) {
-        uint256 interestRatePerSecond = (_interestRate * DECIMAL_PRECISION) /
-            (10000 * SECONDS_IN_A_YEAR);
         uint256 timeElapsed = endTime - startTime;
 
         return
-            (_principal * interestRatePerSecond * timeElapsed) /
-            DECIMAL_PRECISION;
+            (_principal * _interestRate * timeElapsed) /
+            (10000 * SECONDS_IN_A_YEAR);
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
