@@ -35,58 +35,62 @@ describe("HintHelpers", () => {
     )
   }
 
-  it.skip("getApproxHint(): returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
-    // Tried a simplified version of the test in the THUSD repo, but it is not working, skipping for now.
-    // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/HintHelpers_getApproxHintTest.js#L117
+  describe("getApproxHint()", () => {
+    it.skip("returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
+      // Tried a simplified version of the test in the THUSD repo, but it is not working, skipping for now.
+      // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/HintHelpers_getApproxHintTest.js#L117
 
-    await setupTroves()
+      await setupTroves()
 
-    // CR = 202% (Carol's Trove)
-    const cr = to1e18("202")
-    ;({ hintAddress, latestRandomSeed } =
-      await contracts.hintHelpers.getApproxHint(
-        cr,
-        sqrtLength * 10,
-        latestRandomSeed,
-      ))
-    const firstTrove = await contracts.sortedTroves.getFirst()
-    expect(hintAddress).to.eq(firstTrove)
+      // CR = 202% (Carol's Trove)
+      const cr = to1e18("202")
+      ;({ hintAddress, latestRandomSeed } =
+        await contracts.hintHelpers.getApproxHint(
+          cr,
+          sqrtLength * 10,
+          latestRandomSeed,
+        ))
+      const firstTrove = await contracts.sortedTroves.getFirst()
+      expect(hintAddress).to.eq(firstTrove)
+    })
+
+    it("returns the head of the list if the CR is the max uint256 value", async () => {
+      await setupTroves()
+
+      // CR = Maximum value, i.e. 2**256 -1
+      const crMax =
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      ;({ hintAddress, latestRandomSeed } =
+        await contracts.hintHelpers.getApproxHint(
+          crMax,
+          sqrtLength * 10,
+          latestRandomSeed,
+        ))
+      expect(hintAddress).to.eq(await contracts.sortedTroves.getFirst())
+    })
+
+    it("returns the tail of the list if the CR is lower than ICR of any Trove", async () => {
+      await setupTroves()
+      ;({ hintAddress, latestRandomSeed } =
+        await contracts.hintHelpers.getApproxHint(
+          "0",
+          sqrtLength * 10,
+          latestRandomSeed,
+        ))
+
+      await contracts.sortedTroves.getLast()
+
+      expect(hintAddress).to.eq(await contracts.sortedTroves.getLast())
+    })
   })
 
-  it("getApproxHint(): returns the head of the list if the CR is the max uint256 value", async () => {
-    await setupTroves()
-
-    // CR = Maximum value, i.e. 2**256 -1
-    const crMax =
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    ;({ hintAddress, latestRandomSeed } =
-      await contracts.hintHelpers.getApproxHint(
-        crMax,
-        sqrtLength * 10,
-        latestRandomSeed,
-      ))
-    expect(hintAddress).to.eq(await contracts.sortedTroves.getFirst())
-  })
-
-  it("getApproxHint(): returns the tail of the list if the CR is lower than ICR of any Trove", async () => {
-    await setupTroves()
-    ;({ hintAddress, latestRandomSeed } =
-      await contracts.hintHelpers.getApproxHint(
-        "0",
-        sqrtLength * 10,
-        latestRandomSeed,
-      ))
-
-    await contracts.sortedTroves.getLast()
-
-    expect(hintAddress).to.eq(await contracts.sortedTroves.getLast())
-  })
-
-  it("computeNominalCR(): returns the correct nominal CR", async () => {
-    const NICR = await contracts.hintHelpers.computeNominalCR(
-      to1e18("3"),
-      to1e18("200"),
-    )
-    expect(NICR).to.eq(to1e18("1.5"))
+  describe("computeNominalCR()", () => {
+    it("returns the correct nominal CR", async () => {
+      const NICR = await contracts.hintHelpers.computeNominalCR(
+        to1e18("3"),
+        to1e18("200"),
+      )
+      expect(NICR).to.eq(to1e18("1.5"))
+    })
   })
 })

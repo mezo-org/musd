@@ -31,49 +31,20 @@ describe("ActivePool", () => {
     )
   })
 
-  /**
-   *
-   * Expected Reverts
-   *
-   */
-  context("Expected Reverts", () => {})
-
-  /**
-   *
-   * Emitted Events
-   *
-   */
-  context("Emitted Events", () => {})
-
-  /**
-   *
-   * System State Changes
-   *
-   */
-  context("System State Changes", () => {})
-
-  /**
-   *
-   * Individual Troves
-   *
-   */
-  context("Individual Troves", () => {})
-
-  /**
-   *
-   * Balance changes
-   *
-   */
-  context("Balance changes", () => {
-    it("getCollateralBalance(): gets the recorded collateral balance", async () => {
+  describe("getCollateralBalance()", () => {
+    it("gets the recorded collateral balance", async () => {
       expect(await contracts.activePool.getCollateralBalance()).to.equal(0)
     })
+  })
 
-    it("getMUSDDebt(): gets the recorded MUSD balance", async () => {
+  describe("getMUSDDebt()", () => {
+    it("gets the recorded MUSD balance", async () => {
       expect(await contracts.activePool.getMUSDDebt()).to.equal(0)
     })
+  })
 
-    it("increaseMUSDDebt(): increases the recorded MUSD balance by the correct amount", async () => {
+  describe("increaseMUSDDebt()", () => {
+    it("increases the recorded MUSD balance by the correct amount", async () => {
       await updateContractsSnapshot(
         contracts,
         state,
@@ -99,8 +70,10 @@ describe("ActivePool", () => {
         state.activePool.debt.after - state.activePool.debt.before,
       ).to.equal(amount)
     })
+  })
 
-    it("decreaseMUSDDebt(): decreases the recorded MUSD balance by the correct amount", async () => {
+  describe("decreaseMUSDDebt()", () => {
+    it("decreases the recorded MUSD balance by the correct amount", async () => {
       const initialAmount = to1e18("100")
 
       await contracts.activePool
@@ -134,18 +107,4 @@ describe("ActivePool", () => {
       )
     })
   })
-
-  /**
-   *
-   * Fees
-   *
-   */
-  context("Fees", () => {})
-
-  /**
-   *
-   * State change in other contracts
-   *
-   */
-  context("State change in other contracts", () => {})
 })

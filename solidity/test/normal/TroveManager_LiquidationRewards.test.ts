@@ -52,7 +52,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     return trove
   }
 
-  it("redistribution: A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
+  it("A, B Open. B Liquidated. C, D Open. D Liquidated. Distributes correct rewards", async () => {
     await setupTrove(alice, "1800", "400")
     await setupTrove(bob, "1800", "210")
     await updateTroveSnapshots(contracts, [alice, bob], "before")
@@ -99,7 +99,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: Sequence of alternate opening/liquidation: final surviving trove has collateral from all previously liquidated troves", async () => {
+  it("Sequence of alternate opening/liquidation: final surviving trove has collateral from all previously liquidated troves", async () => {
     // A, B open troves
     await setupTroveAndSnapshot(alice, "1800", "210")
     await setupTroveAndSnapshot(bob, "1800", "210")
@@ -140,7 +140,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(gainedCollateral).to.equal(dennis.pending.collateral.after)
   })
 
-  it("redistribution: A,B,C Open. C Liquidated. B adds coll. A Liquidated. B acquires all coll and debt", async () => {
+  it("A,B,C Open. C Liquidated. B adds coll. A Liquidated. B acquires all coll and debt", async () => {
     const users = [alice, bob, carol]
     await Promise.all(
       users.map((user) => setupTroveAndSnapshot(user, "20000", "210")),
@@ -179,7 +179,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: A,B,C Open. C Liquidated. B tops up coll. D Opens. D Liquidated. Distributes correct rewards.", async () => {
+  it("A,B,C Open. C Liquidated. B tops up coll. D Opens. D Liquidated. Distributes correct rewards.", async () => {
     const users = [alice, bob, carol]
     await Promise.all(
       users.map((user) => setupTroveAndSnapshot(user, "20000", "210")),
@@ -242,7 +242,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: Trove with the majority stake tops up. A,B,C, D open. D Liquidated. C tops up. E opens, E Liquidated. Distributes correct rewards", async () => {
+  it("Trove with the majority stake tops up. A,B,C, D open. D Liquidated. C tops up. E opens, E Liquidated. Distributes correct rewards", async () => {
     const initialUsers = [alice, bob, carol, dennis]
     await setupTroveAndSnapshot(alice, "20,000", "4000")
     await setupTroveAndSnapshot(bob, "20,000", "4000")
@@ -305,7 +305,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: Trove with the majority stake tops up. A,B,C, D open. D Liquidated. A, B, C top up. E opens, E Liquidated. Distributes correct rewards", async () => {
+  it("Trove with the majority stake tops up. A,B,C, D open. D Liquidated. A, B, C top up. E opens, E Liquidated. Distributes correct rewards", async () => {
     const initialUsers = [alice, bob, carol, dennis]
     await Promise.all(
       initialUsers
@@ -375,7 +375,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: A,B,C Open. C Liquidated. B withdraws coll. A Liquidated. B acquires all coll and debt", async () => {
+  it("A,B,C Open. C Liquidated. B withdraws coll. A Liquidated. B acquires all coll and debt", async () => {
     await setupTroveAndSnapshot(alice, "20000", "210")
     await setupTroveAndSnapshot(bob, "20000", "2000")
     await setupTroveAndSnapshot(carol, "20000", "210")
@@ -413,7 +413,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: A,B,C Open. C Liquidated. B withdraws coll. D Opens. D Liquidated. Distributes correct rewards.", async () => {
+  it("A,B,C Open. C Liquidated. B withdraws coll. D Opens. D Liquidated. Distributes correct rewards.", async () => {
     // TODO Consider refactoring to remove duplication and/or use expectedRewardAmountForUsers
     const users = [alice, bob, carol]
     await setupTroveAndSnapshot(alice, "20000", "210")
@@ -475,7 +475,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: Trove with the majority stake tops up. A,B,C, D open. D Liquidated. C withdraws coll. E opens, E Liquidated. Distributes correct rewards", async () => {
+  it("Trove with the majority stake tops up. A,B,C, D open. D Liquidated. C withdraws coll. E opens, E Liquidated. Distributes correct rewards", async () => {
     const initialUsers = [alice, bob, carol, dennis]
     await setupTroveAndSnapshot(alice, "20,000", "4000")
     await setupTroveAndSnapshot(bob, "20,000", "4000")
@@ -538,7 +538,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution: Trove with the majority stake withdraws. A,B,C,D open. D Liquidated. A, B, C withdraw coll. E opens, E Liquidated. Distributes correct rewards", async () => {
+  it("Trove with the majority stake withdraws. A,B,C,D open. D Liquidated. A, B, C withdraw coll. E opens, E Liquidated. Distributes correct rewards", async () => {
     const initialUsers = [alice, bob, carol, dennis]
     await setupTroveAndSnapshot(alice, "20,000", "4000")
     await setupTroveAndSnapshot(bob, "20,000", "4000")
@@ -609,7 +609,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("redistribution, all operations: A,B,C open. A Liquidated. D opens. B adds, C withdraws. B Liquidated. E & F open. D adds. F Liquidated. Distributes correct rewards", async () => {
+  it("all operations: A,B,C open. A Liquidated. D opens. B adds, C withdraws. B Liquidated. E & F open. D adds. F Liquidated. Distributes correct rewards", async () => {
     const users = [alice, bob, carol]
     await setupTroveAndSnapshot(alice, "20,000", "150")
     await setupTroveAndSnapshot(bob, "20,000", "180")
