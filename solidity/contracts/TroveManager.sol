@@ -905,6 +905,16 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
+    function updateSystemInterest(uint16 _rate) external {
+        InterestRateInfo memory _interestRateData = interestRateData[_rate];
+        // solhint-disable not-rely-on-time
+        uint256 interest = calculateInterestOwed(_interestRateData.principal, _rate, _interestRateData.lastUpdatedTime, block.timestamp);
+        // solhint-enable not-rely-on-time
+
+        interestRateData[_rate].interest += interest;
+        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    }
+
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
         // solhint-disable not-rely-on-time

@@ -132,6 +132,8 @@ interface ITroveManager {
 
     function addPrincipalToRate(uint16 _rate, uint256 _principal) external;
 
+    function updateSystemInterest(uint16 _rate) external;
+
     function increaseTroveColl(
         address _borrower,
         uint256 _collIncrease

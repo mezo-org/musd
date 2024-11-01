@@ -3322,6 +3322,75 @@ describe("TroveManager in Normal Mode", () => {
     context("State change in other contracts", () => {})
   })
 
+  describe("updateSystemInterest", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("updateSystemInterest(): should update the system interest", async () => {
+        await setupTroveWithInterestRate(100, 30)
+        const { lastUpdatedTime } =
+          await contracts.troveManager.interestRateData(100)
+        await contracts.troveManager.updateSystemInterest(100)
+
+        const { interest } = await contracts.troveManager.interestRateData(100)
+
+        expect(interest).to.equal(
+          calculateInterestOwed(
+            to1e18(10250),
+            100,
+            lastUpdatedTime,
+            BigInt(await getLatestBlockTimestamp()),
+          ),
+        )
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
   describe("Getters", () => {
     it("getTroveStake(): Returns stake", async () => {
       const { collateral } = await openTrove(contracts, {
