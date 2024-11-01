@@ -2,14 +2,18 @@ import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import { ethers } from "hardhat"
 import {
+  NO_GAS,
+  Contracts,
+  ContractsState,
+  TestingAddresses,
+  User,
   adjustTroveToICR,
   applyLiquidationFee,
+  calculateInterestOwed,
   checkTroveActive,
   checkTroveClosedByLiquidation,
   checkTroveClosedByRedemption,
   checkTroveStatus,
-  ContractsState,
-  Contracts,
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
@@ -17,15 +21,14 @@ import {
   getDebtAndCollFromTroveUpdatedEvents,
   getEmittedLiquidationValues,
   getEmittedRedemptionValues,
-  getRedemptionHints,
   getLatestBlockTimestamp,
+  getRedemptionHints,
   getTCR,
-  NO_GAS,
   openTrove,
   performRedemption,
   provideToSP,
   setBaseRate,
-  TestingAddresses,
+  setupTests,
   transferMUSD,
   updateContractsSnapshot,
   updatePCVSnapshot,
@@ -36,8 +39,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  User,
-  setupTests,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -3186,39 +3187,39 @@ describe("TroveManager in Normal Mode", () => {
      */
     context("Individual Troves", () => {
       it("calculateInterestOwed(): should calculate the interest owed for a trove after 15 days", async () => {
-        await setupTroveWithInterestRate(100, 15)
         const interest = await contracts.troveManager.calculateInterestOwed(
-          alice.wallet,
+          to1e18("10,250"),
+          100n,
+          0n,
+          1296000n, // 15 days in seconds
         )
 
-        /*
-         * Annual interest rate: 100 bps (or 0.01)
-         * Seconds in a year: 31536000
-         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
-         * Total debt: 10250
-         * Interest owed after 15 days: 3.17097919e-10 * 10250 * 15 * 60 * 60 * 24 = 4.212328755996
-         *
-         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
-         */
-        expect(interest).to.be.equal(4212328755996000000n)
+        const expectedInterest = calculateInterestOwed(
+          to1e18("10,250"),
+          100,
+          0n,
+          1296000n, // 15 days in seconds
+        )
+        expect(interest).to.be.equal(expectedInterest)
       })
 
       it("calculateInterestOwed(): should calculate the interest owed for a trove after 30 days", async () => {
         await setupTroveWithInterestRate(100, 30)
         const interest = await contracts.troveManager.calculateInterestOwed(
-          alice.wallet,
+          to1e18("10,250"),
+          100n,
+          0n,
+          2592000n, // 30 days in seconds
         )
 
-        /*
-         * Annual interest rate: 100 bps (or 0.01)
-         * Seconds in a year: 31536000
-         * Per second interest rate: 0.01 / 31536000 = 3.17097919e-10
-         * Total debt: 10250
-         * Interest owed after 30 days: 3.17097919e-10 * 10250 * 30 * 60 * 60 * 24 = 8.424657511992
-         *
-         * Note: This is using simple interest and not compounding for simplicity and gas efficiency.
-         */
-        expect(interest).to.be.equal(8424657511992000000n)
+        const expectedInterest = calculateInterestOwed(
+          to1e18("10,250"),
+          100,
+          0n,
+          2592000n, // 15 days in seconds
+        )
+
+        expect(interest).to.be.equal(expectedInterest)
       })
     })
 
@@ -3275,14 +3276,25 @@ describe("TroveManager in Normal Mode", () => {
       it("updateDebtWithInterest(): should update the trove with interest owed and set the lastInterestUpdatedTime", async () => {
         await setupTroveWithInterestRate(100, 30)
 
+        await updateTroveSnapshot(contracts, alice, "before")
+
         await contracts.troveManager.updateDebtWithInterest(alice.wallet)
-        const debt = await contracts.troveManager.getTroveDebt(alice.wallet)
-        const getTroveLastInterestUpdateTime =
-          await contracts.troveManager.getTroveLastInterestUpdateTime(
-            alice.wallet,
-          )
-        expect(debt).to.be.equal(10258424660762245669750n)
-        expect(getTroveLastInterestUpdateTime).to.be.equal(
+
+        await updateTroveSnapshot(contracts, alice, "after")
+
+        expect(alice.trove.debt.after).to.equal(alice.trove.debt.before)
+
+        const interestOwed = calculateInterestOwed(
+          to1e18("10,250"),
+          100,
+          alice.trove.lastInterestUpdateTime.before,
+          BigInt(await getLatestBlockTimestamp()),
+        )
+
+        expect(alice.trove.interestOwed.after).to.equal(
+          alice.trove.interestOwed.before + interestOwed,
+        )
+        expect(alice.trove.lastInterestUpdateTime.after).to.equal(
           await getLatestBlockTimestamp(),
         )
       })

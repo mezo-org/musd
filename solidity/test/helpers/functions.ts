@@ -941,3 +941,17 @@ export async function performRedemption(
       NO_GAS,
     )
 }
+
+export function calculateInterestOwed(
+  principal: bigint,
+  interestRateBips: number,
+  startTimeSeconds: bigint,
+  endTimeSeconds: bigint,
+) {
+  const secondsInOneYear = 31536000n
+  const elapsedSeconds = endTimeSeconds - startTimeSeconds
+  const interestRatePerSecond =
+    to1e18(interestRateBips) / (10000n * secondsInOneYear)
+
+  return (principal * interestRatePerSecond * elapsedSeconds) / to1e18(1)
+}

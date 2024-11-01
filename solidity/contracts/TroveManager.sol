@@ -877,27 +877,31 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
-        uint256 interestOwed = calculateInterestOwed(_borrower);
-        Troves[_borrower].debt += interestOwed;
+        Troves[_borrower].interestOwed = calculateInterestOwed(
+            Troves[_borrower].debt,
+            Troves[_borrower].interestRate,
+            Troves[_borrower].lastInterestUpdateTime,
+            block.timestamp
+        );
+
         // solhint-disable-next-line not-rely-on-time
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 
     // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
     function calculateInterestOwed(
-        address _borrower
-    ) public view returns (uint256) {
-        Trove storage trove = Troves[_borrower];
-        // slither-disable-start divide-before-multiply
-        uint256 interestRatePerSecond = (interestRate * DECIMAL_PRECISION) /
+        uint256 _principal,
+        uint16 _interestRate,
+        uint256 startTime,
+        uint256 endTime
+    ) public pure returns (uint256) {
+        uint256 interestRatePerSecond = (_interestRate * DECIMAL_PRECISION) /
             (10000 * SECONDS_IN_A_YEAR);
-        // solhint-disable-next-line not-rely-on-time
-        uint256 timeElapsed = block.timestamp - trove.lastInterestUpdateTime;
-        uint256 interestOwed = (trove.debt *
-            interestRatePerSecond *
-            timeElapsed) / DECIMAL_PRECISION;
-        // slither-disable-end divide-before-multiply
-        return interestOwed;
+        uint256 timeElapsed = endTime - startTime;
+
+        return
+            (_principal * interestRatePerSecond * timeElapsed) /
+            DECIMAL_PRECISION;
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
