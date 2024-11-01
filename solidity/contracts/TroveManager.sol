@@ -699,6 +699,23 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
+    function updateSystemInterest(uint16 _rate) external {
+        InterestRateInfo memory _interestRateData = interestRateData[_rate];
+        // solhint-disable not-rely-on-time
+        uint256 interest = calculateInterestOwed(
+            _interestRateData.principal,
+            _rate,
+            _interestRateData.lastUpdatedTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        interestRateData[_rate].interest += interest;
+
+        // solhint-disable-next-line not-rely-on-time
+        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    }
+
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }

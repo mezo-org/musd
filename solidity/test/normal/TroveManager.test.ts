@@ -204,16 +204,20 @@ describe("TroveManager in Normal Mode", () => {
     expect(await checkTroveActive(contracts, eric)).to.equal(true)
   }
 
-  async function setupTroveWithInterestRate(
-    interestRate: number,
-    daysToFastForward: number,
-  ) {
+  async function setInterestRate(interestRate: number) {
     await contracts.troveManager
       .connect(council.wallet)
       .proposeInterestRate(interestRate)
     const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
     await fastForwardTime(timeToIncrease)
     await contracts.troveManager.connect(council.wallet).approveInterestRate()
+  }
+
+  async function setupTroveWithInterestRate(
+    interestRate: number,
+    daysToFastForward: number,
+  ) {
+    await setInterestRate(interestRate)
 
     await openTrove(contracts, {
       musdAmount: "10000",
@@ -3299,6 +3303,167 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
     })
+
+    /**
+     *
+     * Balance changes
+     *
+     */
+    context("Balance changes", () => {})
+
+    /**
+     *
+     * Fees
+     *
+     */
+    context("Fees", () => {})
+
+    /**
+     *
+     * State change in other contracts
+     *
+     */
+    context("State change in other contracts", () => {})
+  })
+
+  describe("updateSystemInterest", () => {
+    /**
+     *
+     * Expected Reverts
+     *
+     */
+    context("Expected Reverts", () => {})
+
+    /**
+     *
+     * Emitted Events
+     *
+     */
+    context("Emitted Events", () => {})
+
+    /**
+     *
+     * System State Changes
+     *
+     */
+    context("System State Changes", () => {
+      it("updateSystemInterest(): should update the system interest", async () => {
+        await setupTroveWithInterestRate(100, 30)
+        const { lastUpdatedTime } =
+          await contracts.troveManager.interestRateData(100)
+        await contracts.troveManager.updateSystemInterest(100)
+
+        const { interest } = await contracts.troveManager.interestRateData(100)
+
+        expect(interest).to.equal(
+          calculateInterestOwed(
+            to1e18(10250),
+            100,
+            lastUpdatedTime,
+            BigInt(await getLatestBlockTimestamp()),
+          ),
+        )
+      })
+
+      it("updateSystemInterest(): should update the system interest after a previous update", async () => {
+        await setupTroveWithInterestRate(100, 30)
+        await contracts.troveManager.updateSystemInterest(100)
+
+        await fastForwardTime(30 * 24 * 60 * 60)
+        const { lastUpdatedTime, interest: initialInterest } =
+          await contracts.troveManager.interestRateData(100)
+        await contracts.troveManager.updateSystemInterest(100)
+
+        const { interest } = await contracts.troveManager.interestRateData(100)
+
+        expect(interest).to.equal(
+          initialInterest +
+            calculateInterestOwed(
+              to1e18(10250),
+              100,
+              lastUpdatedTime,
+              BigInt(await getLatestBlockTimestamp()),
+            ),
+        )
+      })
+
+      it("updateSystemInterest(): should update the system interest with multiple troves", async () => {
+        await setupTroveWithInterestRate(100, 30)
+
+        await openTrove(contracts, {
+          sender: bob.wallet,
+          musdAmount: "20,000",
+        })
+        await updateTroveSnapshots(contracts, [alice, bob], "before")
+        const { lastUpdatedTime, interest: initialInterest } =
+          await contracts.troveManager.interestRateData(100)
+        await fastForwardTime(30 * 24 * 60 * 60)
+        await contracts.troveManager.updateSystemInterest(100)
+
+        const { interest } = await contracts.troveManager.interestRateData(100)
+
+        expect(interest).to.equal(
+          initialInterest +
+            calculateInterestOwed(
+              alice.trove.debt.before + bob.trove.debt.before,
+              100,
+              lastUpdatedTime,
+              BigInt(await getLatestBlockTimestamp()),
+            ),
+        )
+      })
+
+      it("updateSystemInterest(): should update the system interest with multiple interest rates", async () => {
+        await setupTroveWithInterestRate(100, 30)
+
+        await setInterestRate(200)
+        await openTrove(contracts, {
+          sender: bob.wallet,
+          musdAmount: "20,000",
+        })
+        const initialTime200 = BigInt(await getLatestBlockTimestamp())
+        await updateTroveSnapshots(contracts, [alice, bob], "before")
+        await contracts.troveManager.updateSystemInterest(100)
+        const { lastUpdatedTime, interest: initialInterestAt100 } =
+          await contracts.troveManager.interestRateData(100)
+
+        await fastForwardTime(30 * 24 * 60 * 60)
+        await contracts.troveManager.updateSystemInterest(100)
+        const finalTime100 = BigInt(await getLatestBlockTimestamp())
+        await contracts.troveManager.updateSystemInterest(200)
+        const finalTime200 = BigInt(await getLatestBlockTimestamp())
+
+        const { interest: finalInterestAt100 } =
+          await contracts.troveManager.interestRateData(100)
+        const { interest: finalInterestAt200 } =
+          await contracts.troveManager.interestRateData(200)
+
+        expect(finalInterestAt100).to.equal(
+          initialInterestAt100 +
+            calculateInterestOwed(
+              alice.trove.debt.before,
+              100,
+              lastUpdatedTime,
+              finalTime100,
+            ),
+        )
+        expect(finalInterestAt200).to.equal(
+          calculateInterestOwed(
+            bob.trove.debt.before,
+            200,
+            initialTime200,
+            finalTime200,
+          ),
+        )
+      })
+    })
+
+    /**
+     *
+     * Individual Troves
+     *
+     */
+    context("Individual Troves", () => {})
 
     /**
      *

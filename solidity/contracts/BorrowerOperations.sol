@@ -200,6 +200,10 @@ contract BorrowerOperations is
             maxBorrowingCapacity
         );
 
+        contractsCache.troveManager.updateSystemInterest(
+            contractsCache.troveManager.interestRate()
+        );
+
         // Add trove's principal to the total principal for it's interest rate
         contractsCache.troveManager.addPrincipalToRate(
             contractsCache.troveManager.interestRate(),
