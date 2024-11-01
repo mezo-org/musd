@@ -185,21 +185,26 @@ contract BorrowerOperations is
             msg.sender,
             contractsCache.troveManager.interestRate()
         );
-        // solhint-disable-next-line not-rely-on-time
+        // solhint-disable not-rely-on-time
         contractsCache.troveManager.setTroveLastInterestUpdateTime(
             msg.sender,
             block.timestamp
         );
+        // solhint-enable not-rely-on-time
 
         // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
-        uint256 maxBorrowingCapacity = (_assetAmount * vars.price) / (110 * 1e16);
+        uint256 maxBorrowingCapacity = (_assetAmount * vars.price) /
+            (110 * 1e16);
         contractsCache.troveManager.setTroveMaxBorrowingCapacity(
             msg.sender,
             maxBorrowingCapacity
         );
 
         // Add trove's principal to the total principal for it's interest rate
-        contractsCache.troveManager.addPrincipalToRate(contractsCache.troveManager.interestRate(), vars.compositeDebt);
+        contractsCache.troveManager.addPrincipalToRate(
+            contractsCache.troveManager.interestRate(),
+            vars.compositeDebt
+        );
 
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(

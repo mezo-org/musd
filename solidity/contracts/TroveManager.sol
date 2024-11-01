@@ -679,11 +679,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function approveInterestRate() external onlyOwnerOrGovernance {
-        // solhint-disable-next-line not-rely-on-time
+        // solhint-disable not-rely-on-time
         require(
             block.timestamp >= proposalTime + MIN_DELAY,
             "Proposal delay not met"
         );
+        // solhint-enable not-rely-on-time
         _setInterestRate(proposedInterestRate);
     }
 
@@ -692,6 +693,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) external onlyOwnerOrGovernance {
         maxInterestRate = _newMaxInterestRate;
         emit MaxInterestRateUpdated(_newMaxInterestRate);
+    }
+
+    function addPrincipalToRate(uint16 _rate, uint256 _principal) external {
+        interestRateData[_rate].principal += _principal;
     }
 
     function getTroveOwnersCount() external view override returns (uint) {
@@ -900,35 +905,19 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
-    function addPrincipalToRate(uint16 _rate, uint256 _principal) external {
-        interestRateData[_rate].principal += _principal;
-    }
-
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
+        // solhint-disable not-rely-on-time
         Troves[_borrower].interestOwed = calculateInterestOwed(
             Troves[_borrower].debt,
             Troves[_borrower].interestRate,
             Troves[_borrower].lastInterestUpdateTime,
             block.timestamp
         );
+        // solhint-enable not-rely-on-time
 
         // solhint-disable-next-line not-rely-on-time
         Troves[_borrower].lastInterestUpdateTime = block.timestamp;
-    }
-
-    // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
-    function calculateInterestOwed(
-        uint256 _principal,
-        uint16 _interestRate,
-        uint256 startTime,
-        uint256 endTime
-    ) public pure returns (uint256) {
-        uint256 timeElapsed = endTime - startTime;
-
-        return
-            (_principal * _interestRate * timeElapsed) /
-            (10000 * SECONDS_IN_A_YEAR);
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
@@ -1041,6 +1030,20 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getRedemptionRate() public view override returns (uint) {
         return _calcRedemptionRate(baseRate);
+    }
+
+    // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
+    function calculateInterestOwed(
+        uint256 _principal,
+        uint16 _interestRate,
+        uint256 startTime,
+        uint256 endTime
+    ) public pure returns (uint256) {
+        uint256 timeElapsed = endTime - startTime;
+
+        return
+            (_principal * _interestRate * timeElapsed) /
+            (10000 * SECONDS_IN_A_YEAR);
     }
 
     // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
