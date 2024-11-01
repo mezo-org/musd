@@ -119,6 +119,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 totalMUSDDebtAtStart;
     }
 
+    // Store the total debt and last computation timestamps for an interest rate
+    struct InterestRateInfo {
+        uint256 principal; // The total principal at this interest rate
+        uint256 interest; // The total outstanding interest owed at this interest rate
+        uint256 lastUpdatedTime; // The last time interest was computed for this rate
+    }
+
     // --- Connected contract declarations ---
 
     address public borrowerOperationsAddress;
@@ -207,6 +214,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public constant MIN_DELAY = 7 days;
 
     uint256 public constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
+
+    // Mapping from interest rate to total principal and interest owed at that rate
+    mapping(uint16 => InterestRateInfo) public interestRateData;
 
     modifier onlyOwnerOrGovernance() {
         require(
@@ -888,6 +898,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.totalMUSDGasCompensation,
             totals.totalCollGasCompensation
         );
+    }
+
+    function addPrincipalToRate(uint16 _rate, uint256 _principal) external {
+        interestRateData[_rate].principal += _principal;
     }
 
     // TODO Change access modifier to limit calls to the contracts that need to call this

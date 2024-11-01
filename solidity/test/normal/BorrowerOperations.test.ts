@@ -743,6 +743,27 @@ describe("BorrowerOperations in Normal Mode", () => {
           dennis.trove.debt.before,
         )
       })
+
+      it("openTrove(): Adds the trove's principal to the principal for its interest rate", async () => {
+        const principalBefore = (
+          await contracts.troveManager.interestRateData(0)
+        ).principal
+
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          ICR: "400",
+          sender: dennis.wallet,
+        })
+
+        const principalAfter = (
+          await contracts.troveManager.interestRateData(0)
+        ).principal
+
+        await updateTroveSnapshot(contracts, dennis, "before")
+        expect(principalAfter - principalBefore).to.equal(
+          dennis.trove.debt.before,
+        )
+      })
     })
 
     /**
