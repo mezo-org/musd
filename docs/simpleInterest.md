@@ -14,18 +14,16 @@ This document outlines a block-based simple interest approach to manage debt and
 ### 2. Total Debt Tracking
 For the system, we maintain for each interest rate:
 - Total debt amount
-- Total interest accrued
-- Total interest minted
+- Total interest owed
 - Timestamp of the last update
 
 ### 3. Individual Trove Data
 Each trove stores:
 - Original debt amount
-- Interest stored (accumulated interest)
+- Interest owed
 - Interest rate 
 - Maximum borrowing capacity at current rate (fixed at opening based on 110% CR capacity)
 - Last update timestamp
-- Interest minted (tracks how much of the stored interest has been distributed)
 
 ### 4. Real-Time Interest
 - Interest is calculated precisely based on actual time elapsed
@@ -34,32 +32,31 @@ Each trove stores:
 
 ### 5. Interest Accumulation and Distribution
 - Interest is stored separately from the principal
-- New interest is calculated and added to stored interest during each interaction
+- New interest is calculated and added to owed interest during each user interaction with a trove
 - Total obligations are the sum of principal and accumulated interest
-- Interest distribution to PCV and gauge pool is tracked separately from interest accrual
+- Interest distribution to PCV and gauge pool is done separately from interest calculation
 - System maintains flexibility to batch interest payments
 
 ## Key Operations
 
-### Updating Total System Debt
+### Updating Total System Interest
 
-For each interest rate:
+System interest is stored per interest rate.  When a trove is modified, the interest for that rate is updated:
 
 1. Calculate new interest:
    ```
    new_interest = total_debt * (current_timestamp - last_update_timestamp) * interest_rate_per_second
    ```
-2. Add new interest to total interest accrued
+2. Add new interest to total interest owed
 3. Update the last update timestamp
-4. Track new interest owed to PCV and gauge pool (but don't mint immediately)
 
 ### Opening a New Trove
 1. Record the initial debt amount
 2. Calculate maximum borrowing capacity at 110% CR
 3. Set fixed interest rate based on maximum capacity (not initial borrow)
 4. Store the current timestamp as the update time
-5. Initialize stored interest and minted interest to zero
-6. Add debt to total system debt
+5. Initialize stored interest to zero
+6. Add principal to total system principal
 
 ### Calculating Interest for a Trove
 1. Calculate new interest accrued:
@@ -70,10 +67,9 @@ For each interest rate:
 
 ### Trove Interactions (Borrowing/Repaying/Adjusting)
 1. Calculate new interest owed up to current timestamp
-2. Add new interest to stored interest
-3. Process the requested operation (note that repayments will first be applied to accrued interest before paying off principal)
-4. Optionally mint and distribute accumulated unminted interest to PCV and gauge pool
-5. Update minted interest tracking if distribution occurs
+2. Add new interest to stored interest for the trove and for the system at the trove's interest rate
+3. Process the requested operation (note that repayments will first be applied to owed interest before paying off principal)
+4. Optionally mint and distribute accumulated interest to PCV and gauge pool
 
 ### Closing a Trove
 1. Calculate final interest owed up to current timestamp
