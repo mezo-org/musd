@@ -39,6 +39,7 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
+  updateInterestRateDataSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -2766,20 +2767,20 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  describe("updateSystemInterest", () => {
+  describe("updateSystemInterest()", () => {
     it("should update the system interest", async () => {
       await setupTroveWithInterestRate(100, 30)
-      const { lastUpdatedTime } =
-        await contracts.troveManager.interestRateData(100)
+      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+
       await contracts.troveManager.updateSystemInterest(100)
 
-      const { interest } = await contracts.troveManager.interestRateData(100)
+      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      expect(interest).to.equal(
+      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
         calculateInterestOwed(
           to1e18(10250),
           100,
-          lastUpdatedTime,
+          state.troveManager.interestRateData[100].lastUpdatedTime.before,
           BigInt(await getLatestBlockTimestamp()),
         ),
       )
@@ -2789,20 +2790,20 @@ describe("TroveManager in Normal Mode", () => {
       await setupTroveWithInterestRate(100, 30)
       await contracts.troveManager.updateSystemInterest(100)
 
+      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+
       await fastForwardTime(30 * 24 * 60 * 60)
-      const { lastUpdatedTime, interest: initialInterest } =
-        await contracts.troveManager.interestRateData(100)
       await contracts.troveManager.updateSystemInterest(100)
 
-      const { interest } = await contracts.troveManager.interestRateData(100)
+      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      expect(interest).to.equal(
-        initialInterest +
+      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+        state.troveManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             to1e18(10250),
             100,
-            lastUpdatedTime,
-            BigInt(await getLatestBlockTimestamp()),
+            state.troveManager.interestRateData[100].lastUpdatedTime.before,
+            state.troveManager.interestRateData[100].lastUpdatedTime.after,
           ),
       )
     })
@@ -2814,21 +2815,23 @@ describe("TroveManager in Normal Mode", () => {
         sender: bob.wallet,
         musdAmount: "20,000",
       })
+
+      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
       await updateTroveSnapshots(contracts, [alice, bob], "before")
-      const { lastUpdatedTime, interest: initialInterest } =
-        await contracts.troveManager.interestRateData(100)
+
       await fastForwardTime(30 * 24 * 60 * 60)
       await contracts.troveManager.updateSystemInterest(100)
 
-      const { interest } = await contracts.troveManager.interestRateData(100)
+      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+      await updateTroveSnapshots(contracts, [alice, bob], "after")
 
-      expect(interest).to.equal(
-        initialInterest +
+      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+        state.troveManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             alice.trove.debt.before + bob.trove.debt.before,
             100,
-            lastUpdatedTime,
-            BigInt(await getLatestBlockTimestamp()),
+            state.troveManager.interestRateData[100].lastUpdatedTime.before,
+            state.troveManager.interestRateData[100].lastUpdatedTime.after,
           ),
       )
     })
@@ -2841,39 +2844,41 @@ describe("TroveManager in Normal Mode", () => {
         sender: bob.wallet,
         musdAmount: "20,000",
       })
-      const initialTime200 = BigInt(await getLatestBlockTimestamp())
+
+      await updateInterestRateDataSnapshot(contracts, state, 200, "before")
       await updateTroveSnapshots(contracts, [alice, bob], "before")
+
       await contracts.troveManager.updateSystemInterest(100)
-      const { lastUpdatedTime, interest: initialInterestAt100 } =
-        await contracts.troveManager.interestRateData(100)
+
+      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
       await contracts.troveManager.updateSystemInterest(100)
-      const finalTime100 = BigInt(await getLatestBlockTimestamp())
+
+      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+
       await contracts.troveManager.updateSystemInterest(200)
-      const finalTime200 = BigInt(await getLatestBlockTimestamp())
 
-      const { interest: finalInterestAt100 } =
-        await contracts.troveManager.interestRateData(100)
-      const { interest: finalInterestAt200 } =
-        await contracts.troveManager.interestRateData(200)
+      await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
-      expect(finalInterestAt100).to.equal(
-        initialInterestAt100 +
+      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+        state.troveManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             alice.trove.debt.before,
             100,
-            lastUpdatedTime,
-            finalTime100,
+            state.troveManager.interestRateData[100].lastUpdatedTime.before,
+            state.troveManager.interestRateData[100].lastUpdatedTime.after,
           ),
       )
-      expect(finalInterestAt200).to.equal(
-        calculateInterestOwed(
-          bob.trove.debt.before,
-          200,
-          initialTime200,
-          finalTime200,
-        ),
+
+      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+        state.troveManager.interestRateData[200].interest.before +
+          calculateInterestOwed(
+            bob.trove.debt.before,
+            200,
+            state.troveManager.interestRateData[200].lastUpdatedTime.before,
+            state.troveManager.interestRateData[200].lastUpdatedTime.after,
+          ),
       )
     })
   })

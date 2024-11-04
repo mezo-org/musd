@@ -14,7 +14,12 @@ import {
   WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
-import { connectContracts, getAddresses, loadTestSetup } from "./context"
+import {
+  beforeAndAfter,
+  connectContracts,
+  getAddresses,
+  loadTestSetup,
+} from "./context"
 
 export const NO_GAS = {
   maxFeePerGas: 0,
@@ -147,6 +152,33 @@ export async function updatePCVSnapshot(
     await contracts.pcv.getAddress(),
   )
   // More fields can be added as needed
+}
+
+export async function updateInterestRateDataSnapshot(
+  contracts: Contracts,
+  state: ContractsState,
+  interestRate: number,
+  checkPoint: CheckPoint,
+) {
+  const { principal, interest, lastUpdatedTime } =
+    await contracts.troveManager.interestRateData(interestRate)
+
+  const data = state.troveManager.interestRateData[interestRate] ?? {}
+  if (!data.principal) {
+    data.principal = beforeAndAfter()
+  }
+  if (!data.interest) {
+    data.interest = beforeAndAfter()
+  }
+  if (!data.lastUpdatedTime) {
+    data.lastUpdatedTime = beforeAndAfter()
+  }
+
+  data.principal[checkPoint] = principal
+  data.interest[checkPoint] = interest
+  data.lastUpdatedTime[checkPoint] = lastUpdatedTime
+
+  state.troveManager.interestRateData[interestRate] = data
 }
 
 export async function updatePendingSnapshot(
