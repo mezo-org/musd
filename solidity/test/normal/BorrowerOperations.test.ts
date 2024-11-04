@@ -22,6 +22,7 @@ import {
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
+  setInterestRate,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import {
@@ -423,13 +424,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
-      // set the current interest rate to 100 bps
-      await contracts.troveManager
-        .connect(council.wallet)
-        .proposeInterestRate(100)
-      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-      await fastForwardTime(timeToIncrease)
-      await contracts.troveManager.connect(council.wallet).approveInterestRate()
+      await setInterestRate(contracts, council, 100)
 
       // open a new trove
       await openTrove(contracts, {
@@ -1251,6 +1246,27 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.activePool.getCollateralBalance(),
       )
       expect(afterCollateral).to.equal(beforeCollateral + collateralTopUp)
+    })
+
+    it("updates the Trove's interest owed ", async () => {
+      await setInterestRate(contracts, council, 100)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await addColl(contracts, {
+        amount: to1e18(1),
+        sender: carol.wallet,
+      })
+      await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      expect(carol.trove.interestOwed.after).to.be.greaterThan(
+        carol.trove.interestOwed.before,
+      )
     })
 
     context("Expected Reverts", () => {

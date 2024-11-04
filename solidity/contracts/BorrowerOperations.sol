@@ -545,6 +545,9 @@ contract BorrowerOperations is
             activePool,
             musd
         );
+
+        contractsCache.troveManager.updateDebtWithInterest(_borrower);
+
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;
         vars.price = priceFeed.fetchPrice();

@@ -986,3 +986,16 @@ export function calculateInterestOwed(
     (10000n * secondsInOneYear)
   )
 }
+
+export async function setInterestRate(
+  contracts: Contracts,
+  sender: User,
+  interestRate: number,
+) {
+  await contracts.troveManager
+    .connect(sender.wallet)
+    .proposeInterestRate(interestRate)
+  const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+  await fastForwardTime(timeToIncrease)
+  await contracts.troveManager.connect(sender.wallet).approveInterestRate()
+}
