@@ -1251,17 +1251,11 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates the Trove's interest owed", async () => {
-      await testUpdatesInterestOwed(
-        contracts,
-        carol,
-        council,
-        async () =>
-          (
-            await addColl(contracts, {
-              amount: to1e18(1),
-              sender: carol.wallet,
-            })
-          ).tx,
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        addColl(contracts, {
+          amount: to1e18(1),
+          sender: carol.wallet,
+        }),
       )
     })
 
@@ -1272,13 +1266,11 @@ describe("BorrowerOperations in Normal Mode", () => {
         carol,
         dennis,
         council,
-        async () =>
-          (
-            await addColl(contracts, {
-              amount: to1e18(1),
-              sender: carol.wallet,
-            })
-          ).tx,
+        () =>
+          addColl(contracts, {
+            amount: to1e18(1),
+            sender: carol.wallet,
+          }),
       )
     })
 

@@ -455,15 +455,11 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   params.upperHint =
     inputs.upperHint === undefined ? ZERO_ADDRESS : inputs.upperHint
 
-  const tx = await contracts.borrowerOperations
+  return contracts.borrowerOperations
     .connect(inputs.sender)
     .addColl(amount, params.lowerHint, params.upperHint, {
       value: amount, // The amount of chain base asset to send
     })
-
-  return {
-    tx,
-  }
 }
 
 export async function withdrawColl(
