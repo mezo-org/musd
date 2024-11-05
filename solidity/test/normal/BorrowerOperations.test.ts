@@ -24,6 +24,7 @@ import {
   updateWalletSnapshot,
   setInterestRate,
   updateInterestRateDataSnapshot,
+  testUpdatesInterestOwed,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import {
@@ -1250,23 +1251,17 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates the Trove's interest owed", async () => {
-      await setInterestRate(contracts, council, 100)
-      await openTrove(contracts, {
-        musdAmount: "50,000",
-        sender: carol.wallet,
-      })
-      await updateTroveSnapshot(contracts, carol, "before")
-
-      await addColl(contracts, {
-        amount: to1e18(1),
-        sender: carol.wallet,
-      })
-      await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
-
-      await updateTroveSnapshot(contracts, carol, "after")
-
-      expect(carol.trove.interestOwed.after).to.be.greaterThan(
-        carol.trove.interestOwed.before,
+      await testUpdatesInterestOwed(
+        contracts,
+        carol,
+        council,
+        async () =>
+          (
+            await addColl(contracts, {
+              amount: to1e18(1),
+              sender: carol.wallet,
+            })
+          ).tx,
       )
     })
 
@@ -1503,25 +1498,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it.only("updates the Trove's interest owed", async () => {
-      await setInterestRate(contracts, council, 100)
-      await openTrove(contracts, {
-        musdAmount: "50,000",
-        ICR: "1000",
-        sender: carol.wallet,
-      })
-      await updateTroveSnapshot(contracts, carol, "before")
-
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS)
-
-      await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
-
-      await updateTroveSnapshot(contracts, carol, "after")
-
-      expect(carol.trove.interestOwed.after).to.be.greaterThan(
-        carol.trove.interestOwed.before,
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS),
       )
     })
 

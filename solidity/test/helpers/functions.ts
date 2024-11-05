@@ -2,7 +2,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
-import { assert } from "chai"
+import { assert, expect } from "chai"
 import { GOVERNANCE_TIME_DELAY, to1e18, ZERO_ADDRESS } from "../utils"
 import {
   AddCollParams,
@@ -11,6 +11,7 @@ import {
   OpenTroveParams,
   TestingAddresses,
   User,
+  Users,
   WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
@@ -998,4 +999,29 @@ export async function setInterestRate(
   const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
   await fastForwardTime(timeToIncrease)
   await contracts.troveManager.connect(sender.wallet).approveInterestRate()
+}
+
+export async function testUpdatesInterestOwed(
+  contracts: Contracts,
+  user: User,
+  governance: User,
+  fn: () => Promise<ContractTransactionResponse>,
+) {
+  await setInterestRate(contracts, governance, 100)
+  await openTrove(contracts, {
+    musdAmount: "50,000",
+    ICR: "1000",
+    sender: user.wallet,
+  })
+  await updateTroveSnapshot(contracts, user, "before")
+
+  await fn()
+
+  await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
+
+  await updateTroveSnapshot(contracts, user, "after")
+
+  expect(user.trove.interestOwed.after).to.be.greaterThan(
+    user.trove.interestOwed.before,
+  )
 }
