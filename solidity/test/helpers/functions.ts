@@ -164,18 +164,14 @@ export async function updateInterestRateDataSnapshot(
     await contracts.troveManager.interestRateData(interestRate)
 
   const data = state.troveManager.interestRateData[interestRate] ?? {}
-  if (!data.principal) {
-    data.principal = beforeAndAfter()
-  }
-  if (!data.interest) {
-    data.interest = beforeAndAfter()
-  }
-  if (!data.lastUpdatedTime) {
-    data.lastUpdatedTime = beforeAndAfter()
-  }
 
+  data.principal ??= beforeAndAfter()
   data.principal[checkPoint] = principal
+
+  data.interest ??= beforeAndAfter()
   data.interest[checkPoint] = interest
+
+  data.lastUpdatedTime ??= beforeAndAfter()
   data.lastUpdatedTime[checkPoint] = lastUpdatedTime
 
   state.troveManager.interestRateData[interestRate] = data
