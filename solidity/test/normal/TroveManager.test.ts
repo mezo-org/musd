@@ -40,6 +40,7 @@ import {
   updateTroveSnapshots,
   updateWalletSnapshot,
   updateInterestRateDataSnapshot,
+  setInterestRate,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -205,20 +206,11 @@ describe("TroveManager in Normal Mode", () => {
     expect(await checkTroveActive(contracts, eric)).to.equal(true)
   }
 
-  async function setInterestRate(interestRate: number) {
-    await contracts.troveManager
-      .connect(council.wallet)
-      .proposeInterestRate(interestRate)
-    const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-    await fastForwardTime(timeToIncrease)
-    await contracts.troveManager.connect(council.wallet).approveInterestRate()
-  }
-
   async function setupTroveWithInterestRate(
     interestRate: number,
     daysToFastForward: number,
   ) {
-    await setInterestRate(interestRate)
+    await setInterestRate(contracts, council, interestRate)
 
     await openTrove(contracts, {
       musdAmount: "10000",
@@ -2839,7 +2831,7 @@ describe("TroveManager in Normal Mode", () => {
     it("should update the system interest with multiple interest rates", async () => {
       await setupTroveWithInterestRate(100, 30)
 
-      await setInterestRate(200)
+      await setInterestRate(contracts, council, 200)
       await openTrove(contracts, {
         sender: bob.wallet,
         musdAmount: "20,000",

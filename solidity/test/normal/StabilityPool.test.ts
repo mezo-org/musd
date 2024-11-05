@@ -1,21 +1,23 @@
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
 import {
-  NO_GAS,
   CheckPoint,
   Contracts,
   ContractsState,
-  TestingAddresses,
-  User,
   createLiquidationEvent,
   dropPrice,
+  dropPriceAndLiquidate,
   getEmittedLiquidationValues,
+  NO_GAS,
   openTrove,
   openTroveAndProvideStability,
   openTroves,
   openTrovesAndProvideStability,
   provideToSP,
   setupTests,
+  TestingAddresses,
+  testUpdatesInterestOwed,
+  testUpdatesSystemInterestOwed,
   transferMUSD,
   updateContractsSnapshot,
   updatePendingSnapshot,
@@ -27,6 +29,7 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
+  User,
   withdrawCollateralGainToTrove,
   withdrawCollateralGainToTroves,
 } from "../helpers"
@@ -37,8 +40,11 @@ describe("StabilityPool in Normal Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
+  let deployer: User
   let dennis: User
   let eric: User
+  let treasury: User
   let whale: User
   let state: ContractsState
   let contracts: Contracts
@@ -47,8 +53,25 @@ describe("StabilityPool in Normal Mode", () => {
   const pools: Pool[] = ["activePool", "defaultPool"]
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, dennis, eric, whale, contracts, state, addresses } =
-      await setupTests())
+    ;({
+      alice,
+      bob,
+      carol,
+      council,
+      deployer,
+      dennis,
+      eric,
+      treasury,
+      whale,
+      contracts,
+      state,
+      addresses,
+    } = await setupTests())
+
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
 
     await openTrove(contracts, {
       musdAmount: "5,000",
@@ -1296,6 +1319,29 @@ describe("StabilityPool in Normal Mode", () => {
     let users: User[] = []
     beforeEach(() => {
       users = [bob, carol, dennis]
+    })
+
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, async () => {
+        await provideToSP(contracts, carol, to1e18("20,000"))
+        await createLiquidationEvent(contracts)
+        return withdrawCollateralGainToTrove(contracts, carol)
+      })
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        async () => {
+          await provideToSP(contracts, carol, to1e18("20,000"))
+          await dropPriceAndLiquidate(contracts, alice)
+          return withdrawCollateralGainToTrove(contracts, carol)
+        },
+      )
     })
 
     it("decreases StabilityPool collateral and increases activePool collateral", async () => {

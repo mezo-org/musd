@@ -2,7 +2,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
-import { assert } from "chai"
+import { assert, expect } from "chai"
 import { GOVERNANCE_TIME_DELAY, to1e18, ZERO_ADDRESS } from "../utils"
 import {
   AddCollParams,
@@ -455,15 +455,11 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
   params.upperHint =
     inputs.upperHint === undefined ? ZERO_ADDRESS : inputs.upperHint
 
-  const tx = await contracts.borrowerOperations
+  return contracts.borrowerOperations
     .connect(inputs.sender)
     .addColl(amount, params.lowerHint, params.upperHint, {
       value: amount, // The amount of chain base asset to send
     })
-
-  return {
-    tx,
-  }
 }
 
 export async function withdrawColl(
@@ -608,7 +604,7 @@ export async function createLiquidationEvent(
   // which is below the MCR of 110%
   await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
 
-  // Liquidate Frank
+  // Liquidate defaulter
   const tx = await contracts.troveManager.liquidate(defaulter)
 
   // Reset the price
@@ -984,5 +980,95 @@ export function calculateInterestOwed(
   return (
     (principal * BigInt(interestRateBips) * elapsedSeconds) /
     (10000n * secondsInOneYear)
+  )
+}
+
+export async function setInterestRate(
+  contracts: Contracts,
+  sender: User,
+  interestRate: number,
+) {
+  await contracts.troveManager
+    .connect(sender.wallet)
+    .proposeInterestRate(interestRate)
+  const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+  await fastForwardTime(timeToIncrease)
+  await contracts.troveManager.connect(sender.wallet).approveInterestRate()
+}
+
+export async function testUpdatesInterestOwed(
+  contracts: Contracts,
+  user: User,
+  governance: User,
+  fn: () => Promise<ContractTransactionResponse>,
+) {
+  await setInterestRate(contracts, governance, 100)
+  await openTrove(contracts, {
+    musdAmount: "50,000",
+    ICR: "1000",
+    sender: user.wallet,
+  })
+  await updateTroveSnapshot(contracts, user, "before")
+
+  await fn()
+
+  await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
+
+  await updateTroveSnapshot(contracts, user, "after")
+
+  expect(user.trove.interestOwed.after).to.equal(
+    user.trove.interestOwed.before +
+      calculateInterestOwed(
+        user.trove.debt.before,
+        100,
+        user.trove.lastInterestUpdateTime.before,
+        user.trove.lastInterestUpdateTime.after,
+      ),
+  )
+}
+
+export async function testUpdatesSystemInterestOwed(
+  contracts: Contracts,
+  state: ContractsState,
+  userA: User,
+  userB: User,
+  governance: User,
+  fn: () => Promise<ContractTransactionResponse>,
+) {
+  await setInterestRate(contracts, governance, 100)
+  await openTrove(contracts, {
+    musdAmount: "50,000",
+    ICR: "1000",
+    sender: userA.wallet,
+  })
+  await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+
+  await setInterestRate(contracts, governance, 200)
+  await openTrove(contracts, {
+    musdAmount: "50,000",
+    sender: userB.wallet,
+  })
+  await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+
+  await fn()
+  await updateTroveSnapshot(contracts, userA, "after")
+  await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+  await updateTroveSnapshot(contracts, userB, "after")
+  await updateInterestRateDataSnapshot(contracts, state, 200, "after")
+
+  // Check that 100 bps interest rate data is updated
+  expect(
+    state.troveManager.interestRateData[100].interest.after,
+  ).to.be.greaterThan(state.troveManager.interestRateData[100].interest.before)
+  expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+    userA.trove.interestOwed.after,
+  )
+
+  // Check that 200 bps interest rate data is unchanged
+  expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+    state.troveManager.interestRateData[200].interest.before,
+  )
+  expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+    userB.trove.interestOwed.after,
   )
 }

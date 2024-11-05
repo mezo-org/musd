@@ -1,9 +1,6 @@
 import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
-  NO_GAS,
-  TestingAddresses,
-  User,
   addColl,
   createLiquidationEvent,
   fastForwardTime,
@@ -12,16 +9,22 @@ import {
   getTCR,
   getTroveEntireColl,
   getTroveEntireDebt,
+  NO_GAS,
   openTrove,
   removeMintlist,
   setBaseRate,
+  setInterestRate,
   setupTests,
+  TestingAddresses,
+  testUpdatesInterestOwed,
+  testUpdatesSystemInterestOwed,
   updateContractsSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
+  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import {
@@ -423,13 +426,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("opens a new Trove with the current interest rate and sets the lastInterestUpdatedTime", async () => {
-      // set the current interest rate to 100 bps
-      await contracts.troveManager
-        .connect(council.wallet)
-        .proposeInterestRate(100)
-      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-      await fastForwardTime(timeToIncrease)
-      await contracts.troveManager.connect(council.wallet).approveInterestRate()
+      await setInterestRate(contracts, council, 100)
 
       // open a new trove
       await openTrove(contracts, {
@@ -1253,6 +1250,30 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(afterCollateral).to.equal(beforeCollateral + collateralTopUp)
     })
 
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        addColl(contracts, {
+          amount: to1e18(1),
+          sender: carol.wallet,
+        }),
+      )
+    })
+
+    it("updates the system interest owed for the interest rate of the Trove", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          addColl(contracts, {
+            amount: to1e18(1),
+            sender: carol.wallet,
+          }),
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts if trove is non-existent or closed", async () => {
         await expect(
@@ -1443,6 +1464,28 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS),
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts when withdrawal would leave trove with ICR < MCR", async () => {
         const price = await contracts.priceFeed.fetchPrice()
@@ -1508,6 +1551,28 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("withdrawMUSD()", () => {
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(to1e18(1), to1e18(1), carol.wallet, carol.wallet),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .withdrawMUSD(to1e18(1), to1e18(1), carol.wallet, carol.wallet),
+      )
+    })
+
     it("decays a non-zero base rate", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
@@ -1884,6 +1949,28 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("repayMUSD()", () => {
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      )
+    })
+
     it("succeeds when it would leave trove with net debt >= minimum net debt", async () => {
       const amount = to1e18("1,000")
       await contracts.borrowerOperations
@@ -2027,6 +2114,44 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("adjustTrove()", () => {
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .adjustTrove(
+            to1e18(1),
+            0,
+            to1e18(1),
+            true,
+            0,
+            carol.wallet,
+            carol.wallet,
+          ),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .adjustTrove(
+              to1e18(1),
+              0,
+              to1e18(1),
+              true,
+              0,
+              carol.wallet,
+              carol.wallet,
+            ),
+      )
+    })
+
     it("decays a non-zero base rate", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
