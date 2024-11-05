@@ -50,10 +50,17 @@ type BeforeAndAfter = {
   after: bigint
 }
 
+type InterestRateInfo = {
+  principal: BeforeAndAfter
+  interest: BeforeAndAfter
+  lastUpdatedTime: BeforeAndAfter
+}
+
 export interface ContractsState {
   troveManager: {
     baseRate: BeforeAndAfter
     collateralSnapshot: BeforeAndAfter
+    interestRateData: Record<number, InterestRateInfo>
     lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter

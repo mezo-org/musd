@@ -73,13 +73,14 @@ export async function deployment() {
   return contracts
 }
 
-const beforeAndAfter = () => ({ before: 0n, after: 0n })
+export const beforeAndAfter = () => ({ before: 0n, after: 0n })
 
 function initializeContractState(): ContractsState {
   return {
     troveManager: {
       baseRate: beforeAndAfter(),
       collateralSnapshot: beforeAndAfter(),
+      interestRateData: {},
       lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
