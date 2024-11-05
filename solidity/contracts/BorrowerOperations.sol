@@ -547,6 +547,8 @@ contract BorrowerOperations is
         );
 
         contractsCache.troveManager.updateDebtWithInterest(_borrower);
+        contractsCache.troveManager.updateSystemInterest(
+            contractsCache.troveManager.getTroveInterestRate(_borrower));
 
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;

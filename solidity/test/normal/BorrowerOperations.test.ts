@@ -23,6 +23,7 @@ import {
   updateTroveSnapshot,
   updateWalletSnapshot,
   setInterestRate,
+  updateInterestRateDataSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import {
@@ -1248,7 +1249,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(afterCollateral).to.equal(beforeCollateral + collateralTopUp)
     })
 
-    it("updates the Trove's interest owed ", async () => {
+    it("updates the Trove's interest owed", async () => {
       await setInterestRate(contracts, council, 100)
       await openTrove(contracts, {
         musdAmount: "50,000",
@@ -1266,6 +1267,49 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       expect(carol.trove.interestOwed.after).to.be.greaterThan(
         carol.trove.interestOwed.before,
+      )
+    })
+
+    it("updates the system interest owed for the interest rate of the Trove", async () => {
+      await setInterestRate(contracts, council, 100)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        sender: carol.wallet,
+      })
+      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+
+      await setInterestRate(contracts, council, 200)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        sender: dennis.wallet,
+      })
+      await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+
+      await addColl(contracts, {
+        amount: to1e18(1),
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+      await updateTroveSnapshot(contracts, dennis, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 200, "after")
+
+      // Check that 100 bps interest rate data is updated
+      expect(
+        state.troveManager.interestRateData[100].interest.after,
+      ).to.be.greaterThan(
+        state.troveManager.interestRateData[100].interest.before,
+      )
+      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+        carol.trove.interestOwed.after,
+      )
+
+      // Check that 200 bps interest rate data is unchanged
+      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+        state.troveManager.interestRateData[200].interest.before,
+      )
+      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+        dennis.trove.interestOwed.after,
       )
     })
 
