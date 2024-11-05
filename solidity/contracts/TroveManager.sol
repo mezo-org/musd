@@ -38,7 +38,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint128 arrayIndex;
     }
 
-    // Object containing the collateral and MUSD snapshots for a given active trove
+    // Object containing the collateral and mUSD snapshots for a given active trove
     struct RewardSnapshot {
         uint256 collateral;
         uint256 MUSDDebt;
@@ -162,7 +162,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     uint256 public baseRate;
 
-    // The timestamp of the latest fee operation (redemption or new MUSD issuance)
+    // The timestamp of the latest fee operation (redemption or new mUSD issuance)
     uint256 public lastFeeOperationTime;
 
     mapping(address => Trove) public Troves;
@@ -331,7 +331,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             "TroveManager: nothing to liquidate"
         );
 
-        // Move liquidated collateral and MUSD to the appropriate pools
+        // Move liquidated collateral and mUSD to the appropriate pools
         stabilityPoolCached.offset(
             totals.totalDebtToOffset,
             totals.totalCollToSendToSP
@@ -376,7 +376,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
-    /* Send _MUSDamount MUSD to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
+    /* Send _MUSDamount mUSD to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
      * request.  Applies pending rewards to a Trove before reducing its debt and coll.
      *
      * Note that if _amount is very large, this function can run out of gas, specially if traversed troves are small. This can be easily avoided by
@@ -394,7 +394,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      *
      * If another transaction modifies the list between calling getRedemptionHints() and passing the hints to redeemCollateral(), it
      * is very likely that the last (partially) redeemed Trove would end up with a different ICR than what the hint is for. In this case the
-     * redemption will stop after the last completely redeemed Trove and the sender will keep the remaining MUSD amount, which they can attempt
+     * redemption will stop after the last completely redeemed Trove and the sender will keep the remaining mUSD amount, which they can attempt
      * to redeem later.
      */
     function redeemCollateral(
@@ -454,7 +454,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             }
         }
 
-        // Loop through the Troves starting from the one with lowest collateral ratio until _amount of MUSD is exchanged for collateral
+        // Loop through the Troves starting from the one with lowest collateral ratio until _amount of mUSD is exchanged for collateral
         if (_maxIterations == 0) {
             _maxIterations = type(uint256).max;
         }
@@ -501,7 +501,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
 
         // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
-        // Use the saved total MUSD supply value, from before it was reduced by the redemption.
+        // Use the saved total mUSD supply value, from before it was reduced by the redemption.
         _updateBaseRateFromRedemption(
             totals.totalCollateralDrawn,
             totals.price,
@@ -534,9 +534,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.collateralFee
         );
 
-        // Burn the total MUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
+        // Burn the total mUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
         contractsCache.musdToken.burn(msg.sender, totals.totalMUSDToRedeem);
-        // Update Active Pool MUSD, and send collateral to account
+        // Update Active Pool mUSD, and send collateral to account
         contractsCache.activePool.decreaseMUSDDebt(totals.totalMUSDToRedeem);
         contractsCache.activePool.sendCollateral(
             msg.sender,
@@ -580,7 +580,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _removeStake(_borrower);
     }
 
-    // Updates the baseRate state variable based on time elapsed since the last redemption or MUSD borrowing operation.
+    // Updates the baseRate state variable based on time elapsed since the last redemption or mUSD borrowing operation.
     function decayBaseRateFromBorrowing() external override {
         _requireCallerIsBorrowerOperations();
 
@@ -877,7 +877,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             "TroveManager: nothing to liquidate"
         );
 
-        // Move liquidated collateral and MUSD to the appropriate pools
+        // Move liquidated collateral and mUSD to the appropriate pools
         stabilityPoolCached.offset(
             totals.totalDebtToOffset,
             totals.totalCollToSendToSP
@@ -1204,7 +1204,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     /*
      * This function has two impacts on the baseRate state variable:
-     * 1) decays the baseRate based on time passed since last redemption or MUSD borrowing operation.
+     * 1) decays the baseRate based on time passed since last redemption or mUSD borrowing operation.
      * then,
      * 2) increases the baseRate based on the amount redeemed, as a proportion of total debt
      */
@@ -1215,7 +1215,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) internal returns (uint) {
         uint256 decayedBaseRate = _calcDecayedBaseRate();
 
-        /* Convert the drawn collateral back to MUSD at face value rate (1 MUSD:1 USD), in order to get
+        /* Convert the drawn collateral back to mUSD at face value rate (1 mUSD:1 USD), in order to get
          * the fraction of total supply that was redeemed at face value. */
         uint256 redeemedMUSDFraction = (_collateralDrawn * _price) /
             _totalMUSDDebt;
@@ -1658,7 +1658,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             /*
              * If 110% <= ICR < current TCR (accounting for the preceding liquidations in the current sequence)
-             * and there is MUSD in the Stability Pool, only offset, with no redistribution,
+             * and there is mUSD in the Stability Pool, only offset, with no redistribution,
              * but at a capped rate of 1.1 and only if the whole debt can be liquidated.
              * The remainder due to the capped rate will be claimable as collateral surplus.
              */
@@ -1715,8 +1715,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     /*
      * Called when a full redemption occurs, and closes the trove.
-     * The redeemer swaps (debt - liquidation reserve) MUSD for (debt - liquidation reserve) worth of collateral, so the MUSD liquidation reserve left corresponds to the remaining debt.
-     * In order to close the trove, the MUSD liquidation reserve is burned, and the corresponding debt is removed from the active pool.
+     * The redeemer swaps (debt - liquidation reserve) mUSD for (debt - liquidation reserve) worth of collateral, so the mUSD liquidation reserve left corresponds to the remaining debt.
+     * In order to close the trove, the mUSD liquidation reserve is burned, and the corresponding debt is removed from the active pool.
      * The debt recorded on the trove's struct is zero'd elswhere, in _closeTrove.
      * Any surplus collateral left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
      */
@@ -1728,7 +1728,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) internal {
         // slither-disable-next-line calls-loop
         _contractsCache.musdToken.burn(gasPoolAddress, _MUSD);
-        // Update Active Pool MUSD, and send collateral to account
+        // Update Active Pool mUSD, and send collateral to account
         // slither-disable-next-line calls-loop
         _contractsCache.activePool.decreaseMUSDDebt(_MUSD);
 
@@ -1742,7 +1742,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
-    // Redeem as much collateral as possible from _borrower's Trove in exchange for MUSD up to _maxMUSDamount
+    // Redeem as much collateral as possible from _borrower's Trove in exchange for mUSD up to _maxMUSDamount
     function _redeemCollateralFromTrove(
         ContractsCache memory _contractsCache,
         address _borrower,
@@ -1763,7 +1763,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (singleRedemption.MUSDLot * DECIMAL_PRECISION) /
             _price;
 
-        // Decrease the debt and collateral of the current Trove according to the MUSD lot and corresponding collateral to send
+        // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
         uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
         uint256 newColl = Troves[_borrower].coll -
             singleRedemption.collateralLot;
@@ -1850,8 +1850,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _addTroveOwnerToArray(
         address _borrower
     ) internal returns (uint128 index) {
-        /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum MUSD
-        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 MUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
+        /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum mUSD
+        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 mUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
 
         // Push the Troveowner to the array
         TroveOwners.push(_borrower);
@@ -1975,7 +1975,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) internal view {
         require(
             _musd.balanceOf(_redeemer) >= _amount,
-            "TroveManager: Requested redemption amount must be <= user's MUSD token balance"
+            "TroveManager: Requested redemption amount must be <= user's mUSD token balance"
         );
     }
 
@@ -2078,9 +2078,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
              * Offset as much debt & collateral as possible against the Stability Pool, and redistribute the remainder
              * between all active troves.
              *
-             *  If the trove's debt is larger than the deposited MUSD in the Stability Pool:
+             *  If the trove's debt is larger than the deposited mUSD in the Stability Pool:
              *
-             *  - Offset an amount of the trove's debt equal to the MUSD in the Stability Pool
+             *  - Offset an amount of the trove's debt equal to the mUSD in the Stability Pool
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */

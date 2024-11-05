@@ -13,9 +13,9 @@ import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IStabilityPool.sol";
 
 /*
- * The Active Pool holds the collateral and MUSD debt (but not MUSD tokens) for all active troves.
+ * The Active Pool holds the collateral and mUSD debt (but not mUSD tokens) for all active troves.
  *
- * When a trove is liquidated, it's collateral and MUSD debt are transferred from the Active Pool, to either the
+ * When a trove is liquidated, it's collateral and mUSD debt are transferred from the Active Pool, to either the
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */

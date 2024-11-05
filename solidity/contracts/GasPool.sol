@@ -47,7 +47,7 @@ contract GasPool is Ownable, CheckContract, IGasPool {
         );
         require(
             musdToken.transfer(_account, _amount),
-            "GasPool: sending MUSD failed"
+            "GasPool: sending mUSD failed"
         );
     }
 }

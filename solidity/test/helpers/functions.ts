@@ -39,7 +39,7 @@ export async function removeMintlist(
 }
 
 /*
- * given the requested MUSD amount in openTrove, returns the total debt
+ * given the requested mUSD amount in openTrove, returns the total debt
  * So, it adds the gas compensation and the borrowing fee
  */
 export async function getOpenTroveTotalDebt(
@@ -486,7 +486,7 @@ export async function withdrawColl(
     .withdrawColl(amount, params.lowerHint, params.upperHint)
 }
 
-// Withdraw MUSD from a trove to make ICR equal to the target ICR
+// Withdraw mUSD from a trove to make ICR equal to the target ICR
 export async function adjustTroveToICR(
   contracts: Contracts,
   from: HardhatEthersSigner,

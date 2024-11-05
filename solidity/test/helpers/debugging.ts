@@ -67,7 +67,7 @@ async function printAddressBalances(
     } else {
       console.log(address)
     }
-    console.log("\tMUSD : \t\t", formatBigIntWithCommas(balances.musd))
+    console.log("\tmUSD : \t\t", formatBigIntWithCommas(balances.musd))
     console.log("\tBTC : \t\t", formatBigIntWithCommas(balances.btc))
     console.log("")
   }

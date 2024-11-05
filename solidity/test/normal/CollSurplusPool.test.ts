@@ -53,7 +53,7 @@ describe("CollSurplusPool in Normal Mode", () => {
         sender: alice.wallet,
       })
 
-      // Whale sends Bob enough MUSD to liquidate Alice
+      // Whale sends Bob enough mUSD to liquidate Alice
       await contracts.musd.connect(whale.wallet).transfer(bob.wallet, netDebt)
 
       await updateTroveSnapshot(contracts, alice, "before")
@@ -109,7 +109,7 @@ describe("CollSurplusPool in Normal Mode", () => {
         sender: alice.wallet,
       })
 
-      // Whale sends Bob enough MUSD to liquidate Alice
+      // Whale sends Bob enough mUSD to liquidate Alice
       await contracts.musd.connect(whale.wallet).transfer(bob.wallet, netDebt)
 
       await updateTroveSnapshot(contracts, alice, "before")
@@ -146,7 +146,7 @@ describe("CollSurplusPool in Normal Mode", () => {
         sender: alice.wallet,
       })
 
-      // Whale sends Bob enough MUSD to liquidate Alice
+      // Whale sends Bob enough mUSD to liquidate Alice
       await contracts.musd.connect(whale.wallet).transfer(bob.wallet, netDebt)
 
       await updateTroveSnapshot(contracts, alice, "before")

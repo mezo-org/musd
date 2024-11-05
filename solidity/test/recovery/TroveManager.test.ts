@@ -749,7 +749,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("with 110% < ICR < TCR, and StabilityPool MUSD > debt to liquidate: offsets the trove entirely with the pool", async () => {
+    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: offsets the trove entirely with the pool", async () => {
       const { spDeposit, totalDebt } = await setupTrovesForStabilityPoolTests()
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
@@ -760,7 +760,7 @@ describe("TroveManager in Recovery Mode", () => {
       expect(state.stabilityPool.musd.after).to.equal(spDeposit - totalDebt)
     })
 
-    it("with ICR% = 110 < TCR, and StabilityPool MUSD > debt to liquidate: offsets the trove entirely with the pool, there’s no collateral surplus", async () => {
+    it("with ICR% = 110 < TCR, and StabilityPool mUSD > debt to liquidate: offsets the trove entirely with the pool, there’s no collateral surplus", async () => {
       await setupTrovesForStabilityPoolTests()
 
       await dropPrice(contracts, bob, to1e18("110"))
@@ -771,7 +771,7 @@ describe("TroveManager in Recovery Mode", () => {
       ).to.equal(0n)
     })
 
-    it("with 110% < ICR < TCR, and StabilityPool MUSD > debt to liquidate: removes stake and updates totalStakes", async () => {
+    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: removes stake and updates totalStakes", async () => {
       await setupTrovesForStabilityPoolTests()
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
@@ -787,7 +787,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("with 110% < ICR < TCR, and StabilityPool MUSD > debt to liquidate: updates system snapshots", async () => {
+    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: updates system snapshots", async () => {
       await setupTrovesForStabilityPoolTests()
       await updateTroveManagerSnapshot(contracts, state, "before")
       await dropPrice(contracts, bob, to1e18("112"))
@@ -801,7 +801,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("with 110% < ICR < TCR, and StabilityPool MUSD > debt to liquidate: closes the Trove", async () => {
+    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: closes the Trove", async () => {
       await setupTrovesForStabilityPoolTests()
       await dropPrice(contracts, bob, to1e18("112"))
       await contracts.troveManager.liquidate(bob.address)
@@ -936,7 +936,7 @@ describe("TroveManager in Recovery Mode", () => {
     })
 
     context("Expected Reverts", () => {
-      it("reverts with ICR > 110%, and StabilityPool MUSD < liquidated debt", async () => {
+      it("reverts with ICR > 110%, and StabilityPool mUSD < liquidated debt", async () => {
         await setupTrovesStabilityPoolLessThanDebt()
 
         await dropPrice(contracts, bob, to1e18("112"))

@@ -44,14 +44,14 @@ contract StabilityPool is
     IMUSD public musd;
     // Needed to check if there are pending liquidations
     ISortedTroves public sortedTroves;
-    // Tracker for MUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
+    // Tracker for mUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
     uint256 internal totalMUSDDeposits;
     uint256 internal collateral; // deposited collateral tracker
     mapping(address => uint256) public deposits; // depositor address -> initial value
     mapping(address => Snapshots) public depositSnapshots; // depositor address -> snapshots struct
 
     /*  Product 'P': Running product by which to multiply an initial deposit, in order to find the current compounded deposit,
-     * after a series of liquidations have occurred, each of which cancel some MUSD debt with the deposit.
+     * after a series of liquidations have occurred, each of which cancel some mUSD debt with the deposit.
      *
      * During its lifetime, a deposit's value evolves from d_t to d_t * P / P_t , where P_t
      * is the snapshot of P taken at the instant the deposit was made. 18-digit decimal.
@@ -161,7 +161,7 @@ contract StabilityPool is
             msg.sender,
             depositorCollateralGain,
             MUSDLoss
-        ); // MUSD Loss required for event log
+        ); // mUSD Loss required for event log
 
         _sendMUSDtoStabilityPool(msg.sender, _amount);
 
@@ -203,7 +203,7 @@ contract StabilityPool is
             msg.sender,
             depositorCollateralGain,
             MUSDLoss
-        ); // MUSD Loss required for event log
+        ); // mUSD Loss required for event log
 
         _sendCollateralGainToDepositor(depositorCollateralGain);
     }
@@ -259,7 +259,7 @@ contract StabilityPool is
     }
 
     /*
-     * Cancels out the specified debt against the MUSD contained in the Stability Pool (as far as possible)
+     * Cancels out the specified debt against the mUSD contained in the Stability Pool (as far as possible)
      * and transfers the Trove's collateral from ActivePool to StabilityPool.
      * Only called by liquidation functions in the TroveManager.
      */
@@ -359,8 +359,8 @@ contract StabilityPool is
         _decreaseMUSD(MUSDWithdrawal);
     }
 
-    // Transfer the MUSD tokens from the user to the Stability Pool's address,
-    // and update its recorded MUSD
+    // Transfer the mUSD tokens from the user to the Stability Pool's address,
+    // and update its recorded mUSD
     function _sendMUSDtoStabilityPool(
         address _address,
         uint256 _amount
@@ -431,7 +431,7 @@ contract StabilityPool is
         )
     {
         /*
-         * Compute the MUSD and collateral rewards. Uses a "feedback" error correction, to keep
+         * Compute the mUSD and collateral rewards. Uses a "feedback" error correction, to keep
          * the cumulative error in the P and S state variables low:
          *
          * 1) Form numerators which compensate for the floor division errors that occurred the last time this
@@ -454,7 +454,7 @@ contract StabilityPool is
                 DECIMAL_PRECISION -
                 lastMUSDLossError_Offset;
             /*
-             * Add 1 to make error in quotient positive. We want "slightly too much" MUSD loss,
+             * Add 1 to make error in quotient positive. We want "slightly too much" mUSD loss,
              * which ensures the error in any given compoundedMUSDDeposit favors the Stability Pool.
              */
             MUSDLossPerUnitStaked = MUSDLossNumerator / _totalMUSDDeposits + 1;
@@ -479,7 +479,7 @@ contract StabilityPool is
     ) internal {
         IActivePool activePoolCached = activePool;
 
-        // Cancel the liquidated MUSD debt with the MUSD in the stability pool
+        // Cancel the liquidated mUSD debt with the mUSD in the stability pool
         activePoolCached.decreaseMUSDDebt(_debtToOffset);
         _decreaseMUSD(_debtToOffset);
 
@@ -507,7 +507,7 @@ contract StabilityPool is
 
         assert(_MUSDLossPerUnitStaked <= DECIMAL_PRECISION);
         /*
-         * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool MUSD in the liquidation.
+         * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool mUSD in the liquidation.
          * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - MUSDLossPerUnitStaked)
          */
         uint256 newProductFactor = DECIMAL_PRECISION - _MUSDLossPerUnitStaked;

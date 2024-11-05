@@ -10,10 +10,10 @@ import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IActivePool.sol";
 
 /*
- * The Default Pool holds the collateral and MUSD debt (but not MUSD tokens) from liquidations that have been redistributed
+ * The Default Pool holds the collateral and mUSD debt (but not mUSD tokens) from liquidations that have been redistributed
  * to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
  *
- * When a trove makes an operation that applies its pending collateral and MUSD debt, its pending collateral and MUSD debt is moved
+ * When a trove makes an operation that applies its pending collateral and mUSD debt, its pending collateral and mUSD debt is moved
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {

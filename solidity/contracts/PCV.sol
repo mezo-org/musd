@@ -11,7 +11,7 @@ import "./interfaces/IPCV.sol";
 import "./BorrowerOperations.sol";
 
 contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
-    uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M MUSD
+    uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
 
     uint256 public immutable governanceTimeDelay;
 
@@ -135,7 +135,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         );
         require(
             musd.transfer(_recipient, _musdAmount),
-            "PCV: sending MUSD failed"
+            "PCV: sending mUSD failed"
         );
         // slither-disable-next-line reentrancy-events
         emit MUSDWithdraw(_recipient, _musdAmount);
