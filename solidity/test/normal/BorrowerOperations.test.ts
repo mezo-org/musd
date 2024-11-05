@@ -1958,6 +1958,28 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("repayMUSD()", () => {
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      )
+    })
+
     it("succeeds when it would leave trove with net debt >= minimum net debt", async () => {
       const amount = to1e18("1,000")
       await contracts.borrowerOperations
