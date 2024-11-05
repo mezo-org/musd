@@ -38,13 +38,13 @@ describe("ActivePool", () => {
   })
 
   describe("getMUSDDebt()", () => {
-    it("gets the recorded MUSD balance", async () => {
+    it("gets the recorded mUSD balance", async () => {
       expect(await contracts.activePool.getMUSDDebt()).to.equal(0)
     })
   })
 
   describe("increaseMUSDDebt()", () => {
-    it("increases the recorded MUSD balance by the correct amount", async () => {
+    it("increases the recorded mUSD balance by the correct amount", async () => {
       await updateContractsSnapshot(
         contracts,
         state,
@@ -73,7 +73,7 @@ describe("ActivePool", () => {
   })
 
   describe("decreaseMUSDDebt()", () => {
-    it("decreases the recorded MUSD balance by the correct amount", async () => {
+    it("decreases the recorded mUSD balance by the correct amount", async () => {
       const initialAmount = to1e18("100")
 
       await contracts.activePool

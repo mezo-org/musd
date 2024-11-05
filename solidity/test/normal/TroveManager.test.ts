@@ -476,7 +476,7 @@ describe("TroveManager in Normal Mode", () => {
         .connect(bob.wallet)
         .transfer(dennis.wallet, spDeposit, { from: bob.wallet })
 
-      // Dennis provides MUSD to SP
+      // Dennis provides mUSD to SP
       await provideToSP(contracts, dennis, spDeposit)
 
       // Alice gets liquidated
@@ -678,7 +678,7 @@ describe("TroveManager in Normal Mode", () => {
         false,
       )
 
-      // Carol's collateral less the liquidation fee and MUSD should be added to the default pool
+      // Carol's collateral less the liquidation fee and mUSD should be added to the default pool
       const liquidatedColl = to1e18(
         applyLiquidationFee(carol.trove.collateral.before),
       )
@@ -696,7 +696,7 @@ describe("TroveManager in Normal Mode", () => {
         expectedLMUSDDebtAfterCarolLiquidated,
       )
 
-      // Alice now withdraws MUSD, bring her ICR to 1.11
+      // Alice now withdraws mUSD, bring her ICR to 1.11
       const { increasedTotalDebt } = await adjustTroveToICR(
         contracts,
         alice.wallet,
@@ -960,13 +960,13 @@ describe("TroveManager in Normal Mode", () => {
       )
       expect(state.activePool.btc.before).to.equal(expectedCollateralBefore)
 
-      // check MUSD Debt
+      // check mUSD Debt
       expect(state.activePool.debt.before).to.equal(
         alice.trove.debt.before + bob.trove.debt.before,
       )
 
-      /* Close Alice's Trove. Should liquidate her collateral and MUSD,
-       * leaving Bob’s collateral and MUSD debt in the ActivePool. */
+      /* Close Alice's Trove. Should liquidate her collateral and mUSD,
+       * leaving Bob’s collateral and mUSD debt in the ActivePool. */
       await dropPriceAndLiquidate(contracts, alice)
 
       await updateContractsSnapshot(
@@ -982,11 +982,11 @@ describe("TroveManager in Normal Mode", () => {
       )
       expect(state.activePool.btc.after).to.equal(bob.trove.collateral.before)
 
-      // check ActivePool MUSD debt
+      // check ActivePool mUSD debt
       expect(state.activePool.debt.after).to.equal(bob.trove.debt.before)
     })
 
-    it("increases DefaultPool collateral and MUSD debt by correct amounts", async () => {
+    it("increases DefaultPool collateral and mUSD debt by correct amounts", async () => {
       await setupTroves()
       await updateTroveSnapshot(contracts, alice, "before")
       await updateTroveSnapshot(contracts, bob, "before")
@@ -1002,7 +1002,7 @@ describe("TroveManager in Normal Mode", () => {
       expect(state.defaultPool.collateral.before).to.equal(0n)
       expect(state.defaultPool.btc.before).to.equal(0n)
 
-      // check MUSD Debt
+      // check mUSD Debt
       expect(state.defaultPool.debt.before).to.equal(0n)
 
       await dropPriceAndLiquidate(contracts, alice)
@@ -1411,7 +1411,7 @@ describe("TroveManager in Normal Mode", () => {
         sender: carol.wallet,
       })
 
-      // Send MUSD to Carol so she can close her trove
+      // Send mUSD to Carol so she can close her trove
       await contracts.musd
         .connect(bob.wallet)
         .transfer(carol.address, to1e18("1000"))
@@ -1490,7 +1490,7 @@ describe("TroveManager in Normal Mode", () => {
         partialRedemptionAmount
 
       const maxRedeemableMUSD =
-        totalDebt - musdAmount - partialRedemptionAmount + to1e18("200") // Partial redemption amount + 200 MUSD for gas comp
+        totalDebt - musdAmount - partialRedemptionAmount + to1e18("200") // Partial redemption amount + 200 mUSD for gas comp
       const netMUSDdebt = totalDebt - to1e18("200")
       const newColl = collateral - to1e18(maxRedeemableMUSD) / price
 
@@ -1530,7 +1530,7 @@ describe("TroveManager in Normal Mode", () => {
 
       const price = await contracts.priceFeed.fetchPrice()
 
-      // Try to redeem 10k MUSD.  At least 2 iterations should be needed for total redemption of the given amount.
+      // Try to redeem 10k mUSD.  At least 2 iterations should be needed for total redemption of the given amount.
       const { partialRedemptionHintNICR } =
         await contracts.hintHelpers.getRedemptionHints(
           to1e18("10,000"),
@@ -1585,7 +1585,7 @@ describe("TroveManager in Normal Mode", () => {
       const { collateralSent, collateralFee } =
         await getEmittedRedemptionValues(redemptionTx)
 
-      // Calculate the amount of collateral needed to redeem the given amount of MUSD
+      // Calculate the amount of collateral needed to redeem the given amount of mUSD
       const collNeeded = to1e18(redemptionAmount) / price
 
       await updateTroveSnapshots(
@@ -1740,7 +1740,7 @@ describe("TroveManager in Normal Mode", () => {
     it("performs partial redemption if resultant debt is > minimum net debt", async () => {
       await setupRedemptionTroves()
 
-      const redemptionAmount = to1e18("4120") // Alice and Bob's net debt + 100 MUSD
+      const redemptionAmount = to1e18("4120") // Alice and Bob's net debt + 100 mUSD
       await performRedemption(contracts, dennis, dennis, redemptionAmount)
 
       // Check that Alice and Bob's troves are closed by redemption
@@ -1752,7 +1752,7 @@ describe("TroveManager in Normal Mode", () => {
       // Check that Carol's trove is still active
       expect(await checkTroveActive(contracts, carol)).to.equal(true)
 
-      // Check that Carol's debt has been reduced by 100 MUSD because of the partial redemption
+      // Check that Carol's debt has been reduced by 100 mUSD because of the partial redemption
       await updateTroveSnapshot(contracts, carol, "after")
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         to1e18("-100"),
@@ -1762,7 +1762,7 @@ describe("TroveManager in Normal Mode", () => {
     it("doesn't perform partial redemption if resultant debt would be < minimum net debt", async () => {
       await setupRedemptionTroves()
 
-      // Alice and Bob's net debt + 300 MUSD.  A partial redemption of 300 MUSD would put Carol below minimum net debt
+      // Alice and Bob's net debt + 300 mUSD.  A partial redemption of 300 mUSD would put Carol below minimum net debt
       const redemptionAmount = to1e18("4320")
 
       await performRedemption(contracts, dennis, dennis, redemptionAmount)
@@ -1806,7 +1806,7 @@ describe("TroveManager in Normal Mode", () => {
         lowerPartialRedemptionHint: l,
       } = await getRedemptionHints(contracts, dennis, to1e18("10"), price)
 
-      // Carol redeems 10 MUSD from Alice's trove ahead of Dennis's redemption
+      // Carol redeems 10 mUSD from Alice's trove ahead of Dennis's redemption
       await contracts.troveManager
         .connect(carol.wallet)
         .redeemCollateral(to1e18("10"), f, u, l, p, 0, to1e18("1"), NO_GAS)
@@ -1913,7 +1913,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("cancels the provided MUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
+    it("cancels the provided mUSD with debt from Troves with the lowest ICRs and sends an equivalent amount of collateral", async () => {
       await setupRedemptionTroves()
 
       const redemptionAmount = to1e18("200")
@@ -2012,7 +2012,7 @@ describe("TroveManager in Normal Mode", () => {
       await checkCollateralAndDebtValues(redemptionTx, redemptionAmount, price)
     })
 
-    it("caller can redeem their entire MUSDToken balance", async () => {
+    it("caller can redeem their entire mUSD balance", async () => {
       await setupRedemptionTroves()
       await updateWalletSnapshot(contracts, dennis, "before")
 
@@ -2239,7 +2239,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("value of issued collateral == face value of redeemed MUSD (assuming 1 MUSD has value of $1)", async () => {
+    it("value of issued collateral == face value of redeemed mUSD (assuming 1 mUSD has value of $1)", async () => {
       await setupRedemptionTroves()
 
       await updateContractsSnapshot(
@@ -2360,14 +2360,14 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.revertedWith("Fee exceeded provided maximum")
       })
 
-      it("reverts when requested redemption amount exceeds caller's MUSD token balance", async () => {
+      it("reverts when requested redemption amount exceeds caller's mUSD token balance", async () => {
         await setupRedemptionTroves()
         await updateWalletSnapshot(contracts, dennis, "before")
 
         await expect(
           performRedemption(contracts, dennis, dennis, dennis.musd.before + 1n),
         ).to.be.revertedWith(
-          "TroveManager: Requested redemption amount must be <= user's MUSD token balance",
+          "TroveManager: Requested redemption amount must be <= user's mUSD token balance",
         )
       })
 
@@ -2446,7 +2446,7 @@ describe("TroveManager in Normal Mode", () => {
         await updateTroveSnapshot(contracts, bob, "before")
 
         const partialAmount = to1e18("10")
-        const redemptionAmount = to1e18("2010") + partialAmount // Redeem an amount equal to Alice's net debt + 10 MUSD
+        const redemptionAmount = to1e18("2010") + partialAmount // Redeem an amount equal to Alice's net debt + 10 mUSD
 
         // Perform a redemption that fully redeems Alice's trove and partially redeems Bob's
         const redemptionTx = await performRedemption(
@@ -2485,7 +2485,7 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   describe("getPendingMUSDDebtReward()", () => {
-    it("returns 0 if there is no pending MUSD reward", async () => {
+    it("returns 0 if there is no pending mUSD reward", async () => {
       await setupTroves()
       await openTrove(contracts, {
         musdAmount: "5000",
@@ -2526,7 +2526,7 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(0)
     })
 
-    it.skip("Returns 2^256-1 for collateral:USD = 100, coll = 1 BTC/token, debt = 100 MUSD", async () => {
+    it.skip("Returns 2^256-1 for collateral:USD = 100, coll = 1 BTC/token, debt = 100 mUSD", async () => {
       // This seems designed to test an edge case where we would overflow but that edge case should no longer be possible
       // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L4043
     })

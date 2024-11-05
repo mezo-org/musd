@@ -1,6 +1,6 @@
-# MUSD Dapp
+# mUSD Dapp
 
-The dApp powering MUSD
+The dApp powering mUSD
 
 ## Development
 

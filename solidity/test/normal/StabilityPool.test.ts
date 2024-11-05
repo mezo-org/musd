@@ -83,7 +83,7 @@ describe("StabilityPool in Normal Mode", () => {
       await createLiquidationEvent(contracts)
     }
 
-    it("increases the Stability Pool MUSD balance", async () => {
+    it("increases the Stability Pool mUSD balance", async () => {
       const amount = to1e18(30)
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
@@ -161,7 +161,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(alice.stabilityPool.P.after).to.equal(state.stabilityPool.P.after)
       expect(alice.stabilityPool.S.after).to.equal(state.stabilityPool.S.after)
 
-      // Bob withdraws MUSD and deposits to StabilityPool
+      // Bob withdraws mUSD and deposits to StabilityPool
 
       await openTrove(contracts, {
         musdAmount: "3,000",
@@ -297,7 +297,7 @@ describe("StabilityPool in Normal Mode", () => {
       ).to.equal("3")
     })
 
-    it("reduces the user's MUSD balance", async () => {
+    it("reduces the user's mUSD balance", async () => {
       await updateWalletSnapshot(contracts, alice, "before")
 
       const amount = to1e18(200)
@@ -346,14 +346,14 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     context("Expected Reverts", () => {
-      it("reverts if user tries to provide more than their MUSD balance", async () => {
+      it("reverts if user tries to provide more than their mUSD balance", async () => {
         await updateWalletSnapshot(contracts, alice, "before")
 
         await expect(provideToSP(contracts, alice, alice.musd.before + 1n)).to
           .be.reverted
       })
 
-      it("reverts if user tries to provide 2^256-1 MUSD, which exceeds their balance", async () => {
+      it("reverts if user tries to provide 2^256-1 mUSD, which exceeds their balance", async () => {
         // Alice attempts to deposit 2^256-1 MUSD
         const maxBytes32 = BigInt(
           "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -395,7 +395,7 @@ describe("StabilityPool in Normal Mode", () => {
       await updateWalletSnapshot(contracts, alice, "after")
     }
 
-    it("leaves the correct amount of MUSD in the Stability Pool", async () => {
+    it("leaves the correct amount of mUSD in the Stability Pool", async () => {
       await setupPartialRetrieval()
       const { liquidatedDebt } =
         await getEmittedLiquidationValues(liquidationTx)
@@ -408,7 +408,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(state.stabilityPool.musd.after).to.equal(expectedMUSD)
     })
 
-    it("full retrieval - leaves the correct amount of MUSD in the Stability Pool", async () => {
+    it("full retrieval - leaves the correct amount of mUSD in the Stability Pool", async () => {
       await provideToSP(contracts, alice, to1e18("5,000"))
 
       await updateStabilityPoolUserSnapshots(
@@ -445,7 +445,7 @@ describe("StabilityPool in Normal Mode", () => {
       )
     })
 
-    it("it correctly updates the user's MUSD and collateral snapshots of entitled reward per unit staked", async () => {
+    it("it correctly updates the user's mUSD and collateral snapshots of entitled reward per unit staked", async () => {
       await provideToSP(contracts, alice, to1e18("4,000"))
 
       await createLiquidationEvent(contracts)
@@ -567,7 +567,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(whale.stabilityPool.collateralGain.after).to.equal(0n)
     })
 
-    it("withdrawing 0 MUSD doesn't alter the caller's deposit or the total MUSD in the Stability Pool", async () => {
+    it("withdrawing 0 mUSD doesn't alter the caller's deposit or the total mUSD in the Stability Pool", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
       await createLiquidationEvent(contracts)
 
@@ -612,7 +612,7 @@ describe("StabilityPool in Normal Mode", () => {
       })
     })
 
-    it("retrieves correct MUSD amount and the entire collateral Gain, and updates deposit", async () => {
+    it("retrieves correct mUSD amount and the entire collateral Gain, and updates deposit", async () => {
       await setupPartialRetrieval()
       const { liquidatedDebt, liquidatedColl } =
         await getEmittedLiquidationValues(liquidationTx)
@@ -659,7 +659,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(alice.btc.after).to.equal(alice.btc.before)
     })
 
-    it("increases depositor's MUSD token balance by the expected amount", async () => {
+    it("increases depositor's mUSD token balance by the expected amount", async () => {
       await provideToSP(contracts, alice, to1e18("4,000"))
 
       await createLiquidationEvent(contracts)
@@ -730,7 +730,7 @@ describe("StabilityPool in Normal Mode", () => {
       expect(whale.stabilityPool.compoundedDeposit.after).to.equal(0n)
     })
 
-    it("Request to withdraw 2^256-1 MUSD only withdraws the caller's compounded deposit", async () => {
+    it("Request to withdraw 2^256-1 mUSD only withdraws the caller's compounded deposit", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
       const maxBytes32 = BigInt(
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -835,14 +835,14 @@ describe("StabilityPool in Normal Mode", () => {
         await verify()
       })
 
-      it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after two liquidations of increasing MUSD", async () => {
+      it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after two liquidations of increasing mUSD", async () => {
         await setupIdenticalDeposits()
         await createLiquidationEvent(contracts)
         await createLiquidationEvent(contracts, "3,000")
         await verify()
       })
 
-      it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after three liquidations of increasing MUSD", async () => {
+      it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after three liquidations of increasing mUSD", async () => {
         await setupIdenticalDeposits()
         await createLiquidationEvent(contracts)
         await createLiquidationEvent(contracts, "3,000")
@@ -904,7 +904,7 @@ describe("StabilityPool in Normal Mode", () => {
         await verify()
       })
 
-      it("Bob, Carol, Dennis deposit -> 2 liquidations -> Eric deposits -> 2 liquidations. All deposits and liquidations = 10,000 MUSD.", async () => {
+      it("Bob, Carol, Dennis deposit -> 2 liquidations -> Eric deposits -> 2 liquidations. All deposits and liquidations = 10,000 mUSD.", async () => {
         await openTrove(contracts, {
           musdAmount: "10,000",
           ICR: "200",
@@ -942,7 +942,7 @@ describe("StabilityPool in Normal Mode", () => {
         await verify()
       })
 
-      it("Bob, Carol, Dennis deposit -> 2 liquidations -> Dennis withdraws -> 2 liquidations. All deposits and liquidations = 2,000 MUSD.", async () => {
+      it("Bob, Carol, Dennis deposit -> 2 liquidations -> Dennis withdraws -> 2 liquidations. All deposits and liquidations = 2,000 mUSD.", async () => {
         const users = [bob, carol, dennis]
         const amount = "2,000"
 
@@ -1042,7 +1042,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("deposit spans one scale factor change: Single depositor withdraws correct compounded deposit and collateral Gain after one liquidation", async () => {
-      // Add just enough MUSD to increase the scale
+      // Add just enough mUSD to increase the scale
       await provideToSP(contracts, whale, to1e18("10250") + 500000n)
 
       await createLiquidationEvent(contracts, "10,000")
@@ -1420,7 +1420,7 @@ describe("StabilityPool in Normal Mode", () => {
       expectCorrectCollateralGainWithEqualDeposits()
     })
 
-    it("Depositors with equal initial deposit withdraw correct collateral Gain after two liquidations of increasing MUSD", async () => {
+    it("Depositors with equal initial deposit withdraw correct collateral Gain after two liquidations of increasing mUSD", async () => {
       await openTrovesAndProvideStability(contracts, users, "10,000", "200")
 
       await createLiquidationEvent(contracts, "5,000")
@@ -1739,7 +1739,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("deposit spans one scale factor change: Single depositor withdraws correct collateral Gain after one liquidation", async () => {
-      // Add just enough MUSD to increase the scale
+      // Add just enough mUSD to increase the scale
       await provideToSP(contracts, whale, to1e18("10250") + 500000n)
 
       await createLiquidationEvent(contracts, "10,000")
@@ -1765,7 +1765,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("Several deposits of varying amounts span one scale factor change. Depositors withdraw correct compounded deposit and collateral Gain after one liquidation", async () => {
-      // Add just enough MUSD to increase the scale
+      // Add just enough mUSD to increase the scale
       await provideToSP(contracts, whale, to1e18("5250") + 500000n)
 
       await openTroveAndProvideStability(contracts, bob, "3,000", "200")

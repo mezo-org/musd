@@ -138,7 +138,7 @@ contract BorrowerOperations is
 
         _requireAtLeastMinNetDebt(vars.netDebt);
 
-        // ICR is based on the composite debt, i.e. the requested MUSD amount + MUSD borrowing fee + MUSD gas comp.
+        // ICR is based on the composite debt, i.e. the requested mUSD amount + mUSD borrowing fee + mUSD gas comp.
         vars.compositeDebt = _getCompositeDebt(vars.netDebt);
         assert(vars.compositeDebt > 0);
 
@@ -234,7 +234,7 @@ contract BorrowerOperations is
             _debtAmount,
             vars.netDebt
         );
-        // Move the MUSD gas compensation to the Gas Pool
+        // Move the mUSD gas compensation to the Gas Pool
         _withdrawMUSD(
             contractsCache.activePool,
             contractsCache.musd,
@@ -311,7 +311,7 @@ contract BorrowerOperations is
         );
     }
 
-    // Withdraw MUSD tokens from a trove: mint new MUSD tokens to the owner, and increase the trove's debt accordingly
+    // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's debt accordingly
     function withdrawMUSD(
         uint256 _maxFeePercentage,
         uint256 _amount,
@@ -330,7 +330,7 @@ contract BorrowerOperations is
         );
     }
 
-    // Repay MUSD tokens to a Trove: Burn the repaid MUSD tokens, and reduce the trove's debt accordingly
+    // Repay mUSD tokens to a Trove: Burn the repaid mUSD tokens, and reduce the trove's debt accordingly
     function repayMUSD(
         uint256 _amount,
         address _upperHint,
@@ -393,7 +393,7 @@ contract BorrowerOperations is
             uint8(BorrowerOperation.closeTrove)
         );
 
-        // Burn the repaid MUSD from the user's balance and the gas compensation from the Gas Pool
+        // Burn the repaid mUSD from the user's balance and the gas compensation from the Gas Pool
         _repayMUSD(
             activePoolCached,
             musdTokenCached,
@@ -452,7 +452,7 @@ contract BorrowerOperations is
         address _sortedTrovesAddress,
         address _troveManagerAddress
     ) external override onlyOwner {
-        // This makes impossible to open a trove with zero withdrawn MUSD
+        // This makes impossible to open a trove with zero withdrawn mUSD
         assert(MIN_NET_DEBT > 0);
 
         checkContract(_activePoolAddress);
@@ -611,7 +611,7 @@ contract BorrowerOperations is
             vars
         );
 
-        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough MUSD
+        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough mUSD
         if (!_isDebtIncrease && _MUSDChange > 0) {
             _requireAtLeastMinNetDebt(
                 _getNetDebt(vars.debt) - vars.netDebtChange
@@ -671,7 +671,7 @@ contract BorrowerOperations is
         );
     }
 
-    // Issue the specified amount of MUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
+    // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
     function _withdrawMUSD(
         IActivePool _activePool,
         IMUSD _musd,
@@ -891,7 +891,7 @@ contract BorrowerOperations is
     ) internal view {
         require(
             _musd.balanceOf(_borrower) >= _debtRepayment,
-            "BorrowerOps: Caller doesnt have enough MUSD to make repayment"
+            "BorrowerOps: Caller doesnt have enough mUSD to make repayment"
         );
     }
 

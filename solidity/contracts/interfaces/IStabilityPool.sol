@@ -3,17 +3,17 @@
 pragma solidity ^0.8.24;
 
 /*
- * The Stability Pool holds MUSD tokens deposited by Stability Pool depositors.
+ * The Stability Pool holds mUSD tokens deposited by Stability Pool depositors.
  *
- * When a trove is liquidated, then depending on system conditions, some of its MUSD debt gets offset with
- * MUSD in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of MUSD tokens in the Stability Pool is burned.
+ * When a trove is liquidated, then depending on system conditions, some of its mUSD debt gets offset with
+ * mUSD in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of mUSD tokens in the Stability Pool is burned.
  *
- * Thus, a liquidation causes each depositor to receive a MUSD loss, in proportion to their deposit as a share of total deposits.
+ * Thus, a liquidation causes each depositor to receive a mUSD loss, in proportion to their deposit as a share of total deposits.
  * They also receive an collateral gain, as the collateral of the liquidated trove is distributed among Stability depositors,
  * in the same proportion.
  *
  * When a liquidation occurs, it depletes every deposit by the same fraction: for example, a liquidation that depletes 40%
- * of the total MUSD in the Stability Pool, depletes 40% of each deposit.
+ * of the total mUSD in the Stability Pool, depletes 40% of each deposit.
  *
  * A deposit that has experienced a series of liquidations is termed a "compounded deposit": each liquidation depletes the deposit,
  * multiplying it by some factor in range ]0,1[
@@ -113,7 +113,7 @@ interface IStabilityPool {
      * Initial checks:
      * - Caller is TroveManager
      * ---
-     * Cancels out the specified debt against the MUSD contained in the Stability Pool (as far as possible)
+     * Cancels out the specified debt against the mUSD contained in the Stability Pool (as far as possible)
      * and transfers the Trove's collateral from ActivePool to StabilityPool.
      * Only called by liquidation functions in the TroveManager.
      */
@@ -126,7 +126,7 @@ interface IStabilityPool {
     function getCollateralBalance() external view returns (uint);
 
     /*
-     * Returns MUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
+     * Returns mUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
      */
     function getTotalMUSDDeposits() external view returns (uint);
 

@@ -41,7 +41,7 @@ describe("SortedTroves", () => {
       // Need to open two troves so that we can close Alice's. We can't close the last trove.
       await openTroves(contracts, [alice, bob], "2,000", "200")
 
-      // Give Alice extra MUSD to pay back fees.
+      // Give Alice extra mUSD to pay back fees.
       await contracts.musd.unprotectedMint(alice.wallet, to1e18("1,000"))
 
       await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
@@ -55,7 +55,7 @@ describe("SortedTroves", () => {
       // Need to open two troves so that we can close Alice's. We can't close the last trove.
       await openTroves(contracts, [alice, bob], "2,000", "200")
 
-      // Give Alice extra MUSD to pay back fees.
+      // Give Alice extra mUSD to pay back fees.
       await contracts.musd.unprotectedMint(alice.wallet, to1e18("1,000"))
 
       await contracts.borrowerOperations.connect(alice.wallet).closeTrove()

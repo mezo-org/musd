@@ -105,7 +105,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         .liquidate(alice.wallet)
 
       /* with total stakes = 10 ether/tokens, after liquidation, L_Collateral should equal 1/10 ether/token per-ether-staked/per-tokens-staked,
-      and L_MUSD should equal 18 MUSD per-ether-staked/per-tokens-staked. */
+      and L_MUSD should equal 18 mUSD per-ether-staked/per-tokens-staked. */
 
       const liquidatedCollateral = await contracts.troveManager.L_Collateral()
       const liquidatedDebt = await contracts.troveManager.L_MUSDDebt()

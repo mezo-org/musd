@@ -377,7 +377,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         sender: carol.wallet,
       })
 
-      // Get the expected debt based on the MUSD request (adding fee and liq. reserve on top)
+      // Get the expected debt based on the mUSD request (adding fee and liq. reserve on top)
       const expectedDebt =
         MIN_NET_DEBT +
         (await contracts.troveManager.getBorrowingFee(MIN_NET_DEBT)) +
@@ -394,7 +394,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Allows a user to open a Trove, then close it, then re-open it", async () => {
-      // Send MUSD to Alice so she has sufficent funds to close the trove
+      // Send mUSD to Alice so she has sufficent funds to close the trove
       await contracts.musd
         .connect(bob.wallet)
         .transfer(alice.address, to1e18("10,000"))
@@ -454,7 +454,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(lastInterestUpdatedTime).is.equal(currentTime)
     })
 
-    it("Increases user MUSD balance by correct amount", async () => {
+    it("Increases user mUSD balance by correct amount", async () => {
       expect(await contracts.musd.balanceOf(carol.wallet)).to.equal(0)
 
       const musdAmount = to1e18("100,000")
@@ -466,7 +466,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(await contracts.musd.balanceOf(carol.wallet)).to.equal(musdAmount)
     })
 
-    it("Increases the Trove's MUSD debt by the correct amount", async () => {
+    it("Increases the Trove's mUSD debt by the correct amount", async () => {
       const abi = [
         // Add your contract ABI here
         "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
@@ -492,7 +492,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("Increases MUSD debt in ActivePool by the debt of the trove", async () => {
+    it("Increases mUSD debt in ActivePool by the debt of the trove", async () => {
       const debtBefore = await contracts.activePool.getMUSDDebt()
 
       await openTrove(contracts, {
@@ -583,7 +583,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("Borrowing at non-zero base rate sends MUSD fee to PCV contract", async () => {
+    it("Borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
 
       const newRate = to1e18(5) / 100n
@@ -620,7 +620,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(dennis.musd.after).to.equal(musdAmount)
     })
 
-    it("Borrowing at zero base rate changes the PCV contract MUSD fees collected", async () => {
+    it("Borrowing at zero base rate changes the PCV contract mUSD fees collected", async () => {
       state.troveManager.baseRate.before =
         await contracts.troveManager.baseRate()
       expect(state.troveManager.baseRate.before).to.be.equal(0)
@@ -980,7 +980,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("subtracts the debt of the closed Trove from the Borrower's MUSDToken balance", async () => {
+    it("subtracts the debt of the closed Trove from the Borrower's mUSD balance", async () => {
       await updateTroveSnapshot(contracts, alice, "before")
 
       const amount = to1e18("10,000")
@@ -1143,11 +1143,11 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith("TroveManager: Only one trove in the system")
       })
 
-      it("reverts if borrower has insufficient MUSD balance to repay his entire debt", async () => {
+      it("reverts if borrower has insufficient mUSD to repay his entire debt", async () => {
         await expect(
           contracts.borrowerOperations.connect(bob.wallet).closeTrove(),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller doesnt have enough MUSD to make repayment",
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )
       })
     })
@@ -1587,7 +1587,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("borrowing at zero base rate changes MUSD fees", async () => {
+    it("borrowing at zero base rate changes mUSD fees", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTrove()
@@ -1601,7 +1601,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(state.pcv.musd.after).is.greaterThan(state.pcv.musd.before)
     })
 
-    it("increases the Trove's MUSD debt by the correct amount", async () => {
+    it("increases the Trove's mUSD debt by the correct amount", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       const borrowingRate = await contracts.troveManager.getBorrowingRate()
@@ -1685,7 +1685,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(await contracts.troveManager.baseRate()).is.lessThan(newRate)
     })
 
-    it("borrowing at non-zero base rate sends MUSD fee to PCV contract", async () => {
+    it("borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTroveAndAdjustRate()
@@ -1727,7 +1727,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("increases MUSD debt in ActivePool by correct amount", async () => {
+    it("increases mUSD debt in ActivePool by correct amount", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
 
@@ -1849,7 +1849,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
       })
 
-      it("reverts when requested withdrawal amount is zero MUSD", async () => {
+      it("reverts when requested withdrawal amount is zero mUSD", async () => {
         const maxFeePercentage = to1e18(1)
         const amount = 0
 
@@ -1868,7 +1868,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         expect(tcr).to.equal(to1e18(1.5))
 
-        // Bob attempts to withdraw 1 MUSD.
+        // Bob attempts to withdraw 1 mUSD.
         const maxFeePercentage = to1e18(1)
         const amount = to1e18(1)
 
@@ -1894,7 +1894,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.trove.debt.after).is.greaterThan(MIN_NET_DEBT)
     })
 
-    it("reduces the Trove's MUSD debt by the correct amount", async () => {
+    it("reduces the Trove's mUSD debt by the correct amount", async () => {
       const amount = to1e18("1,000")
       await updateTroveSnapshot(contracts, bob, "before")
       await contracts.borrowerOperations
@@ -1905,7 +1905,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
     })
 
-    it("decreases user MUSDToken balance by correct amount", async () => {
+    it("decreases user mUSD balance by correct amount", async () => {
       bob.musd.before = await contracts.musd.balanceOf(bob.address)
       const amount = to1e18("1,000")
       await contracts.borrowerOperations
@@ -1916,7 +1916,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.musd.after).to.equal(bob.musd.before - amount)
     })
 
-    it("decreases MUSD debt in ActivePool by correct amount", async () => {
+    it("decreases mUSD debt in ActivePool by correct amount", async () => {
       await updateContractsSnapshot(
         contracts,
         state,
@@ -2010,7 +2010,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWithPanic()
       })
 
-      it("Reverts if borrower has insufficient MUSD balance to cover his debt repayment", async () => {
+      it("Reverts if borrower has insufficient mUSD to cover his debt repayment", async () => {
         // bob has $20,000 of MUSD. Transfer $15,000 to Alice before trying to repay $15,000
         const amount = to1e18("15,000")
         await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
@@ -2020,7 +2020,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(bob.wallet)
             .repayMUSD(amount, bob.wallet, bob.wallet),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller doesnt have enough MUSD to make repayment",
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )
       })
     })
@@ -2245,7 +2245,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.musd.after).to.equal(carol.musd.before + amount)
     })
 
-    it("Borrowing at zero base rate sends total requested MUSD to the user", async () => {
+    it("Borrowing at zero base rate sends total requested mUSD to the user", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
@@ -2269,7 +2269,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.musd.after).to.equal(carol.musd.before + amount)
     })
 
-    it("Borrowing at zero base rate changes MUSD balance of PCV contract", async () => {
+    it("Borrowing at zero base rate changes mUSD balance of PCV contract", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
@@ -2295,7 +2295,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(state.pcv.musd.after).to.be.greaterThan(state.pcv.musd.before)
     })
 
-    it("borrowing at non-zero base rate sends MUSD fee to PCV contract", async () => {
+    it("borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
@@ -2616,7 +2616,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("changes MUSDToken balance by the requested decrease", async () => {
+    it("changes mUSD balance by the requested decrease", async () => {
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
@@ -2639,7 +2639,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.musd.after).to.be.equal(carol.musd.before - debtChange)
     })
 
-    it("changes MUSDToken balance by the requested increase", async () => {
+    it("changes mUSD balance by the requested increase", async () => {
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
@@ -2748,7 +2748,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("Changes the MUSD debt in ActivePool by requested decrease", async () => {
+    it("Changes the mUSD debt in ActivePool by requested decrease", async () => {
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
@@ -2788,7 +2788,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("Changes the MUSD debt in ActivePool by requested increase", async () => {
+    it("Changes the mUSD debt in ActivePool by requested increase", async () => {
       const abi = [
         // Add your contract ABI here
         "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
@@ -2993,7 +2993,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("reverts when MUSD repaid is > debt of the trove", async () => {
+      it("reverts when mUSD repaid is > debt of the trove", async () => {
         // Alice transfers MUSD to bob to compensate borrowing fees
         await contracts.musd
           .connect(alice.wallet)
@@ -3126,7 +3126,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it("Reverts if borrower has insufficient MUSD balance to cover his debt repayment", async () => {
+      it("Reverts if borrower has insufficient mUSD to cover his debt repayment", async () => {
         await updateTroveSnapshot(contracts, alice, "before")
         await expect(
           contracts.borrowerOperations

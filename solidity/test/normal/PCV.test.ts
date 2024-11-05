@@ -163,7 +163,7 @@ describe("PCV", () => {
   })
 
   describe("depositToStabilityPool()", () => {
-    it("deposits additional MUSD to StabilityPool", async () => {
+    it("deposits additional mUSD to StabilityPool", async () => {
       const depositAmount = to1e18("20")
       await contracts.musd.unprotectedMint(addresses.pcv, depositAmount)
       await PCVDeployer.depositToStabilityPool(depositAmount)
@@ -174,7 +174,7 @@ describe("PCV", () => {
     })
 
     context("Expected Reverts", () => {
-      it("reverts when not enough MUSD", async () => {
+      it("reverts when not enough mUSD", async () => {
         await expect(
           PCVDeployer.depositToStabilityPool(bootstrapLoan + 1n),
         ).to.be.revertedWith("PCV: not enough tokens")
@@ -183,7 +183,7 @@ describe("PCV", () => {
   })
 
   describe("withdrawMUSD()", () => {
-    it("withdraws MUSD to recipient", async () => {
+    it("withdraws mUSD to recipient", async () => {
       await debtPaid()
       const value = to1e18("20")
       await contracts.musd.unprotectedMint(addresses.pcv, value)
@@ -213,7 +213,7 @@ describe("PCV", () => {
         ).to.be.revertedWith("PCV: recipient must be in whitelist")
       })
 
-      it("reverts if not enough MUSD", async () => {
+      it("reverts if not enough mUSD", async () => {
         await debtPaid()
         await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
         await expect(
