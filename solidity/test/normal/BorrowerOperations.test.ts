@@ -1503,6 +1503,28 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it.only("updates the Trove's interest owed", async () => {
+      await setInterestRate(contracts, council, 100)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "1000",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS)
+
+      await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      expect(carol.trove.interestOwed.after).to.be.greaterThan(
+        carol.trove.interestOwed.before,
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts when withdrawal would leave trove with ICR < MCR", async () => {
         const price = await contracts.priceFeed.fetchPrice()
