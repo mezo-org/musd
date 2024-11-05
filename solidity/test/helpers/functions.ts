@@ -1025,3 +1025,48 @@ export async function testUpdatesInterestOwed(
     user.trove.interestOwed.before,
   )
 }
+
+export async function testUpdatesSystemInterestOwed(
+  contracts: Contracts,
+  state: ContractsState,
+  userA: User,
+  userB: User,
+  governance: User,
+  fn: () => Promise<ContractTransactionResponse>,
+) {
+  await setInterestRate(contracts, governance, 100)
+  await openTrove(contracts, {
+    musdAmount: "50,000",
+    sender: userA.wallet,
+  })
+  await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+
+  await setInterestRate(contracts, governance, 200)
+  await openTrove(contracts, {
+    musdAmount: "50,000",
+    sender: userB.wallet,
+  })
+  await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+
+  await fn()
+  await updateTroveSnapshot(contracts, userA, "after")
+  await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+  await updateTroveSnapshot(contracts, userB, "after")
+  await updateInterestRateDataSnapshot(contracts, state, 200, "after")
+
+  // Check that 100 bps interest rate data is updated
+  expect(
+    state.troveManager.interestRateData[100].interest.after,
+  ).to.be.greaterThan(state.troveManager.interestRateData[100].interest.before)
+  expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+    userA.trove.interestOwed.after,
+  )
+
+  // Check that 200 bps interest rate data is unchanged
+  expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+    state.troveManager.interestRateData[200].interest.before,
+  )
+  expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+    userB.trove.interestOwed.after,
+  )
+}
