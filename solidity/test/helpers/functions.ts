@@ -604,7 +604,7 @@ export async function createLiquidationEvent(
   // which is below the MCR of 110%
   await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
 
-  // Liquidate Frank
+  // Liquidate defaulter
   const tx = await contracts.troveManager.liquidate(defaulter)
 
   // Reset the price
