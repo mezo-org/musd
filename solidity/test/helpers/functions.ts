@@ -11,7 +11,6 @@ import {
   OpenTroveParams,
   TestingAddresses,
   User,
-  Users,
   WithdrawCollParams,
 } from "./interfaces"
 import { fastForwardTime } from "./time"
@@ -1021,8 +1020,14 @@ export async function testUpdatesInterestOwed(
 
   await updateTroveSnapshot(contracts, user, "after")
 
-  expect(user.trove.interestOwed.after).to.be.greaterThan(
-    user.trove.interestOwed.before,
+  expect(user.trove.interestOwed.after).to.equal(
+    user.trove.interestOwed.before +
+      calculateInterestOwed(
+        user.trove.debt.before,
+        100,
+        user.trove.lastInterestUpdateTime.before,
+        user.trove.lastInterestUpdateTime.after,
+      ),
   )
 }
 

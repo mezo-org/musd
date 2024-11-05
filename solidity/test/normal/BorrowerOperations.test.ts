@@ -1,9 +1,6 @@
 import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
-  NO_GAS,
-  TestingAddresses,
-  User,
   addColl,
   createLiquidationEvent,
   fastForwardTime,
@@ -12,20 +9,22 @@ import {
   getTCR,
   getTroveEntireColl,
   getTroveEntireDebt,
+  NO_GAS,
   openTrove,
   removeMintlist,
   setBaseRate,
+  setInterestRate,
   setupTests,
+  TestingAddresses,
+  testUpdatesInterestOwed,
+  testUpdatesSystemInterestOwed,
   updateContractsSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
   updateWalletSnapshot,
-  setInterestRate,
-  updateInterestRateDataSnapshot,
-  testUpdatesInterestOwed,
-  testUpdatesSystemInterestOwed,
+  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import {
