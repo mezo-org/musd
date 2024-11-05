@@ -2123,6 +2123,44 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("adjustTrove()", () => {
+    it("updates the Trove's interest owed", async () => {
+      await testUpdatesInterestOwed(contracts, carol, council, () =>
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .adjustTrove(
+            to1e18(1),
+            0,
+            to1e18(1),
+            true,
+            0,
+            carol.wallet,
+            carol.wallet,
+          ),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .adjustTrove(
+              to1e18(1),
+              0,
+              to1e18(1),
+              true,
+              0,
+              carol.wallet,
+              carol.wallet,
+            ),
+      )
+    })
+
     it("decays a non-zero base rate", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
