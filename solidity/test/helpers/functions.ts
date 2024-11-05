@@ -1037,6 +1037,7 @@ export async function testUpdatesSystemInterestOwed(
   await setInterestRate(contracts, governance, 100)
   await openTrove(contracts, {
     musdAmount: "50,000",
+    ICR: "1000",
     sender: userA.wallet,
   })
   await updateInterestRateDataSnapshot(contracts, state, 100, "before")

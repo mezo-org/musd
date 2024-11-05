@@ -1266,7 +1266,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it.only("updates the system interest owed for the interest rate of the Trove", async () => {
+    it("updates the system interest owed for the interest rate of the Trove", async () => {
       await testUpdatesSystemInterestOwed(
         contracts,
         state,
@@ -1478,6 +1478,20 @@ describe("BorrowerOperations in Normal Mode", () => {
         contracts.borrowerOperations
           .connect(carol.wallet)
           .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS),
+      )
+    })
+
+    it("updates the system interest owed for the Trove's interest rate", async () => {
+      await testUpdatesSystemInterestOwed(
+        contracts,
+        state,
+        carol,
+        dennis,
+        council,
+        () =>
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .withdrawColl(1n, carol.wallet, carol.wallet, NO_GAS),
       )
     })
 
