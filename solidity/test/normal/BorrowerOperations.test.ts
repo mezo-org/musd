@@ -1983,7 +1983,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it.only("updates the system interest owed for the Trove's interest rate", async () => {
+    it("updates the system interest owed for the Trove's interest rate", async () => {
       await setInterestRate(contracts, council, 100)
       await openTrove(contracts, {
         musdAmount: "50,000",
@@ -2008,12 +2008,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, dennis, "after")
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
+      console.log(state.troveManager.interestRateData[100])
       // Check that 100 bps interest rate data is updated
-      expect(
-        state.troveManager.interestRateData[100].interest.after,
-      ).to.be.greaterThan(
-        state.troveManager.interestRateData[100].interest.before,
-      )
       expect(state.troveManager.interestRateData[100].interest.after).to.equal(
         0n,
       )

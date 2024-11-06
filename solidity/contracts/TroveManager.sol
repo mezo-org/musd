@@ -6,16 +6,16 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
-import "./token/IMUSD.sol";
-import "./interfaces/IStabilityPool.sol";
-import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "./interfaces/ISortedTroves.sol";
+import "./interfaces/IStabilityPool.sol";
+import "./interfaces/ITroveManager.sol";
+import "./token/IMUSD.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -698,7 +698,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
-    function updateSystemInterest(uint16 _rate) external {
+    function updateSystemInterest(uint16 _rate) public {
         InterestRateInfo memory _interestRateData = interestRateData[_rate];
         // solhint-disable not-rely-on-time
         uint256 interest = calculateInterestOwed(
@@ -923,8 +923,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
+
         // solhint-disable not-rely-on-time
-        Troves[_borrower].interestOwed = calculateInterestOwed(
+        Troves[_borrower].interestOwed += calculateInterestOwed(
             Troves[_borrower].debt,
             Troves[_borrower].interestRate,
             Troves[_borrower].lastInterestUpdateTime,
@@ -1065,12 +1066,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 
+        updateSystemInterest(trove.interestRate);
+        updateDebtWithInterest(_borrower);
+
         if (_payment >= trove.interestOwed) {
             uint256 remainingPayment = _payment - trove.interestOwed;
+            interestRateData[trove.interestRate].principal -= remainingPayment;
+            interestRateData[trove.interestRate].interest -= trove.interestOwed;
             trove.interestOwed = 0;
             trove.debt = trove.debt > remainingPayment ? trove.debt - remainingPayment : 0;
         } else {
             trove.interestOwed -= _payment;
+            interestRateData[trove.interestRate].interest -= _payment;
         }
     }
 
