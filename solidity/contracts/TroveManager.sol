@@ -1063,6 +1063,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (10000 * SECONDS_IN_A_YEAR);
     }
 
+    function _updateTroveDebt(address _borrower, uint256 _payment) internal {
+        Trove storage trove = Troves[_borrower];
+
+        if (_payment >= trove.interestOwed) {
+            uint256 remainingPayment = _payment - trove.interestOwed;
+            trove.interestOwed = 0;
+            trove.debt = trove.debt > remainingPayment ? trove.debt - remainingPayment : 0;
+        } else {
+            trove.interestOwed -= _payment;
+        }
+    }
+
     // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
     function _setInterestRate(uint16 _newInterestRate) internal {
         require(
