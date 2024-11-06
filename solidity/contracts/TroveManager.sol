@@ -698,23 +698,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
-    function updateSystemInterest(uint16 _rate) public {
-        InterestRateInfo memory _interestRateData = interestRateData[_rate];
-        // solhint-disable not-rely-on-time
-        uint256 interest = calculateInterestOwed(
-            _interestRateData.principal,
-            _rate,
-            _interestRateData.lastUpdatedTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
-
-        interestRateData[_rate].interest += interest;
-
-        // solhint-disable-next-line not-rely-on-time
-        interestRateData[_rate].lastUpdatedTime = block.timestamp;
-    }
-
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -827,6 +810,23 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _checkRecoveryMode(_price);
     }
 
+    function updateSystemInterest(uint16 _rate) public {
+        InterestRateInfo memory _interestRateData = interestRateData[_rate];
+        // solhint-disable not-rely-on-time
+        uint256 interest = calculateInterestOwed(
+            _interestRateData.principal,
+            _rate,
+            _interestRateData.lastUpdatedTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        interestRateData[_rate].interest += interest;
+
+        // solhint-disable-next-line not-rely-on-time
+        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    }
+
     /*
      * Attempt to liquidate a custom list of troves provided by the caller.
      */
@@ -923,7 +923,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // TODO Change access modifier to limit calls to the contracts that need to call this
     function updateDebtWithInterest(address _borrower) public {
-
         // solhint-disable not-rely-on-time
         Troves[_borrower].interestOwed += calculateInterestOwed(
             Troves[_borrower].debt,
@@ -1074,7 +1073,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             interestRateData[trove.interestRate].principal -= remainingPayment;
             interestRateData[trove.interestRate].interest -= trove.interestOwed;
             trove.interestOwed = 0;
-            trove.debt = trove.debt > remainingPayment ? trove.debt - remainingPayment : 0;
+            trove.debt = trove.debt > remainingPayment
+                ? trove.debt - remainingPayment
+                : 0;
         } else {
             trove.interestOwed -= _payment;
             interestRateData[trove.interestRate].interest -= _payment;

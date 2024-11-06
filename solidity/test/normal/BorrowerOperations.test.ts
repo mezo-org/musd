@@ -2008,7 +2008,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, dennis, "after")
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
-      console.log(state.troveManager.interestRateData[100])
       // Check that 100 bps interest rate data is updated
       expect(state.troveManager.interestRateData[100].interest.after).to.equal(
         0n,
