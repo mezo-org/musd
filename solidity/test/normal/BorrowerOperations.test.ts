@@ -2,6 +2,7 @@ import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
   addColl,
+  calculateInterestOwed,
   createLiquidationEvent,
   fastForwardTime,
   getEventArgByName,
@@ -1950,10 +1951,33 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   describe("repayMUSD()", () => {
     it("updates the Trove's interest owed", async () => {
-      await testUpdatesInterestOwed(contracts, carol, council, () =>
-        contracts.borrowerOperations
-          .connect(carol.wallet)
-          .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      await setInterestRate(contracts, council, 100)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "1000",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet)
+
+      await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      // Carol's debt repayment gets applied to interest first
+      expect(carol.trove.interestOwed.after).to.equal(0n)
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before -
+          to1e18("1,000") +
+          calculateInterestOwed(
+            carol.trove.debt.before,
+            100,
+            carol.trove.lastInterestUpdateTime.before,
+            carol.trove.lastInterestUpdateTime.after,
+          ),
       )
     })
 

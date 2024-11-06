@@ -6,16 +6,16 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
-import "./token/IMUSD.sol";
-import "./interfaces/IStabilityPool.sol";
-import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "./interfaces/ISortedTroves.sol";
+import "./interfaces/IStabilityPool.sol";
+import "./interfaces/ITroveManager.sol";
+import "./token/IMUSD.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -646,9 +646,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _debtDecrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
-        uint256 newDebt = Troves[_borrower].debt - _debtDecrease;
-        Troves[_borrower].debt = newDebt;
-        return newDebt;
+        _updateTroveDebt(_borrower, _debtDecrease);
+        return _getTotalDebt(_borrower);
     }
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external {
@@ -1263,7 +1262,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             // Apply pending rewards to trove's state
             Troves[_borrower].coll += pendingCollateralReward;
-            Troves[_borrower].debt += pendingMUSDDebtReward;
+            _updateTroveDebt(_borrower, pendingMUSDDebtReward);
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -1277,7 +1276,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveUpdated(
                 _borrower,
-                Troves[_borrower].debt,
+                _getTotalDebt(_borrower),
                 Troves[_borrower].coll,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.applyPendingRewards)
@@ -1776,7 +1775,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _price;
 
         // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
-        uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
+        uint256 newDebt = _getTotalDebt(_borrower) - singleRedemption.MUSDLot;
         uint256 newColl = Troves[_borrower].coll -
             singleRedemption.collateralLot;
 
@@ -1822,7 +1821,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _lowerPartialRedemptionHint
             );
 
-            Troves[_borrower].debt = newDebt;
+            _updateTroveDebt(_borrower, singleRedemption.MUSDLot);
             Troves[_borrower].coll = newColl;
             _updateStakeAndTotalStakes(_borrower);
 
@@ -1916,6 +1915,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
         Troves[_borrower].debt = 0;
+        Troves[_borrower].interestOwed = 0;
 
         rewardSnapshots[_borrower].collateral = 0;
         rewardSnapshots[_borrower].MUSDDebt = 0;
