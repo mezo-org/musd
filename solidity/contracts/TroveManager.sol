@@ -785,7 +785,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function getTroveDebt(
         address _borrower
     ) external view override returns (uint) {
-        return Troves[_borrower].debt;
+        return _getTotalDebt(_borrower);
     }
 
     function getTroveInterestOwed(
@@ -985,7 +985,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 pendingCollateralReward
         )
     {
-        debt = Troves[_borrower].debt;
+        debt = _getTotalDebt(_borrower);
         coll = Troves[_borrower].coll;
 
         pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
@@ -1755,7 +1755,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.MUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            Troves[_borrower].debt - MUSD_GAS_COMPENSATION
+            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
         );
 
         // Get the collateralLot of equivalent value in USD
@@ -1997,7 +1997,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         uint256 currentCollateral = Troves[_borrower].coll +
             pendingCollateralReward;
-        uint256 currentMUSDDebt = Troves[_borrower].debt +
+        uint256 currentMUSDDebt = _getTotalDebt(_borrower) +
             pendingMUSDDebtReward;
 
         return (currentCollateral, currentMUSDDebt);
