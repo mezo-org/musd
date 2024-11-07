@@ -698,6 +698,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
+    function updateSystemAndTroveInterest(address _borrower) external {
+        _requireCallerIsBorrowerOperations();
+        _updateSystemInterest(Troves[_borrower].interestRate);
+        _updateDebtWithInterest(_borrower);
+    }
+
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -810,23 +816,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _checkRecoveryMode(_price);
     }
 
-    function updateSystemInterest(uint16 _rate) public {
-        InterestRateInfo memory _interestRateData = interestRateData[_rate];
-        // solhint-disable not-rely-on-time
-        uint256 interest = calculateInterestOwed(
-            _interestRateData.principal,
-            _rate,
-            _interestRateData.lastUpdatedTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
-
-        interestRateData[_rate].interest += interest;
-
-        // solhint-disable-next-line not-rely-on-time
-        interestRateData[_rate].lastUpdatedTime = block.timestamp;
-    }
-
     /*
      * Attempt to liquidate a custom list of troves provided by the caller.
      */
@@ -919,21 +908,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.totalMUSDGasCompensation,
             totals.totalCollGasCompensation
         );
-    }
-
-    // TODO Change access modifier to limit calls to the contracts that need to call this
-    function updateDebtWithInterest(address _borrower) public {
-        // solhint-disable not-rely-on-time
-        Troves[_borrower].interestOwed += calculateInterestOwed(
-            Troves[_borrower].debt,
-            Troves[_borrower].interestRate,
-            Troves[_borrower].lastInterestUpdateTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
-
-        // solhint-disable-next-line not-rely-on-time
-        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
@@ -1062,11 +1036,43 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (10000 * SECONDS_IN_A_YEAR);
     }
 
+    // TODO Change access modifier to limit calls to the contracts that need to call this
+    function _updateDebtWithInterest(address _borrower) internal {
+        // solhint-disable not-rely-on-time
+        Troves[_borrower].interestOwed += calculateInterestOwed(
+            Troves[_borrower].debt,
+            Troves[_borrower].interestRate,
+            Troves[_borrower].lastInterestUpdateTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        // solhint-disable-next-line not-rely-on-time
+        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
+    }
+
+    function _updateSystemInterest(uint16 _rate) internal {
+        InterestRateInfo memory _interestRateData = interestRateData[_rate];
+        // solhint-disable not-rely-on-time
+        uint256 interest = calculateInterestOwed(
+            _interestRateData.principal,
+            _rate,
+            _interestRateData.lastUpdatedTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        interestRateData[_rate].interest += interest;
+
+        // solhint-disable-next-line not-rely-on-time
+        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    }
+
     /**
-      * Updates the debt on the given trove by first paying down interest owed, then the principal.
-      * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
-      * Calculation of the interest owed (for system and trove) should be performed before calling this function.
-      */
+     * Updates the debt on the given trove by first paying down interest owed, then the principal.
+     * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
+     * Calculation of the interest owed (for system and trove) should be performed before calling this function.
+     */
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 

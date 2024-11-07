@@ -200,9 +200,7 @@ contract BorrowerOperations is
             maxBorrowingCapacity
         );
 
-        contractsCache.troveManager.updateSystemInterest(
-            contractsCache.troveManager.interestRate()
-        );
+        contractsCache.troveManager.updateSystemAndTroveInterest(msg.sender);
 
         // Add trove's principal to the total principal for it's interest rate
         contractsCache.troveManager.addPrincipalToRate(
@@ -546,10 +544,7 @@ contract BorrowerOperations is
             musd
         );
 
-        contractsCache.troveManager.updateDebtWithInterest(_borrower);
-        contractsCache.troveManager.updateSystemInterest(
-            contractsCache.troveManager.getTroveInterestRate(_borrower)
-        );
+        contractsCache.troveManager.updateSystemAndTroveInterest(_borrower);
 
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;

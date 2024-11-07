@@ -2737,7 +2737,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, alice, "before")
 
-      await contracts.troveManager.updateDebtWithInterest(alice.wallet)
+      await contracts.troveManager.callUpdateDebtWithInterest(alice.wallet)
 
       await updateTroveSnapshot(contracts, alice, "after")
 
@@ -2770,10 +2770,10 @@ describe("TroveManager in Normal Mode", () => {
       const daysInSeconds = 30 * 24 * 60 * 60
       await fastForwardTime(daysInSeconds)
 
-      await contracts.troveManager.updateDebtWithInterest(alice.wallet)
+      await contracts.troveManager.callUpdateDebtWithInterest(alice.wallet)
 
       await fastForwardTime(daysInSeconds)
-      await contracts.troveManager.updateDebtWithInterest(alice.wallet)
+      await contracts.troveManager.callUpdateDebtWithInterest(alice.wallet)
       await updateTroveSnapshot(contracts, alice, "after")
 
       const expectedInterest = calculateInterestOwed(
@@ -2794,7 +2794,7 @@ describe("TroveManager in Normal Mode", () => {
       await setupTroveWithInterestRate(100, 30)
       await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
-      await contracts.troveManager.updateSystemInterest(100)
+      await contracts.troveManager.callUpdateSystemInterest(100)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
@@ -2810,12 +2810,12 @@ describe("TroveManager in Normal Mode", () => {
 
     it("should update the system interest after a previous update", async () => {
       await setupTroveWithInterestRate(100, 30)
-      await contracts.troveManager.updateSystemInterest(100)
+      await contracts.troveManager.callUpdateSystemInterest(100)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.updateSystemInterest(100)
+      await contracts.troveManager.callUpdateSystemInterest(100)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
@@ -2842,7 +2842,7 @@ describe("TroveManager in Normal Mode", () => {
       await updateTroveSnapshots(contracts, [alice, bob], "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.updateSystemInterest(100)
+      await contracts.troveManager.callUpdateSystemInterest(100)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
       await updateTroveSnapshots(contracts, [alice, bob], "after")
@@ -2870,16 +2870,16 @@ describe("TroveManager in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 200, "before")
       await updateTroveSnapshots(contracts, [alice, bob], "before")
 
-      await contracts.troveManager.updateSystemInterest(100)
+      await contracts.troveManager.callUpdateSystemInterest(100)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.updateSystemInterest(100)
+      await contracts.troveManager.callUpdateSystemInterest(100)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      await contracts.troveManager.updateSystemInterest(200)
+      await contracts.troveManager.callUpdateSystemInterest(200)
 
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
