@@ -1912,6 +1912,60 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
+      it("reverts when withdrawal would leave trove with ICR < MCR due to interest and not just principal", async () => {
+        // Open a high ICR trove to prevent us from going into recovery mode
+        await openTrove(contracts, {
+          sender: eric.wallet,
+          musdAmount: "10,000",
+          ICR: "1000",
+        })
+
+        // Open a trove at 111% ICR (it will have the default 0% interest rate)
+        await openTrove(contracts, {
+          sender: carol.wallet,
+          musdAmount: "2,000",
+          ICR: "111",
+        })
+
+        // Set the interest rate to 10% and open another trove now accruing interest
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          sender: dennis.wallet,
+          musdAmount: "2,000",
+          ICR: "111",
+        })
+
+        await fastForwardTime(100 * 24 * 60 * 60)
+
+        // Attempt to withdraw mUSD from the first trove, it should succeed
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(
+            maxFeePercentage,
+            amount,
+            carol.wallet,
+            carol.wallet,
+            NO_GAS,
+          )
+
+        // Attempt to withdraw mUSD from the second trove, it should fail due to interest accrued
+        await expect(
+          contracts.borrowerOperations
+            .connect(dennis.wallet)
+            .withdrawMUSD(
+              maxFeePercentage,
+              amount,
+              dennis.wallet,
+              dennis.wallet,
+              NO_GAS,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
       it("reverts if max fee > 100%", async () => {
         const maxFeePercentage = to1e18(1) + 1n
         const amount = 1n
