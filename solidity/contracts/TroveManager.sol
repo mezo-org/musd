@@ -1062,11 +1062,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (10000 * SECONDS_IN_A_YEAR);
     }
 
+    /**
+      * Updates the debt on the given trove by first paying down interest owed, then the principal.
+      * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
+      * Calculation of the interest owed (for system and trove) should be performed before calling this function.
+      */
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
-
-        updateSystemInterest(trove.interestRate);
-        updateDebtWithInterest(_borrower);
 
         if (_payment >= trove.interestOwed) {
             uint256 remainingPayment = _payment - trove.interestOwed;
