@@ -2137,6 +2137,50 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.trove.debt.after).is.greaterThan(MIN_NET_DEBT)
     })
 
+    it("succeeds when it would leave trove with net debt >= minimum net debt including interest", async () => {
+      // Set up Carol's trove with 0% interest rate
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      // Set interest rate to 10% and open a trove now accruing interest
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        sender: dennis.wallet,
+        musdAmount: "3,000",
+        ICR: "200",
+      })
+
+      // Fast-forward a year
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await updateTroveSnapshot(contracts, dennis, "before")
+
+      // Carol's trove should revert as it has not accrued any interest
+      await expect(
+        contracts.borrowerOperations
+          .connect(carol.wallet)
+          .repayMUSD(
+            carol.trove.debt.before - MIN_NET_DEBT,
+            carol.wallet,
+            carol.wallet,
+          ),
+      ).to.be.revertedWith(
+        "BorrowerOps: Trove's net debt must be greater than minimum",
+      )
+
+      // Dennis's trove should succeed due to the interest putting him over the minimum
+      await contracts.borrowerOperations
+        .connect(dennis.wallet)
+        .repayMUSD(
+          dennis.trove.debt.before - MIN_NET_DEBT,
+          dennis.wallet,
+          dennis.wallet,
+        )
+
+      await updateTroveSnapshot(contracts, dennis, "after")
+      expect(dennis.trove.debt.after).to.be.greaterThan(MIN_NET_DEBT)
+    })
+
     it("reduces the Trove's mUSD debt by the correct amount", async () => {
       const amount = to1e18("1,000")
       await updateTroveSnapshot(contracts, bob, "before")
