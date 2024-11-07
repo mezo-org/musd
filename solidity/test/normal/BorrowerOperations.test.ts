@@ -2,6 +2,7 @@ import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
   addColl,
+  calculateInterestOwed,
   createLiquidationEvent,
   fastForwardTime,
   getEventArgByName,
@@ -19,6 +20,7 @@ import {
   testUpdatesInterestOwed,
   testUpdatesSystemInterestOwed,
   updateContractsSnapshot,
+  updateInterestRateDataSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
@@ -1950,24 +1952,83 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   describe("repayMUSD()", () => {
     it("updates the Trove's interest owed", async () => {
-      await testUpdatesInterestOwed(contracts, carol, council, () =>
-        contracts.borrowerOperations
-          .connect(carol.wallet)
-          .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      await setInterestRate(contracts, council, 100)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "1000",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      const amount = to1e18("1,000")
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .repayMUSD(amount, carol.wallet, carol.wallet)
+
+      await fastForwardTime(60 * 60 * 24 * 7) // fast-forward one week
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      // Carol's debt repayment gets applied to interest first
+      expect(carol.trove.interestOwed.after).to.equal(0n)
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before -
+          amount +
+          calculateInterestOwed(
+            carol.trove.debt.before,
+            100,
+            carol.trove.lastInterestUpdateTime.before,
+            carol.trove.lastInterestUpdateTime.after,
+          ),
       )
     })
 
     it("updates the system interest owed for the Trove's interest rate", async () => {
-      await testUpdatesSystemInterestOwed(
-        contracts,
-        state,
-        carol,
-        dennis,
-        council,
-        () =>
-          contracts.borrowerOperations
-            .connect(carol.wallet)
-            .repayMUSD(to1e18("1,000"), carol.wallet, carol.wallet),
+      await setInterestRate(contracts, council, 100)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "1000",
+        sender: carol.wallet,
+      })
+      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+
+      await setInterestRate(contracts, council, 200)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        sender: dennis.wallet,
+      })
+      await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+
+      const amount = to1e18("1,000")
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .repayMUSD(amount, carol.wallet, carol.wallet)
+      await updateTroveSnapshot(contracts, carol, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+      await updateTroveSnapshot(contracts, dennis, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 200, "after")
+
+      // Check that 100 bps interest rate data is updated
+      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+        0n,
+      )
+      expect(state.troveManager.interestRateData[100].principal.after).to.equal(
+        state.troveManager.interestRateData[100].principal.before -
+          amount +
+          calculateInterestOwed(
+            state.troveManager.interestRateData[100].principal.before,
+            100,
+            state.troveManager.interestRateData[100].lastUpdatedTime.before,
+            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+          ),
+      )
+
+      // Check that 200 bps interest rate data is unchanged
+      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+        state.troveManager.interestRateData[200].interest.before,
+      )
+      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
+        dennis.trove.interestOwed.after,
       )
     })
 

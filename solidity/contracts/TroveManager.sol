@@ -6,16 +6,16 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
-import "./token/IMUSD.sol";
-import "./interfaces/IStabilityPool.sol";
-import "./interfaces/ISortedTroves.sol";
-import "./interfaces/ITroveManager.sol";
 import "./interfaces/IPCV.sol";
+import "./interfaces/ISortedTroves.sol";
+import "./interfaces/IStabilityPool.sol";
+import "./interfaces/ITroveManager.sol";
+import "./token/IMUSD.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     enum TroveManagerOperation {
@@ -646,9 +646,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _debtDecrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
-        uint256 newDebt = Troves[_borrower].debt - _debtDecrease;
-        Troves[_borrower].debt = newDebt;
-        return newDebt;
+        _updateTroveDebt(_borrower, _debtDecrease);
+        return _getTotalDebt(_borrower);
     }
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external {
@@ -699,21 +698,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
-    function updateSystemInterest(uint16 _rate) external {
-        InterestRateInfo memory _interestRateData = interestRateData[_rate];
-        // solhint-disable not-rely-on-time
-        uint256 interest = calculateInterestOwed(
-            _interestRateData.principal,
-            _rate,
-            _interestRateData.lastUpdatedTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
-
-        interestRateData[_rate].interest += interest;
-
-        // solhint-disable-next-line not-rely-on-time
-        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    function updateSystemAndTroveInterest(address _borrower) external {
+        _requireCallerIsBorrowerOperations();
+        _updateSystemInterest(Troves[_borrower].interestRate);
+        _updateDebtWithInterest(_borrower);
     }
 
     function getTroveOwnersCount() external view override returns (uint) {
@@ -785,7 +773,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function getTroveDebt(
         address _borrower
     ) external view override returns (uint) {
-        return Troves[_borrower].debt;
+        return _getTotalDebt(_borrower);
     }
 
     function getTroveInterestOwed(
@@ -922,21 +910,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
     }
 
-    // TODO Change access modifier to limit calls to the contracts that need to call this
-    function updateDebtWithInterest(address _borrower) public {
-        // solhint-disable not-rely-on-time
-        Troves[_borrower].interestOwed = calculateInterestOwed(
-            Troves[_borrower].debt,
-            Troves[_borrower].interestRate,
-            Troves[_borrower].lastInterestUpdateTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
-
-        // solhint-disable-next-line not-rely-on-time
-        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
-    }
-
     function getRedemptionRateWithDecay() public view override returns (uint) {
         return _calcRedemptionRate(_calcDecayedBaseRate());
     }
@@ -985,7 +958,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 pendingCollateralReward
         )
     {
-        debt = Troves[_borrower].debt;
+        debt = _getTotalDebt(_borrower);
         coll = Troves[_borrower].coll;
 
         pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
@@ -1061,6 +1034,60 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return
             (_principal * _interestRate * timeElapsed) /
             (10000 * SECONDS_IN_A_YEAR);
+    }
+
+    // TODO Change access modifier to limit calls to the contracts that need to call this
+    function _updateDebtWithInterest(address _borrower) internal {
+        // solhint-disable not-rely-on-time
+        Troves[_borrower].interestOwed += calculateInterestOwed(
+            Troves[_borrower].debt,
+            Troves[_borrower].interestRate,
+            Troves[_borrower].lastInterestUpdateTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        // solhint-disable-next-line not-rely-on-time
+        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
+    }
+
+    function _updateSystemInterest(uint16 _rate) internal {
+        InterestRateInfo memory _interestRateData = interestRateData[_rate];
+        // solhint-disable not-rely-on-time
+        uint256 interest = calculateInterestOwed(
+            _interestRateData.principal,
+            _rate,
+            _interestRateData.lastUpdatedTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        interestRateData[_rate].interest += interest;
+
+        // solhint-disable-next-line not-rely-on-time
+        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    }
+
+    /**
+     * Updates the debt on the given trove by first paying down interest owed, then the principal.
+     * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
+     * Calculation of the interest owed (for system and trove) should be performed before calling this function.
+     */
+    function _updateTroveDebt(address _borrower, uint256 _payment) internal {
+        Trove storage trove = Troves[_borrower];
+
+        if (_payment >= trove.interestOwed) {
+            uint256 remainingPayment = _payment - trove.interestOwed;
+            interestRateData[trove.interestRate].principal -= remainingPayment;
+            interestRateData[trove.interestRate].interest -= trove.interestOwed;
+            trove.interestOwed = 0;
+            trove.debt = trove.debt > remainingPayment
+                ? trove.debt - remainingPayment
+                : 0;
+        } else {
+            trove.interestOwed -= _payment;
+            interestRateData[trove.interestRate].interest -= _payment;
+        }
     }
 
     // Internal function to set the interest rate.  Changes must be proposed and approved by governance.
@@ -1755,7 +1782,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.MUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            Troves[_borrower].debt - MUSD_GAS_COMPENSATION
+            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
         );
 
         // Get the collateralLot of equivalent value in USD
@@ -1764,7 +1791,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _price;
 
         // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
-        uint256 newDebt = Troves[_borrower].debt - singleRedemption.MUSDLot;
+        uint256 newDebt = _getTotalDebt(_borrower) - singleRedemption.MUSDLot;
         uint256 newColl = Troves[_borrower].coll -
             singleRedemption.collateralLot;
 
@@ -1810,7 +1837,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _lowerPartialRedemptionHint
             );
 
-            Troves[_borrower].debt = newDebt;
+            _updateTroveDebt(_borrower, singleRedemption.MUSDLot);
             Troves[_borrower].coll = newColl;
             _updateStakeAndTotalStakes(_borrower);
 
@@ -1904,6 +1931,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
         Troves[_borrower].debt = 0;
+        Troves[_borrower].interestOwed = 0;
 
         rewardSnapshots[_borrower].collateral = 0;
         rewardSnapshots[_borrower].MUSDDebt = 0;
@@ -1997,10 +2025,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         uint256 currentCollateral = Troves[_borrower].coll +
             pendingCollateralReward;
-        uint256 currentMUSDDebt = Troves[_borrower].debt +
+        uint256 currentMUSDDebt = _getTotalDebt(_borrower) +
             pendingMUSDDebtReward;
 
         return (currentCollateral, currentMUSDDebt);
+    }
+
+    function _getTotalDebt(address _borrower) internal view returns (uint256) {
+        return Troves[_borrower].debt + Troves[_borrower].interestOwed;
     }
 
     // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
