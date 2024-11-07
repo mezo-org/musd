@@ -2384,6 +2384,25 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWithPanic()
       })
 
+      it("reverts when attempted repayment is > the principal of the trove but less than total debt including interest", async () => {
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          sender: carol.wallet,
+          musdAmount: "5000",
+        })
+        await fastForwardTime(60 * 60 * 24 * 365)
+        await updateTroveSnapshot(contracts, carol, "before")
+
+        const amount = carol.trove.debt.before + 1n
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .repayMUSD(amount, carol.wallet, carol.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: Trove's net debt must be greater than minimum",
+        )
+      })
+
       it("Reverts if borrower has insufficient mUSD to cover his debt repayment", async () => {
         // bob has $20,000 of MUSD. Transfer $15,000 to Alice before trying to repay $15,000
         const amount = to1e18("15,000")
