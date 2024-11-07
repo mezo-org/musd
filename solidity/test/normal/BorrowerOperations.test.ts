@@ -2186,6 +2186,52 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    // TODO Come back to this test after verifying behavior
+    it.skip("decreases mUSD debt in ActivePool by correct amount accounting for interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "1000",
+        sender: carol.wallet,
+      })
+
+      await fastForwardTime(60 * 60 * 24 * 30) // fast-forward 30 days
+
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+
+      const amount = to1e18("1,000")
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .repayMUSD(amount, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.debt.after).to.equal(
+        state.activePool.debt.before - amount + expectedInterest,
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts when repayment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
