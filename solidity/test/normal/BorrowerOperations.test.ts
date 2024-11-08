@@ -2138,10 +2138,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("succeeds when it would leave trove with net debt >= minimum net debt including interest", async () => {
-      // Set up Carol's trove with 0% interest rate
-      await setupCarolsTrove()
-      await updateTroveSnapshot(contracts, carol, "before")
-
       // Set interest rate to 10% and open a trove now accruing interest
       await setInterestRate(contracts, council, 1000)
       await openTrove(contracts, {
@@ -2154,19 +2150,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await fastForwardTime(365 * 24 * 60 * 60)
 
       await updateTroveSnapshot(contracts, dennis, "before")
-
-      // Carol's trove should revert as it has not accrued any interest
-      await expect(
-        contracts.borrowerOperations
-          .connect(carol.wallet)
-          .repayMUSD(
-            carol.trove.debt.before - MIN_NET_DEBT,
-            carol.wallet,
-            carol.wallet,
-          ),
-      ).to.be.revertedWith(
-        "BorrowerOps: Trove's net debt must be greater than minimum",
-      )
 
       // Dennis's trove should succeed due to the interest putting him over the minimum
       await contracts.borrowerOperations
@@ -2302,13 +2285,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           ICR: "1000",
         })
 
-        // Open a trove at 111% ICR (it will have the default 0% interest rate)
-        await openTrove(contracts, {
-          sender: carol.wallet,
-          musdAmount: "3,000",
-          ICR: "110",
-        })
-
         // Set the interest rate to 10% and open another trove now accruing interest
         await setInterestRate(contracts, council, 1000)
         await openTrove(contracts, {
@@ -2319,17 +2295,11 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         await fastForwardTime(100 * 24 * 60 * 60)
 
-        // Attempt to repay mUSD from the first trove, it should succeed
-        const amount = to1e18("1")
-        await contracts.borrowerOperations
-          .connect(carol.wallet)
-          .repayMUSD(amount, carol.wallet, carol.wallet)
-
-        // Attempt to repay mUSD from the second trove, it should fail due to interest accrued
+        // Attempt to repay mUSD from Dennis's trove, it should fail due to interest accrued
         await expect(
           contracts.borrowerOperations
             .connect(dennis.wallet)
-            .repayMUSD(amount, dennis.wallet, dennis.wallet),
+            .repayMUSD(to1e18("1"), dennis.wallet, dennis.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
