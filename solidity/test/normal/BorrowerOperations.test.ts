@@ -2231,7 +2231,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     // TODO Come back to this test after verifying behavior
-    it.skip("decreases mUSD debt in ActivePool by correct amount accounting for interest", async () => {
+    it.only("decreases mUSD debt in ActivePool by correct amount accounting for interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await openTrove(contracts, {
         musdAmount: "50,000",
