@@ -1508,6 +1508,47 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
+      it("reverts when withdrawal would leave trove with ICR < MCR due to interest and not just principal", async () => {
+        // Open a high ICR trove to prevent us from going into recovery mode
+        await openTrove(contracts, {
+          sender: eric.wallet,
+          musdAmount: "10,000",
+          ICR: "1000",
+        })
+
+        // Open a trove at 111% ICR (it will have the default 0% interest rate)
+        await openTrove(contracts, {
+          sender: carol.wallet,
+          musdAmount: "2,000",
+          ICR: "111",
+        })
+
+        // Set the interest rate to 10% and open another trove now accruing interest
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          sender: dennis.wallet,
+          musdAmount: "2,000",
+          ICR: "111",
+        })
+
+        await fastForwardTime(100 * 24 * 60 * 60)
+
+        // Attempt to withdraw collateral from the first trove, it should succeed
+        const withdrawalAmount = 1n
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawColl(withdrawalAmount, carol.wallet, carol.wallet, NO_GAS)
+
+        // Attempt to withdraw collateral from the second trove, it should fail due to interest accrued
+        await expect(
+          contracts.borrowerOperations
+            .connect(dennis.wallet)
+            .withdrawColl(withdrawalAmount, dennis.wallet, dennis.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
       it("no mintlist, reverts when withdrawal would leave trove with ICR < MCR", async () => {
         await removeMintlist(contracts, deployer.wallet)
 
@@ -1871,6 +1912,60 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
+      it("reverts when withdrawal would leave trove with ICR < MCR due to interest and not just principal", async () => {
+        // Open a high ICR trove to prevent us from going into recovery mode
+        await openTrove(contracts, {
+          sender: eric.wallet,
+          musdAmount: "10,000",
+          ICR: "1000",
+        })
+
+        // Open a trove at 111% ICR (it will have the default 0% interest rate)
+        await openTrove(contracts, {
+          sender: carol.wallet,
+          musdAmount: "2,000",
+          ICR: "111",
+        })
+
+        // Set the interest rate to 10% and open another trove now accruing interest
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          sender: dennis.wallet,
+          musdAmount: "2,000",
+          ICR: "111",
+        })
+
+        await fastForwardTime(100 * 24 * 60 * 60)
+
+        // Attempt to withdraw mUSD from the first trove, it should succeed
+        const maxFeePercentage = to1e18(1)
+        const amount = to1e18(1)
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .withdrawMUSD(
+            maxFeePercentage,
+            amount,
+            carol.wallet,
+            carol.wallet,
+            NO_GAS,
+          )
+
+        // Attempt to withdraw mUSD from the second trove, it should fail due to interest accrued
+        await expect(
+          contracts.borrowerOperations
+            .connect(dennis.wallet)
+            .withdrawMUSD(
+              maxFeePercentage,
+              amount,
+              dennis.wallet,
+              dennis.wallet,
+              NO_GAS,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
       it("reverts if max fee > 100%", async () => {
         const maxFeePercentage = to1e18(1) + 1n
         const amount = 1n
@@ -2042,6 +2137,33 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.trove.debt.after).is.greaterThan(MIN_NET_DEBT)
     })
 
+    it("succeeds when it would leave trove with net debt >= minimum net debt including interest", async () => {
+      // Set interest rate to 10% and open a trove now accruing interest
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        sender: dennis.wallet,
+        musdAmount: "3,000",
+        ICR: "200",
+      })
+
+      // Fast-forward a year
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await updateTroveSnapshot(contracts, dennis, "before")
+
+      // Dennis's trove should succeed due to the interest putting him over the minimum
+      await contracts.borrowerOperations
+        .connect(dennis.wallet)
+        .repayMUSD(
+          dennis.trove.debt.before - MIN_NET_DEBT,
+          dennis.wallet,
+          dennis.wallet,
+        )
+
+      await updateTroveSnapshot(contracts, dennis, "after")
+      expect(dennis.trove.debt.after).to.be.greaterThan(MIN_NET_DEBT)
+    })
+
     it("reduces the Trove's mUSD debt by the correct amount", async () => {
       const amount = to1e18("1,000")
       await updateTroveSnapshot(contracts, bob, "before")
@@ -2091,6 +2213,51 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("decreases mUSD debt in ActivePool by correct amount accounting for interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "1000",
+        sender: carol.wallet,
+      })
+
+      await fastForwardTime(60 * 60 * 24 * 30) // fast-forward 30 days
+
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+
+      const amount = to1e18("1,000")
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .repayMUSD(amount, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.debt.after).to.equal(
+        state.activePool.debt.before - amount + expectedInterest,
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts when repayment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
@@ -2105,6 +2272,34 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .repayMUSD(to1e18(1), alice.wallet, alice.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
+      it("reverts when repayment would leave trove with ICR < MCR due to interest and not just principal", async () => {
+        // Open a high ICR trove to prevent us from going into recovery mode
+        await openTrove(contracts, {
+          sender: eric.wallet,
+          musdAmount: "10,000",
+          ICR: "1000",
+        })
+
+        // Set the interest rate to 10% and open another trove now accruing interest
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          sender: dennis.wallet,
+          musdAmount: "3,000",
+          ICR: "110",
+        })
+
+        await fastForwardTime(100 * 24 * 60 * 60)
+
+        // Attempt to repay mUSD from Dennis's trove, it should fail due to interest accrued
+        await expect(
+          contracts.borrowerOperations
+            .connect(dennis.wallet)
+            .repayMUSD(to1e18("1"), dennis.wallet, dennis.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
@@ -2156,6 +2351,25 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(alice.wallet)
             .repayMUSD(amount, alice.wallet, alice.wallet),
         ).to.be.revertedWithPanic()
+      })
+
+      it("reverts when attempted repayment is > the principal of the trove but less than total debt including interest", async () => {
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          sender: carol.wallet,
+          musdAmount: "5000",
+        })
+        await fastForwardTime(60 * 60 * 24 * 365)
+        await updateTroveSnapshot(contracts, carol, "before")
+
+        const amount = carol.trove.debt.before + 1n
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .repayMUSD(amount, carol.wallet, carol.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: Trove's net debt must be greater than minimum",
+        )
       })
 
       it("Reverts if borrower has insufficient mUSD to cover his debt repayment", async () => {

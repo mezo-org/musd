@@ -12,6 +12,7 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {console} from "./debugging/console.sol";
 
 contract BorrowerOperations is
     LiquityBase,
@@ -39,6 +40,9 @@ contract BorrowerOperations is
         uint256 newDebt;
         uint256 newColl;
         uint256 stake;
+        uint256 interestOwed;
+        uint256 principalAdjustment;
+        uint256 interestAdjustment;
     }
 
     struct LocalVariables_openTrove {
@@ -548,6 +552,16 @@ contract BorrowerOperations is
 
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;
+
+        // Snapshot interest and principal before repayment so we can correctly adjust the active pool debt
+        vars.interestOwed = contractsCache.troveManager.getTroveInterestOwed(
+            _borrower
+        );
+
+        (vars.principalAdjustment, vars.interestAdjustment) = contractsCache
+            .troveManager
+            .calculateDebtAdjustment(vars.interestOwed, _MUSDChange);
+
         vars.price = priceFeed.fetchPrice();
         bool isRecoveryMode = _checkRecoveryMode(vars.price);
 
@@ -666,7 +680,7 @@ contract BorrowerOperations is
             msg.sender,
             vars.collChange,
             vars.isCollIncrease,
-            _MUSDChange,
+            _isDebtIncrease ? _MUSDChange : vars.principalAdjustment,
             _isDebtIncrease,
             vars.netDebtChange
         );
