@@ -41,7 +41,6 @@ contract BorrowerOperations is
         uint256 newColl;
         uint256 stake;
         uint256 interestOwed;
-        uint256 principal;
         uint256 principalAdjustment;
         uint256 interestAdjustment;
     }
@@ -555,14 +554,13 @@ contract BorrowerOperations is
         LocalVariables_adjustTrove memory vars;
 
         // Snapshot interest and principal before repayment so we can correctly adjust the active pool debt
-        vars.interestOwed = contractsCache.troveManager.getTroveInterestOwed(_borrower);
-        vars.principal = contractsCache.troveManager.getTrovePrincipal(_borrower);
-
-        (vars.principalAdjustment, vars.interestAdjustment) = contractsCache.troveManager.calculateDebtAdjustment(
-            vars.interestOwed,
-            vars.principal,
-            _MUSDChange
+        vars.interestOwed = contractsCache.troveManager.getTroveInterestOwed(
+            _borrower
         );
+
+        (vars.principalAdjustment, vars.interestAdjustment) = contractsCache
+            .troveManager
+            .calculateDebtAdjustment(vars.interestOwed, _MUSDChange);
 
         vars.price = priceFeed.fetchPrice();
         bool isRecoveryMode = _checkRecoveryMode(vars.price);

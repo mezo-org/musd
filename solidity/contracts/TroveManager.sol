@@ -744,7 +744,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return interestRateHistory;
     }
 
-
     // --- Borrowing fee functions ---
 
     function getBorrowingFee(
@@ -777,9 +776,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _getTotalDebt(_borrower);
     }
 
-    function getTrovePrincipal(
-        address _borrower
-    ) external view returns (uint) {
+    function getTrovePrincipal(address _borrower) external view returns (uint) {
         return Troves[_borrower].debt;
     }
 
@@ -1029,6 +1026,23 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
+    function calculateDebtAdjustment(
+        uint256 _interestOwed,
+        uint256 _payment
+    )
+        public
+        pure
+        returns (uint256 principalAdjustment, uint256 interestAdjustment)
+    {
+        if (_payment >= _interestOwed) {
+            principalAdjustment = _payment - _interestOwed;
+            interestAdjustment = _interestOwed;
+        } else {
+            principalAdjustment = 0;
+            interestAdjustment = _payment;
+        }
+    }
+
     // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
     function calculateInterestOwed(
         uint256 _principal,
@@ -1083,30 +1097,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 
-        (uint256 _principalAdjustment, uint256 _interestAdjustment) = calculateDebtAdjustment(
-            trove.interestOwed,
-            trove.debt,
-            _payment
-        );
+        (
+            uint256 _principalAdjustment,
+            uint256 _interestAdjustment
+        ) = calculateDebtAdjustment(trove.interestOwed, _payment);
 
         trove.interestOwed -= _interestAdjustment;
         trove.debt -= _principalAdjustment;
         interestRateData[trove.interestRate].principal -= _principalAdjustment;
         interestRateData[trove.interestRate].interest -= _interestAdjustment;
-    }
-
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _debt,
-        uint256 _payment
-    ) public pure returns (uint256 principalAdjustment, uint256 interestAdjustment) {
-        if (_payment >= _interestOwed) {
-            principalAdjustment = _payment - _interestOwed;
-            interestAdjustment = _interestOwed;
-        } else {
-            principalAdjustment = 0;
-            interestAdjustment = _payment;
-        }
     }
 
     // Internal function to set the interest rate.  Changes must be proposed and approved by governance.

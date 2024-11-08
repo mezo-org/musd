@@ -181,9 +181,7 @@ interface ITroveManager {
         address _borrower
     ) external view returns (uint256);
 
-    function getTrovePrincipal(
-        address _borrower
-    ) external view returns (uint);
+    function getTrovePrincipal(address _borrower) external view returns (uint);
 
     function getNominalICR(address _borrower) external view returns (uint);
 
@@ -261,7 +259,6 @@ interface ITroveManager {
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
-        uint256 _debt,
         uint256 _payment
     ) external pure returns (uint, uint);
 }
