@@ -3113,6 +3113,42 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.musd.after).to.be.equal(carol.musd.before - debtChange)
     })
 
+    it("changes mUSD balance by the requested decrease, accounting for interest owed", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateWalletSnapshot(contracts, carol, "before")
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      const collChange = to1e18(1)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          collChange,
+          debtChange,
+          false,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateWalletSnapshot(contracts, carol, "after")
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.musd.after).to.be.equal(
+        carol.musd.before - debtChange + expectedInterest,
+      )
+    })
+
     it("changes mUSD balance by the requested increase", async () => {
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
