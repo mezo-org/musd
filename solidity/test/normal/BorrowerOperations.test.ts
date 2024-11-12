@@ -2841,6 +2841,46 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.debt.after).to.equal(carol.trove.debt.before)
     })
 
+    it("updates debt, coll, and interestOwed with coll increase, debt decrease", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      const collChange = to1e18(1)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          collChange,
+          carol.wallet,
+          carol.wallet,
+          {
+            value: collChange,
+          },
+        )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.trove.interestOwed.after).to.equal(0)
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before - debtChange + expectedInterest,
+      )
+      expect(carol.trove.collateral.after).to.equal(
+        carol.trove.collateral.before + collChange,
+      )
+    })
+
     it("updates borrower's debt and coll with an increase in both", async () => {
       const abi = [
         // Add your contract ABI here
