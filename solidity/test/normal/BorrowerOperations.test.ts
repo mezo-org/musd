@@ -2807,6 +2807,40 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("reduces interestOwed, then principal when decreasing debt", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(50)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.trove.interestOwed.after).to.equal(
+        expectedInterest - debtChange,
+      )
+      // No principal has been paid off because the debt change was less than the interest owed
+      expect(carol.trove.debt.after).to.equal(carol.trove.debt.before)
+    })
+
     it("updates borrower's debt and coll with an increase in both", async () => {
       const abi = [
         // Add your contract ABI here
