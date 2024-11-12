@@ -3298,6 +3298,56 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("Changes the mUSD debt in ActivePool by requested decrease, accounting for interest owed", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      const collChange = to1e18(1)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          collChange,
+          carol.wallet,
+          carol.wallet,
+          {
+            value: collChange,
+          },
+        )
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.debt.after).to.be.equal(
+        state.activePool.debt.before - debtChange + expectedInterest,
+      )
+    })
+
     it("Changes the mUSD debt in ActivePool by requested increase", async () => {
       const abi = [
         // Add your contract ABI here
