@@ -3435,6 +3435,38 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
+      it("reverts when adjustment would leave trove with ICR < MCR because of interest owed", async () => {
+        await openTrove(contracts, {
+          musdAmount: "50,000",
+          ICR: "400",
+          sender: eric.wallet,
+        })
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "111",
+          sender: carol.wallet,
+        })
+        await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+        const debtChange = 1n
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .adjustTrove(
+              to1e18(1),
+              0,
+              debtChange,
+              false,
+              0,
+              carol.wallet,
+              carol.wallet,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
       it("no mintlist, reverts when adjustment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
         await removeMintlist(contracts, deployer.wallet)
