@@ -41,6 +41,7 @@ import {
   updateWalletSnapshot,
   updateInterestRateDataSnapshot,
   setInterestRate,
+  getTroveEntireDebt,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -1441,6 +1442,38 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
+  describe("getCurrentICR()", () => {
+    it("reflects interest owed", async () => {
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      const { totalDebt } = await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+      const currentTime = BigInt(await getLatestBlockTimestamp())
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const expectedDebt =
+        carol.trove.debt.before +
+        calculateInterestOwed(
+          totalDebt,
+          interestRate,
+          carol.trove.lastInterestUpdateTime.before,
+          currentTime,
+        )
+      const expectedICR = (carol.trove.collateral.before * price) / expectedDebt
+
+      expect(carol.trove.icr.after).to.equal(expectedICR)
+    })
+  })
+
   describe("getRedemptionHints()", () => {
     it("gets the address of the first Trove and the final ICR of the last Trove involved in a redemption", async () => {
       // Open Troves for Alice and Bob
@@ -2473,6 +2506,33 @@ describe("TroveManager in Normal Mode", () => {
         expect(bobDebt).to.equal(bob.trove.debt.before - partialAmount)
         expect(bobColl).to.equal(bob.trove.collateral.before - collNeeded)
       })
+    })
+  })
+
+  describe("getEntireDebtAndColl()", () => {
+    it("reflects accrued interest", async () => {
+      await setInterestRate(contracts, council, 100)
+      const { totalDebt } = await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+      const currentTime = BigInt(await getLatestBlockTimestamp())
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const entireDebt = await getTroveEntireDebt(contracts, carol.wallet)
+
+      expect(entireDebt).to.equal(
+        totalDebt +
+          calculateInterestOwed(
+            totalDebt,
+            100,
+            carol.trove.lastInterestUpdateTime.before,
+            currentTime,
+          ),
+      )
     })
   })
 

@@ -926,6 +926,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 currentCollateral,
             uint256 currentMUSDDebt
         ) = _getCurrentTroveAmounts(_borrower);
+        currentMUSDDebt += calculateInterestOwed(
+            Troves[_borrower].debt,
+            Troves[_borrower].interestRate,
+            Troves[_borrower].lastInterestUpdateTime,
+            block.timestamp
+        );
         uint256 ICR = LiquityMath._computeCR(
             currentCollateral,
             currentMUSDDebt,
@@ -965,10 +971,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         debt = _getTotalDebt(_borrower);
         coll = Troves[_borrower].coll;
 
+        debt += calculateInterestOwed(
+            Troves[_borrower].debt,
+            Troves[_borrower].interestRate,
+            Troves[_borrower].lastInterestUpdateTime,
+            block.timestamp
+        );
+
         pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
         pendingCollateralReward = getPendingCollateralReward(_borrower);
 
         debt += pendingMUSDDebtReward;
+
         coll += pendingCollateralReward;
     }
 
