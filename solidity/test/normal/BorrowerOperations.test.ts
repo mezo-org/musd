@@ -2807,6 +2807,80 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("reduces interestOwed, then principal when decreasing debt", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(50)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.trove.interestOwed.after).to.equal(
+        expectedInterest - debtChange,
+      )
+      // No principal has been paid off because the debt change was less than the interest owed
+      expect(carol.trove.debt.after).to.equal(carol.trove.debt.before)
+    })
+
+    it("updates debt, coll, and interestOwed with coll increase, debt decrease", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      const collChange = to1e18(1)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          collChange,
+          carol.wallet,
+          carol.wallet,
+          {
+            value: collChange,
+          },
+        )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.trove.interestOwed.after).to.equal(0)
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before - debtChange + expectedInterest,
+      )
+      expect(carol.trove.collateral.after).to.equal(
+        carol.trove.collateral.before + collChange,
+      )
+    })
+
     it("updates borrower's debt and coll with an increase in both", async () => {
       const abi = [
         // Add your contract ABI here
@@ -3039,6 +3113,42 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.musd.after).to.be.equal(carol.musd.before - debtChange)
     })
 
+    it("changes mUSD balance by the requested decrease, accounting for interest owed", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateWalletSnapshot(contracts, carol, "before")
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      const collChange = to1e18(1)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          collChange,
+          debtChange,
+          false,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateWalletSnapshot(contracts, carol, "after")
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.musd.after).to.be.equal(
+        carol.musd.before - debtChange + expectedInterest,
+      )
+    })
+
     it("changes mUSD balance by the requested increase", async () => {
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
@@ -3188,6 +3298,56 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("Changes the mUSD debt in ActivePool by requested decrease, accounting for interest owed", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      const collChange = to1e18(1)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          collChange,
+          carol.wallet,
+          carol.wallet,
+          {
+            value: collChange,
+          },
+        )
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.debt.after).to.be.equal(
+        state.activePool.debt.before - debtChange + expectedInterest,
+      )
+    })
+
     it("Changes the mUSD debt in ActivePool by requested increase", async () => {
       const abi = [
         // Add your contract ABI here
@@ -3240,6 +3400,35 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("allows for mUSD repaid to be > principal of the trove as long as it is less than the total debt including interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      // Alice transfers MUSD to carol to compensate borrowing fees
+      await contracts.musd
+        .connect(alice.wallet)
+        .transfer(carol.wallet, to1e18("2,000"))
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+      const amount =
+        carol.trove.debt.before - MUSD_GAS_COMPENSATION + to1e18("10")
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(to1e18(1), 0, amount, false, 0, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before - amount + expectedInterest,
+      )
+      expect(carol.trove.interestOwed.after).to.be.equal(0)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when adjustment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
@@ -3269,6 +3458,38 @@ describe("BorrowerOperations in Normal Mode", () => {
               collateralTopUp,
               alice.wallet,
               alice.wallet,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+
+      it("reverts when adjustment would leave trove with ICR < MCR because of interest owed", async () => {
+        await openTrove(contracts, {
+          musdAmount: "50,000",
+          ICR: "400",
+          sender: eric.wallet,
+        })
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          musdAmount: "5000",
+          ICR: "111",
+          sender: carol.wallet,
+        })
+        await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+        const debtChange = 1n
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .adjustTrove(
+              to1e18(1),
+              0,
+              debtChange,
+              false,
+              0,
+              carol.wallet,
+              carol.wallet,
             ),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
