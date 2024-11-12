@@ -3400,6 +3400,35 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("allows for mUSD repaid to be > principal of the trove as long as it is less than the total debt including interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      // Alice transfers MUSD to carol to compensate borrowing fees
+      await contracts.musd
+        .connect(alice.wallet)
+        .transfer(carol.wallet, to1e18("2,000"))
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+      const amount =
+        carol.trove.debt.before - MUSD_GAS_COMPENSATION + to1e18("10")
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(to1e18(1), 0, amount, false, 0, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before - amount + expectedInterest,
+      )
+      expect(carol.trove.interestOwed.after).to.be.equal(0)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when adjustment would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove()
