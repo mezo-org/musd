@@ -1205,7 +1205,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it(" calling address does not have active trove", async () => {
+      it("reverts when calling address does not have active trove", async () => {
         await expect(
           contracts.borrowerOperations.connect(carol.wallet).closeTrove(),
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
@@ -1225,6 +1225,28 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts if borrower has insufficient mUSD to repay his entire debt", async () => {
         await expect(
           contracts.borrowerOperations.connect(bob.wallet).closeTrove(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
+        )
+      })
+
+      it("reverts if borrower has insufficient mUSD to repay his entire debt including interest", async () => {
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          sender: carol.wallet,
+        })
+
+        await fastForwardTime(60 * 60 * 24 * 365)
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateWalletSnapshot(contracts, carol, "before")
+
+        await contracts.musd
+          .connect(bob.wallet)
+          .transfer(carol.wallet, carol.trove.debt.before - carol.musd.before)
+
+        await expect(
+          contracts.borrowerOperations.connect(carol.wallet).closeTrove(),
         ).to.be.revertedWith(
           "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )
