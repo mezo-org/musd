@@ -926,12 +926,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 currentCollateral,
             uint256 currentMUSDDebt
         ) = _getCurrentTroveAmounts(_borrower);
-        currentMUSDDebt += calculateInterestOwed(
-            Troves[_borrower].debt,
-            Troves[_borrower].interestRate,
-            Troves[_borrower].lastInterestUpdateTime,
-            block.timestamp
-        );
         uint256 ICR = LiquityMath._computeCR(
             currentCollateral,
             currentMUSDDebt,
@@ -970,13 +964,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     {
         debt = _getTotalDebt(_borrower);
         coll = Troves[_borrower].coll;
-
-        debt += calculateInterestOwed(
-            Troves[_borrower].debt,
-            Troves[_borrower].interestRate,
-            Troves[_borrower].lastInterestUpdateTime,
-            block.timestamp
-        );
 
         pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
         pendingCollateralReward = getPendingCollateralReward(_borrower);
@@ -2064,7 +2051,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
-        return Troves[_borrower].debt + Troves[_borrower].interestOwed;
+        return
+            Troves[_borrower].debt +
+            Troves[_borrower].interestOwed +
+            calculateInterestOwed(
+                Troves[_borrower].debt,
+                Troves[_borrower].interestRate,
+                Troves[_borrower].lastInterestUpdateTime,
+                block.timestamp
+            );
     }
 
     // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
