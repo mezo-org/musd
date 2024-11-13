@@ -943,6 +943,22 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(alice.trove.debt.after).to.equal(0)
     })
 
+    it("reduces a Trove's interestOwed to zero", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: carol.wallet,
+      })
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+      await updateTroveSnapshot(contracts, carol, "after")
+      expect(carol.trove.interestOwed.after).to.equal(0)
+    })
+
     it("sets Trove's stake to zero", async () => {
       const amount = to1e18("10,000")
       await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
@@ -990,6 +1006,37 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       expect(alice.musd.after).to.equal(
         alice.musd.before - alice.trove.debt.before + MUSD_GAS_COMPENSATION,
+      )
+    })
+
+    it("subtracts the debt and interestOwed of the closed Trove from the borrower's mUSD balance", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await updateWalletSnapshot(contracts, carol, "before")
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+      const now = BigInt(await getLatestBlockTimestamp())
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        now,
+      )
+      await updateWalletSnapshot(contracts, carol, "after")
+
+      expect(carol.musd.after).to.equal(
+        carol.musd.before -
+          carol.trove.debt.before -
+          expectedInterest +
+          MUSD_GAS_COMPENSATION,
       )
     })
 
@@ -1085,6 +1132,39 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("reduces ActivePool debt by correct amount accounting for interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: carol.wallet,
+      })
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+
+      expect(state.activePool.debt.after).to.equal(
+        state.activePool.debt.before - carol.trove.debt.before,
+      )
+    })
+
     it("updates the the total stakes", async () => {
       await updateTroveSnapshot(contracts, alice, "before")
       await updateTroveManagerSnapshot(contracts, state, "before")
@@ -1125,7 +1205,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         )
       })
 
-      it(" calling address does not have active trove", async () => {
+      it("reverts when calling address does not have active trove", async () => {
         await expect(
           contracts.borrowerOperations.connect(carol.wallet).closeTrove(),
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
@@ -1145,6 +1225,28 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts if borrower has insufficient mUSD to repay his entire debt", async () => {
         await expect(
           contracts.borrowerOperations.connect(bob.wallet).closeTrove(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
+        )
+      })
+
+      it("reverts if borrower has insufficient mUSD to repay his entire debt including interest", async () => {
+        await setInterestRate(contracts, council, 1000)
+        await openTrove(contracts, {
+          musdAmount: "5,000",
+          sender: carol.wallet,
+        })
+
+        await fastForwardTime(60 * 60 * 24 * 365)
+        await updateTroveSnapshot(contracts, carol, "before")
+        await updateWalletSnapshot(contracts, carol, "before")
+
+        await contracts.musd
+          .connect(bob.wallet)
+          .transfer(carol.wallet, carol.trove.debt.before - carol.musd.before)
+
+        await expect(
+          contracts.borrowerOperations.connect(carol.wallet).closeTrove(),
         ).to.be.revertedWith(
           "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )

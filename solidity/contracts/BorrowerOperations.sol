@@ -356,6 +356,8 @@ contract BorrowerOperations is
         IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
 
+        troveManagerCached.updateSystemAndTroveInterest(msg.sender);
+
         _requireTroveisActive(troveManagerCached, msg.sender);
         uint256 price = priceFeed.fetchPrice();
         if (canMint) {
@@ -366,6 +368,9 @@ contract BorrowerOperations is
 
         uint256 coll = troveManagerCached.getTroveColl(msg.sender);
         uint256 debt = troveManagerCached.getTroveDebt(msg.sender);
+        uint256 interestOwed = troveManagerCached.getTroveInterestOwed(
+            msg.sender
+        );
 
         _requireSufficientMUSDBalance(
             musdTokenCached,
@@ -395,13 +400,15 @@ contract BorrowerOperations is
             uint8(BorrowerOperation.closeTrove)
         );
 
-        // Burn the repaid mUSD from the user's balance and the gas compensation from the Gas Pool
-        _repayMUSD(
-            activePoolCached,
-            musdTokenCached,
-            msg.sender,
-            debt - MUSD_GAS_COMPENSATION
+        // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
+        activePoolCached.decreaseMUSDDebt(
+            debt - MUSD_GAS_COMPENSATION - interestOwed
         );
+
+        // Burn the repaid mUSD from the user's balance
+        musdTokenCached.burn(msg.sender, debt - MUSD_GAS_COMPENSATION);
+
+        // Burn the gas compensation from the gas pool
         _repayMUSD(
             activePoolCached,
             musdTokenCached,

@@ -2050,6 +2050,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
+        // solhint-disable not-rely-on-time
         return
             Troves[_borrower].debt +
             Troves[_borrower].interestOwed +
@@ -2059,6 +2060,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 Troves[_borrower].lastInterestUpdateTime,
                 block.timestamp
             );
+        // solhint-enable not-rely-on-time
     }
 
     // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
