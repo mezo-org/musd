@@ -969,7 +969,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         pendingCollateralReward = getPendingCollateralReward(_borrower);
 
         debt += pendingMUSDDebtReward;
-
         coll += pendingCollateralReward;
     }
 
