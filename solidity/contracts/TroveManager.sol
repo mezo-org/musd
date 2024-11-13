@@ -2050,7 +2050,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
-        return Troves[_borrower].debt + Troves[_borrower].interestOwed;
+        return
+            Troves[_borrower].debt +
+            Troves[_borrower].interestOwed +
+            calculateInterestOwed(
+                Troves[_borrower].debt,
+                Troves[_borrower].interestRate,
+                Troves[_borrower].lastInterestUpdateTime,
+                block.timestamp
+            );
     }
 
     // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
