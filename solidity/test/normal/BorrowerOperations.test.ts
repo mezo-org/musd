@@ -1009,6 +1009,37 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("subtracts the debt and interestOwed of the closed Trove from the borrower's mUSD balance", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await updateWalletSnapshot(contracts, carol, "before")
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+      const now = BigInt(await getLatestBlockTimestamp())
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        now,
+      )
+      await updateWalletSnapshot(contracts, carol, "after")
+
+      expect(carol.musd.after).to.equal(
+        carol.musd.before -
+          carol.trove.debt.before -
+          expectedInterest +
+          MUSD_GAS_COMPENSATION,
+      )
+    })
+
     it("zero's the troves reward snapshots", async () => {
       await setupCarolsTrove()
 
