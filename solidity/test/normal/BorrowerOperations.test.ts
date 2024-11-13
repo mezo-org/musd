@@ -943,6 +943,22 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(alice.trove.debt.after).to.equal(0)
     })
 
+    it("reduces a Trove's interestOwed to zero", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: carol.wallet,
+      })
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+      await updateTroveSnapshot(contracts, carol, "after")
+      expect(carol.trove.interestOwed.after).to.equal(0)
+    })
+
     it("sets Trove's stake to zero", async () => {
       const amount = to1e18("10,000")
       await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
