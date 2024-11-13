@@ -368,7 +368,9 @@ contract BorrowerOperations is
 
         uint256 coll = troveManagerCached.getTroveColl(msg.sender);
         uint256 debt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 interestOwed = troveManagerCached.getTroveInterestOwed(msg.sender);
+        uint256 interestOwed = troveManagerCached.getTroveInterestOwed(
+            msg.sender
+        );
 
         _requireSufficientMUSDBalance(
             musdTokenCached,
@@ -399,7 +401,9 @@ contract BorrowerOperations is
         );
 
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
-        activePoolCached.decreaseMUSDDebt(debt - MUSD_GAS_COMPENSATION - interestOwed);
+        activePoolCached.decreaseMUSDDebt(
+            debt - MUSD_GAS_COMPENSATION - interestOwed
+        );
 
         // Burn the repaid mUSD from the user's balance
         musdTokenCached.burn(msg.sender, debt - MUSD_GAS_COMPENSATION);
