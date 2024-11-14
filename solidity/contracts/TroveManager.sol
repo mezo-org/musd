@@ -838,6 +838,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             "TroveManager: Calldata address array must not be empty"
         );
 
+        for (uint i = 0; i < _troveArray.length; i++) {
+            address borrower = _troveArray[i];
+            _updateSystemInterest(Troves[borrower].interestRate);
+            _updateDebtWithInterest(borrower);
+        }
+
         IActivePool activePoolCached = activePool;
         IDefaultPool defaultPoolCached = defaultPool;
         IStabilityPool stabilityPoolCached = stabilityPool;
