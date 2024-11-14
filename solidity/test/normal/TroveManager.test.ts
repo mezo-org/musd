@@ -407,7 +407,7 @@ describe("TroveManager in Normal Mode", () => {
       expect(tcr4).to.be.greaterThan(tcr3)
     })
 
-    it("a pure redistribution reduces the TCR only as a result of compensation", async () => {
+    it("a pure redistribution reduces the TCR only as a result of compensation if the interest rate is 0%", async () => {
       await setupTroves()
       await openTrove(contracts, {
         musdAmount: "1800",
@@ -452,6 +452,58 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       expect(tcrAfter).to.equal(remainingColl / remainingDebt)
+    })
+
+    it.only("a pure redistribution reduces the TCR due to compensation and interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+
+      // Open trove to be liquidated
+      await openTrove(contracts, {
+        musdAmount: "1800",
+        ICR: "120",
+        sender: carol.wallet,
+      })
+
+      await updateTroveManagerSnapshot(contracts, state, "before")
+      const entireSystemCollBefore =
+        await contracts.troveManager.getEntireSystemColl()
+      const entireSystemDebtBefore =
+        await contracts.troveManager.getEntireSystemDebt()
+
+      const before = await getLatestBlockTimestamp()
+
+      // Fast-forward 1 year
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      // Liquidate trove
+      const { newPrice, liquidationTx } = await dropPriceAndLiquidate(
+        contracts,
+        carol,
+      )
+      const { collGasCompensation } = await getEmittedLiquidationValues(
+        liquidationTx!,
+      )
+
+      // Calculate interest on total system debt
+      const after = await getLatestBlockTimestamp()
+      const interestOwed = calculateInterestOwed(
+        entireSystemDebtBefore,
+        1000,
+        BigInt(before),
+        BigInt(after),
+      )
+
+      // Calculate expected tcr
+      const remainingColl =
+        (entireSystemCollBefore - collGasCompensation) * newPrice
+      const remainingDebt = entireSystemDebtBefore + interestOwed
+
+      await updateTroveManagerSnapshot(contracts, state, "after")
+
+      expect(state.troveManager.TCR.after).to.equal(
+        remainingColl / remainingDebt,
+      )
     })
 
     it("does not affect the SP deposit or collateral gain when called on an SP depositor's address that has no trove", async () => {
