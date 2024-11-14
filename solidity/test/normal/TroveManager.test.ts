@@ -674,8 +674,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    // TODO This test will fail until we fix stability pool distribution
-    it.skip("liquidates a SP depositor's trove with ICR < 110%, and the liquidation correctly impacts their SP deposit and collateral gain accounting for interest", async () => {
+    it("liquidates a SP depositor's trove with ICR < 110%, and the liquidation correctly impacts their SP deposit and collateral gain accounting for interest", async () => {
       await setInterestRate(contracts, council, 1000)
 
       // Open two troves: Alice, Bob
@@ -689,6 +688,7 @@ describe("TroveManager in Normal Mode", () => {
         ICR: "200",
         sender: bob.wallet,
       })
+      await updateTroveSnapshot(contracts, bob, "before")
 
       const aliceSPDeposit = to1e18(10000)
       await provideToSP(contracts, alice, aliceSPDeposit)
@@ -696,13 +696,19 @@ describe("TroveManager in Normal Mode", () => {
 
       await fastForwardTime(365 * 24 * 60 * 60)
 
-      await updateTroveSnapshot(contracts, bob, "after")
       await dropPriceAndLiquidate(contracts, bob)
+
+      const expectedInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        1000,
+        BigInt(bob.trove.lastInterestUpdateTime.before),
+        BigInt(await getLatestBlockTimestamp()),
+      )
 
       // Alice's deposit should decrease by Bob's debt and accrued interest
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
       expect(alice.stabilityPool.compoundedDeposit.after).to.be.closeTo(
-        aliceSPDeposit - bob.trove.debt.after - bob.trove.interestOwed.after,
+        aliceSPDeposit - bob.trove.debt.before - expectedInterest,
         1000000n,
       )
     })
