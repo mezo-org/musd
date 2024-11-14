@@ -990,25 +990,11 @@ describe("TroveManager in Normal Mode", () => {
       await contracts.troveManager.liquidate(bob.address)
       await contracts.troveManager.liquidate(carol.address)
 
-      // Check Alice stays active, Bob and Carol get liquidated
-      expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
+      expect(await checkTroveActive(contracts, alice)).to.equal(true)
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
+      expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
         true,
       )
-      expect(await contracts.sortedTroves.contains(bob.address)).to.equal(false)
-      expect(await contracts.sortedTroves.contains(carol.address)).to.equal(
-        false,
-      )
-
-      // Check Trove statuses - Alice should be active (1), B and C are closed by liquidation (3)
-      expect(
-        await contracts.troveManager.getTroveStatus(alice.address),
-      ).to.equal(1)
-      expect(await contracts.troveManager.getTroveStatus(bob.address)).to.equal(
-        3,
-      )
-      expect(
-        await contracts.troveManager.getTroveStatus(carol.address),
-      ).to.equal(3)
     })
 
     it("liquidates based on actual ICR including interest", async () => {
