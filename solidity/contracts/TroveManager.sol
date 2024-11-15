@@ -347,6 +347,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             contractsCache.activePool,
             contractsCache.defaultPool,
             totals.totalDebtToRedistribute,
+        0,
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
@@ -891,6 +892,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             activePoolCached,
             defaultPoolCached,
             totals.totalDebtToRedistribute,
+            0,
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
@@ -1375,10 +1377,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _redistributeDebtAndColl(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
-        uint256 _debt,
+        uint256 _principal,
+        uint256 _interest,
         uint256 _coll
     ) internal {
-        if (_debt == 0) {
+        if (_principal == 0 && _interest == 0) {
             return;
         }
 
@@ -1396,7 +1399,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 collateralNumerator = _coll *
             DECIMAL_PRECISION +
             lastCollateralError_Redistribution;
-        uint256 MUSDDebtNumerator = _debt *
+        uint256 MUSDDebtNumerator = _principal *
             DECIMAL_PRECISION +
             lastMUSDDebtError_Redistribution;
 
@@ -1421,8 +1424,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit LTermsUpdated(L_Collateral, L_MUSDDebt);
 
         // Transfer coll and debt from ActivePool to DefaultPool
-        _activePool.decreaseMUSDDebt(_debt, 0);
-        _defaultPool.increaseMUSDDebt(_debt, 0);
+        _activePool.decreaseMUSDDebt(_principal, 0);
+        _defaultPool.increaseMUSDDebt(_principal, 0);
         _activePool.sendCollateral(address(_defaultPool), _coll);
     }
 

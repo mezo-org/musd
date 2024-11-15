@@ -454,7 +454,7 @@ describe("TroveManager in Normal Mode", () => {
       expect(tcrAfter).to.equal(remainingColl / remainingDebt)
     })
 
-    it.only("a pure redistribution reduces the TCR due to compensation and interest", async () => {
+    it("a pure redistribution reduces the TCR due to compensation and interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupTroves()
 
