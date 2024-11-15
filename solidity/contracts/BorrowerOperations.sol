@@ -43,6 +43,7 @@ contract BorrowerOperations is
         uint256 interestOwed;
         uint256 principalAdjustment;
         uint256 interestAdjustment;
+        bool isRecoveryMode;
     }
 
     struct LocalVariables_openTrove {
@@ -403,7 +404,7 @@ contract BorrowerOperations is
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
         activePoolCached.decreaseMUSDDebt(
             debt - MUSD_GAS_COMPENSATION - interestOwed,
-            0
+            interestOwed
         );
 
         // Burn the repaid mUSD from the user's balance
@@ -414,7 +415,8 @@ contract BorrowerOperations is
             activePoolCached,
             musdTokenCached,
             gasPoolAddress,
-            MUSD_GAS_COMPENSATION
+            MUSD_GAS_COMPENSATION,
+    0
         );
 
         // Send the collateral back to the user
@@ -571,10 +573,10 @@ contract BorrowerOperations is
             .calculateDebtAdjustment(vars.interestOwed, _MUSDChange);
 
         vars.price = priceFeed.fetchPrice();
-        bool isRecoveryMode = _checkRecoveryMode(vars.price);
+        vars.isRecoveryMode = _checkRecoveryMode(vars.price);
 
         if (_isDebtIncrease) {
-            _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
+            _requireValidMaxFeePercentage(_maxFeePercentage, vars.isRecoveryMode);
             _requireNonZeroDebtChange(_MUSDChange);
         }
         _requireSingularCollChange(_collWithdrawal, _assetAmount);
@@ -600,7 +602,7 @@ contract BorrowerOperations is
         vars.netDebtChange = _MUSDChange;
 
         // If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
-        if (_isDebtIncrease && !isRecoveryMode) {
+        if (_isDebtIncrease && !vars.isRecoveryMode) {
             vars.MUSDFee = _triggerBorrowingFee(
                 contractsCache.troveManager,
                 contractsCache.musd,
@@ -628,7 +630,7 @@ contract BorrowerOperations is
 
         // Check the adjustment satisfies all conditions for the current system mode
         _requireValidAdjustmentInCurrentMode(
-            isRecoveryMode,
+            vars.isRecoveryMode,
             _collWithdrawal,
             _isDebtIncrease,
             vars
@@ -689,6 +691,7 @@ contract BorrowerOperations is
             vars.collChange,
             vars.isCollIncrease,
             _isDebtIncrease ? _MUSDChange : vars.principalAdjustment,
+            vars.interestAdjustment,
             _isDebtIncrease,
             vars.netDebtChange
         );
@@ -711,10 +714,11 @@ contract BorrowerOperations is
         IActivePool _activePool,
         IMUSD _musd,
         address _account,
-        uint256 _MUSD
+        uint256 _principal,
+        uint256 _interest
     ) internal {
-        _activePool.decreaseMUSDDebt(_MUSD, 0);
-        _musd.burn(_account, _MUSD);
+        _activePool.decreaseMUSDDebt(_principal, _interest);
+        _musd.burn(_account, _principal + _interest);
     }
 
     function _moveTokensAndCollateralfromAdjustment(
@@ -723,7 +727,8 @@ contract BorrowerOperations is
         address _borrower,
         uint256 _collChange,
         bool _isCollIncrease,
-        uint256 _MUSDChange,
+        uint256 _principalChange,
+        uint256 _interestChange,
         bool _isDebtIncrease,
         uint256 _netDebtChange
     ) internal {
@@ -732,11 +737,11 @@ contract BorrowerOperations is
                 _activePool,
                 _musd,
                 _borrower,
-                _MUSDChange,
+                _principalChange,
                 _netDebtChange
             );
         } else {
-            _repayMUSD(_activePool, _musd, _borrower, _MUSDChange);
+            _repayMUSD(_activePool, _musd, _borrower, _principalChange, _interestChange);
         }
 
         if (_isCollIncrease) {

@@ -73,6 +73,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 totalDebtToOffset;
         uint256 totalCollToSendToSP;
         uint256 totalDebtToRedistribute;
+        uint256 totalInterestToRedistribute;
         uint256 totalCollToRedistribute;
         uint256 totalCollSurplus;
     }
@@ -88,13 +89,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     struct LiquidationValues {
-        uint256 entireTroveDebt;
+        uint256 entireTrovePrincipal;
+        uint256 entireTroveInterest;
         uint256 entireTroveColl;
         uint256 collGasCompensation;
         uint256 MUSDGasCompensation;
         uint256 debtToOffset;
         uint256 collToSendToSP;
         uint256 debtToRedistribute;
+        uint256 interestToRedistribute;
         uint256 collToRedistribute;
         uint256 collSurplus;
     }
@@ -707,7 +710,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function updateSystemAndTroveInterest(address _borrower) external {
-        _requireCallerIsBorrowerOperations();
         _updateSystemInterest(Troves[_borrower].interestRate);
         _updateDebtWithInterest(_borrower);
     }
@@ -892,7 +894,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             activePoolCached,
             defaultPoolCached,
             totals.totalDebtToRedistribute,
-            0,
+            totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
@@ -971,19 +973,21 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         view
         override
         returns (
-            uint256 debt,
+            uint256 principal,
+            uint256 interest,
             uint256 coll,
             uint256 pendingMUSDDebtReward,
             uint256 pendingCollateralReward
         )
     {
-        debt = _getTotalDebt(_borrower);
+        principal = Troves[_borrower].debt;
+        interest = Troves[_borrower].interestOwed;
         coll = Troves[_borrower].coll;
 
         pendingMUSDDebtReward = getPendingMUSDDebtReward(_borrower);
         pendingCollateralReward = getPendingCollateralReward(_borrower);
 
-        debt += pendingMUSDDebtReward;
+        principal += pendingMUSDDebtReward;
         coll += pendingCollateralReward;
     }
 
@@ -1099,6 +1103,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // solhint-enable not-rely-on-time
 
         interestRateData[_rate].interest += interest;
+        activePool.increaseMUSDDebt(0, interest);
 
         // solhint-disable-next-line not-rely-on-time
         interestRateData[_rate].lastUpdatedTime = block.timestamp;
@@ -1424,8 +1429,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit LTermsUpdated(L_Collateral, L_MUSDDebt);
 
         // Transfer coll and debt from ActivePool to DefaultPool
-        _activePool.decreaseMUSDDebt(_principal, 0);
-        _defaultPool.increaseMUSDDebt(_principal, 0);
+        _activePool.decreaseMUSDDebt(_principal, _interest);
+        _defaultPool.increaseMUSDDebt(_principal, _interest);
         _activePool.sendCollateral(address(_defaultPool), _coll);
     }
 
@@ -1440,7 +1445,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         LocalVariables_InnerSingleLiquidateFunction memory vars;
 
         (
-            singleLiquidation.entireTroveDebt,
+            singleLiquidation.entireTrovePrincipal,
+            singleLiquidation.entireTroveInterest,
             singleLiquidation.entireTroveColl,
             vars.pendingDebtReward,
             vars.pendingCollReward
@@ -1465,9 +1471,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             singleLiquidation.debtToOffset,
             singleLiquidation.collToSendToSP,
             singleLiquidation.debtToRedistribute,
+            singleLiquidation.interestToRedistribute,
             singleLiquidation.collToRedistribute
         ) = _getOffsetAndRedistributionVals(
-            singleLiquidation.entireTroveDebt,
+            singleLiquidation.entireTrovePrincipal,
+            singleLiquidation.entireTroveInterest,
             collToLiquidate,
             _MUSDInStabPool
         );
@@ -1475,7 +1483,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _closeTrove(_borrower, Status.closedByLiquidation);
         emit TroveLiquidated(
             _borrower,
-            singleLiquidation.entireTroveDebt,
+            singleLiquidation.entireTrovePrincipal,
             singleLiquidation.entireTroveColl,
             uint8(TroveManagerOperation.liquidateInNormalMode)
         );
@@ -1637,7 +1645,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             return singleLiquidation;
         } // don't liquidate if last trove
         (
-            singleLiquidation.entireTroveDebt,
+            singleLiquidation.entireTrovePrincipal,
+            singleLiquidation.entireTroveInterest,
             singleLiquidation.entireTroveColl,
             vars.pendingDebtReward,
             vars.pendingCollReward
@@ -1664,13 +1673,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             singleLiquidation.debtToOffset = 0;
             singleLiquidation.collToSendToSP = 0;
             singleLiquidation.debtToRedistribute = singleLiquidation
-                .entireTroveDebt;
+                .entireTrovePrincipal;
             singleLiquidation.collToRedistribute = vars.collToLiquidate;
 
             _closeTrove(_borrower, Status.closedByLiquidation);
             emit TroveLiquidated(
                 _borrower,
-                singleLiquidation.entireTroveDebt,
+                singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.entireTroveColl,
                 uint8(TroveManagerOperation.liquidateInRecoveryMode)
             );
@@ -1696,9 +1705,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 singleLiquidation.debtToOffset,
                 singleLiquidation.collToSendToSP,
                 singleLiquidation.debtToRedistribute,
+                singleLiquidation.interestToRedistribute,
                 singleLiquidation.collToRedistribute
             ) = _getOffsetAndRedistributionVals(
-                singleLiquidation.entireTroveDebt,
+                singleLiquidation.entireTrovePrincipal,
+            singleLiquidation.entireTroveInterest,
                 vars.collToLiquidate,
                 _MUSDInStabPool
             );
@@ -1706,7 +1717,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _closeTrove(_borrower, Status.closedByLiquidation);
             emit TroveLiquidated(
                 _borrower,
-                singleLiquidation.entireTroveDebt,
+                singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.entireTroveColl,
                 uint8(TroveManagerOperation.liquidateInRecoveryMode)
             );
@@ -1726,7 +1737,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         } else if (
             (_ICR >= MCR) &&
             (_ICR < _TCR) &&
-            (singleLiquidation.entireTroveDebt <= _MUSDInStabPool)
+            (singleLiquidation.entireTrovePrincipal <= _MUSDInStabPool)
         ) {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
@@ -1738,7 +1749,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             _removeStake(_borrower);
             singleLiquidation = _getCappedOffsetVals(
-                singleLiquidation.entireTroveDebt,
+                singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.entireTroveColl,
                 _price
             );
@@ -1753,7 +1764,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveLiquidated(
                 _borrower,
-                singleLiquidation.entireTroveDebt,
+                singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.collToSendToSP,
                 uint8(TroveManagerOperation.liquidateInRecoveryMode)
             );
@@ -2154,7 +2165,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      * redistributed to active troves.
      */
     function _getOffsetAndRedistributionVals(
-        uint256 _debt,
+        uint256 _principal,
+        uint256 _interest,
         uint256 _coll,
         uint256 _MUSDInStabPool
     )
@@ -2163,7 +2175,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         returns (
             uint256 debtToOffset,
             uint256 collToSendToSP,
-            uint256 debtToRedistribute,
+            uint256 principalToRedistribute,
+            uint256 interestToRedistribute,
             uint256 collToRedistribute
         )
     {
@@ -2178,14 +2191,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            debtToOffset = LiquityMath._min(_debt, _MUSDInStabPool);
-            collToSendToSP = (_coll * debtToOffset) / _debt;
-            debtToRedistribute = _debt - debtToOffset;
+            uint256 interestToOffset = LiquityMath._min(_interest, _MUSDInStabPool);
+            uint256 principalToOffset = LiquityMath._min(_principal, _MUSDInStabPool - interestToOffset);
+            debtToOffset = principalToOffset + interestToOffset;
+            collToSendToSP = (_coll * debtToOffset) / (_principal + _interest);
+            interestToRedistribute = _interest - interestToOffset;
+            principalToRedistribute = _principal - principalToOffset;
             collToRedistribute = _coll - collToSendToSP;
         } else {
             debtToOffset = 0;
             collToSendToSP = 0;
-            debtToRedistribute = _debt;
+            principalToRedistribute = _principal;
+            interestToRedistribute = _interest;
             collToRedistribute = _coll;
         }
     }
@@ -2227,7 +2244,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _entireTroveColl,
         uint256 _price
     ) internal pure returns (LiquidationValues memory singleLiquidation) {
-        singleLiquidation.entireTroveDebt = _entireTroveDebt;
+        singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
         singleLiquidation.entireTroveColl = _entireTroveColl;
         uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
 
@@ -2258,7 +2275,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             singleLiquidation.MUSDGasCompensation;
         newTotals.totalDebtInSequence =
             oldTotals.totalDebtInSequence +
-            singleLiquidation.entireTroveDebt;
+            singleLiquidation.entireTrovePrincipal;
+            singleLiquidation.entireTroveInterest;
         newTotals.totalCollInSequence =
             oldTotals.totalCollInSequence +
             singleLiquidation.entireTroveColl;
@@ -2271,6 +2289,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         newTotals.totalDebtToRedistribute =
             oldTotals.totalDebtToRedistribute +
             singleLiquidation.debtToRedistribute;
+        newTotals.totalInterestToRedistribute =
+            oldTotals.totalInterestToRedistribute +
+            singleLiquidation.interestToRedistribute;
         newTotals.totalCollToRedistribute =
             oldTotals.totalCollToRedistribute +
             singleLiquidation.collToRedistribute;

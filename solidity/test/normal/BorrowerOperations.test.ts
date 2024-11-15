@@ -25,6 +25,7 @@ import {
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
+  updateTroveSnapshots,
   updateWalletSnapshot,
   User,
 } from "../helpers"
@@ -83,10 +84,12 @@ describe("BorrowerOperations in Normal Mode", () => {
       {
         musdAmount: "10,000",
         sender: alice.wallet,
+        ICR: "150",
       },
       {
         musdAmount: "20,000",
         sender: bob.wallet,
+        ICR: "150",
       },
     ]
 
@@ -947,6 +950,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setInterestRate(contracts, council, 1000)
       await openTrove(contracts, {
         musdAmount: "5,000",
+        ICR: "1000",
+        sender: dennis.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5,000",
         sender: carol.wallet,
       })
       await fastForwardTime(60 * 60 * 24 * 365)
@@ -1014,6 +1022,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       await openTrove(contracts, {
         musdAmount: "5,000",
         sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: dennis.wallet,
+        ICR: "1000",
       })
       await updateTroveSnapshot(contracts, carol, "before")
       await fastForwardTime(60 * 60 * 24 * 365)
@@ -1133,11 +1146,18 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("reduces ActivePool debt by correct amount accounting for interest", async () => {
+      await openTrove(contracts, {
+        sender: dennis.wallet,
+        ICR: "1000",
+        musdAmount: "10,000",
+      })
+
       await setInterestRate(contracts, council, 1000)
       await openTrove(contracts, {
-        musdAmount: "5,000",
         sender: carol.wallet,
+        musdAmount: "5,000",
       })
+
       await updateContractsSnapshot(
         contracts,
         state,
@@ -1146,12 +1166,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         addresses,
       )
       await updateTroveSnapshot(contracts, carol, "before")
-      await fastForwardTime(60 * 60 * 24 * 365)
 
-      await contracts.musd
-        .connect(bob.wallet)
-        .transfer(carol.wallet, to1e18("10,000"))
+      // Transfer mUSD to Carol so she can close her trove
+      const amount = to1e18("10,000")
+      await contracts.musd.connect(bob.wallet).transfer(carol.wallet, amount)
+
       await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+
       await updateContractsSnapshot(
         contracts,
         state,
@@ -1159,7 +1180,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         "after",
         addresses,
       )
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before - carol.trove.debt.before,
+      )
+      // Interest should be 0 because Carol is the only one with an interest rate
+      expect(state.activePool.interest.after).to.equal(0)
 
+      // Interest is paid on closing the trove so the debt difference should be Carol's principal
       expect(state.activePool.debt.after).to.equal(
         state.activePool.debt.before - carol.trove.debt.before,
       )

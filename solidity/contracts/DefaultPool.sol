@@ -108,6 +108,14 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         return principal + interest;
     }
 
+    function getPrincipal() external view override returns (uint) {
+        return principal;
+    }
+
+    function getInterest() external view override returns (uint) {
+        return interest;
+    }
+
     function _requireCallerIsTroveManager() internal view {
         require(
             msg.sender == troveManagerAddress,

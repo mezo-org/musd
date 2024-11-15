@@ -74,6 +74,8 @@ export interface ContractsState {
   activePool: {
     btc: BeforeAndAfter
     collateral: BeforeAndAfter
+    principal: BeforeAndAfter
+    interest: BeforeAndAfter
     debt: BeforeAndAfter
   }
   collSurplusPool: {
@@ -82,6 +84,8 @@ export interface ContractsState {
   defaultPool: {
     btc: BeforeAndAfter
     collateral: BeforeAndAfter
+    principal: BeforeAndAfter
+    interest: BeforeAndAfter
     debt: BeforeAndAfter
   }
   pcv: {

@@ -465,13 +465,12 @@ describe("TroveManager in Normal Mode", () => {
         sender: carol.wallet,
       })
 
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateTroveSnapshot(contracts, carol, "before")
       await updateTroveManagerSnapshot(contracts, state, "before")
+
       const entireSystemCollBefore =
         await contracts.troveManager.getEntireSystemColl()
-      const entireSystemDebtBefore =
-        await contracts.troveManager.getEntireSystemDebt()
-
-      const before = await getLatestBlockTimestamp()
 
       // Fast-forward 1 year
       await fastForwardTime(365 * 24 * 60 * 60)
@@ -481,23 +480,26 @@ describe("TroveManager in Normal Mode", () => {
         contracts,
         carol,
       )
+      await updateTroveSnapshot(contracts, carol, "after")
       const { collGasCompensation } = await getEmittedLiquidationValues(
         liquidationTx!,
       )
 
       // Calculate interest on total system debt
-      const after = await getLatestBlockTimestamp()
-      const interestOwed = calculateInterestOwed(
-        entireSystemDebtBefore,
-        1000,
-        BigInt(before),
-        BigInt(after),
-      )
+      const interestOwed =
+        calculateInterestOwed(
+          state.troveManager.interestRateData[1000].principal.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          carol.trove.lastInterestUpdateTime.after,
+        ) + state.troveManager.interestRateData[1000].interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
-      const remainingDebt = entireSystemDebtBefore + interestOwed
+      const remainingDebt =
+        state.troveManager.interestRateData[1000].principal.before +
+        interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
 
@@ -2647,9 +2649,10 @@ describe("TroveManager in Normal Mode", () => {
       })
       await updateTroveSnapshot(contracts, carol, "before")
       await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
-      const currentTime = BigInt(await getLatestBlockTimestamp())
 
       await updateTroveSnapshot(contracts, carol, "after")
+      await contracts.troveManager.updateSystemAndTroveInterest(carol.wallet)
+      const currentTime = BigInt(await getLatestBlockTimestamp())
       const entireDebt = await getTroveEntireDebt(contracts, carol.wallet)
 
       expect(entireDebt).to.equal(

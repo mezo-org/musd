@@ -207,6 +207,7 @@ interface ITroveManager {
         view
         returns (
             uint256 debt,
+            uint256 interest,
             uint256 coll,
             uint256 pendingMUSDDebtReward,
             uint256 pendingCollateralReward

@@ -150,6 +150,14 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         return principal + interest;
     }
 
+    function getPrincipal() external view override returns (uint) {
+        return principal;
+    }
+
+    function getInterest() external view override returns (uint) {
+        return interest;
+    }
+
     function _requireCallerIsBorrowerOperationsOrDefaultPool() internal view {
         require(
             msg.sender == borrowerOperationsAddress ||

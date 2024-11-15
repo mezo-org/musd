@@ -21,4 +21,8 @@ interface IPool {
     function getCollateralBalance() external view returns (uint);
 
     function getMUSDDebt() external view returns (uint);
+
+    function getPrincipal() external view returns (uint);
+
+    function getInterest() external view returns (uint);
 }

@@ -94,11 +94,15 @@ function initializeContractState(): ContractsState {
     activePool: {
       btc: beforeAndAfter(),
       collateral: beforeAndAfter(),
+      principal: beforeAndAfter(),
+      interest: beforeAndAfter(),
       debt: beforeAndAfter(),
     },
     defaultPool: {
       btc: beforeAndAfter(),
       collateral: beforeAndAfter(),
+      principal: beforeAndAfter(),
+      interest: beforeAndAfter(),
       debt: beforeAndAfter(),
     },
     collSurplusPool: {
