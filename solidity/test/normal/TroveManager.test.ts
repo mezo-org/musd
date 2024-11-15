@@ -454,8 +454,7 @@ describe("TroveManager in Normal Mode", () => {
       expect(tcrAfter).to.equal(remainingColl / remainingDebt)
     })
 
-    // TODO - this test is failing because we aren't tracking interest as total system debt yet
-    it.skip("a pure redistribution reduces the TCR due to compensation and interest", async () => {
+    it.only("a pure redistribution reduces the TCR due to compensation and interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupTroves()
 

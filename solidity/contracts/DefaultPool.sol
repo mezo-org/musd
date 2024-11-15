@@ -105,7 +105,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     }
 
     function getMUSDDebt() external view override returns (uint) {
-        return principal;
+        return principal + interest;
     }
 
     function _requireCallerIsTroveManager() internal view {
