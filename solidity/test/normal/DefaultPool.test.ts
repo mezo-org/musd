@@ -73,7 +73,7 @@ describe("DefaultPool", () => {
 
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .increaseMUSDDebt(amount, NO_GAS)
+        .increaseMUSDDebt(amount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -94,12 +94,12 @@ describe("DefaultPool", () => {
       const originalAmount = to1e18("200")
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .increaseMUSDDebt(originalAmount, NO_GAS)
+        .increaseMUSDDebt(originalAmount, 0n, NO_GAS)
 
       const subtractedAmount = to1e18("50")
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .decreaseMUSDDebt(subtractedAmount, NO_GAS)
+        .decreaseMUSDDebt(subtractedAmount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,

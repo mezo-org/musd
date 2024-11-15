@@ -21,7 +21,8 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     address public collateralAddress;
     address public troveManagerAddress;
     uint256 internal collateral; // deposited collateral tracker
-    uint256 internal MUSDDebt; // debt
+    uint256 internal principal;
+    uint256 internal interest;
 
     constructor() Ownable(msg.sender) {}
 
@@ -69,16 +70,24 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         renounceOwnership();
     }
 
-    function increaseMUSDDebt(uint256 _amount) external override {
+    function increaseMUSDDebt(
+        uint256 _principal,
+        uint256 _interest
+    ) external override {
         _requireCallerIsTroveManager();
-        MUSDDebt += _amount;
-        emit DefaultPoolMUSDDebtUpdated(MUSDDebt);
+        principal += _principal;
+        interest += _interest;
+        emit DefaultPoolMUSDDebtUpdated(principal, interest);
     }
 
-    function decreaseMUSDDebt(uint256 _amount) external override {
+    function decreaseMUSDDebt(
+        uint256 _principal,
+        uint256 _interest
+    ) external override {
         _requireCallerIsTroveManager();
-        MUSDDebt -= _amount;
-        emit DefaultPoolMUSDDebtUpdated(MUSDDebt);
+        principal -= _principal;
+        interest -= _interest;
+        emit DefaultPoolMUSDDebtUpdated(principal, interest);
     }
 
     function sendCollateralToActivePool(uint256 _amount) external override {
@@ -96,7 +105,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     }
 
     function getMUSDDebt() external view override returns (uint) {
-        return MUSDDebt;
+        return principal;
     }
 
     function _requireCallerIsTroveManager() internal view {

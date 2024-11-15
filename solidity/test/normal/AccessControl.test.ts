@@ -184,7 +184,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
     it("increaseMUSDDebt(): reverts when called by an account that is not BO nor TroveM", async () => {
       await expect(
-        contracts.activePool.connect(alice.wallet).increaseMUSDDebt(100),
+        contracts.activePool.connect(alice.wallet).increaseMUSDDebt(100n, 0n),
       ).to.be.revertedWith(
         "ActivePool: Caller is neither BorrowerOperations nor TroveManager",
       )
@@ -192,7 +192,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
     it("decreaseMUSDDebt(): reverts when called by an account that is not BO nor TroveM nor SP", async () => {
       await expect(
-        contracts.activePool.connect(alice.wallet).decreaseMUSDDebt(100),
+        contracts.activePool.connect(alice.wallet).decreaseMUSDDebt(100n, 0n),
       ).to.be.revertedWith(
         "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool",
       )
@@ -229,13 +229,13 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
     it("increaseMUSDDebt(): reverts when called by an account that is not TroveManager", async () => {
       await expect(
-        contracts.defaultPool.connect(alice.wallet).increaseMUSDDebt(100),
+        contracts.defaultPool.connect(alice.wallet).increaseMUSDDebt(100n, 0n),
       ).to.be.revertedWith("DefaultPool: Caller is not the TroveManager")
     })
 
     it("decreaseMUSDDebt(): reverts when called by an account that is not TroveManager", async () => {
       await expect(
-        contracts.defaultPool.connect(alice.wallet).decreaseMUSDDebt(100),
+        contracts.defaultPool.connect(alice.wallet).decreaseMUSDDebt(100n, 0n),
       ).to.be.revertedWith("DefaultPool: Caller is not the TroveManager")
     })
 

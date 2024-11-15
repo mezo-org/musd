@@ -7,7 +7,6 @@ interface IPool {
     // --- Events ---
 
     event CollateralBalanceUpdated(uint256 _newBalance);
-    event MUSDBalanceUpdated(uint256 _newBalance);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
     event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
@@ -15,9 +14,9 @@ interface IPool {
 
     // --- Functions ---
 
-    function increaseMUSDDebt(uint256 _amount) external;
+    function increaseMUSDDebt(uint256 _principal, uint256 _interest) external;
 
-    function decreaseMUSDDebt(uint256 _amount) external;
+    function decreaseMUSDDebt(uint256 _principal, uint256 _interest) external;
 
     function getCollateralBalance() external view returns (uint);
 

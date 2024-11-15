@@ -537,7 +537,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // Burn the total mUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
         contractsCache.musdToken.burn(msg.sender, totals.totalMUSDToRedeem);
         // Update Active Pool mUSD, and send collateral to account
-        contractsCache.activePool.decreaseMUSDDebt(totals.totalMUSDToRedeem);
+        contractsCache.activePool.decreaseMUSDDebt(totals.totalMUSDToRedeem, 0);
         contractsCache.activePool.sendCollateral(
             msg.sender,
             totals.collateralToSendToRedeemer
@@ -1408,8 +1408,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit LTermsUpdated(L_Collateral, L_MUSDDebt);
 
         // Transfer coll and debt from ActivePool to DefaultPool
-        _activePool.decreaseMUSDDebt(_debt);
-        _defaultPool.increaseMUSDDebt(_debt);
+        _activePool.decreaseMUSDDebt(_debt, 0);
+        _defaultPool.increaseMUSDDebt(_debt, 0);
         _activePool.sendCollateral(address(_defaultPool), _coll);
     }
 
@@ -1775,7 +1775,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _contractsCache.musdToken.burn(gasPoolAddress, _MUSD);
         // Update Active Pool mUSD, and send collateral to account
         // slither-disable-next-line calls-loop
-        _contractsCache.activePool.decreaseMUSDDebt(_MUSD);
+        _contractsCache.activePool.decreaseMUSDDebt(_MUSD, 0);
 
         // send collateral from Active Pool to CollSurplus Pool
         // slither-disable-next-line calls-loop
@@ -1928,9 +1928,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _collateral
     ) internal {
         // slither-disable-next-line calls-loop
-        _defaultPool.decreaseMUSDDebt(_MUSD);
+        _defaultPool.decreaseMUSDDebt(_MUSD, 0);
         // slither-disable-next-line calls-loop
-        _activePool.increaseMUSDDebt(_MUSD);
+        _activePool.increaseMUSDDebt(_MUSD, 0);
         // slither-disable-next-line calls-loop
         _defaultPool.sendCollateralToActivePool(_collateral);
     }

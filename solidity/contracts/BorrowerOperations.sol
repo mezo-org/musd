@@ -402,7 +402,8 @@ contract BorrowerOperations is
 
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
         activePoolCached.decreaseMUSDDebt(
-            debt - MUSD_GAS_COMPENSATION - interestOwed
+            debt - MUSD_GAS_COMPENSATION - interestOwed,
+            0
         );
 
         // Burn the repaid mUSD from the user's balance
@@ -701,7 +702,7 @@ contract BorrowerOperations is
         uint256 _debtAmount,
         uint256 _netDebtIncrease
     ) internal {
-        _activePool.increaseMUSDDebt(_netDebtIncrease);
+        _activePool.increaseMUSDDebt(_netDebtIncrease, 0);
         _musd.mint(_account, _debtAmount);
     }
 
@@ -712,7 +713,7 @@ contract BorrowerOperations is
         address _account,
         uint256 _MUSD
     ) internal {
-        _activePool.decreaseMUSDDebt(_MUSD);
+        _activePool.decreaseMUSDDebt(_MUSD, 0);
         _musd.burn(_account, _MUSD);
     }
 
