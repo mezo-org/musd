@@ -27,7 +27,8 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public stabilityPoolAddress;
     address public troveManagerAddress;
     uint256 internal collateral; // deposited collateral tracker
-    uint256 internal MUSDDebt;
+    uint256 internal principal;
+    uint256 internal interest;
 
     constructor() Ownable(msg.sender) {}
 
@@ -104,16 +105,24 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         renounceOwnership();
     }
 
-    function increaseMUSDDebt(uint256 _amount) external override {
+    function increaseMUSDDebt(
+        uint256 _principal,
+        uint256 _interest
+    ) external override {
         _requireCallerIsBorrowerOperationsOrTroveManager();
-        MUSDDebt += _amount;
-        emit ActivePoolMUSDDebtUpdated(MUSDDebt);
+        principal += _principal;
+        interest += _interest;
+        emit ActivePoolMUSDDebtUpdated(principal, interest);
     }
 
-    function decreaseMUSDDebt(uint256 _amount) external override {
+    function decreaseMUSDDebt(
+        uint256 _principal,
+        uint256 _interest
+    ) external override {
         _requireCallerIsBOorTroveMorSP();
-        MUSDDebt -= _amount;
-        emit ActivePoolMUSDDebtUpdated(MUSDDebt);
+        principal -= _principal;
+        interest -= _interest;
+        emit ActivePoolMUSDDebtUpdated(principal, interest);
     }
 
     function sendCollateral(
@@ -138,7 +147,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     }
 
     function getMUSDDebt() external view override returns (uint) {
-        return MUSDDebt;
+        return principal;
     }
 
     function _requireCallerIsBorrowerOperationsOrDefaultPool() internal view {

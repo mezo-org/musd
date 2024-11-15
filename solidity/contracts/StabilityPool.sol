@@ -480,7 +480,7 @@ contract StabilityPool is
         IActivePool activePoolCached = activePool;
 
         // Cancel the liquidated mUSD debt with the mUSD in the stability pool
-        activePoolCached.decreaseMUSDDebt(_debtToOffset);
+        activePoolCached.decreaseMUSDDebt(_debtToOffset, 0);
         _decreaseMUSD(_debtToOffset);
 
         // Burn the debt that was successfully offset

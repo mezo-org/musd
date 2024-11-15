@@ -56,7 +56,7 @@ describe("ActivePool", () => {
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .increaseMUSDDebt(amount, NO_GAS)
+        .increaseMUSDDebt(amount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -78,7 +78,7 @@ describe("ActivePool", () => {
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .increaseMUSDDebt(initialAmount, NO_GAS)
+        .increaseMUSDDebt(initialAmount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -92,7 +92,7 @@ describe("ActivePool", () => {
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .decreaseMUSDDebt(subtractedAmount, NO_GAS)
+        .decreaseMUSDDebt(subtractedAmount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
