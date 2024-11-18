@@ -1083,9 +1083,9 @@ contract BorrowerOperations is
         );
     }
 
-    function _requireNonZeroDebtChange(uint256 _MUSDChange) internal pure {
+    function _requireNonZeroDebtChange(uint256 _debtChange) internal pure {
         require(
-            _MUSDChange > 0,
+            _debtChange > 0,
             "BorrowerOps: Debt increase requires non-zero debtChange"
         );
     }
@@ -1102,11 +1102,11 @@ contract BorrowerOperations is
 
     function _requireNonZeroAdjustment(
         uint256 _collWithdrawal,
-        uint256 _MUSDChange,
+        uint256 _debtChange,
         uint256 _assetAmount
     ) internal pure {
         require(
-            _assetAmount != 0 || _collWithdrawal != 0 || _MUSDChange != 0,
+            _assetAmount != 0 || _collWithdrawal != 0 || _debtChange != 0,
             "BorrowerOps: There must be either a collateral change or a debt change"
         );
     }
