@@ -416,7 +416,7 @@ contract BorrowerOperations is
             musdTokenCached,
             gasPoolAddress,
             MUSD_GAS_COMPENSATION,
-    0
+            0
         );
 
         // Send the collateral back to the user
@@ -576,7 +576,10 @@ contract BorrowerOperations is
         vars.isRecoveryMode = _checkRecoveryMode(vars.price);
 
         if (_isDebtIncrease) {
-            _requireValidMaxFeePercentage(_maxFeePercentage, vars.isRecoveryMode);
+            _requireValidMaxFeePercentage(
+                _maxFeePercentage,
+                vars.isRecoveryMode
+            );
             _requireNonZeroDebtChange(_MUSDChange);
         }
         _requireSingularCollChange(_collWithdrawal, _assetAmount);
@@ -741,7 +744,13 @@ contract BorrowerOperations is
                 _netDebtChange
             );
         } else {
-            _repayMUSD(_activePool, _musd, _borrower, _principalChange, _interestChange);
+            _repayMUSD(
+                _activePool,
+                _musd,
+                _borrower,
+                _principalChange,
+                _interestChange
+            );
         }
 
         if (_isCollIncrease) {

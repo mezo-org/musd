@@ -350,7 +350,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             contractsCache.activePool,
             contractsCache.defaultPool,
             totals.totalDebtToRedistribute,
-        0,
+            0,
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
@@ -1709,7 +1709,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 singleLiquidation.collToRedistribute
             ) = _getOffsetAndRedistributionVals(
                 singleLiquidation.entireTrovePrincipal,
-            singleLiquidation.entireTroveInterest,
+                singleLiquidation.entireTroveInterest,
                 vars.collToLiquidate,
                 _MUSDInStabPool
             );
@@ -1860,6 +1860,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
         } else {
             // calculate 10 minutes worth of interest to account for delay between the hint call and now
+            // solhint-disable not-rely-on-time
             vars.upperBoundNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt -
@@ -1870,6 +1871,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                         block.timestamp
                     )
             );
+            // solhint-enable not-rely-on-time
             vars.newNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt
@@ -2191,8 +2193,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            uint256 interestToOffset = LiquityMath._min(_interest, _MUSDInStabPool);
-            uint256 principalToOffset = LiquityMath._min(_principal, _MUSDInStabPool - interestToOffset);
+            uint256 interestToOffset = LiquityMath._min(
+                _interest,
+                _MUSDInStabPool
+            );
+            uint256 principalToOffset = LiquityMath._min(
+                _principal,
+                _MUSDInStabPool - interestToOffset
+            );
             debtToOffset = principalToOffset + interestToOffset;
             collToSendToSP = (_coll * debtToOffset) / (_principal + _interest);
             interestToRedistribute = _interest - interestToOffset;
@@ -2276,7 +2284,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         newTotals.totalDebtInSequence =
             oldTotals.totalDebtInSequence +
             singleLiquidation.entireTrovePrincipal;
-            singleLiquidation.entireTroveInterest;
+        singleLiquidation.entireTroveInterest;
         newTotals.totalCollInSequence =
             oldTotals.totalCollInSequence +
             singleLiquidation.entireTroveColl;
