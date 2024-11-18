@@ -25,7 +25,6 @@ import {
   updateRewardSnapshot,
   updateTroveManagerSnapshot,
   updateTroveSnapshot,
-  updateTroveSnapshots,
   updateWalletSnapshot,
   User,
 } from "../helpers"
@@ -3267,15 +3266,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateWalletSnapshot(contracts, carol, "after")
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const expectedInterest = calculateInterestOwed(
-        carol.trove.debt.before,
-        1000,
-        carol.trove.lastInterestUpdateTime.before,
-        carol.trove.lastInterestUpdateTime.after,
-      )
-      expect(carol.musd.after).to.be.equal(
-        carol.musd.before - debtChange + expectedInterest,
-      )
+      // Carol's balance should be reduced by the adjustment amount as both interest and principal are paid
+      expect(carol.musd.after).to.be.equal(carol.musd.before - debtChange)
     })
 
     it("changes mUSD balance by the requested increase", async () => {
