@@ -72,7 +72,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 totalMUSDGasCompensation;
         uint256 totalDebtToOffset;
         uint256 totalCollToSendToSP;
-        uint256 totalDebtToRedistribute;
+        uint256 totalPrincipalToRedistribute;
         uint256 totalInterestToRedistribute;
         uint256 totalCollToRedistribute;
         uint256 totalCollSurplus;
@@ -96,7 +96,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 MUSDGasCompensation;
         uint256 debtToOffset;
         uint256 collToSendToSP;
-        uint256 debtToRedistribute;
+        uint256 principalToRedistribute;
         uint256 interestToRedistribute;
         uint256 collToRedistribute;
         uint256 collSurplus;
@@ -129,7 +129,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 totalMUSDDebtAtStart;
     }
 
-    // Store the total debt and last computation timestamps for an interest rate
     struct InterestRateInfo {
         uint256 principal; // The total principal at this interest rate
         uint256 interest; // The total outstanding interest owed at this interest rate
@@ -349,7 +348,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _redistributeDebtAndColl(
             contractsCache.activePool,
             contractsCache.defaultPool,
-            totals.totalDebtToRedistribute,
+            totals.totalPrincipalToRedistribute,
             0,
             totals.totalCollToRedistribute
         );
@@ -894,7 +893,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _redistributeDebtAndColl(
             activePoolCached,
             defaultPoolCached,
-            totals.totalDebtToRedistribute,
+            totals.totalPrincipalToRedistribute,
             totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
@@ -1474,7 +1473,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         (
             singleLiquidation.debtToOffset,
             singleLiquidation.collToSendToSP,
-            singleLiquidation.debtToRedistribute,
+            singleLiquidation.principalToRedistribute,
             singleLiquidation.interestToRedistribute,
             singleLiquidation.collToRedistribute
         ) = _getOffsetAndRedistributionVals(
@@ -1677,7 +1676,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             singleLiquidation.debtToOffset = 0;
             singleLiquidation.collToSendToSP = 0;
-            singleLiquidation.debtToRedistribute = singleLiquidation
+            singleLiquidation.principalToRedistribute = singleLiquidation
                 .entireTrovePrincipal;
             singleLiquidation.collToRedistribute = vars.collToLiquidate;
 
@@ -1710,7 +1709,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (
                 singleLiquidation.debtToOffset,
                 singleLiquidation.collToSendToSP,
-                singleLiquidation.debtToRedistribute,
+                singleLiquidation.principalToRedistribute,
                 singleLiquidation.interestToRedistribute,
                 singleLiquidation.collToRedistribute
             ) = _getOffsetAndRedistributionVals(
@@ -2276,7 +2275,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             cappedCollPortion -
             singleLiquidation.collGasCompensation;
         singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
-        singleLiquidation.debtToRedistribute = 0;
+        singleLiquidation.principalToRedistribute = 0;
         singleLiquidation.collToRedistribute = 0;
     }
 
@@ -2313,9 +2312,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             oldTotals.totalCollToSendToSP +
             singleLiquidation.collToSendToSP;
 
-        newTotals.totalDebtToRedistribute =
-            oldTotals.totalDebtToRedistribute +
-            singleLiquidation.debtToRedistribute;
+        newTotals.totalPrincipalToRedistribute =
+            oldTotals.totalPrincipalToRedistribute +
+            singleLiquidation.principalToRedistribute;
 
         newTotals.totalInterestToRedistribute =
             oldTotals.totalInterestToRedistribute +
