@@ -28,7 +28,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Store the necessary data for a trove
     struct Trove {
         uint256 coll;
-        uint256 debt;
+        uint256 principal;
         uint256 interestOwed;
         uint256 stake;
         Status status;
@@ -647,8 +647,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _debtIncrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
-        uint256 newDebt = Troves[_borrower].debt + _debtIncrease;
-        Troves[_borrower].debt = newDebt;
+        uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
+        Troves[_borrower].principal = newDebt;
         return newDebt;
     }
 
@@ -787,7 +787,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function getTrovePrincipal(address _borrower) external view returns (uint) {
-        return Troves[_borrower].debt;
+        return Troves[_borrower].principal;
     }
 
     function getTroveInterestRate(
@@ -980,7 +980,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 pendingCollateralReward
         )
     {
-        principal = Troves[_borrower].debt;
+        principal = Troves[_borrower].principal;
         interest = Troves[_borrower].interestOwed;
         coll = Troves[_borrower].coll;
 
@@ -1080,7 +1080,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _updateDebtWithInterest(address _borrower) internal {
         // solhint-disable not-rely-on-time
         Troves[_borrower].interestOwed += calculateInterestOwed(
-            Troves[_borrower].debt,
+            Troves[_borrower].principal,
             Troves[_borrower].interestRate,
             Troves[_borrower].lastInterestUpdateTime,
             block.timestamp
@@ -1124,8 +1124,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 _interestAdjustment
         ) = calculateDebtAdjustment(trove.interestOwed, _payment);
 
+        trove.principal -= _principalAdjustment;
         trove.interestOwed -= _interestAdjustment;
-        trove.debt -= _principalAdjustment;
         interestRateData[trove.interestRate].principal -= _principalAdjustment;
         interestRateData[trove.interestRate].interest -= _interestAdjustment;
     }
@@ -1318,7 +1318,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             // Apply pending rewards to trove's state
             Troves[_borrower].coll += pendingCollateralReward;
-            Troves[_borrower].debt += pendingMUSDDebtReward;
+            Troves[_borrower].principal += pendingMUSDDebtReward;
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -1332,7 +1332,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveUpdated(
                 _borrower,
-                Troves[_borrower].debt,
+                Troves[_borrower].principal,
                 Troves[_borrower].coll,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.applyPendingRewards)
@@ -1867,7 +1867,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 vars.newColl,
                 vars.newDebt -
                     calculateInterestOwed(
-                        Troves[_borrower].debt,
+                        Troves[_borrower].principal,
                         Troves[_borrower].interestRate,
                         block.timestamp - 600,
                         block.timestamp
@@ -1997,7 +1997,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
-        Troves[_borrower].debt = 0;
+        Troves[_borrower].principal = 0;
         Troves[_borrower].interestOwed = 0;
 
         rewardSnapshots[_borrower].collateral = 0;
@@ -2101,10 +2101,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
         // solhint-disable not-rely-on-time
         return
-            Troves[_borrower].debt +
+            Troves[_borrower].principal +
             Troves[_borrower].interestOwed +
             calculateInterestOwed(
-                Troves[_borrower].debt,
+                Troves[_borrower].principal,
                 Troves[_borrower].interestRate,
                 Troves[_borrower].lastInterestUpdateTime,
                 block.timestamp
