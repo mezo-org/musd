@@ -655,10 +655,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function decreaseTroveDebt(
         address _borrower,
         uint256 _debtDecrease
-    ) external override returns (uint) {
+    ) external override returns (uint256, uint256) {
         _requireCallerIsBorrowerOperations();
         _updateTroveDebt(_borrower, _debtDecrease);
-        return _getTotalDebt(_borrower);
+        return (Troves[_borrower].principal, Troves[_borrower].interestOwed);
     }
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external {
@@ -1333,6 +1333,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             emit TroveUpdated(
                 _borrower,
                 Troves[_borrower].principal,
+                Troves[_borrower].interestOwed,
                 Troves[_borrower].coll,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.applyPendingRewards)
@@ -1491,6 +1492,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
         emit TroveUpdated(
             _borrower,
+            0,
             0,
             0,
             0,
@@ -1690,6 +1692,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 0,
                 0,
                 0,
+                0,
                 uint8(TroveManagerOperation.liquidateInRecoveryMode)
             );
 
@@ -1725,6 +1728,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             emit TroveUpdated(
                 _borrower,
+                0,
                 0,
                 0,
                 0,
@@ -1772,6 +1776,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             emit TroveUpdated(
                 _borrower,
+                0,
                 0,
                 0,
                 0,
@@ -1858,6 +1863,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 0,
                 0,
                 0,
+                0,
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
@@ -1910,7 +1916,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveUpdated(
                 _borrower,
-                vars.newDebt,
+                Troves[_borrower].principal,
+                Troves[_borrower].interestOwed,
                 vars.newColl,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.redeemCollateral)

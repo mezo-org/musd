@@ -49,7 +49,8 @@ interface ITroveManager {
     );
     event TroveUpdated(
         address indexed _borrower,
-        uint256 _debt,
+        uint256 _principal,
+        uint256 _interest,
         uint256 _coll,
         uint256 stake,
         uint8 operation
@@ -147,12 +148,12 @@ interface ITroveManager {
     function increaseTroveDebt(
         address _borrower,
         uint256 _debtIncrease
-    ) external returns (uint);
+    ) external returns (uint256);
 
     function decreaseTroveDebt(
         address _borrower,
         uint256 _debtDecrease
-    ) external returns (uint);
+    ) external returns (uint256, uint256);
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external;
 

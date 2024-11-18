@@ -400,8 +400,9 @@ export async function getDebtAndCollFromTroveUpdatedEvents(
 ) {
   const event = troveUpdatedEvents.find((e) => e.args[0] === user.address)
   return {
-    debt: event?.args[1],
-    coll: event?.args[2],
+    principal: event?.args[1],
+    interest: event?.args[2],
+    coll: event?.args[3],
   }
 }
 

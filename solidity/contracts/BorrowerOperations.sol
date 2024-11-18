@@ -37,8 +37,9 @@ contract BorrowerOperations is
         uint256 newICR;
         uint256 newTCR;
         uint256 MUSDFee;
-        uint256 newDebt;
         uint256 newColl;
+        uint256 newPrincipal;
+        uint256 newInterest;
         uint256 stake;
         uint256 interestOwed;
         uint256 principalAdjustment;
@@ -249,6 +250,7 @@ contract BorrowerOperations is
         emit TroveUpdated(
             msg.sender,
             vars.compositeDebt,
+            0,
             _assetAmount,
             vars.stake,
             uint8(BorrowerOperation.openTrove)
@@ -395,6 +397,7 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             msg.sender,
+            0,
             0,
             0,
             0,
@@ -652,7 +655,11 @@ contract BorrowerOperations is
             );
         }
 
-        (vars.newColl, vars.newDebt) = _updateTroveFromAdjustment(
+        (
+            vars.newColl,
+            vars.newPrincipal,
+            vars.newInterest
+        ) = _updateTroveFromAdjustment(
             contractsCache.troveManager,
             _borrower,
             vars.collChange,
@@ -678,7 +685,8 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
-            vars.newDebt,
+            vars.newPrincipal,
+            vars.newInterest,
             vars.newColl,
             vars.stake,
             uint8(BorrowerOperation.adjustTrove)
@@ -781,15 +789,25 @@ contract BorrowerOperations is
         bool _isCollIncrease,
         uint256 _debtChange,
         bool _isDebtIncrease
-    ) internal returns (uint, uint) {
-        uint256 newColl = (_isCollIncrease)
+    )
+        internal
+        returns (uint256 newColl, uint256 newPrincipal, uint256 newInterest)
+    {
+        newColl = (_isCollIncrease)
             ? _troveManager.increaseTroveColl(_borrower, _collChange)
             : _troveManager.decreaseTroveColl(_borrower, _collChange);
-        uint256 newDebt = (_isDebtIncrease)
-            ? _troveManager.increaseTroveDebt(_borrower, _debtChange)
-            : _troveManager.decreaseTroveDebt(_borrower, _debtChange);
 
-        return (newColl, newDebt);
+        if (_isDebtIncrease) {
+            newPrincipal = _troveManager.increaseTroveDebt(
+                _borrower,
+                _debtChange
+            );
+        } else {
+            (newPrincipal, newInterest) = _troveManager.decreaseTroveDebt(
+                _borrower,
+                _debtChange
+            );
+        }
     }
 
     // --- Helper functions ---
