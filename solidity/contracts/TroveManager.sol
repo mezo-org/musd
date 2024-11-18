@@ -1103,6 +1103,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         // solhint-enable not-rely-on-time
 
         interestRateData[_rate].interest += interest;
+
+        // slither-disable-next-line calls-loop
         activePool.increaseMUSDDebt(0, interest);
 
         // solhint-disable-next-line not-rely-on-time
