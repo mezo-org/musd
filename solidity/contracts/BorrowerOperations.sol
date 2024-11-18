@@ -900,42 +900,62 @@ contract BorrowerOperations is
         );
     }
 
+    /*
+     * In Recovery Mode, only allow:
+     *
+     * - Pure collateral top-up
+     * - Pure debt repayment
+     * - Collateral top-up with debt repayment
+     * - A debt increase combined with a collateral top-up which makes the ICR
+     * >= 150% and improves the ICR (and by extension improves the TCR).
+     */
+    function _requireValidAdjustmentInRecoveryMode(
+        uint256 _collWithdrawal,
+        bool _isDebtIncrease,
+        LocalVariables_adjustTrove memory _vars
+    ) internal pure {
+        _requireNoCollWithdrawal(_collWithdrawal);
+        if (_isDebtIncrease) {
+            _requireICRisAboveCCR(_vars.newICR);
+            _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
+        }
+    }
+
+    /*
+     * In Normal Mode, ensure:
+     *
+     * - The new ICR is above MCR
+     * - The adjustment won't pull the TCR below CCR
+     */
+    function _requireValidAdjustmentInNormalMode(
+        bool _isDebtIncrease,
+        LocalVariables_adjustTrove memory _vars
+    ) internal view {
+        _requireICRisAboveMCR(_vars.newICR);
+        _vars.newTCR = _getNewTCRFromTroveChange(
+            _vars.collChange,
+            _vars.isCollIncrease,
+            _vars.netDebtChange,
+            _isDebtIncrease,
+            _vars.price
+        );
+        _requireNewTCRisAboveCCR(_vars.newTCR);
+    }
+
     function _requireValidAdjustmentInCurrentMode(
         bool _isRecoveryMode,
         uint256 _collWithdrawal,
         bool _isDebtIncrease,
         LocalVariables_adjustTrove memory _vars
     ) internal view {
-        /*
-         *In Recovery Mode, only allow:
-         *
-         * - Pure collateral top-up
-         * - Pure debt repayment
-         * - Collateral top-up with debt repayment
-         * - A debt increase combined with a collateral top-up which makes the ICR >= 150% and improves the ICR (and by extension improves the TCR).
-         *
-         * In Normal Mode, ensure:
-         *
-         * - The new ICR is above MCR
-         * - The adjustment won't pull the TCR below CCR
-         */
         if (_isRecoveryMode) {
-            _requireNoCollWithdrawal(_collWithdrawal);
-            if (_isDebtIncrease) {
-                _requireICRisAboveCCR(_vars.newICR);
-                _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
-            }
-        } else {
-            // if Normal Mode
-            _requireICRisAboveMCR(_vars.newICR);
-            _vars.newTCR = _getNewTCRFromTroveChange(
-                _vars.collChange,
-                _vars.isCollIncrease,
-                _vars.netDebtChange,
+            _requireValidAdjustmentInRecoveryMode(
+                _collWithdrawal,
                 _isDebtIncrease,
-                _vars.price
+                _vars
             );
-            _requireNewTCRisAboveCCR(_vars.newTCR);
+        } else {
+            _requireValidAdjustmentInNormalMode(_isDebtIncrease, _vars);
         }
     }
 
