@@ -69,8 +69,8 @@ interface ITroveManager {
         uint256 _totalStakesSnapshot,
         uint256 _totalCollateralSnapshot
     );
-    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
-    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
+    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_mUSDDebt);
+    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_mUSDDebt);
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
     event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
     event InterestRateUpdated(uint256 _newInterestRate);
@@ -227,10 +227,10 @@ interface ITroveManager {
 
     function getBorrowingRateWithDecay() external view returns (uint);
 
-    function getBorrowingFee(uint256 MUSDDebt) external view returns (uint);
+    function getBorrowingFee(uint256 _mUSDDebt) external view returns (uint);
 
     function getBorrowingFeeWithDecay(
-        uint256 _MUSDDebt
+        uint256 _mUSDDebt
     ) external view returns (uint);
 
     function getTroveStatus(address _borrower) external view returns (Status);

@@ -41,7 +41,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Object containing the collateral and mUSD snapshots for a given active trove
     struct RewardSnapshot {
         uint256 collateral;
-        uint256 MUSDDebt;
+        uint256 mUSDDebt;
     }
 
     struct LocalVariables_OuterLiquidationFunction {
@@ -757,15 +757,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // --- Borrowing fee functions ---
 
     function getBorrowingFee(
-        uint256 MUSDDebt
+        uint256 _mUSDDebt
     ) external view override returns (uint) {
-        return _calcBorrowingFee(getBorrowingRate(), MUSDDebt);
+        return _calcBorrowingFee(getBorrowingRate(), _mUSDDebt);
     }
 
     function getBorrowingFeeWithDecay(
-        uint256 _MUSDDebt
+        uint256 _mUSDDebt
     ) external view override returns (uint) {
-        return _calcBorrowingFee(getBorrowingRateWithDecay(), _MUSDDebt);
+        return _calcBorrowingFee(getBorrowingRateWithDecay(), _mUSDDebt);
     }
 
     function getTroveStatus(
@@ -1023,7 +1023,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function getPendingMUSDDebtReward(
         address _borrower
     ) public view override returns (uint) {
-        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].MUSDDebt;
+        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].mUSDDebt;
         uint256 rewardPerUnitStaked = L_MUSDDebt - snapshotMUSDDebt;
 
         if (
@@ -1407,7 +1407,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 collateralNumerator = _coll *
             DECIMAL_PRECISION +
             lastCollateralError_Redistribution;
-        uint256 MUSDDebtNumerator = _principal *
+        uint256 mUSDDebtNumerator = _principal *
             DECIMAL_PRECISION +
             lastMUSDDebtError_Redistribution;
 
@@ -1416,18 +1416,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 collateralRewardPerUnitStaked = collateralNumerator /
             totalStakes;
         // slither-disable-next-line divide-before-multiply
-        uint256 MUSDDebtRewardPerUnitStaked = MUSDDebtNumerator / totalStakes;
+        uint256 mUSDDebtRewardPerUnitStaked = mUSDDebtNumerator / totalStakes;
 
         lastCollateralError_Redistribution =
             collateralNumerator -
             (collateralRewardPerUnitStaked * totalStakes);
         lastMUSDDebtError_Redistribution =
-            MUSDDebtNumerator -
-            (MUSDDebtRewardPerUnitStaked * totalStakes);
+            mUSDDebtNumerator -
+            (mUSDDebtRewardPerUnitStaked * totalStakes);
 
         // Add per-unit-staked terms to the running totals
         L_Collateral += collateralRewardPerUnitStaked;
-        L_MUSDDebt += MUSDDebtRewardPerUnitStaked;
+        L_MUSDDebt += mUSDDebtRewardPerUnitStaked;
 
         emit LTermsUpdated(L_Collateral, L_MUSDDebt);
 
@@ -1944,7 +1944,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _updateTroveRewardSnapshots(address _borrower) internal {
         rewardSnapshots[_borrower].collateral = L_Collateral;
-        rewardSnapshots[_borrower].MUSDDebt = L_MUSDDebt;
+        rewardSnapshots[_borrower].mUSDDebt = L_MUSDDebt;
         emit TroveSnapshotsUpdated(L_Collateral, L_MUSDDebt);
     }
 
@@ -2008,7 +2008,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[_borrower].interestOwed = 0;
 
         rewardSnapshots[_borrower].collateral = 0;
-        rewardSnapshots[_borrower].MUSDDebt = 0;
+        rewardSnapshots[_borrower].mUSDDebt = 0;
 
         _removeTroveOwner(_borrower, TroveOwnersArrayLength);
         // slither-disable-next-line calls-loop
@@ -2333,9 +2333,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _calcBorrowingFee(
         uint256 _borrowingRate,
-        uint256 _MUSDDebt
+        uint256 _mUSDDebt
     ) internal pure returns (uint) {
-        return (_borrowingRate * _MUSDDebt) / DECIMAL_PRECISION;
+        return (_borrowingRate * _mUSDDebt) / DECIMAL_PRECISION;
     }
 
     function _calcBorrowingRate(

@@ -815,13 +815,13 @@ contract BorrowerOperations is
     function _triggerBorrowingFee(
         ITroveManager _troveManager,
         IMUSD _musd,
-        uint256 _MUSDAmount,
+        uint256 _mUSDAmount,
         uint256 _maxFeePercentage
     ) internal returns (uint) {
         _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint256 MUSDFee = _troveManager.getBorrowingFee(_MUSDAmount);
+        uint256 MUSDFee = _troveManager.getBorrowingFee(_mUSDAmount);
 
-        _requireUserAcceptsFee(MUSDFee, _MUSDAmount, _maxFeePercentage);
+        _requireUserAcceptsFee(MUSDFee, _mUSDAmount, _maxFeePercentage);
 
         // Send fee to PCV contract
         _musd.mint(pcvAddress, MUSDFee);
