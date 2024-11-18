@@ -36,7 +36,8 @@ interface ITroveManager {
     event PCVAddressChanged(address _pcvAddress);
 
     event Liquidation(
-        uint256 _liquidatedDebt,
+        uint256 _liquidatedPrincipal,
+        uint256 _liquidatedInterest,
         uint256 _liquidatedColl,
         uint256 _collGasCompensation,
         uint256 _MUSDGasCompensation

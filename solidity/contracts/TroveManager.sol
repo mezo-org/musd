@@ -48,7 +48,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 price;
         uint256 MUSDInStabPool;
         bool recoveryModeAtStart;
-        uint256 liquidatedDebt;
         uint256 liquidatedColl;
     }
 
@@ -67,7 +66,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     struct LiquidationTotals {
         uint256 totalCollInSequence;
-        uint256 totalDebtInSequence;
+        uint256 totalPrincipalInSequence;
+        uint256 totalInterestInSequence;
         uint256 totalCollGasCompensation;
         uint256 totalMUSDGasCompensation;
         uint256 totalDebtToOffset;
@@ -337,7 +337,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         }
 
         require(
-            totals.totalDebtInSequence > 0,
+            totals.totalPrincipalInSequence > 0,
             "TroveManager: nothing to liquidate"
         );
 
@@ -366,13 +366,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.totalCollGasCompensation
         );
 
-        vars.liquidatedDebt = totals.totalDebtInSequence;
         vars.liquidatedColl =
             totals.totalCollInSequence -
             totals.totalCollGasCompensation -
             totals.totalCollSurplus;
+
         emit Liquidation(
-            vars.liquidatedDebt,
+            totals.totalPrincipalInSequence,
+            totals.totalInterestInSequence,
             vars.liquidatedColl,
             totals.totalCollGasCompensation,
             totals.totalMUSDGasCompensation
@@ -881,7 +882,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         }
 
         require(
-            totals.totalDebtInSequence > 0,
+            totals.totalPrincipalInSequence > 0,
             "TroveManager: nothing to liquidate"
         );
 
@@ -910,13 +911,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.totalCollGasCompensation
         );
 
-        vars.liquidatedDebt = totals.totalDebtInSequence;
         vars.liquidatedColl =
             totals.totalCollInSequence -
             totals.totalCollGasCompensation -
             totals.totalCollSurplus;
         emit Liquidation(
-            vars.liquidatedDebt,
+            totals.totalPrincipalInSequence,
+            totals.totalInterestInSequence,
             vars.liquidatedColl,
             totals.totalCollGasCompensation,
             totals.totalMUSDGasCompensation
@@ -2287,31 +2288,43 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         newTotals.totalCollGasCompensation =
             oldTotals.totalCollGasCompensation +
             singleLiquidation.collGasCompensation;
+
         newTotals.totalMUSDGasCompensation =
             oldTotals.totalMUSDGasCompensation +
             singleLiquidation.MUSDGasCompensation;
-        newTotals.totalDebtInSequence =
-            oldTotals.totalDebtInSequence +
+
+        newTotals.totalPrincipalInSequence =
+            oldTotals.totalPrincipalInSequence +
             singleLiquidation.entireTrovePrincipal;
-        singleLiquidation.entireTroveInterest;
+
+        newTotals.totalInterestInSequence =
+            oldTotals.totalInterestInSequence +
+            singleLiquidation.entireTroveInterest;
+
         newTotals.totalCollInSequence =
             oldTotals.totalCollInSequence +
             singleLiquidation.entireTroveColl;
+
         newTotals.totalDebtToOffset =
             oldTotals.totalDebtToOffset +
             singleLiquidation.debtToOffset;
+
         newTotals.totalCollToSendToSP =
             oldTotals.totalCollToSendToSP +
             singleLiquidation.collToSendToSP;
+
         newTotals.totalDebtToRedistribute =
             oldTotals.totalDebtToRedistribute +
             singleLiquidation.debtToRedistribute;
+
         newTotals.totalInterestToRedistribute =
             oldTotals.totalInterestToRedistribute +
             singleLiquidation.interestToRedistribute;
+
         newTotals.totalCollToRedistribute =
             oldTotals.totalCollToRedistribute +
             singleLiquidation.collToRedistribute;
+
         newTotals.totalCollSurplus =
             oldTotals.totalCollSurplus +
             singleLiquidation.collSurplus;
