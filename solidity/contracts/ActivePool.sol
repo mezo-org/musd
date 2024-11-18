@@ -147,7 +147,15 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     }
 
     function getMUSDDebt() external view override returns (uint) {
+        return principal + interest;
+    }
+
+    function getPrincipal() external view override returns (uint) {
         return principal;
+    }
+
+    function getInterest() external view override returns (uint) {
+        return interest;
     }
 
     function _requireCallerIsBorrowerOperationsOrDefaultPool() internal view {

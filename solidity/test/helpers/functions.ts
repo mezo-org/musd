@@ -141,6 +141,8 @@ export async function updateContractsSnapshot(
     addresses[pool],
   )
   state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
+  state[pool].principal[checkPoint] = await contracts[pool].getPrincipal()
+  state[pool].interest[checkPoint] = await contracts[pool].getInterest()
 }
 
 export async function updatePCVSnapshot(
@@ -296,14 +298,17 @@ export async function getTroveEntireColl(
   contracts: Contracts,
   address: HardhatEthersSigner,
 ) {
-  return (await contracts.troveManager.getEntireDebtAndColl(address))[1]
+  const { coll } = await contracts.troveManager.getEntireDebtAndColl(address)
+  return coll
 }
 
 export async function getTroveEntireDebt(
   contracts: Contracts,
   address: HardhatEthersSigner,
 ) {
-  return (await contracts.troveManager.getEntireDebtAndColl(address))[0]
+  const { principal, interest } =
+    await contracts.troveManager.getEntireDebtAndColl(address)
+  return principal + interest
 }
 
 export async function getAllEventsByName(
@@ -488,7 +493,9 @@ export async function adjustTroveToICR(
   from: HardhatEthersSigner,
   targetICR: bigint,
 ) {
-  const { debt, coll } = await contracts.troveManager.getEntireDebtAndColl(from)
+  const { principal, interest, coll } =
+    await contracts.troveManager.getEntireDebtAndColl(from)
+  const debt = principal + interest
   const price = await contracts.priceFeed.fetchPrice()
 
   // Calculate the debt required to reach the target ICR
@@ -529,7 +536,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   const maxFeePercentage = to1e18(params.maxFeePercentage) / 100n
 
   // ICR default of 150%
-  if (params.ICR === undefined) params.ICR = "150"
+  if (params.ICR === undefined) params.ICR = "200"
   const ICR = to1e18(params.ICR) / 100n // 1e18 = 100%
 
   const musdAmount =
