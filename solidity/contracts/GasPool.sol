@@ -8,13 +8,13 @@ import "./interfaces/IGasPool.sol";
 import "./token/MUSD.sol";
 
 /**
- * The purpose of this contract is to hold THUSD tokens for gas compensation:
+ * The purpose of this contract is to hold mUSD tokens for gas compensation:
  * https://github.com/liquity/dev#gas-compensation
- * When a borrower opens a trove, an additional 50 THUSD debt is issued,
- * and 50 THUSD is minted and sent to this contract.
+ * When a borrower opens a trove, an additional 50 mUSD principal is issued,
+ * and 50 mUSD is minted and sent to this contract.
  * When a borrower closes their active trove, this gas compensation is refunded:
- * 50 THUSD is burned from the this contract's balance, and the corresponding
- * 50 THUSD debt on the trove is cancelled.
+ * 50 mUSD is burned from the this contract's balance, and the corresponding
+ * 50 mUSD principal on the trove is cancelled.
  * See this issue for more context: https://github.com/liquity/dev/issues/186
  */
 contract GasPool is Ownable, CheckContract, IGasPool {
