@@ -316,7 +316,7 @@ contract BorrowerOperations is
         );
     }
 
-    // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's debt accordingly
+    // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's principal accordingly
     function withdrawMUSD(
         uint256 _maxFeePercentage,
         uint256 _amount,
@@ -566,7 +566,7 @@ contract BorrowerOperations is
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;
 
-        // Snapshot interest and principal before repayment so we can correctly adjust the active pool debt
+        // Snapshot interest and principal before repayment so we can correctly adjust the active pool
         vars.interestOwed = contractsCache.troveManager.getTroveInterestOwed(
             _borrower
         );
@@ -607,7 +607,7 @@ contract BorrowerOperations is
 
         vars.netDebtChange = _MUSDChange;
 
-        // If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
+        // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
             vars.MUSDFee = _triggerBorrowingFee(
                 contractsCache.troveManager,
@@ -1034,8 +1034,7 @@ contract BorrowerOperations is
             _isDebtIncrease
         );
 
-        uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
-        return newNICR;
+        return LiquityMath._computeNominalCR(newColl, newDebt);
     }
 
     function _requireValidMaxFeePercentage(
