@@ -52,6 +52,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 liquidatedColl;
     }
 
+    struct LocalVariables_redeemCollateralFromTrove {
+        uint256 newDebt;
+        uint256 newColl;
+        uint256 upperBoundNICR;
+        uint256 newNICR;
+    }
+
     struct LocalVariables_InnerSingleLiquidateFunction {
         uint256 collToLiquidate;
         uint256 pendingDebtReward;
@@ -1797,6 +1804,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_redeemCollateralFromTrove memory vars;
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.MUSDLot = LiquityMath._min(
             _maxMUSDamount,
@@ -1809,11 +1818,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _price;
 
         // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
-        uint256 newDebt = _getTotalDebt(_borrower) - singleRedemption.MUSDLot;
-        uint256 newColl = Troves[_borrower].coll -
-            singleRedemption.collateralLot;
+        vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.MUSDLot;
+        vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
 
-        if (newDebt == MUSD_GAS_COMPENSATION) {
+        if (vars.newDebt == MUSD_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1821,7 +1829,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _contractsCache,
                 _borrower,
                 MUSD_GAS_COMPENSATION,
-                newColl
+                vars.newColl
             );
             emit TroveUpdated(
                 _borrower,
@@ -1831,7 +1839,21 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
-            uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
+            // calculate 10 minutes worth of interest to account for delay between the hint call and now
+            vars.upperBoundNICR = LiquityMath._computeNominalCR(
+                vars.newColl,
+                vars.newDebt -
+                    calculateInterestOwed(
+                        Troves[_borrower].debt,
+                        Troves[_borrower].interestRate,
+                        block.timestamp - 600,
+                        block.timestamp
+                    )
+            );
+            vars.newNICR = LiquityMath._computeNominalCR(
+                vars.newColl,
+                vars.newDebt
+            );
 
             /*
              * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
@@ -1840,8 +1862,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
              * If the resultant net debt of the partial is less than the minimum, net debt we bail.
              */
             if (
-                newNICR != _partialRedemptionHintNICR ||
-                _getNetDebt(newDebt) < MIN_NET_DEBT
+                _partialRedemptionHintNICR < vars.newNICR ||
+                _partialRedemptionHintNICR > vars.upperBoundNICR ||
+                _getNetDebt(vars.newDebt) < MIN_NET_DEBT
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
@@ -1850,19 +1873,21 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             // slither-disable-next-line calls-loop
             _contractsCache.sortedTroves.reInsert(
                 _borrower,
-                newNICR,
+                vars.newNICR,
                 _upperPartialRedemptionHint,
                 _lowerPartialRedemptionHint
             );
 
+            _updateSystemInterest(Troves[_borrower].interestRate);
+            _updateDebtWithInterest(_borrower);
             _updateTroveDebt(_borrower, singleRedemption.MUSDLot);
-            Troves[_borrower].coll = newColl;
+            Troves[_borrower].coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);
 
             emit TroveUpdated(
                 _borrower,
-                newDebt,
-                newColl,
+                vars.newDebt,
+                vars.newColl,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.redeemCollateral)
             );

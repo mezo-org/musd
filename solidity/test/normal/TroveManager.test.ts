@@ -1954,6 +1954,32 @@ describe("TroveManager in Normal Mode", () => {
       await checkCollateralAndDebtValues(redemptionTx, redemptionAmount, price)
     })
 
+    it("pays any interest owed before principal", async () => {
+      await setInterestRate(contracts, council, 100)
+      await setupRedemptionTroves()
+
+      const redemptionAmount = to1e18("200")
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      await performRedemption(contracts, dennis, alice, redemptionAmount)
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      const interestAccrued = calculateInterestOwed(
+        alice.trove.debt.before,
+        100,
+        alice.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(interestAccrued).to.be.greaterThan(0n)
+      expect(alice.trove.interestOwed.after).to.equal(0n)
+      expect(alice.trove.debt.after).to.equal(
+        alice.trove.debt.before - redemptionAmount + interestAccrued,
+      )
+    })
+
     it("has the same functionality with invalid first hint, zero address", async () => {
       await setupRedemptionTroves()
 
