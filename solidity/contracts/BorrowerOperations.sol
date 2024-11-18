@@ -1011,14 +1011,9 @@ contract BorrowerOperations is
         bool _isCollIncrease,
         uint256 _debtChange,
         bool _isDebtIncrease
-    ) internal pure returns (uint, uint) {
-        uint256 newColl = _coll;
-        uint256 newDebt = _debt;
-
+    ) internal pure returns (uint newColl, uint newDebt) {
         newColl = _isCollIncrease ? _coll + _collChange : _coll - _collChange;
         newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
-
-        return (newColl, newDebt);
     }
 
     // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
