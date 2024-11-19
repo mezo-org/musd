@@ -2,6 +2,7 @@ import { assert, expect } from "chai"
 import { ethers } from "hardhat"
 import {
   addColl,
+  BORROWING_FEE_PAID,
   calculateInterestOwed,
   createLiquidationEvent,
   fastForwardTime,
@@ -341,11 +342,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Borrowing at non-zero base records the (drawn debt + fee  + liq. reserve) on the Trove struct", async () => {
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
-
       const musdAmount = to1e18("20,000")
       const newRate = to1e18(5) / 100n
       await setNewRate(newRate)
@@ -359,8 +355,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       expect(emittedFee).to.greaterThan(0)
@@ -469,11 +465,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Increases the Trove's mUSD debt by the correct amount", async () => {
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
-
       await updateTroveSnapshot(contracts, dennis, "before")
       expect(dennis.trove.debt.before).to.equal(0n)
 
@@ -484,8 +475,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       await updateTroveSnapshot(contracts, dennis, "after")
@@ -495,7 +486,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Increases mUSD debt in ActivePool by the debt of the trove", async () => {
-      const debtBefore = await contracts.activePool.getMUSDDebt()
+      const debtBefore = await contracts.activePool.getDebt()
 
       await openTrove(contracts, {
         musdAmount: MIN_NET_DEBT,
@@ -503,7 +494,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       await updateTroveSnapshot(contracts, carol, "after")
-      expect(await contracts.activePool.getMUSDDebt()).to.equal(
+      expect(await contracts.activePool.getDebt()).to.equal(
         carol.trove.debt.after + debtBefore,
       )
 
@@ -513,7 +504,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       await updateTroveSnapshot(contracts, dennis, "after")
-      expect(await contracts.activePool.getMUSDDebt()).to.equal(
+      expect(await contracts.activePool.getDebt()).to.equal(
         dennis.trove.debt.after + carol.trove.debt.after + debtBefore,
       )
     })
@@ -640,11 +631,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Borrowing at zero base rate charges minimum fee", async () => {
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed sender, uint256 fee)",
-      ]
-
       const { tx } = await openTrove(contracts, {
         musdAmount: MIN_NET_DEBT,
         sender: carol.wallet,
@@ -652,8 +638,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
 
@@ -1504,7 +1490,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("applies pending rewards and updates user's L_Collateral, L_MUSDDebt snapshots", async () => {
+    it("applies pending rewards and updates user's L_Collateral, L_Debt snapshots", async () => {
       await openTrove(contracts, {
         musdAmount: "50,000",
         ICR: "1000",
@@ -1532,7 +1518,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       state.troveManager.liquidation.collateral.before =
         await contracts.troveManager.L_Collateral()
       state.troveManager.liquidation.debt.before =
-        await contracts.troveManager.L_MUSDDebt()
+        await contracts.troveManager.L_Debt()
 
       await updateRewardSnapshot(contracts, carol, "before")
       await updateRewardSnapshot(contracts, dennis, "before")
@@ -1928,10 +1914,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
       await setupCarolsTroveAndAdjustRate()
 
       await updateTroveSnapshot(contracts, carol, "before")
@@ -1941,8 +1923,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       expect(emittedFee).to.greaterThan(0)
@@ -2704,10 +2686,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
 
       await setupCarolsTroveAndAdjustRate()
 
@@ -2728,8 +2706,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
 
@@ -3001,11 +2979,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's debt and coll with an increase in both", async () => {
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
-
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
@@ -3029,8 +3002,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       await updateTroveSnapshot(contracts, carol, "after")
@@ -3105,11 +3078,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's debt and coll with coll decrease, debt increase", async () => {
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
-
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
@@ -3130,8 +3098,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       await updateTroveSnapshot(contracts, carol, "after")
@@ -3461,11 +3429,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Changes the mUSD debt in ActivePool by requested increase", async () => {
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
-
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
@@ -3495,8 +3458,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       await updateContractsSnapshot(

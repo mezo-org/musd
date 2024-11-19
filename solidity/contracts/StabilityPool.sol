@@ -150,7 +150,7 @@ contract StabilityPool is
             msg.sender
         );
         uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
-        uint256 MUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+        uint256 mUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
 
         uint256 newDeposit = compoundedMUSDDeposit + _amount;
 
@@ -160,7 +160,7 @@ contract StabilityPool is
         emit CollateralGainWithdrawn(
             msg.sender,
             depositorCollateralGain,
-            MUSDLoss
+            mUSDLoss
         ); // mUSD Loss required for event log
 
         _sendMUSDtoStabilityPool(msg.sender, _amount);
@@ -186,23 +186,23 @@ contract StabilityPool is
         );
 
         uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
-        uint256 MUSDtoWithdraw = LiquityMath._min(
+        uint256 mUSDtoWithdraw = LiquityMath._min(
             _amount,
             compoundedMUSDDeposit
         );
-        uint256 MUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+        uint256 mUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
 
-        _sendMUSDToDepositor(msg.sender, MUSDtoWithdraw);
+        _sendMUSDToDepositor(msg.sender, mUSDtoWithdraw);
 
         // Update deposit
-        uint256 newDeposit = compoundedMUSDDeposit - MUSDtoWithdraw;
+        uint256 newDeposit = compoundedMUSDDeposit - mUSDtoWithdraw;
         _updateDepositAndSnapshots(msg.sender, newDeposit);
         emit UserDepositChanged(msg.sender, newDeposit);
 
         emit CollateralGainWithdrawn(
             msg.sender,
             depositorCollateralGain,
-            MUSDLoss
+            mUSDLoss
         ); // mUSD Loss required for event log
 
         _sendCollateralGainToDepositor(depositorCollateralGain);
@@ -226,7 +226,7 @@ contract StabilityPool is
         );
 
         uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
-        uint256 MUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+        uint256 mUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
 
         _updateDepositAndSnapshots(msg.sender, compoundedMUSDDeposit);
 
@@ -236,7 +236,7 @@ contract StabilityPool is
         emit CollateralGainWithdrawn(
             msg.sender,
             depositorCollateralGain,
-            MUSDLoss
+            mUSDLoss
         );
         emit UserDepositChanged(msg.sender, compoundedMUSDDeposit);
 
@@ -275,12 +275,12 @@ contract StabilityPool is
 
         (
             uint256 collateralGainPerUnitStaked,
-            uint256 MUSDLossPerUnitStaked
+            uint256 mUSDLossPerUnitStaked
         ) = _computeRewardsPerUnitStaked(_collToAdd, _debtToOffset, totalMUSD);
 
         _updateRewardSumAndProduct(
             collateralGainPerUnitStaked,
-            MUSDLossPerUnitStaked
+            mUSDLossPerUnitStaked
         ); // updates S and P
 
         _moveOffsetCollAndDebt(_collToAdd, _debtToOffset);
@@ -348,15 +348,15 @@ contract StabilityPool is
 
     function _sendMUSDToDepositor(
         address _depositor,
-        uint256 MUSDWithdrawal
+        uint256 _withdrawal
     ) internal {
-        if (MUSDWithdrawal == 0) {
+        if (_withdrawal == 0) {
             return;
         }
 
         // slither-disable-next-line unchecked-transfer
-        musd.transfer(_depositor, MUSDWithdrawal);
-        _decreaseMUSD(MUSDWithdrawal);
+        musd.transfer(_depositor, _withdrawal);
+        _decreaseMUSD(_withdrawal);
     }
 
     // Transfer the mUSD tokens from the user to the Stability Pool's address,
@@ -427,7 +427,7 @@ contract StabilityPool is
         internal
         returns (
             uint256 collateralGainPerUnitStaked,
-            uint256 MUSDLossPerUnitStaked
+            uint256 mUSDLossPerUnitStaked
         )
     {
         /*
@@ -447,21 +447,21 @@ contract StabilityPool is
 
         assert(_debtToOffset <= _totalMUSDDeposits);
         if (_debtToOffset == _totalMUSDDeposits) {
-            MUSDLossPerUnitStaked = DECIMAL_PRECISION; // When the Pool depletes to 0, so does each deposit
+            mUSDLossPerUnitStaked = DECIMAL_PRECISION; // When the Pool depletes to 0, so does each deposit
             lastMUSDLossError_Offset = 0;
         } else {
-            uint256 MUSDLossNumerator = _debtToOffset *
+            uint256 mUSDLossNumerator = _debtToOffset *
                 DECIMAL_PRECISION -
                 lastMUSDLossError_Offset;
             /*
              * Add 1 to make error in quotient positive. We want "slightly too much" mUSD loss,
              * which ensures the error in any given compoundedMUSDDeposit favors the Stability Pool.
              */
-            MUSDLossPerUnitStaked = MUSDLossNumerator / _totalMUSDDeposits + 1;
+            mUSDLossPerUnitStaked = mUSDLossNumerator / _totalMUSDDeposits + 1;
             lastMUSDLossError_Offset =
-                MUSDLossPerUnitStaked *
+                mUSDLossPerUnitStaked *
                 _totalMUSDDeposits -
-                MUSDLossNumerator;
+                mUSDLossNumerator;
         }
 
         collateralGainPerUnitStaked = collateralNumerator / _totalMUSDDeposits;
@@ -470,7 +470,7 @@ contract StabilityPool is
             collateralNumerator -
             (collateralGainPerUnitStaked * _totalMUSDDeposits);
 
-        return (collateralGainPerUnitStaked, MUSDLossPerUnitStaked);
+        return (collateralGainPerUnitStaked, mUSDLossPerUnitStaked);
     }
 
     function _moveOffsetCollAndDebt(
@@ -479,8 +479,8 @@ contract StabilityPool is
     ) internal {
         IActivePool activePoolCached = activePool;
 
-        // Cancel the liquidated mUSD debt with the mUSD in the stability pool
-        activePoolCached.decreaseMUSDDebt(_debtToOffset, 0);
+        // Cancel the liquidated debt with the mUSD in the stability pool
+        activePoolCached.decreaseDebt(_debtToOffset, 0);
         _decreaseMUSD(_debtToOffset);
 
         // Burn the debt that was successfully offset
@@ -500,17 +500,17 @@ contract StabilityPool is
     // slither-disable-start dead-code
     function _updateRewardSumAndProduct(
         uint256 _collateralGainPerUnitStaked,
-        uint256 _MUSDLossPerUnitStaked
+        uint256 _mUSDLossPerUnitStaked
     ) internal {
         uint256 currentP = P;
         uint256 newP;
 
-        assert(_MUSDLossPerUnitStaked <= DECIMAL_PRECISION);
+        assert(_mUSDLossPerUnitStaked <= DECIMAL_PRECISION);
         /*
          * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool mUSD in the liquidation.
          * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - MUSDLossPerUnitStaked)
          */
-        uint256 newProductFactor = DECIMAL_PRECISION - _MUSDLossPerUnitStaked;
+        uint256 newProductFactor = DECIMAL_PRECISION - _mUSDLossPerUnitStaked;
 
         uint128 currentScaleCached = currentScale;
         uint128 currentEpochCached = currentEpoch;

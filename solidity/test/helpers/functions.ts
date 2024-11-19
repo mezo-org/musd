@@ -141,7 +141,7 @@ export async function updateContractsSnapshot(
   state[pool].btc[checkPoint] = await ethers.provider.getBalance(
     addresses[pool],
   )
-  state[pool].debt[checkPoint] = await contracts[pool].getMUSDDebt()
+  state[pool].debt[checkPoint] = await contracts[pool].getDebt()
   state[pool].principal[checkPoint] = await contracts[pool].getPrincipal()
   state[pool].interest[checkPoint] = await contracts[pool].getInterest()
 }
@@ -185,12 +185,10 @@ export async function updatePendingSnapshot(
   user: User,
   checkPoint: CheckPoint,
 ) {
-  const collateral = await contracts.troveManager.getPendingCollateralReward(
+  const collateral = await contracts.troveManager.getPendingCollateral(
     user.address,
   )
-  const debt = await contracts.troveManager.getPendingMUSDDebtReward(
-    user.address,
-  )
+  const debt = await contracts.troveManager.getPendingDebt(user.address)
   user.pending.collateral[checkPoint] = collateral
   user.pending.debt[checkPoint] = debt
 }

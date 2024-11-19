@@ -36,7 +36,7 @@ contract BorrowerOperations is
         uint256 oldICR;
         uint256 newICR;
         uint256 newTCR;
-        uint256 MUSDFee;
+        uint256 fee;
         uint256 newColl;
         uint256 newPrincipal;
         uint256 newInterest;
@@ -49,7 +49,7 @@ contract BorrowerOperations is
 
     struct LocalVariables_openTrove {
         uint256 price;
-        uint256 MUSDFee;
+        uint256 fee;
         uint256 netDebt;
         uint256 compositeDebt;
         uint256 ICR;
@@ -129,22 +129,22 @@ contract BorrowerOperations is
         _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
         _requireTroveisNotActive(contractsCache.troveManager, msg.sender);
 
-        vars.MUSDFee;
+        vars.fee;
         vars.netDebt = _debtAmount;
 
         if (!isRecoveryMode) {
-            vars.MUSDFee = _triggerBorrowingFee(
+            vars.fee = _triggerBorrowingFee(
                 contractsCache.troveManager,
                 contractsCache.musd,
                 _debtAmount,
                 _maxFeePercentage
             );
-            vars.netDebt += vars.MUSDFee;
+            vars.netDebt += vars.fee;
         }
 
         _requireAtLeastMinNetDebt(vars.netDebt);
 
-        // ICR is based on the composite debt, i.e. the requested mUSD amount + mUSD borrowing fee + mUSD gas comp.
+        // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
         vars.compositeDebt = _getCompositeDebt(vars.netDebt);
         assert(vars.compositeDebt > 0);
 
@@ -227,7 +227,7 @@ contract BorrowerOperations is
         emit TroveCreated(msg.sender, vars.arrayIndex);
 
         /*
-         * Move the collateral to the Active Pool, and mint the MUSDAmount to the borrower
+         * Move the collateral to the Active Pool, and mint the amount to the borrower
          * If the user has insuffient tokens to do the transfer to the Active Pool an error will cause the transaction to revert.
          */
         _activePoolAddColl(contractsCache.activePool, _assetAmount);
@@ -255,7 +255,7 @@ contract BorrowerOperations is
             vars.stake,
             uint8(BorrowerOperation.openTrove)
         );
-        emit MUSDBorrowingFeePaid(msg.sender, vars.MUSDFee);
+        emit BorrowingFeePaid(msg.sender, vars.fee);
     }
 
     // Send collateral to a trove
@@ -405,7 +405,7 @@ contract BorrowerOperations is
         );
 
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
-        activePoolCached.decreaseMUSDDebt(
+        activePoolCached.decreaseDebt(
             debt - MUSD_GAS_COMPENSATION - interestOwed,
             interestOwed
         );
@@ -548,7 +548,7 @@ contract BorrowerOperations is
     function _adjustTrove(
         address _borrower,
         uint256 _collWithdrawal,
-        uint256 _MUSDChange,
+        uint256 _mUSDChange,
         bool _isDebtIncrease,
         uint256 _assetAmount,
         address _upperHint,
@@ -573,7 +573,7 @@ contract BorrowerOperations is
 
         (vars.principalAdjustment, vars.interestAdjustment) = contractsCache
             .troveManager
-            .calculateDebtAdjustment(vars.interestOwed, _MUSDChange);
+            .calculateDebtAdjustment(vars.interestOwed, _mUSDChange);
 
         vars.price = priceFeed.fetchPrice();
         vars.isRecoveryMode = _checkRecoveryMode(vars.price);
@@ -583,10 +583,10 @@ contract BorrowerOperations is
                 _maxFeePercentage,
                 vars.isRecoveryMode
             );
-            _requireNonZeroDebtChange(_MUSDChange);
+            _requireNonZeroDebtChange(_mUSDChange);
         }
         _requireSingularCollChange(_collWithdrawal, _assetAmount);
-        _requireNonZeroAdjustment(_collWithdrawal, _MUSDChange, _assetAmount);
+        _requireNonZeroAdjustment(_collWithdrawal, _mUSDChange, _assetAmount);
         _requireTroveisActive(contractsCache.troveManager, _borrower);
 
         // Confirm the operation is either a borrower adjusting their own trove, or a pure collateral transfer from the Stability Pool to a trove
@@ -594,7 +594,7 @@ contract BorrowerOperations is
             msg.sender == _borrower ||
                 (msg.sender == stabilityPoolAddress &&
                     _assetAmount > 0 &&
-                    _MUSDChange == 0)
+                    _mUSDChange == 0)
         );
 
         contractsCache.troveManager.applyPendingRewards(_borrower);
@@ -605,17 +605,17 @@ contract BorrowerOperations is
             _collWithdrawal
         );
 
-        vars.netDebtChange = _MUSDChange;
+        vars.netDebtChange = _mUSDChange;
 
         // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
-            vars.MUSDFee = _triggerBorrowingFee(
+            vars.fee = _triggerBorrowingFee(
                 contractsCache.troveManager,
                 contractsCache.musd,
-                _MUSDChange,
+                _mUSDChange,
                 _maxFeePercentage
             );
-            vars.netDebtChange += vars.MUSDFee; // The raw debt change includes the fee
+            vars.netDebtChange += vars.fee; // The raw debt change includes the fee
         }
 
         vars.debt = contractsCache.troveManager.getTroveDebt(_borrower);
@@ -643,7 +643,7 @@ contract BorrowerOperations is
         );
 
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough mUSD
-        if (!_isDebtIncrease && _MUSDChange > 0) {
+        if (!_isDebtIncrease && _mUSDChange > 0) {
             _requireAtLeastMinNetDebt(
                 _getNetDebt(vars.debt) - vars.netDebtChange
             );
@@ -692,16 +692,16 @@ contract BorrowerOperations is
             uint8(BorrowerOperation.adjustTrove)
         );
         // slither-disable-next-line reentrancy-events
-        emit MUSDBorrowingFeePaid(msg.sender, vars.MUSDFee);
+        emit BorrowingFeePaid(msg.sender, vars.fee);
 
-        // Use the unmodified _MUSDChange here, as we don't send the fee to the user
+        // Use the unmodified _mUSDChange here, as we don't send the fee to the user
         _moveTokensAndCollateralfromAdjustment(
             contractsCache.activePool,
             contractsCache.musd,
             msg.sender,
             vars.collChange,
             vars.isCollIncrease,
-            _isDebtIncrease ? _MUSDChange : vars.principalAdjustment,
+            _isDebtIncrease ? _mUSDChange : vars.principalAdjustment,
             vars.interestAdjustment,
             _isDebtIncrease,
             vars.netDebtChange
@@ -716,7 +716,7 @@ contract BorrowerOperations is
         uint256 _debtAmount,
         uint256 _netDebtIncrease
     ) internal {
-        _activePool.increaseMUSDDebt(_netDebtIncrease, 0);
+        _activePool.increaseDebt(_netDebtIncrease, 0);
         _musd.mint(_account, _debtAmount);
     }
 
@@ -728,7 +728,7 @@ contract BorrowerOperations is
         uint256 _principal,
         uint256 _interest
     ) internal {
-        _activePool.decreaseMUSDDebt(_principal, _interest);
+        _activePool.decreaseDebt(_principal, _interest);
         _musd.burn(_account, _principal + _interest);
     }
 
@@ -815,17 +815,17 @@ contract BorrowerOperations is
     function _triggerBorrowingFee(
         ITroveManager _troveManager,
         IMUSD _musd,
-        uint256 _mUSDAmount,
+        uint256 _amount,
         uint256 _maxFeePercentage
     ) internal returns (uint) {
         _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint256 MUSDFee = _troveManager.getBorrowingFee(_mUSDAmount);
+        uint256 fee = _troveManager.getBorrowingFee(_amount);
 
-        _requireUserAcceptsFee(MUSDFee, _mUSDAmount, _maxFeePercentage);
+        _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
 
         // Send fee to PCV contract
-        _musd.mint(pcvAddress, MUSDFee);
-        return MUSDFee;
+        _musd.mint(pcvAddress, fee);
+        return fee;
     }
 
     function getAssetAmount(

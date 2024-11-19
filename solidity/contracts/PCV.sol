@@ -121,7 +121,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
 
     function withdrawMUSD(
         address _recipient,
-        uint256 _musdAmount
+        uint256 _amount
     )
         external
         override
@@ -130,15 +130,12 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         onlyWhitelistedRecipient(_recipient)
     {
         require(
-            _musdAmount <= musd.balanceOf(address(this)),
+            _amount <= musd.balanceOf(address(this)),
             "PCV: not enough tokens"
         );
-        require(
-            musd.transfer(_recipient, _musdAmount),
-            "PCV: sending mUSD failed"
-        );
+        require(musd.transfer(_recipient, _amount), "PCV: sending mUSD failed");
         // slither-disable-next-line reentrancy-events
-        emit MUSDWithdraw(_recipient, _musdAmount);
+        emit MUSDWithdraw(_recipient, _amount);
     }
 
     function withdrawCollateral(
@@ -247,21 +244,18 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     }
 
     function depositToStabilityPool(
-        uint256 _musdAmount
+        uint256 _amount
     ) public onlyOwnerOrCouncilOrTreasury {
         require(
-            _musdAmount <= musd.balanceOf(address(this)),
+            _amount <= musd.balanceOf(address(this)),
             "PCV: not enough tokens"
         );
         require(
-            musd.approve(
-                borrowerOperations.stabilityPoolAddress(),
-                _musdAmount
-            ),
+            musd.approve(borrowerOperations.stabilityPoolAddress(), _amount),
             "PCV: Approval failed"
         );
         IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
-            _musdAmount
+            _amount
         );
 
         // TODO Emit event

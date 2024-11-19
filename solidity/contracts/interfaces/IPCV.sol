@@ -11,7 +11,7 @@ interface IPCV {
     event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);
     event CollateralAddressSet(address _collateralAddress);
     event RolesSet(address _council, address _treasury);
-    event MUSDWithdraw(address _recipient, uint256 _musdAmount);
+    event MUSDWithdraw(address _recipient, uint256 _amount);
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
     event PCVDebtPaid(uint256 _paidDebt);
     event RecipientAdded(address _recipient);
@@ -31,7 +31,7 @@ interface IPCV {
 
     function initialize() external;
 
-    function withdrawMUSD(address _recipient, uint256 _musdAmount) external;
+    function withdrawMUSD(address _recipient, uint256 _amount) external;
 
     function withdrawCollateral(
         address _recipient,

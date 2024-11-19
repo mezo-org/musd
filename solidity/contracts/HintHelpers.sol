@@ -43,15 +43,15 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
 
     /* getRedemptionHints() - Helper function for finding the right hints to pass to redeemCollateral().
      *
-     * It simulates a redemption of `_MUSDAmount` to figure out where the redemption sequence will start and what state the final Trove
+     * It simulates a redemption of `_amount` to figure out where the redemption sequence will start and what state the final Trove
      * of the sequence will end up in.
      *
      * Returns three hints:
      *  - `firstRedemptionHint` is the address of the first Trove with ICR >= MCR (i.e. the first Trove that will be redeemed).
      *  - `partialRedemptionHintNICR` is the final nominal ICR of the last Trove of the sequence after being hit by partial redemption,
      *     or zero in case of no partial redemption.
-     *  - `truncatedMUSDamount` is the maximum amount that can be redeemed out of the the provided `_MUSDAmount`. This can be lower than
-     *    `_MUSDAmount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
+     *  - `truncatedAmount` is the maximum amount that can be redeemed out of the the provided `_amount`. This can be lower than
+     *    `_amount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
      *    minimum allowed value (i.e. MIN_NET_DEBT).
      *
      * The number of Troves to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
@@ -59,7 +59,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
      */
 
     function getRedemptionHints(
-        uint256 _MUSDAmount,
+        uint256 _amount,
         uint256 _price,
         uint256 _maxIterations
     )
@@ -68,12 +68,12 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
         returns (
             address firstRedemptionHint,
             uint256 partialRedemptionHintNICR,
-            uint256 truncatedMUSDamount
+            uint256 truncatedAmount
         )
     {
         ISortedTroves sortedTrovesCached = sortedTroves;
 
-        uint256 remainingMUSD = _MUSDAmount;
+        uint256 remainingMUSD = _amount;
         address currentTroveuser = sortedTrovesCached.getLast();
 
         // slither-disable-start calls-loop
@@ -96,27 +96,24 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
             _maxIterations > 0
         ) {
             _maxIterations--;
-            uint256 netMUSDDebt = _getNetDebt(
+            uint256 netDebt = _getNetDebt(
                 troveManager.getTroveDebt(currentTroveuser)
-            ) + troveManager.getPendingMUSDDebtReward(currentTroveuser);
+            ) + troveManager.getPendingDebt(currentTroveuser);
 
-            if (netMUSDDebt > remainingMUSD) {
-                if (netMUSDDebt > MIN_NET_DEBT) {
+            if (netDebt > remainingMUSD) {
+                if (netDebt > MIN_NET_DEBT) {
                     uint256 maxRedeemableMUSD = LiquityMath._min(
                         remainingMUSD,
-                        netMUSDDebt - MIN_NET_DEBT
+                        netDebt - MIN_NET_DEBT
                     );
 
                     uint256 collateral = troveManager.getTroveColl(
                         currentTroveuser
-                    ) +
-                        troveManager.getPendingCollateralReward(
-                            currentTroveuser
-                        );
+                    ) + troveManager.getPendingCollateral(currentTroveuser);
 
                     uint256 newColl = collateral -
                         ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
-                    uint256 newDebt = netMUSDDebt - maxRedeemableMUSD;
+                    uint256 newDebt = netDebt - maxRedeemableMUSD;
 
                     uint256 compositeDebt = _getCompositeDebt(newDebt);
                     partialRedemptionHintNICR = LiquityMath._computeNominalCR(
@@ -128,14 +125,14 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                 }
                 break;
             } else {
-                remainingMUSD -= netMUSDDebt;
+                remainingMUSD -= netDebt;
             }
 
             currentTroveuser = sortedTrovesCached.getPrev(currentTroveuser);
         }
         // slither-disable-end calls-loop
 
-        truncatedMUSDamount = _MUSDAmount - remainingMUSD;
+        truncatedAmount = _amount - remainingMUSD;
     }
 
     /* getApproxHint() - return address of a Trove that is, on average, (length / numTrials) positions away in the

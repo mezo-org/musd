@@ -1,6 +1,7 @@
 import { expect } from "chai"
 
 import {
+  BORROWING_FEE_PAID,
   Contracts,
   ContractsState,
   TestingAddresses,
@@ -108,7 +109,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
       and L_MUSD should equal 18 mUSD per-ether-staked/per-tokens-staked. */
 
       const liquidatedCollateral = await contracts.troveManager.L_Collateral()
-      const liquidatedDebt = await contracts.troveManager.L_MUSDDebt()
+      const liquidatedDebt = await contracts.troveManager.L_Debt()
 
       expect(liquidatedCollateral).is.greaterThan(0n)
       expect(liquidatedDebt).is.greaterThan(0n)
@@ -186,7 +187,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
       state.troveManager.liquidation.collateral.before =
         await contracts.troveManager.L_Collateral()
       state.troveManager.liquidation.debt.before =
-        await contracts.troveManager.L_MUSDDebt()
+        await contracts.troveManager.L_Debt()
 
       await updateTroveSnapshot(contracts, bob, "before")
       await updateTroveSnapshot(contracts, carol, "before")
@@ -514,10 +515,6 @@ describe("BorrowerOperations in Recovery Mode", () => {
       const maxFeePercentage = to1e18(1)
       const collChange = to1e18("20")
       const debtChange = to1e18("2,000")
-      const abi = [
-        // Add your contract ABI here
-        "event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
-      ]
 
       await setupCarolsTrove()
 
@@ -540,8 +537,8 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
       const emittedFee = await getEventArgByName(
         tx,
-        abi,
-        "MUSDBorrowingFeePaid",
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
         1,
       )
       expect(emittedFee).to.be.equal(0)
