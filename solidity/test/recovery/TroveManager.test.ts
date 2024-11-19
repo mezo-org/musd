@@ -21,6 +21,8 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
+  setInterestRate,
+  fastForwardTime,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -28,15 +30,35 @@ describe("TroveManager in Recovery Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
   let dennis: User
+  let deployer: User
   let eric: User
   let frank: User
+  let treasury: User
   let state: ContractsState
   let contracts: Contracts
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, dennis, eric, frank, contracts, state } =
-      await setupTests())
+    ;({
+      alice,
+      bob,
+      carol,
+      council,
+      dennis,
+      deployer,
+      eric,
+      frank,
+      treasury,
+      contracts,
+      state,
+    } = await setupTests())
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {
@@ -698,6 +720,29 @@ describe("TroveManager in Recovery Mode", () => {
       expect(await checkTroveActive(contracts, alice))
       expect(await checkTroveClosedByLiquidation(contracts, bob))
       expect(await checkTroveClosedByLiquidation(contracts, carol))
+    })
+
+    it("liquidates based on actual ICR including interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "150",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2,000",
+        ICR: "150",
+        sender: bob.wallet,
+      })
+
+      // Drop the price so Bob is just above MCR
+      await dropPrice(contracts, bob, to1e18("111"))
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      // Bob is now below MCR due to interest
+      await contracts.troveManager.liquidate(bob.wallet.address)
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
     })
 
     it("does not alter the liquidated user's token balance", async () => {
