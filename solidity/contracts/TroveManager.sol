@@ -1159,6 +1159,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.user = _contractsCache.sortedTroves.getLast();
         address firstUser = _contractsCache.sortedTroves.getFirst();
         for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
+            _updateSystemInterest(Troves[vars.user].interestRate);
+            _updateDebtWithInterest(vars.user);
             // we need to cache it, because current user is likely going to be deleted
             address nextUser = _contractsCache.sortedTroves.getPrev(vars.user);
 
