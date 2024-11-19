@@ -1312,7 +1312,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("a liquidation sequence of pure redistributions can reduce the TCR more than 0.5% due to compensation and interest", async () => {
+    it("a liquidation sequence of pure redistributions can reduce the TCR more than 0.5% due to gas compensation and interest", async () => {
       await setInterestRate(contracts, council, 9000)
       await setupTroves()
 

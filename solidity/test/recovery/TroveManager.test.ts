@@ -178,6 +178,32 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
+    it("a liquidation sequence of pure redistributions can reduce the TCR more than 0.5% due to gas compensation and interest", async () => {
+      await setInterestRate(contracts, council, 9000)
+      await setupTrove(alice, "5000", "400")
+      await setupTrove(bob, "50,000", "400")
+      await setupTrove(carol, "2000", "400")
+      await setupTrove(dennis, "2000", "400")
+
+      await fastForwardTime(365 * 24 * 60 * 60 * 10)
+
+      // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
+      await dropPrice(contracts, alice)
+      await updateTroveManagerSnapshot(contracts, state, "before")
+
+      // Perform liquidation and check that TCR has decreased
+      await contracts.troveManager.liquidateTroves(4)
+      await updateTroveManagerSnapshot(contracts, state, "after")
+      expect(state.troveManager.TCR.before).to.be.greaterThan(
+        state.troveManager.TCR.after,
+      )
+
+      // Check that the TCR has decreased by more than the liquidation fee
+      expect(state.troveManager.TCR.after).to.be.lessThanOrEqual(
+        applyLiquidationFee(state.troveManager.TCR.before),
+      )
+    })
+
     it("With all ICRs > 110%, Liquidates Troves until system leaves recovery mode", async () => {
       // Open 5 troves
       await setupTroveAndSnapshot(bob, "5000", "240")
