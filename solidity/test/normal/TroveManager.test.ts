@@ -1125,8 +1125,7 @@ describe("TroveManager in Normal Mode", () => {
         bob.trove.lastInterestUpdateTime.before,
         BigInt(after),
       )
-      console.log(bob.trove)
-      console.log(state.activePool)
+
       expect(state.activePool.interest.after).to.equal(expectedInterest)
       expect(state.activePool.debt.after).to.equal(
         bob.trove.debt.before + expectedInterest,
