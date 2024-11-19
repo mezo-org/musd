@@ -61,8 +61,8 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         view
         returns (uint256 entireSystemDebt)
     {
-        uint256 activeDebt = activePool.getMUSDDebt();
-        uint256 closedDebt = defaultPool.getMUSDDebt();
+        uint256 activeDebt = activePool.getDebt();
+        uint256 closedDebt = defaultPool.getDebt();
 
         return activeDebt + closedDebt;
     }

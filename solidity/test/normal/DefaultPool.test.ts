@@ -54,13 +54,13 @@ describe("DefaultPool", () => {
     })
   })
 
-  describe("getMUSDDebt()", () => {
+  describe("getDebt()", () => {
     it("gets the recorded mUSD balance", async () => {
-      expect(await contracts.defaultPool.getMUSDDebt()).to.equal(0)
+      expect(await contracts.defaultPool.getDebt()).to.equal(0)
     })
   })
 
-  context("increaseMUSDDebt()", () => {
+  context("increaseDebt()", () => {
     it("increases the recorded mUSD balance by the correct amount", async () => {
       await updateContractsSnapshot(
         contracts,
@@ -73,7 +73,7 @@ describe("DefaultPool", () => {
 
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .increaseMUSDDebt(amount, 0n, NO_GAS)
+        .increaseDebt(amount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -89,17 +89,17 @@ describe("DefaultPool", () => {
     })
   })
 
-  describe("decreaseMUSDDebt()", () => {
+  describe("decreaseDebt()", () => {
     it("decreases the recorded mUSD balance by the correct amount", async () => {
       const originalAmount = to1e18("200")
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .increaseMUSDDebt(originalAmount, 0n, NO_GAS)
+        .increaseDebt(originalAmount, 0n, NO_GAS)
 
       const subtractedAmount = to1e18("50")
       await contracts.defaultPool
         .connect(troveManagerSigner)
-        .decreaseMUSDDebt(subtractedAmount, 0n, NO_GAS)
+        .decreaseDebt(subtractedAmount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,

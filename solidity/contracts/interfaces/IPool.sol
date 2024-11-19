@@ -14,13 +14,13 @@ interface IPool {
 
     // --- Functions ---
 
-    function increaseMUSDDebt(uint256 _principal, uint256 _interest) external;
+    function increaseDebt(uint256 _principal, uint256 _interest) external;
 
-    function decreaseMUSDDebt(uint256 _principal, uint256 _interest) external;
+    function decreaseDebt(uint256 _principal, uint256 _interest) external;
 
     function getCollateralBalance() external view returns (uint);
 
-    function getMUSDDebt() external view returns (uint);
+    function getDebt() external view returns (uint);
 
     function getPrincipal() external view returns (uint);
 

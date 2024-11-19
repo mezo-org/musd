@@ -10,10 +10,10 @@ import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IActivePool.sol";
 
 /*
- * The Default Pool holds the collateral and mUSD debt (but not mUSD tokens) from liquidations that have been redistributed
+ * The Default Pool holds the collateral and debt (but not mUSD tokens) from liquidations that have been redistributed
  * to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
  *
- * When a trove makes an operation that applies its pending collateral and mUSD debt, its pending collateral and mUSD debt is moved
+ * When a trove makes an operation that applies its pending collateral and debt, its pending collateral and debt is moved
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
@@ -70,24 +70,24 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         renounceOwnership();
     }
 
-    function increaseMUSDDebt(
+    function increaseDebt(
         uint256 _principal,
         uint256 _interest
     ) external override {
         _requireCallerIsTroveManager();
         principal += _principal;
         interest += _interest;
-        emit DefaultPoolMUSDDebtUpdated(principal, interest);
+        emit DefaultPoolDebtUpdated(principal, interest);
     }
 
-    function decreaseMUSDDebt(
+    function decreaseDebt(
         uint256 _principal,
         uint256 _interest
     ) external override {
         _requireCallerIsTroveManager();
         principal -= _principal;
         interest -= _interest;
-        emit DefaultPoolMUSDDebtUpdated(principal, interest);
+        emit DefaultPoolDebtUpdated(principal, interest);
     }
 
     function sendCollateralToActivePool(uint256 _amount) external override {
@@ -104,7 +104,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         return collateral;
     }
 
-    function getMUSDDebt() external view override returns (uint) {
+    function getDebt() external view override returns (uint) {
         return principal + interest;
     }
 

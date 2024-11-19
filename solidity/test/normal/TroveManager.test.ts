@@ -746,7 +746,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("updates the L_Collateral and L_MUSDDebt reward-per-unit-staked totals", async () => {
+    it("updates the L_Collateral and L_Debt reward-per-unit-staked totals", async () => {
       await setupTroves()
       await openTrove(contracts, {
         musdAmount: "5000",
@@ -779,7 +779,7 @@ describe("TroveManager in Normal Mode", () => {
 
       const expectedLMUSDDebtAfterCarolLiquidated =
         to1e18(carol.trove.debt.before) / remainingColl
-      expect(await contracts.troveManager.L_MUSDDebt()).to.equal(
+      expect(await contracts.troveManager.L_Debt()).to.equal(
         expectedLMUSDDebtAfterCarolLiquidated,
       )
 
@@ -833,7 +833,7 @@ describe("TroveManager in Normal Mode", () => {
           bob.trove.collateral.before
 
       const tolerance = 100n
-      expect(await contracts.troveManager.L_MUSDDebt()).to.be.closeTo(
+      expect(await contracts.troveManager.L_Debt()).to.be.closeTo(
         expectedLMUSDDebtAfterAliceLiquidated,
         tolerance,
       )
@@ -2549,7 +2549,7 @@ describe("TroveManager in Normal Mode", () => {
           sender: dennis.wallet,
         })
         const totalDebt = carolTotalDebt + dennisTotalDebt
-        expect(await contracts.activePool.getMUSDDebt()).to.equal(totalDebt)
+        expect(await contracts.activePool.getDebt()).to.equal(totalDebt)
 
         const price = await contracts.priceFeed.fetchPrice()
         const { firstRedemptionHint, partialRedemptionHintNICR } =

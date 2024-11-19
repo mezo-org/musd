@@ -37,13 +37,13 @@ describe("ActivePool", () => {
     })
   })
 
-  describe("getMUSDDebt()", () => {
+  describe("getDebt()", () => {
     it("gets the recorded mUSD balance", async () => {
-      expect(await contracts.activePool.getMUSDDebt()).to.equal(0)
+      expect(await contracts.activePool.getDebt()).to.equal(0)
     })
   })
 
-  describe("increaseMUSDDebt()", () => {
+  describe("increaseDebt()", () => {
     it("increases the recorded mUSD balance by the correct amount", async () => {
       await updateContractsSnapshot(
         contracts,
@@ -56,7 +56,7 @@ describe("ActivePool", () => {
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .increaseMUSDDebt(amount, 0n, NO_GAS)
+        .increaseDebt(amount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -72,13 +72,13 @@ describe("ActivePool", () => {
     })
   })
 
-  describe("decreaseMUSDDebt()", () => {
+  describe("decreaseDebt()", () => {
     it("decreases the recorded mUSD balance by the correct amount", async () => {
       const initialAmount = to1e18("100")
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .increaseMUSDDebt(initialAmount, 0n, NO_GAS)
+        .increaseDebt(initialAmount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,
@@ -92,7 +92,7 @@ describe("ActivePool", () => {
 
       await contracts.activePool
         .connect(borrowerOperationsSigner)
-        .decreaseMUSDDebt(subtractedAmount, 0n, NO_GAS)
+        .decreaseDebt(subtractedAmount, 0n, NO_GAS)
 
       await updateContractsSnapshot(
         contracts,

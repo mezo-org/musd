@@ -40,11 +40,11 @@ interface ITroveManager {
         uint256 _liquidatedInterest,
         uint256 _liquidatedColl,
         uint256 _collGasCompensation,
-        uint256 _MUSDGasCompensation
+        uint256 _gasCompensation
     );
     event Redemption(
-        uint256 _attemptedMUSDAmount,
-        uint256 _actualMUSDAmount,
+        uint256 _attemptedAmount,
+        uint256 _actualAmount,
         uint256 _collateralSent,
         uint256 _collateralFee
     );
@@ -69,8 +69,8 @@ interface ITroveManager {
         uint256 _totalStakesSnapshot,
         uint256 _totalCollateralSnapshot
     );
-    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_mUSDDebt);
-    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_mUSDDebt);
+    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_Debt);
+    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_Debt);
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
     event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
     event InterestRateUpdated(uint256 _newInterestRate);
@@ -98,7 +98,7 @@ interface ITroveManager {
     function batchLiquidateTroves(address[] calldata _troveArray) external;
 
     function redeemCollateral(
-        uint256 _MUSDAmount,
+        uint256 _amount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
@@ -192,13 +192,11 @@ interface ITroveManager {
         uint256 _price
     ) external view returns (uint);
 
-    function getPendingCollateralReward(
+    function getPendingCollateral(
         address _borrower
     ) external view returns (uint);
 
-    function getPendingMUSDDebtReward(
-        address _borrower
-    ) external view returns (uint);
+    function getPendingDebt(address _borrower) external view returns (uint);
 
     function hasPendingRewards(address _borrower) external view returns (bool);
 
@@ -211,8 +209,8 @@ interface ITroveManager {
             uint256 debt,
             uint256 interest,
             uint256 coll,
-            uint256 pendingMUSDDebtReward,
-            uint256 pendingCollateralReward
+            uint256 pendingDebt,
+            uint256 pendingCollateral
         );
 
     function getRedemptionRate() external view returns (uint);
@@ -227,10 +225,10 @@ interface ITroveManager {
 
     function getBorrowingRateWithDecay() external view returns (uint);
 
-    function getBorrowingFee(uint256 _mUSDDebt) external view returns (uint);
+    function getBorrowingFee(uint256 _debt) external view returns (uint);
 
     function getBorrowingFeeWithDecay(
-        uint256 _mUSDDebt
+        uint256 _debt
     ) external view returns (uint);
 
     function getTroveStatus(address _borrower) external view returns (Status);

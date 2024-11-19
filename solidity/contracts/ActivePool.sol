@@ -13,9 +13,9 @@ import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IStabilityPool.sol";
 
 /*
- * The Active Pool holds the collateral and mUSD debt (but not mUSD tokens) for all active troves.
+ * The Active Pool holds the collateral and debt (but not mUSD tokens) for all active troves.
  *
- * When a trove is liquidated, it's collateral and mUSD debt are transferred from the Active Pool, to either the
+ * When a trove is liquidated, it's collateral and debt are transferred from the Active Pool, to either the
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
@@ -105,24 +105,24 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         renounceOwnership();
     }
 
-    function increaseMUSDDebt(
+    function increaseDebt(
         uint256 _principal,
         uint256 _interest
     ) external override {
         _requireCallerIsBorrowerOperationsOrTroveManager();
         principal += _principal;
         interest += _interest;
-        emit ActivePoolMUSDDebtUpdated(principal, interest);
+        emit ActivePoolDebtUpdated(principal, interest);
     }
 
-    function decreaseMUSDDebt(
+    function decreaseDebt(
         uint256 _principal,
         uint256 _interest
     ) external override {
         _requireCallerIsBOorTroveMorSP();
         principal -= _principal;
         interest -= _interest;
-        emit ActivePoolMUSDDebtUpdated(principal, interest);
+        emit ActivePoolDebtUpdated(principal, interest);
     }
 
     function sendCollateral(
@@ -146,7 +146,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         return collateral;
     }
 
-    function getMUSDDebt() external view override returns (uint) {
+    function getDebt() external view override returns (uint) {
         return principal + interest;
     }
 

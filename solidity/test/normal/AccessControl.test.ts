@@ -182,17 +182,17 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       )
     })
 
-    it("increaseMUSDDebt(): reverts when called by an account that is not BO nor TroveM", async () => {
+    it("increaseDebt(): reverts when called by an account that is not BO nor TroveM", async () => {
       await expect(
-        contracts.activePool.connect(alice.wallet).increaseMUSDDebt(100n, 0n),
+        contracts.activePool.connect(alice.wallet).increaseDebt(100n, 0n),
       ).to.be.revertedWith(
         "ActivePool: Caller is neither BorrowerOperations nor TroveManager",
       )
     })
 
-    it("decreaseMUSDDebt(): reverts when called by an account that is not BO nor TroveM nor SP", async () => {
+    it("decreaseDebt(): reverts when called by an account that is not BO nor TroveM nor SP", async () => {
       await expect(
-        contracts.activePool.connect(alice.wallet).decreaseMUSDDebt(100n, 0n),
+        contracts.activePool.connect(alice.wallet).decreaseDebt(100n, 0n),
       ).to.be.revertedWith(
         "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool",
       )
@@ -227,15 +227,15 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       ).to.be.revertedWith("DefaultPool: Caller is not the TroveManager")
     })
 
-    it("increaseMUSDDebt(): reverts when called by an account that is not TroveManager", async () => {
+    it("increaseDebt(): reverts when called by an account that is not TroveManager", async () => {
       await expect(
-        contracts.defaultPool.connect(alice.wallet).increaseMUSDDebt(100n, 0n),
+        contracts.defaultPool.connect(alice.wallet).increaseDebt(100n, 0n),
       ).to.be.revertedWith("DefaultPool: Caller is not the TroveManager")
     })
 
-    it("decreaseMUSDDebt(): reverts when called by an account that is not TroveManager", async () => {
+    it("decreaseDebt(): reverts when called by an account that is not TroveManager", async () => {
       await expect(
-        contracts.defaultPool.connect(alice.wallet).decreaseMUSDDebt(100n, 0n),
+        contracts.defaultPool.connect(alice.wallet).decreaseDebt(100n, 0n),
       ).to.be.revertedWith("DefaultPool: Caller is not the TroveManager")
     })
 

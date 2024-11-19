@@ -27,7 +27,7 @@ interface IBorrowerOperations {
         uint256 stake,
         uint8 operation
     );
-    event MUSDBorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee);
+    event BorrowingFeePaid(address indexed _borrower, uint256 _fee);
 
     // --- Functions ---
 

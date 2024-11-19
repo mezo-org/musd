@@ -5,11 +5,11 @@ pragma solidity ^0.8.24;
 /*
  * The Stability Pool holds mUSD tokens deposited by Stability Pool depositors.
  *
- * When a trove is liquidated, then depending on system conditions, some of its mUSD debt gets offset with
- * mUSD in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of mUSD tokens in the Stability Pool is burned.
+ * When a trove is liquidated, then depending on system conditions, some of its debt gets offset with
+ * mUSD in the Stability Pool: that is, the offset debt evaporates, and an equal amount of mUSD tokens in the Stability Pool are burned.
  *
- * Thus, a liquidation causes each depositor to receive a mUSD loss, in proportion to their deposit as a share of total deposits.
- * They also receive an collateral gain, as the collateral of the liquidated trove is distributed among Stability depositors,
+ * Thus, a liquidation causes each depositor to receive a mUSD loss in proportion to their deposit as a share of total deposits.
+ * They also receive an collateral gain, as the collateral of the liquidated trove is distributed among Stability depositors
  * in the same proportion.
  *
  * When a liquidation occurs, it depletes every deposit by the same fraction: for example, a liquidation that depletes 40%

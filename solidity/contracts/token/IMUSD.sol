@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 interface IMUSD is IERC20Metadata, IERC20Permit {
     // --- Events ---
     event BorrowerOperationsAddressAdded(address _newBorrowerOperationsAddress);
-    event MUSDBalanceUpdated(address _user, uint256 _amount);
+    event BalanceUpdated(address _user, uint256 _amount);
     event StabilityPoolAddressAdded(address _newStabilityPoolAddress);
     event TroveManagerAddressAdded(address _troveManagerAddress);
 
