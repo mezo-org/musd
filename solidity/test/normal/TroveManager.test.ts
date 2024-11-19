@@ -1312,6 +1312,41 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
+    it("a liquidation sequence of pure redistributions can reduce the TCR more than 0.5% due to compensation and interest", async () => {
+      await setInterestRate(contracts, council, 9000)
+      await setupTroves()
+
+      // Open a couple more troves with the same ICR as Alice
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: dennis.wallet,
+      })
+
+      await fastForwardTime(365 * 24 * 60 * 60 * 10)
+
+      // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
+      await dropPrice(contracts, alice)
+      await updateTroveManagerSnapshot(contracts, state, "before")
+
+      // Perform liquidation and check that TCR has decreased
+      await contracts.troveManager.liquidateTroves(4)
+      await updateTroveManagerSnapshot(contracts, state, "after")
+      expect(state.troveManager.TCR.before).to.be.greaterThan(
+        state.troveManager.TCR.after,
+      )
+
+      // Check that the TCR has decreased by more than the liquidation fee
+      expect(state.troveManager.TCR.after).to.be.lessThanOrEqual(
+        applyLiquidationFee(state.troveManager.TCR.before),
+      )
+    })
+
     it("liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
       await setupTrovesLiquidateWithSkip()
 

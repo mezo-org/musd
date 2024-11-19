@@ -1242,6 +1242,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         for (vars.i = 0; vars.i < _n; vars.i++) {
             vars.user = sortedTrovesCached.getLast();
+            _updateSystemInterest(Troves[vars.user].interestRate);
+            _updateDebtWithInterest(vars.user);
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
