@@ -1084,6 +1084,55 @@ describe("TroveManager in Normal Mode", () => {
       expect(state.activePool.debt.after).to.equal(bob.trove.debt.before)
     })
 
+    it("decreases ActivePool collateral, principal, and interest owed by correct amounts", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      await updateTroveSnapshot(contracts, bob, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+
+      // Close Alice's Trove
+      await dropPriceAndLiquidate(contracts, alice)
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      const after = await getLatestBlockTimestamp()
+
+      expect(state.activePool.collateral.after).to.equal(
+        bob.trove.collateral.before,
+      )
+      expect(state.activePool.btc.after).to.equal(bob.trove.collateral.before)
+      expect(state.activePool.principal.after).to.equal(bob.trove.debt.before)
+
+      // ActivePool interest should only include Bob's interest
+      const expectedInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        1000,
+        bob.trove.lastInterestUpdateTime.before,
+        BigInt(after),
+      )
+      console.log(bob.trove)
+      console.log(state.activePool)
+      expect(state.activePool.interest.after).to.equal(expectedInterest)
+      expect(state.activePool.debt.after).to.equal(
+        bob.trove.debt.before + expectedInterest,
+      )
+    })
+
     it("increases DefaultPool collateral and mUSD debt by correct amounts", async () => {
       await setupTroves()
       await updateTroveSnapshot(contracts, alice, "before")
@@ -1127,7 +1176,7 @@ describe("TroveManager in Normal Mode", () => {
       expect(state.defaultPool.debt.after).to.equal(alice.trove.debt.before)
     })
 
-    it("increases DefaultPool collateral, mUSD debt, and interest owed by correct amounts", async () => {
+    it("increases DefaultPool collateral, principal, and interest owed by correct amounts", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupTroves()
 
