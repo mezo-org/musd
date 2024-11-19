@@ -709,11 +709,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
-    function updateSystemAndTroveInterest(address _borrower) external {
-        _updateSystemInterest(Troves[_borrower].interestRate);
-        _updateDebtWithInterest(_borrower);
-    }
-
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -830,6 +825,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _checkRecoveryMode(_price);
     }
 
+    function updateSystemAndTroveInterest(address _borrower) public {
+        _updateSystemInterest(Troves[_borrower].interestRate);
+        _updateDebtWithInterest(_borrower);
+    }
+
     /*
      * Attempt to liquidate a custom list of troves provided by the caller.
      */
@@ -843,8 +843,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
-            _updateSystemInterest(Troves[borrower].interestRate);
-            _updateDebtWithInterest(borrower);
+            updateSystemAndTroveInterest(borrower);
         }
 
         IActivePool activePoolCached = activePool;
@@ -1159,6 +1158,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.user = _contractsCache.sortedTroves.getLast();
         address firstUser = _contractsCache.sortedTroves.getFirst();
         for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
+            updateSystemAndTroveInterest(vars.user);
             // we need to cache it, because current user is likely going to be deleted
             address nextUser = _contractsCache.sortedTroves.getPrev(vars.user);
 
@@ -1242,6 +1242,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         for (vars.i = 0; vars.i < _n; vars.i++) {
             vars.user = sortedTrovesCached.getLast();
+            updateSystemAndTroveInterest(vars.user);
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
@@ -1899,8 +1900,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _lowerPartialRedemptionHint
             );
 
-            _updateSystemInterest(Troves[_borrower].interestRate);
-            _updateDebtWithInterest(_borrower);
+            updateSystemAndTroveInterest(_borrower);
             _updateTroveDebt(_borrower, singleRedemption.mUSDLot);
             Troves[_borrower].coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);

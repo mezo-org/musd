@@ -23,6 +23,9 @@ import {
   updateWalletSnapshot,
   setInterestRate,
   fastForwardTime,
+  updateInterestRateDataSnapshot,
+  calculateInterestOwed,
+  getLatestBlockTimestamp,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -157,7 +160,7 @@ describe("TroveManager in Recovery Mode", () => {
 
     it("A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
       await setupTrove(alice, "5000", "400")
-      await setupTrove(bob, "50,000", "5000")
+      await setupTrove(bob, "50,000", "405")
       await setupTrove(carol, "2000", "400")
       await setupTrove(dennis, "2000", "400")
 
@@ -175,6 +178,48 @@ describe("TroveManager in Recovery Mode", () => {
       // Check that the TCR has decreased by no more than the liquidation fee
       expect(state.troveManager.TCR.after).to.be.greaterThanOrEqual(
         applyLiquidationFee(state.troveManager.TCR.before),
+      )
+    })
+
+    it("a pure redistribution reduces the TCR due to gas compensation and interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTrove(alice, "5000", "155")
+      await setupTrove(bob, "5000", "155")
+      await setupTrove(carol, "1800", "150")
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateTroveManagerSnapshot(contracts, state, "before")
+      const entireSystemCollBefore =
+        await contracts.troveManager.getEntireSystemColl()
+      await fastForwardTime(365 * 24 * 60 * 60)
+      const newPrice = await dropPrice(contracts, carol)
+      const liquidationTx = await contracts.troveManager.liquidateTroves(1)
+      await updateTroveSnapshot(contracts, carol, "after")
+      const { collGasCompensation } =
+        await getEmittedLiquidationValues(liquidationTx)
+
+      // Calculate interest on total system debt
+      const after = await getLatestBlockTimestamp()
+      const interestOwed =
+        calculateInterestOwed(
+          state.troveManager.interestRateData[1000].principal.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          BigInt(after),
+        ) + state.troveManager.interestRateData[1000].interest.before
+
+      // Calculate expected tcr
+      const remainingColl =
+        (entireSystemCollBefore - collGasCompensation) * newPrice
+      const remainingDebt =
+        state.troveManager.interestRateData[1000].principal.before +
+        interestOwed
+
+      await updateTroveManagerSnapshot(contracts, state, "after")
+
+      expect(state.troveManager.TCR.after).to.equal(
+        remainingColl / remainingDebt,
       )
     })
 
@@ -350,6 +395,28 @@ describe("TroveManager in Recovery Mode", () => {
       expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
         true,
       )
+    })
+
+    it("liquidates based on actual ICR including interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "155",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2,000",
+        ICR: "150",
+        sender: bob.wallet,
+      })
+
+      // Drop the price so Bob is just above MCR
+      await dropPrice(contracts, bob, to1e18("111"))
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await contracts.troveManager.liquidateTroves(1n)
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
     })
 
     it("with a non fulfilled liquidation: still can liquidate further troves after the non-liquidated, emptied pool", async () => {
