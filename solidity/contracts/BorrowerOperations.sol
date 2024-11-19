@@ -901,27 +901,6 @@ contract BorrowerOperations is
     }
 
     /*
-     * In Recovery Mode, only allow:
-     *
-     * - Pure collateral top-up
-     * - Pure debt repayment
-     * - Collateral top-up with debt repayment
-     * - A debt increase combined with a collateral top-up which makes the ICR
-     * >= 150% and improves the ICR (and by extension improves the TCR).
-     */
-    function _requireValidAdjustmentInRecoveryMode(
-        uint256 _collWithdrawal,
-        bool _isDebtIncrease,
-        LocalVariables_adjustTrove memory _vars
-    ) internal pure {
-        _requireNoCollWithdrawal(_collWithdrawal);
-        if (_isDebtIncrease) {
-            _requireICRisAboveCCR(_vars.newICR);
-            _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
-        }
-    }
-
-    /*
      * In Normal Mode, ensure:
      *
      * - The new ICR is above MCR
@@ -968,6 +947,27 @@ contract BorrowerOperations is
             _musd.balanceOf(_borrower) >= _debtRepayment,
             "BorrowerOps: Caller doesnt have enough mUSD to make repayment"
         );
+    }
+
+    /*
+     * In Recovery Mode, only allow:
+     *
+     * - Pure collateral top-up
+     * - Pure debt repayment
+     * - Collateral top-up with debt repayment
+     * - A debt increase combined with a collateral top-up which makes the ICR
+     * >= 150% and improves the ICR (and by extension improves the TCR).
+     */
+    function _requireValidAdjustmentInRecoveryMode(
+        uint256 _collWithdrawal,
+        bool _isDebtIncrease,
+        LocalVariables_adjustTrove memory _vars
+    ) internal pure {
+        _requireNoCollWithdrawal(_collWithdrawal);
+        if (_isDebtIncrease) {
+            _requireICRisAboveCCR(_vars.newICR);
+            _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
+        }
     }
 
     function _getCollChange(
