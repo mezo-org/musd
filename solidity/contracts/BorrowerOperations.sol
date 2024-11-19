@@ -37,8 +37,9 @@ contract BorrowerOperations is
         uint256 newICR;
         uint256 newTCR;
         uint256 MUSDFee;
-        uint256 newDebt;
         uint256 newColl;
+        uint256 newPrincipal;
+        uint256 newInterest;
         uint256 stake;
         uint256 interestOwed;
         uint256 principalAdjustment;
@@ -249,6 +250,7 @@ contract BorrowerOperations is
         emit TroveUpdated(
             msg.sender,
             vars.compositeDebt,
+            0,
             _assetAmount,
             vars.stake,
             uint8(BorrowerOperation.openTrove)
@@ -314,7 +316,7 @@ contract BorrowerOperations is
         );
     }
 
-    // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's debt accordingly
+    // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's principal accordingly
     function withdrawMUSD(
         uint256 _maxFeePercentage,
         uint256 _amount,
@@ -395,6 +397,7 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             msg.sender,
+            0,
             0,
             0,
             0,
@@ -563,7 +566,7 @@ contract BorrowerOperations is
         // slither-disable-next-line uninitialized-local
         LocalVariables_adjustTrove memory vars;
 
-        // Snapshot interest and principal before repayment so we can correctly adjust the active pool debt
+        // Snapshot interest and principal before repayment so we can correctly adjust the active pool
         vars.interestOwed = contractsCache.troveManager.getTroveInterestOwed(
             _borrower
         );
@@ -604,7 +607,7 @@ contract BorrowerOperations is
 
         vars.netDebtChange = _MUSDChange;
 
-        // If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
+        // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
             vars.MUSDFee = _triggerBorrowingFee(
                 contractsCache.troveManager,
@@ -652,7 +655,11 @@ contract BorrowerOperations is
             );
         }
 
-        (vars.newColl, vars.newDebt) = _updateTroveFromAdjustment(
+        (
+            vars.newColl,
+            vars.newPrincipal,
+            vars.newInterest
+        ) = _updateTroveFromAdjustment(
             contractsCache.troveManager,
             _borrower,
             vars.collChange,
@@ -678,7 +685,8 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
-            vars.newDebt,
+            vars.newPrincipal,
+            vars.newInterest,
             vars.newColl,
             vars.stake,
             uint8(BorrowerOperation.adjustTrove)
@@ -781,15 +789,25 @@ contract BorrowerOperations is
         bool _isCollIncrease,
         uint256 _debtChange,
         bool _isDebtIncrease
-    ) internal returns (uint, uint) {
-        uint256 newColl = (_isCollIncrease)
+    )
+        internal
+        returns (uint256 newColl, uint256 newPrincipal, uint256 newInterest)
+    {
+        newColl = (_isCollIncrease)
             ? _troveManager.increaseTroveColl(_borrower, _collChange)
             : _troveManager.decreaseTroveColl(_borrower, _collChange);
-        uint256 newDebt = (_isDebtIncrease)
-            ? _troveManager.increaseTroveDebt(_borrower, _debtChange)
-            : _troveManager.decreaseTroveDebt(_borrower, _debtChange);
 
-        return (newColl, newDebt);
+        if (_isDebtIncrease) {
+            newPrincipal = _troveManager.increaseTroveDebt(
+                _borrower,
+                _debtChange
+            );
+        } else {
+            (newPrincipal, newInterest) = _troveManager.decreaseTroveDebt(
+                _borrower,
+                _debtChange
+            );
+        }
     }
 
     // --- Helper functions ---
@@ -797,13 +815,13 @@ contract BorrowerOperations is
     function _triggerBorrowingFee(
         ITroveManager _troveManager,
         IMUSD _musd,
-        uint256 _MUSDAmount,
+        uint256 _mUSDAmount,
         uint256 _maxFeePercentage
     ) internal returns (uint) {
         _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint256 MUSDFee = _troveManager.getBorrowingFee(_MUSDAmount);
+        uint256 MUSDFee = _troveManager.getBorrowingFee(_mUSDAmount);
 
-        _requireUserAcceptsFee(MUSDFee, _MUSDAmount, _maxFeePercentage);
+        _requireUserAcceptsFee(MUSDFee, _mUSDAmount, _maxFeePercentage);
 
         // Send fee to PCV contract
         _musd.mint(pcvAddress, MUSDFee);
@@ -882,42 +900,62 @@ contract BorrowerOperations is
         );
     }
 
+    /*
+     * In Recovery Mode, only allow:
+     *
+     * - Pure collateral top-up
+     * - Pure debt repayment
+     * - Collateral top-up with debt repayment
+     * - A debt increase combined with a collateral top-up which makes the ICR
+     * >= 150% and improves the ICR (and by extension improves the TCR).
+     */
+    function _requireValidAdjustmentInRecoveryMode(
+        uint256 _collWithdrawal,
+        bool _isDebtIncrease,
+        LocalVariables_adjustTrove memory _vars
+    ) internal pure {
+        _requireNoCollWithdrawal(_collWithdrawal);
+        if (_isDebtIncrease) {
+            _requireICRisAboveCCR(_vars.newICR);
+            _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
+        }
+    }
+
+    /*
+     * In Normal Mode, ensure:
+     *
+     * - The new ICR is above MCR
+     * - The adjustment won't pull the TCR below CCR
+     */
+    function _requireValidAdjustmentInNormalMode(
+        bool _isDebtIncrease,
+        LocalVariables_adjustTrove memory _vars
+    ) internal view {
+        _requireICRisAboveMCR(_vars.newICR);
+        _vars.newTCR = _getNewTCRFromTroveChange(
+            _vars.collChange,
+            _vars.isCollIncrease,
+            _vars.netDebtChange,
+            _isDebtIncrease,
+            _vars.price
+        );
+        _requireNewTCRisAboveCCR(_vars.newTCR);
+    }
+
     function _requireValidAdjustmentInCurrentMode(
         bool _isRecoveryMode,
         uint256 _collWithdrawal,
         bool _isDebtIncrease,
         LocalVariables_adjustTrove memory _vars
     ) internal view {
-        /*
-         *In Recovery Mode, only allow:
-         *
-         * - Pure collateral top-up
-         * - Pure debt repayment
-         * - Collateral top-up with debt repayment
-         * - A debt increase combined with a collateral top-up which makes the ICR >= 150% and improves the ICR (and by extension improves the TCR).
-         *
-         * In Normal Mode, ensure:
-         *
-         * - The new ICR is above MCR
-         * - The adjustment won't pull the TCR below CCR
-         */
         if (_isRecoveryMode) {
-            _requireNoCollWithdrawal(_collWithdrawal);
-            if (_isDebtIncrease) {
-                _requireICRisAboveCCR(_vars.newICR);
-                _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
-            }
-        } else {
-            // if Normal Mode
-            _requireICRisAboveMCR(_vars.newICR);
-            _vars.newTCR = _getNewTCRFromTroveChange(
-                _vars.collChange,
-                _vars.isCollIncrease,
-                _vars.netDebtChange,
+            _requireValidAdjustmentInRecoveryMode(
+                _collWithdrawal,
                 _isDebtIncrease,
-                _vars.price
+                _vars
             );
-            _requireNewTCRisAboveCCR(_vars.newTCR);
+        } else {
+            _requireValidAdjustmentInNormalMode(_isDebtIncrease, _vars);
         }
     }
 
@@ -973,14 +1011,9 @@ contract BorrowerOperations is
         bool _isCollIncrease,
         uint256 _debtChange,
         bool _isDebtIncrease
-    ) internal pure returns (uint, uint) {
-        uint256 newColl = _coll;
-        uint256 newDebt = _debt;
-
+    ) internal pure returns (uint newColl, uint newDebt) {
         newColl = _isCollIncrease ? _coll + _collChange : _coll - _collChange;
         newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
-
-        return (newColl, newDebt);
     }
 
     // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
@@ -1001,8 +1034,7 @@ contract BorrowerOperations is
             _isDebtIncrease
         );
 
-        uint256 newNICR = LiquityMath._computeNominalCR(newColl, newDebt);
-        return newNICR;
+        return LiquityMath._computeNominalCR(newColl, newDebt);
     }
 
     function _requireValidMaxFeePercentage(
@@ -1051,9 +1083,9 @@ contract BorrowerOperations is
         );
     }
 
-    function _requireNonZeroDebtChange(uint256 _MUSDChange) internal pure {
+    function _requireNonZeroDebtChange(uint256 _debtChange) internal pure {
         require(
-            _MUSDChange > 0,
+            _debtChange > 0,
             "BorrowerOps: Debt increase requires non-zero debtChange"
         );
     }
@@ -1070,11 +1102,11 @@ contract BorrowerOperations is
 
     function _requireNonZeroAdjustment(
         uint256 _collWithdrawal,
-        uint256 _MUSDChange,
+        uint256 _debtChange,
         uint256 _assetAmount
     ) internal pure {
         require(
-            _assetAmount != 0 || _collWithdrawal != 0 || _MUSDChange != 0,
+            _assetAmount != 0 || _collWithdrawal != 0 || _debtChange != 0,
             "BorrowerOps: There must be either a collateral change or a debt change"
         );
     }

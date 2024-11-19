@@ -43,15 +43,15 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
 
     /* getRedemptionHints() - Helper function for finding the right hints to pass to redeemCollateral().
      *
-     * It simulates a redemption of `_MUSDamount` to figure out where the redemption sequence will start and what state the final Trove
+     * It simulates a redemption of `_MUSDAmount` to figure out where the redemption sequence will start and what state the final Trove
      * of the sequence will end up in.
      *
      * Returns three hints:
      *  - `firstRedemptionHint` is the address of the first Trove with ICR >= MCR (i.e. the first Trove that will be redeemed).
      *  - `partialRedemptionHintNICR` is the final nominal ICR of the last Trove of the sequence after being hit by partial redemption,
      *     or zero in case of no partial redemption.
-     *  - `truncatedMUSDamount` is the maximum amount that can be redeemed out of the the provided `_MUSDamount`. This can be lower than
-     *    `_MUSDamount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
+     *  - `truncatedMUSDamount` is the maximum amount that can be redeemed out of the the provided `_MUSDAmount`. This can be lower than
+     *    `_MUSDAmount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
      *    minimum allowed value (i.e. MIN_NET_DEBT).
      *
      * The number of Troves to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
@@ -59,7 +59,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
      */
 
     function getRedemptionHints(
-        uint256 _MUSDamount,
+        uint256 _MUSDAmount,
         uint256 _price,
         uint256 _maxIterations
     )
@@ -73,7 +73,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
     {
         ISortedTroves sortedTrovesCached = sortedTroves;
 
-        uint256 remainingMUSD = _MUSDamount;
+        uint256 remainingMUSD = _MUSDAmount;
         address currentTroveuser = sortedTrovesCached.getLast();
 
         // slither-disable-start calls-loop
@@ -135,7 +135,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
         }
         // slither-disable-end calls-loop
 
-        truncatedMUSDamount = _MUSDamount - remainingMUSD;
+        truncatedMUSDamount = _MUSDAmount - remainingMUSD;
     }
 
     /* getApproxHint() - return address of a Trove that is, on average, (length / numTrials) positions away in the

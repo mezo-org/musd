@@ -420,13 +420,13 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("leaves the correct amount of mUSD in the Stability Pool", async () => {
       await setupPartialRetrieval()
-      const { liquidatedDebt } =
+      const { liquidatedPrincipal } =
         await getEmittedLiquidationValues(liquidationTx)
 
       const expectedMUSD =
         state.stabilityPool.musd.before -
         to1e18(900) - // alice withdrew $900
-        liquidatedDebt
+        liquidatedPrincipal
 
       expect(state.stabilityPool.musd.after).to.equal(expectedMUSD)
     })
@@ -443,10 +443,10 @@ describe("StabilityPool in Normal Mode", () => {
 
       const tx = await createLiquidationEvent(contracts)
 
-      const { liquidatedDebt } = await getEmittedLiquidationValues(tx)
+      const { liquidatedPrincipal } = await getEmittedLiquidationValues(tx)
 
       const expectedMUSDLoss =
-        (liquidatedDebt * alice.stabilityPool.deposit.before) /
+        (liquidatedPrincipal * alice.stabilityPool.deposit.before) /
         (alice.stabilityPool.deposit.before +
           whale.stabilityPool.deposit.before)
 
@@ -462,7 +462,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       expect(state.stabilityPool.musd.after).to.be.closeTo(
         state.stabilityPool.musd.before -
-          liquidatedDebt -
+          liquidatedPrincipal -
           aliceRemainingDeposit,
         5000n,
       )
@@ -637,11 +637,11 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("retrieves correct mUSD amount and the entire collateral Gain, and updates deposit", async () => {
       await setupPartialRetrieval()
-      const { liquidatedDebt, liquidatedColl } =
+      const { liquidatedPrincipal, liquidatedColl } =
         await getEmittedLiquidationValues(liquidationTx)
 
       const expectedMUSDLoss =
-        (liquidatedDebt * alice.stabilityPool.deposit.before) /
+        (liquidatedPrincipal * alice.stabilityPool.deposit.before) /
         (alice.stabilityPool.deposit.before +
           whale.stabilityPool.deposit.before)
 

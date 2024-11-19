@@ -13,6 +13,7 @@ import {
   User,
   WithdrawCollParams,
 } from "./interfaces"
+import { LIQUIDATION_ABI } from "./abi"
 import { fastForwardTime } from "./time"
 import {
   beforeAndAfter,
@@ -400,48 +401,28 @@ export async function getDebtAndCollFromTroveUpdatedEvents(
 ) {
   const event = troveUpdatedEvents.find((e) => e.args[0] === user.address)
   return {
-    debt: event?.args[1],
-    coll: event?.args[2],
+    principal: event?.args[1],
+    interest: event?.args[2],
+    coll: event?.args[3],
   }
 }
 
 export async function getEmittedLiquidationValues(
   liquidationTx: ContractTransactionResponse,
 ) {
-  const abi = [
-    "event Liquidation(uint256 _liquidatedDebt, uint256 _liquidatedColl, uint256 _collGasCompensation, uint256 _MUSDGasCompensation)",
-  ]
-
-  const liquidatedDebt = await getEventArgByName(
-    liquidationTx,
-    abi,
-    "Liquidation",
-    0,
-  )
-
-  const liquidatedColl = await getEventArgByName(
-    liquidationTx,
-    abi,
-    "Liquidation",
-    1,
-  )
-
-  const collGasCompensation = await getEventArgByName(
-    liquidationTx,
-    abi,
-    "Liquidation",
-    2,
-  )
-
-  const MUSDGasCompensation = await getEventArgByName(
-    liquidationTx,
-    abi,
-    "Liquidation",
-    3,
-  )
+  const [
+    liquidatedPrincipal,
+    liquidatedInterest,
+    liquidatedColl,
+    collGasCompensation,
+    MUSDGasCompensation,
+  ] = (
+    await getAllEventsByName(liquidationTx, LIQUIDATION_ABI, "Liquidation")
+  )[0].args
 
   return {
-    liquidatedDebt,
+    liquidatedPrincipal,
+    liquidatedInterest,
     liquidatedColl,
     collGasCompensation,
     MUSDGasCompensation,

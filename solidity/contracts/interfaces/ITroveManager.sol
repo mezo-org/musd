@@ -36,7 +36,8 @@ interface ITroveManager {
     event PCVAddressChanged(address _pcvAddress);
 
     event Liquidation(
-        uint256 _liquidatedDebt,
+        uint256 _liquidatedPrincipal,
+        uint256 _liquidatedInterest,
         uint256 _liquidatedColl,
         uint256 _collGasCompensation,
         uint256 _MUSDGasCompensation
@@ -49,7 +50,8 @@ interface ITroveManager {
     );
     event TroveUpdated(
         address indexed _borrower,
-        uint256 _debt,
+        uint256 _principal,
+        uint256 _interest,
         uint256 _coll,
         uint256 stake,
         uint8 operation
@@ -67,8 +69,8 @@ interface ITroveManager {
         uint256 _totalStakesSnapshot,
         uint256 _totalCollateralSnapshot
     );
-    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
-    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_MUSDDebt);
+    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_mUSDDebt);
+    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_mUSDDebt);
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
     event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
     event InterestRateUpdated(uint256 _newInterestRate);
@@ -147,12 +149,12 @@ interface ITroveManager {
     function increaseTroveDebt(
         address _borrower,
         uint256 _debtIncrease
-    ) external returns (uint);
+    ) external returns (uint256);
 
     function decreaseTroveDebt(
         address _borrower,
         uint256 _debtDecrease
-    ) external returns (uint);
+    ) external returns (uint256, uint256);
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external;
 
@@ -225,10 +227,10 @@ interface ITroveManager {
 
     function getBorrowingRateWithDecay() external view returns (uint);
 
-    function getBorrowingFee(uint256 MUSDDebt) external view returns (uint);
+    function getBorrowingFee(uint256 _mUSDDebt) external view returns (uint);
 
     function getBorrowingFeeWithDecay(
-        uint256 _MUSDDebt
+        uint256 _mUSDDebt
     ) external view returns (uint);
 
     function getTroveStatus(address _borrower) external view returns (Status);

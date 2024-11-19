@@ -28,7 +28,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Store the necessary data for a trove
     struct Trove {
         uint256 coll;
-        uint256 debt;
+        uint256 principal;
         uint256 interestOwed;
         uint256 stake;
         Status status;
@@ -41,14 +41,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Object containing the collateral and mUSD snapshots for a given active trove
     struct RewardSnapshot {
         uint256 collateral;
-        uint256 MUSDDebt;
+        uint256 mUSDDebt;
     }
 
     struct LocalVariables_OuterLiquidationFunction {
         uint256 price;
         uint256 MUSDInStabPool;
         bool recoveryModeAtStart;
-        uint256 liquidatedDebt;
         uint256 liquidatedColl;
     }
 
@@ -67,12 +66,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     struct LiquidationTotals {
         uint256 totalCollInSequence;
-        uint256 totalDebtInSequence;
+        uint256 totalPrincipalInSequence;
+        uint256 totalInterestInSequence;
         uint256 totalCollGasCompensation;
         uint256 totalMUSDGasCompensation;
         uint256 totalDebtToOffset;
         uint256 totalCollToSendToSP;
-        uint256 totalDebtToRedistribute;
+        uint256 totalPrincipalToRedistribute;
         uint256 totalInterestToRedistribute;
         uint256 totalCollToRedistribute;
         uint256 totalCollSurplus;
@@ -96,7 +96,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 MUSDGasCompensation;
         uint256 debtToOffset;
         uint256 collToSendToSP;
-        uint256 debtToRedistribute;
+        uint256 principalToRedistribute;
         uint256 interestToRedistribute;
         uint256 collToRedistribute;
         uint256 collSurplus;
@@ -129,7 +129,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 totalMUSDDebtAtStart;
     }
 
-    // Store the total debt and last computation timestamps for an interest rate
     struct InterestRateInfo {
         uint256 principal; // The total principal at this interest rate
         uint256 interest; // The total outstanding interest owed at this interest rate
@@ -337,7 +336,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         }
 
         require(
-            totals.totalDebtInSequence > 0,
+            totals.totalPrincipalInSequence > 0,
             "TroveManager: nothing to liquidate"
         );
 
@@ -349,7 +348,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _redistributeDebtAndColl(
             contractsCache.activePool,
             contractsCache.defaultPool,
-            totals.totalDebtToRedistribute,
+            totals.totalPrincipalToRedistribute,
             0,
             totals.totalCollToRedistribute
         );
@@ -366,13 +365,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.totalCollGasCompensation
         );
 
-        vars.liquidatedDebt = totals.totalDebtInSequence;
         vars.liquidatedColl =
             totals.totalCollInSequence -
             totals.totalCollGasCompensation -
             totals.totalCollSurplus;
+
         emit Liquidation(
-            vars.liquidatedDebt,
+            totals.totalPrincipalInSequence,
+            totals.totalInterestInSequence,
             vars.liquidatedColl,
             totals.totalCollGasCompensation,
             totals.totalMUSDGasCompensation
@@ -647,18 +647,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _debtIncrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
-        uint256 newDebt = Troves[_borrower].debt + _debtIncrease;
-        Troves[_borrower].debt = newDebt;
+        uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
+        Troves[_borrower].principal = newDebt;
         return newDebt;
     }
 
     function decreaseTroveDebt(
         address _borrower,
         uint256 _debtDecrease
-    ) external override returns (uint) {
+    ) external override returns (uint256, uint256) {
         _requireCallerIsBorrowerOperations();
         _updateTroveDebt(_borrower, _debtDecrease);
-        return _getTotalDebt(_borrower);
+        return (Troves[_borrower].principal, Troves[_borrower].interestOwed);
     }
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external {
@@ -757,15 +757,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // --- Borrowing fee functions ---
 
     function getBorrowingFee(
-        uint256 MUSDDebt
+        uint256 _mUSDDebt
     ) external view override returns (uint) {
-        return _calcBorrowingFee(getBorrowingRate(), MUSDDebt);
+        return _calcBorrowingFee(getBorrowingRate(), _mUSDDebt);
     }
 
     function getBorrowingFeeWithDecay(
-        uint256 _MUSDDebt
+        uint256 _mUSDDebt
     ) external view override returns (uint) {
-        return _calcBorrowingFee(getBorrowingRateWithDecay(), _MUSDDebt);
+        return _calcBorrowingFee(getBorrowingRateWithDecay(), _mUSDDebt);
     }
 
     function getTroveStatus(
@@ -787,7 +787,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function getTrovePrincipal(address _borrower) external view returns (uint) {
-        return Troves[_borrower].debt;
+        return Troves[_borrower].principal;
     }
 
     function getTroveInterestRate(
@@ -881,7 +881,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         }
 
         require(
-            totals.totalDebtInSequence > 0,
+            totals.totalPrincipalInSequence > 0,
             "TroveManager: nothing to liquidate"
         );
 
@@ -893,7 +893,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _redistributeDebtAndColl(
             activePoolCached,
             defaultPoolCached,
-            totals.totalDebtToRedistribute,
+            totals.totalPrincipalToRedistribute,
             totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
@@ -910,13 +910,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             totals.totalCollGasCompensation
         );
 
-        vars.liquidatedDebt = totals.totalDebtInSequence;
         vars.liquidatedColl =
             totals.totalCollInSequence -
             totals.totalCollGasCompensation -
             totals.totalCollSurplus;
         emit Liquidation(
-            vars.liquidatedDebt,
+            totals.totalPrincipalInSequence,
+            totals.totalInterestInSequence,
             vars.liquidatedColl,
             totals.totalCollGasCompensation,
             totals.totalMUSDGasCompensation
@@ -980,7 +980,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 pendingCollateralReward
         )
     {
-        principal = Troves[_borrower].debt;
+        principal = Troves[_borrower].principal;
         interest = Troves[_borrower].interestOwed;
         coll = Troves[_borrower].coll;
 
@@ -1023,7 +1023,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function getPendingMUSDDebtReward(
         address _borrower
     ) public view override returns (uint) {
-        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].MUSDDebt;
+        uint256 snapshotMUSDDebt = rewardSnapshots[_borrower].mUSDDebt;
         uint256 rewardPerUnitStaked = L_MUSDDebt - snapshotMUSDDebt;
 
         if (
@@ -1080,7 +1080,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _updateDebtWithInterest(address _borrower) internal {
         // solhint-disable not-rely-on-time
         Troves[_borrower].interestOwed += calculateInterestOwed(
-            Troves[_borrower].debt,
+            Troves[_borrower].principal,
             Troves[_borrower].interestRate,
             Troves[_borrower].lastInterestUpdateTime,
             block.timestamp
@@ -1124,8 +1124,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 _interestAdjustment
         ) = calculateDebtAdjustment(trove.interestOwed, _payment);
 
+        trove.principal -= _principalAdjustment;
         trove.interestOwed -= _interestAdjustment;
-        trove.debt -= _principalAdjustment;
         interestRateData[trove.interestRate].principal -= _principalAdjustment;
         interestRateData[trove.interestRate].interest -= _interestAdjustment;
     }
@@ -1318,7 +1318,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             // Apply pending rewards to trove's state
             Troves[_borrower].coll += pendingCollateralReward;
-            Troves[_borrower].debt += pendingMUSDDebtReward;
+            Troves[_borrower].principal += pendingMUSDDebtReward;
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -1332,7 +1332,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveUpdated(
                 _borrower,
-                Troves[_borrower].debt,
+                Troves[_borrower].principal,
+                Troves[_borrower].interestOwed,
                 Troves[_borrower].coll,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.applyPendingRewards)
@@ -1406,7 +1407,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 collateralNumerator = _coll *
             DECIMAL_PRECISION +
             lastCollateralError_Redistribution;
-        uint256 MUSDDebtNumerator = _principal *
+        uint256 mUSDDebtNumerator = _principal *
             DECIMAL_PRECISION +
             lastMUSDDebtError_Redistribution;
 
@@ -1415,18 +1416,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 collateralRewardPerUnitStaked = collateralNumerator /
             totalStakes;
         // slither-disable-next-line divide-before-multiply
-        uint256 MUSDDebtRewardPerUnitStaked = MUSDDebtNumerator / totalStakes;
+        uint256 mUSDDebtRewardPerUnitStaked = mUSDDebtNumerator / totalStakes;
 
         lastCollateralError_Redistribution =
             collateralNumerator -
             (collateralRewardPerUnitStaked * totalStakes);
         lastMUSDDebtError_Redistribution =
-            MUSDDebtNumerator -
-            (MUSDDebtRewardPerUnitStaked * totalStakes);
+            mUSDDebtNumerator -
+            (mUSDDebtRewardPerUnitStaked * totalStakes);
 
         // Add per-unit-staked terms to the running totals
         L_Collateral += collateralRewardPerUnitStaked;
-        L_MUSDDebt += MUSDDebtRewardPerUnitStaked;
+        L_MUSDDebt += mUSDDebtRewardPerUnitStaked;
 
         emit LTermsUpdated(L_Collateral, L_MUSDDebt);
 
@@ -1472,7 +1473,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         (
             singleLiquidation.debtToOffset,
             singleLiquidation.collToSendToSP,
-            singleLiquidation.debtToRedistribute,
+            singleLiquidation.principalToRedistribute,
             singleLiquidation.interestToRedistribute,
             singleLiquidation.collToRedistribute
         ) = _getOffsetAndRedistributionVals(
@@ -1491,6 +1492,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
         emit TroveUpdated(
             _borrower,
+            0,
             0,
             0,
             0,
@@ -1674,7 +1676,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             singleLiquidation.debtToOffset = 0;
             singleLiquidation.collToSendToSP = 0;
-            singleLiquidation.debtToRedistribute = singleLiquidation
+            singleLiquidation.principalToRedistribute = singleLiquidation
                 .entireTrovePrincipal;
             singleLiquidation.collToRedistribute = vars.collToLiquidate;
 
@@ -1687,6 +1689,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             emit TroveUpdated(
                 _borrower,
+                0,
                 0,
                 0,
                 0,
@@ -1706,7 +1709,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (
                 singleLiquidation.debtToOffset,
                 singleLiquidation.collToSendToSP,
-                singleLiquidation.debtToRedistribute,
+                singleLiquidation.principalToRedistribute,
                 singleLiquidation.interestToRedistribute,
                 singleLiquidation.collToRedistribute
             ) = _getOffsetAndRedistributionVals(
@@ -1725,6 +1728,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             emit TroveUpdated(
                 _borrower,
+                0,
                 0,
                 0,
                 0,
@@ -1772,6 +1776,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             emit TroveUpdated(
                 _borrower,
+                0,
                 0,
                 0,
                 0,
@@ -1858,6 +1863,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 0,
                 0,
                 0,
+                0,
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
@@ -1867,7 +1873,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 vars.newColl,
                 vars.newDebt -
                     calculateInterestOwed(
-                        Troves[_borrower].debt,
+                        Troves[_borrower].principal,
                         Troves[_borrower].interestRate,
                         block.timestamp - 600,
                         block.timestamp
@@ -1910,7 +1916,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveUpdated(
                 _borrower,
-                vars.newDebt,
+                Troves[_borrower].principal,
+                Troves[_borrower].interestOwed,
                 vars.newColl,
                 Troves[_borrower].stake,
                 uint8(TroveManagerOperation.redeemCollateral)
@@ -1937,7 +1944,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _updateTroveRewardSnapshots(address _borrower) internal {
         rewardSnapshots[_borrower].collateral = L_Collateral;
-        rewardSnapshots[_borrower].MUSDDebt = L_MUSDDebt;
+        rewardSnapshots[_borrower].mUSDDebt = L_MUSDDebt;
         emit TroveSnapshotsUpdated(L_Collateral, L_MUSDDebt);
     }
 
@@ -1997,11 +2004,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
-        Troves[_borrower].debt = 0;
+        Troves[_borrower].principal = 0;
         Troves[_borrower].interestOwed = 0;
 
         rewardSnapshots[_borrower].collateral = 0;
-        rewardSnapshots[_borrower].MUSDDebt = 0;
+        rewardSnapshots[_borrower].mUSDDebt = 0;
 
         _removeTroveOwner(_borrower, TroveOwnersArrayLength);
         // slither-disable-next-line calls-loop
@@ -2101,10 +2108,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
         // solhint-disable not-rely-on-time
         return
-            Troves[_borrower].debt +
+            Troves[_borrower].principal +
             Troves[_borrower].interestOwed +
             calculateInterestOwed(
-                Troves[_borrower].debt,
+                Troves[_borrower].principal,
                 Troves[_borrower].interestRate,
                 Troves[_borrower].lastInterestUpdateTime,
                 block.timestamp
@@ -2268,7 +2275,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             cappedCollPortion -
             singleLiquidation.collGasCompensation;
         singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
-        singleLiquidation.debtToRedistribute = 0;
+        singleLiquidation.principalToRedistribute = 0;
         singleLiquidation.collToRedistribute = 0;
     }
 
@@ -2280,31 +2287,43 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         newTotals.totalCollGasCompensation =
             oldTotals.totalCollGasCompensation +
             singleLiquidation.collGasCompensation;
+
         newTotals.totalMUSDGasCompensation =
             oldTotals.totalMUSDGasCompensation +
             singleLiquidation.MUSDGasCompensation;
-        newTotals.totalDebtInSequence =
-            oldTotals.totalDebtInSequence +
+
+        newTotals.totalPrincipalInSequence =
+            oldTotals.totalPrincipalInSequence +
             singleLiquidation.entireTrovePrincipal;
-        singleLiquidation.entireTroveInterest;
+
+        newTotals.totalInterestInSequence =
+            oldTotals.totalInterestInSequence +
+            singleLiquidation.entireTroveInterest;
+
         newTotals.totalCollInSequence =
             oldTotals.totalCollInSequence +
             singleLiquidation.entireTroveColl;
+
         newTotals.totalDebtToOffset =
             oldTotals.totalDebtToOffset +
             singleLiquidation.debtToOffset;
+
         newTotals.totalCollToSendToSP =
             oldTotals.totalCollToSendToSP +
             singleLiquidation.collToSendToSP;
-        newTotals.totalDebtToRedistribute =
-            oldTotals.totalDebtToRedistribute +
-            singleLiquidation.debtToRedistribute;
+
+        newTotals.totalPrincipalToRedistribute =
+            oldTotals.totalPrincipalToRedistribute +
+            singleLiquidation.principalToRedistribute;
+
         newTotals.totalInterestToRedistribute =
             oldTotals.totalInterestToRedistribute +
             singleLiquidation.interestToRedistribute;
+
         newTotals.totalCollToRedistribute =
             oldTotals.totalCollToRedistribute +
             singleLiquidation.collToRedistribute;
+
         newTotals.totalCollSurplus =
             oldTotals.totalCollSurplus +
             singleLiquidation.collSurplus;
@@ -2314,9 +2333,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _calcBorrowingFee(
         uint256 _borrowingRate,
-        uint256 _MUSDDebt
+        uint256 _mUSDDebt
     ) internal pure returns (uint) {
-        return (_borrowingRate * _MUSDDebt) / DECIMAL_PRECISION;
+        return (_borrowingRate * _mUSDDebt) / DECIMAL_PRECISION;
     }
 
     function _calcBorrowingRate(

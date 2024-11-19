@@ -529,7 +529,7 @@ describe("TroveManager in Recovery Mode", () => {
         const price = await dropPrice(contracts, dennis, to1e18("149"))
 
         const liquidationTx = await contracts.troveManager.liquidateTroves(4)
-        const { liquidatedDebt, liquidatedColl } =
+        const { liquidatedPrincipal, liquidatedColl } =
           await getEmittedLiquidationValues(liquidationTx)
 
         const expectedLiquidatedColl = applyLiquidationFee(
@@ -537,7 +537,7 @@ describe("TroveManager in Recovery Mode", () => {
             price,
         )
         expect(liquidatedColl).to.be.closeTo(expectedLiquidatedColl, 100n)
-        expect(liquidatedDebt).to.equal(
+        expect(liquidatedPrincipal).to.equal(
           alice.trove.debt.before + bob.trove.debt.before,
         )
       })

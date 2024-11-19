@@ -42,6 +42,7 @@ import {
   updateInterestRateDataSnapshot,
   setInterestRate,
   getTroveEntireDebt,
+  TROVE_UPDATED_ABI,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -2614,18 +2615,14 @@ describe("TroveManager in Normal Mode", () => {
         const price = await contracts.priceFeed.fetchPrice()
         const collNeeded = to1e18(partialAmount) / price
 
-        const abi = [
-          "event TroveUpdated(address indexed _borrower,uint256 _debt, uint256 _coll, uint256 _stake, uint8 operation)",
-        ]
-
         const troveUpdatedEvents = await getAllEventsByName(
           redemptionTx,
-          abi,
+          TROVE_UPDATED_ABI,
           "TroveUpdated",
         )
-        const { debt: aliceDebt, coll: aliceColl } =
+        const { principal: aliceDebt, coll: aliceColl } =
           await getDebtAndCollFromTroveUpdatedEvents(troveUpdatedEvents, alice)
-        const { debt: bobDebt, coll: bobColl } =
+        const { principal: bobDebt, coll: bobColl } =
           await getDebtAndCollFromTroveUpdatedEvents(troveUpdatedEvents, bob)
 
         // Check that Alice's TroveUpdated event has 0 emitted debt and coll since it was closed

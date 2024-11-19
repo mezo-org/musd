@@ -19,6 +19,7 @@ import {
   TestingAddresses,
   testUpdatesInterestOwed,
   testUpdatesSystemInterestOwed,
+  TROVE_UPDATED_ABI,
   updateContractsSnapshot,
   updateInterestRateDataSnapshot,
   updatePendingSnapshot,
@@ -66,7 +67,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       tx = (await openTrove(contracts, transactions[i])).tx
 
       coll = await getTroveEntireColl(contracts, transactions[i].sender)
-      emittedColl = await getEventArgByName(tx, abi, "TroveUpdated", 2)
+      emittedColl = await getEventArgByName(tx, abi, "TroveUpdated", 3)
       expect(coll).to.equal(emittedColl)
       expect(coll).to.greaterThan(0)
 
@@ -863,11 +864,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Emitted Events", () => {
       it("Emits a TroveUpdated event with the correct collateral and debt", async () => {
-        const abi = [
-          // Add your contract ABI here
-          "event TroveUpdated(address indexed borrower, uint256 debt, uint256 coll, uint256 stake, uint8 operation)",
-        ]
-
         // data setup
         const transactions = [
           {
@@ -876,15 +872,10 @@ describe("BorrowerOperations in Normal Mode", () => {
           },
         ]
 
-        await checkOpenTroveEvents(transactions, abi)
+        await checkOpenTroveEvents(transactions, TROVE_UPDATED_ABI)
       })
 
       it("Emits a TroveUpdated event with the correct collateral and debt after changed baseRate", async () => {
-        const abi = [
-          // Add your contract ABI here
-          "event TroveUpdated(address indexed borrower, uint256 debt, uint256 coll, uint256 stake, uint8 operation)",
-        ]
-
         // system state change via Tester functionality
         const newRate = to1e18(5) / 100n
         await setNewRate(newRate)
@@ -900,7 +891,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             sender: eric.wallet,
           },
         ]
-        await checkOpenTroveEvents(transactions, abi)
+        await checkOpenTroveEvents(transactions, TROVE_UPDATED_ABI)
       })
     })
   })

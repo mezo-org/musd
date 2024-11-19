@@ -21,7 +21,8 @@ interface IBorrowerOperations {
     event TroveCreated(address indexed _borrower, uint256 arrayIndex);
     event TroveUpdated(
         address indexed _borrower,
-        uint256 _debt,
+        uint256 _principal,
+        uint256 _interest,
         uint256 _coll,
         uint256 stake,
         uint8 operation
