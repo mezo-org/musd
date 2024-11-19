@@ -157,7 +157,7 @@ describe("TroveManager in Recovery Mode", () => {
 
     it("A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
       await setupTrove(alice, "5000", "400")
-      await setupTrove(bob, "50,000", "5000")
+      await setupTrove(bob, "50,000", "405")
       await setupTrove(carol, "2000", "400")
       await setupTrove(dennis, "2000", "400")
 
