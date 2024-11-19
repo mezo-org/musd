@@ -1338,12 +1338,13 @@ describe("TroveManager in Normal Mode", () => {
         await getEmittedLiquidationValues(liquidationTx)
 
       // Calculate interest on total system debt
+      const after = await getLatestBlockTimestamp()
       const interestOwed =
         calculateInterestOwed(
           state.troveManager.interestRateData[1000].principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
-          carol.trove.lastInterestUpdateTime.after,
+          BigInt(after),
         ) + state.troveManager.interestRateData[1000].interest.before
 
       // Calculate expected tcr
