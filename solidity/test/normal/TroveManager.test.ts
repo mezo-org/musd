@@ -1127,6 +1127,59 @@ describe("TroveManager in Normal Mode", () => {
       expect(state.defaultPool.debt.after).to.equal(alice.trove.debt.before)
     })
 
+    it("increases DefaultPool collateral, mUSD debt, and interest owed by correct amounts", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      await updateTroveSnapshot(contracts, bob, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "before",
+        addresses,
+      )
+
+      await dropPriceAndLiquidate(contracts, alice)
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      // DefaultPool collateral should increase by Alice's collateral less the liquidation fee
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "after",
+        addresses,
+      )
+      const expectedDefaultPoolCollateral = applyLiquidationFee(
+        alice.trove.collateral.before,
+      )
+      expect(state.defaultPool.collateral.after).to.equal(
+        expectedDefaultPoolCollateral,
+      )
+      expect(state.defaultPool.btc.after).to.equal(
+        expectedDefaultPoolCollateral,
+      )
+
+      expect(state.defaultPool.principal.after).to.equal(
+        alice.trove.debt.before,
+      )
+
+      const expectedInterest = calculateInterestOwed(
+        alice.trove.debt.before,
+        1000,
+        alice.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
+      )
+      expect(state.defaultPool.interest.after).to.equal(expectedInterest)
+      expect(state.defaultPool.debt.after).to.equal(
+        alice.trove.debt.before + expectedInterest,
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts if trove has been closed", async () => {
         await setupTroves()
