@@ -378,6 +378,28 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
+    it("liquidates based on actual ICR including interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "155",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2,000",
+        ICR: "150",
+        sender: bob.wallet,
+      })
+
+      // Drop the price so Bob is just above MCR
+      await dropPrice(contracts, bob, to1e18("111"))
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await contracts.troveManager.liquidateTroves(1n)
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
+    })
+
     it("with a non fulfilled liquidation: still can liquidate further troves after the non-liquidated, emptied pool", async () => {
       await setupTroveAndSnapshot(alice, "5000", "150")
       await setupTroveAndSnapshot(bob, "5000", "150")
