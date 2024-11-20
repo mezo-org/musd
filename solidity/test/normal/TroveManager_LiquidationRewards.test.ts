@@ -221,18 +221,17 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(dennis.pending.collateral.after).to.equal(0n)
 
     // Check debt values
-    expect(alice.pending.debt.after - alice.pending.debt.before).to.be.closeTo(
-      rewardsFromL2[alice.address].debt,
-      10000,
-    )
+    expect(
+      alice.pending.principal.after - alice.pending.principal.before,
+    ).to.be.closeTo(rewardsFromL2[alice.address].debt, 10000)
     // Bob added collateral so his pending rewards were applied from the first liquidation
-    expect(bob.pending.debt.after).to.be.closeTo(
+    expect(bob.pending.principal.after).to.be.closeTo(
       rewardsFromL2[bob.address].debt,
       10000,
     )
 
-    expect(carol.pending.debt.after).to.equal(0n)
-    expect(dennis.pending.debt.after).to.equal(0n)
+    expect(carol.pending.principal.after).to.equal(0n)
+    expect(dennis.pending.principal.after).to.equal(0n)
 
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
@@ -282,20 +281,18 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(eric.pending.collateral.after).to.equal(0n)
 
     // Check debt values
-    expect(alice.pending.debt.after - alice.pending.debt.before).to.be.closeTo(
-      rewards[alice.address].debt,
-      10000,
-    )
-    expect(bob.pending.debt.after - bob.pending.debt.before).to.be.closeTo(
-      rewards[bob.address].debt,
-      10000,
-    )
-    expect(carol.pending.debt.after).to.be.closeTo(
+    expect(
+      alice.pending.principal.after - alice.pending.principal.before,
+    ).to.be.closeTo(rewards[alice.address].debt, 10000)
+    expect(
+      bob.pending.principal.after - bob.pending.principal.before,
+    ).to.be.closeTo(rewards[bob.address].debt, 10000)
+    expect(carol.pending.principal.after).to.be.closeTo(
       rewards[carol.address].debt,
       10000,
     )
-    expect(dennis.pending.debt.after).to.equal(0n)
-    expect(eric.pending.debt.after).to.equal(0n)
+    expect(dennis.pending.principal.after).to.equal(0n)
+    expect(eric.pending.principal.after).to.equal(0n)
 
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
@@ -352,20 +349,20 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(eric.pending.collateral.after).to.equal(0n)
 
     // Check debt values
-    expect(alice.pending.debt.after).to.be.closeTo(
+    expect(alice.pending.principal.after).to.be.closeTo(
       rewards[alice.address].debt,
       10000,
     )
-    expect(bob.pending.debt.after).to.be.closeTo(
+    expect(bob.pending.principal.after).to.be.closeTo(
       rewards[bob.address].debt,
       10000,
     )
-    expect(carol.pending.debt.after).to.be.closeTo(
+    expect(carol.pending.principal.after).to.be.closeTo(
       rewards[carol.address].debt,
       10000,
     )
-    expect(dennis.pending.debt.after).to.equal(0n)
-    expect(eric.pending.debt.after).to.equal(0n)
+    expect(dennis.pending.principal.after).to.equal(0n)
+    expect(eric.pending.principal.after).to.equal(0n)
 
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
@@ -454,18 +451,17 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(dennis.pending.collateral.after).to.equal(0n)
 
     // Check debt values
-    expect(alice.pending.debt.after - alice.pending.debt.before).to.be.closeTo(
-      rewardsFromL2[alice.address].debt,
-      10000,
-    )
+    expect(
+      alice.pending.principal.after - alice.pending.principal.before,
+    ).to.be.closeTo(rewardsFromL2[alice.address].debt, 10000)
     // Bob added collateral so his pending rewards were applied from the first liquidation
-    expect(bob.pending.debt.after).to.be.closeTo(
+    expect(bob.pending.principal.after).to.be.closeTo(
       rewardsFromL2[bob.address].debt,
       10000,
     )
 
-    expect(carol.pending.debt.after).to.equal(0n)
-    expect(dennis.pending.debt.after).to.equal(0n)
+    expect(carol.pending.principal.after).to.equal(0n)
+    expect(dennis.pending.principal.after).to.equal(0n)
 
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
@@ -515,20 +511,18 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(eric.pending.collateral.after).to.equal(0n)
 
     // Check debt values
-    expect(alice.pending.debt.after - alice.pending.debt.before).to.be.closeTo(
-      rewards[alice.address].debt,
-      10000,
-    )
-    expect(bob.pending.debt.after - bob.pending.debt.before).to.be.closeTo(
-      rewards[bob.address].debt,
-      10000,
-    )
-    expect(carol.pending.debt.after).to.be.closeTo(
+    expect(
+      alice.pending.principal.after - alice.pending.principal.before,
+    ).to.be.closeTo(rewards[alice.address].debt, 10000)
+    expect(
+      bob.pending.principal.after - bob.pending.principal.before,
+    ).to.be.closeTo(rewards[bob.address].debt, 10000)
+    expect(carol.pending.principal.after).to.be.closeTo(
       rewards[carol.address].debt,
       10000,
     )
-    expect(dennis.pending.debt.after).to.equal(0n)
-    expect(eric.pending.debt.after).to.equal(0n)
+    expect(dennis.pending.principal.after).to.equal(0n)
+    expect(eric.pending.principal.after).to.equal(0n)
 
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()
@@ -586,20 +580,20 @@ describe("TroveManager - Redistribution reward calculations", () => {
     expect(eric.pending.collateral.after).to.equal(0n)
 
     // Check debt values
-    expect(alice.pending.debt.after).to.be.closeTo(
+    expect(alice.pending.principal.after).to.be.closeTo(
       rewards[alice.address].debt,
       10000,
     )
-    expect(bob.pending.debt.after).to.be.closeTo(
+    expect(bob.pending.principal.after).to.be.closeTo(
       rewards[bob.address].debt,
       10000,
     )
-    expect(carol.pending.debt.after).to.be.closeTo(
+    expect(carol.pending.principal.after).to.be.closeTo(
       rewards[carol.address].debt,
       10000,
     )
-    expect(dennis.pending.debt.after).to.equal(0n)
-    expect(eric.pending.debt.after).to.equal(0n)
+    expect(dennis.pending.principal.after).to.equal(0n)
+    expect(eric.pending.principal.after).to.equal(0n)
 
     // Check active pool and default pool balances
     const entireSystemColl = await contracts.troveManager.getEntireSystemColl()

@@ -850,7 +850,7 @@ describe("TroveManager in Recovery Mode", () => {
       await updatePendingSnapshot(contracts, alice, "after")
 
       expect(state.stabilityPool.musd.after).to.equal(0n)
-      expect(alice.pending.debt.after).to.be.closeTo(
+      expect(alice.pending.principal.after).to.be.closeTo(
         bob.trove.debt.before - spDeposit,
         100n,
       )

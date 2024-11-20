@@ -96,9 +96,15 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
             _maxIterations > 0
         ) {
             _maxIterations--;
+
+            (uint256 pendingPrincipal, uint256 pendingInterest) = troveManager
+                .getPendingDebt(currentTroveuser);
+
             uint256 netDebt = _getNetDebt(
                 troveManager.getTroveDebt(currentTroveuser)
-            ) + troveManager.getPendingDebt(currentTroveuser);
+            ) +
+                pendingPrincipal +
+                pendingInterest;
 
             if (netDebt > remainingMUSD) {
                 if (netDebt > MIN_NET_DEBT) {

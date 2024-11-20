@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
-import "./interfaces/IDefaultPool.sol";
 import "./interfaces/IActivePool.sol";
+import "./interfaces/IDefaultPool.sol";
 
 /*
  * The Default Pool holds the collateral and debt (but not mUSD tokens) from liquidations that have been redistributed

@@ -746,7 +746,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("updates the L_Collateral and L_Debt reward-per-unit-staked totals", async () => {
+    it("updates the L_Collateral, L_Principal, and L_Interest reward-per-unit-staked totals", async () => {
       await setupTroves()
       await openTrove(contracts, {
         musdAmount: "5000",
@@ -754,9 +754,7 @@ describe("TroveManager in Normal Mode", () => {
         sender: carol.wallet,
       })
 
-      await updateTroveSnapshot(contracts, alice, "before")
-      await updateTroveSnapshot(contracts, bob, "before")
-      await updateTroveSnapshot(contracts, carol, "before")
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
 
       // Drop the price to lower Carol's ICR below MCR and close Carol's trove
       await contracts.mockAggregator.setPrice(to1e18(49000))
@@ -779,7 +777,7 @@ describe("TroveManager in Normal Mode", () => {
 
       const expectedLMUSDDebtAfterCarolLiquidated =
         to1e18(carol.trove.debt.before) / remainingColl
-      expect(await contracts.troveManager.L_Debt()).to.equal(
+      expect(await contracts.troveManager.L_Principal()).to.equal(
         expectedLMUSDDebtAfterCarolLiquidated,
       )
 
@@ -833,7 +831,7 @@ describe("TroveManager in Normal Mode", () => {
           bob.trove.collateral.before
 
       const tolerance = 100n
-      expect(await contracts.troveManager.L_Debt()).to.be.closeTo(
+      expect(await contracts.troveManager.L_Principal()).to.be.closeTo(
         expectedLMUSDDebtAfterAliceLiquidated,
         tolerance,
       )
@@ -2848,7 +2846,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await dropPriceAndLiquidate(contracts, carol)
       await updatePendingSnapshot(contracts, alice, "after")
-      expect(alice.pending.debt.after).to.equal(0n)
+      expect(alice.pending.principal.after).to.equal(0n)
     })
   })
 

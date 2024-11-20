@@ -41,7 +41,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Object containing the collateral and mUSD snapshots for a given active trove
     struct RewardSnapshot {
         uint256 collateral;
-        uint256 debt;
+        uint256 principal;
+        uint256 interest;
     }
 
     struct LocalVariables_OuterLiquidationFunction {
@@ -60,8 +61,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     struct LocalVariables_InnerSingleLiquidateFunction {
         uint256 collToLiquidate;
-        uint256 pendingDebt;
         uint256 pendingColl;
+        uint256 pendingPrincipal;
+        uint256 pendingInterest;
     }
 
     struct LiquidationTotals {
@@ -185,15 +187,21 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     uint256 public totalCollateralSnapshot;
 
     /*
-     * L_Collateral and L_Debt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
+     * L_Collateral, L_Principal, and L_Interest track the sums of accumulated
+     * pending liquidations per unit staked. During its lifetime, each stake
+     * earns:
      *
      * An collateral gain of ( stake * [L_Collateral - L_Collateral(0)] )
-     * A debt increase  of ( stake * [L_Debt - L_Debt(0)] )
+     * A principal increase  of ( stake * [L_Principal - L_Principal(0)] )
+     * An interest increase  of ( stake * [L_Interest - L_Interest(0)] )
      *
-     * Where L_Collateral(0) and L_Debt(0) are snapshots of L_Collateral and L_Debt for the active Trove taken at the instant the stake was made
+     * Where L_Collateral(0), L_Principal(0), and L_Interest(0) are snapshots of
+     * L_Collateral, L_Principal, and L_Interest for the active Trove taken at the
+     * instant the stake was made
      */
     uint256 public L_Collateral;
-    uint256 public L_Debt;
+    uint256 public L_Principal;
+    uint256 public L_Interest;
 
     // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
     // slither-disable-next-line similar-names
@@ -201,7 +209,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // Error trackers for the trove redistribution calculation
     uint256 public lastCollateralError_Redistribution;
-    uint256 public lastDebtError_Redistribution;
+    uint256 public lastPrincipalError_Redistribution;
+    uint256 public lastInterestError_Redistribution;
 
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
@@ -562,7 +571,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _updateStakeAndTotalStakes(_borrower);
     }
 
-    // Update borrower's snapshots of L_Collateral and L_Debt to reflect the current values
+    // Update borrower's snapshots of L_Collateral, L_Principal, and L_Interest
+    // to reflect the current values
     function updateTroveRewardSnapshots(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
         return _updateTroveRewardSnapshots(_borrower);
@@ -972,22 +982,24 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         view
         override
         returns (
+            uint256 coll,
             uint256 principal,
             uint256 interest,
-            uint256 coll,
-            uint256 pendingDebt,
-            uint256 pendingCollateral
+            uint256 pendingCollateral,
+            uint256 pendingPrincipal,
+            uint256 pendingInterest
         )
     {
+        coll = Troves[_borrower].coll;
         principal = Troves[_borrower].principal;
         interest = Troves[_borrower].interestOwed;
-        coll = Troves[_borrower].coll;
 
-        pendingDebt = getPendingDebt(_borrower);
         pendingCollateral = getPendingCollateral(_borrower);
+        (pendingPrincipal, pendingInterest) = getPendingDebt(_borrower);
 
-        principal += pendingDebt;
         coll += pendingCollateral;
+        principal += pendingPrincipal;
+        interest += pendingInterest;
     }
 
     function getBorrowingRate() public view override returns (uint) {
@@ -1018,20 +1030,29 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getPendingDebt(
         address _borrower
-    ) public view override returns (uint) {
-        uint256 snapshotDebt = rewardSnapshots[_borrower].debt;
-        uint256 rewardPerUnitStaked = L_Debt - snapshotDebt;
+    )
+        public
+        view
+        override
+        returns (uint256 pendingPrincipal, uint256 pendingInterest)
+    {
+        uint256 principalSnapshot = rewardSnapshots[_borrower].principal;
+        uint256 principalPerUnitStaked = L_Principal - principalSnapshot;
+
+        uint256 interestSnapshot = rewardSnapshots[_borrower].interest;
+        uint256 interestPerUnitStaked = L_Interest - interestSnapshot;
 
         if (
-            rewardPerUnitStaked == 0 ||
+            principalPerUnitStaked == 0 ||
             Troves[_borrower].status != Status.active
         ) {
-            return 0;
+            return (0, 0);
         }
 
         uint256 stake = Troves[_borrower].stake;
 
-        return (stake * rewardPerUnitStaked) / DECIMAL_PRECISION;
+        pendingPrincipal = (stake * principalPerUnitStaked) / DECIMAL_PRECISION;
+        pendingInterest = (stake * interestPerUnitStaked) / DECIMAL_PRECISION;
     }
 
     function getRedemptionRate() public view override returns (uint) {
@@ -1306,11 +1327,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
-            uint256 pendingDebt = getPendingDebt(_borrower);
+            (
+                uint256 pendingPrincipal,
+                uint256 pendingInterest
+            ) = getPendingDebt(_borrower);
 
             // Apply pending rewards to trove's state
             Troves[_borrower].coll += pendingCollateral;
-            Troves[_borrower].principal += pendingDebt;
+            Troves[_borrower].principal += pendingPrincipal;
+            Troves[_borrower].interestOwed += pendingInterest;
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -1318,8 +1343,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
-                pendingDebt,
-                pendingCollateral
+                pendingCollateral,
+                pendingPrincipal,
+                pendingInterest
             );
 
             emit TroveUpdated(
@@ -1386,42 +1412,56 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         }
 
         /*
-         * Add distributed coll and debt rewards-per-unit-staked to the running totals. Division uses a "feedback"
-         * error correction, to keep the cumulative error low in the running totals L_Collateral and L_Debt:
+         * Add distributed coll and debt rewards-per-unit-staked to the running
+         * totals. Division uses a "feedback" * error correction, to keep the
+         * cumulative error low in the running totals L_Collateral, L_Principal,
+         * and L_Interest:
          *
-         * 1) Form numerators which compensate for the floor division errors that occurred the last time this
-         * function was called.
-         * 2) Calculate "per-unit-staked" ratios.
-         * 3) Multiply each ratio back by its denominator, to reveal the current floor division error.
-         * 4) Store these errors for use in the next correction when this function is called.
-         * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
+         * 1) Form numerators which compensate for the floor division errors
+         *    that occurred the last time this * function was called. * 2) Calculate
+         *    "per-unit-staked" ratios.
+         * 3) Multiply each ratio back by its denominator, to reveal the current
+         *    floor division error.
+         * 4) Store these errors for use in the next correction when this
+         *    function is called.
+         * 5) Note: static analysis tools complain about this "division before
+         *    multiplication", however, it is intended.
          */
         uint256 collateralNumerator = _coll *
             DECIMAL_PRECISION +
             lastCollateralError_Redistribution;
-        uint256 debtNumerator = _principal *
+        uint256 principalNumerator = _principal *
             DECIMAL_PRECISION +
-            lastDebtError_Redistribution;
+            lastPrincipalError_Redistribution;
+        uint256 interestNumerator = _interest *
+            DECIMAL_PRECISION +
+            lastInterestError_Redistribution;
 
         // Get the per-unit-staked terms
         // slither-disable-next-line divide-before-multiply
         uint256 pendingCollateralPerUnitStaked = collateralNumerator /
             totalStakes;
         // slither-disable-next-line divide-before-multiply
-        uint256 pendingDebtPerUnitStaked = debtNumerator / totalStakes;
+        uint256 pendingPrincipalPerUnitStaked = principalNumerator /
+            totalStakes;
+        uint256 pendingInterestPerUnitStaked = interestNumerator / totalStakes;
 
         lastCollateralError_Redistribution =
             collateralNumerator -
             (pendingCollateralPerUnitStaked * totalStakes);
-        lastDebtError_Redistribution =
-            debtNumerator -
-            (pendingDebtPerUnitStaked * totalStakes);
+        lastPrincipalError_Redistribution =
+            principalNumerator -
+            (pendingPrincipalPerUnitStaked * totalStakes);
+        lastInterestError_Redistribution =
+            interestNumerator -
+            (pendingInterestPerUnitStaked * totalStakes);
 
         // Add per-unit-staked terms to the running totals
         L_Collateral += pendingCollateralPerUnitStaked;
-        L_Debt += pendingDebtPerUnitStaked;
+        L_Principal += pendingPrincipalPerUnitStaked;
+        L_Interest += pendingInterestPerUnitStaked;
 
-        emit LTermsUpdated(L_Collateral, L_Debt);
+        emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
 
         // Transfer coll and debt from ActivePool to DefaultPool
         _activePool.decreaseDebt(_principal, _interest);
@@ -1440,18 +1480,20 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         LocalVariables_InnerSingleLiquidateFunction memory vars;
 
         (
+            singleLiquidation.entireTroveColl,
             singleLiquidation.entireTrovePrincipal,
             singleLiquidation.entireTroveInterest,
-            singleLiquidation.entireTroveColl,
-            vars.pendingDebt,
-            vars.pendingColl
+            vars.pendingColl,
+            vars.pendingPrincipal,
+            vars.pendingInterest
         ) = getEntireDebtAndColl(_borrower);
 
         _movePendingTroveRewardsToActivePool(
             _activePool,
             _defaultPool,
-            vars.pendingDebt,
-            vars.pendingColl
+            vars.pendingColl,
+            vars.pendingPrincipal,
+            vars.pendingInterest
         );
         _removeStake(_borrower);
 
@@ -1641,11 +1683,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             return singleLiquidation;
         } // don't liquidate if last trove
         (
+            singleLiquidation.entireTroveColl,
             singleLiquidation.entireTrovePrincipal,
             singleLiquidation.entireTroveInterest,
-            singleLiquidation.entireTroveColl,
-            vars.pendingDebt,
-            vars.pendingColl
+            vars.pendingColl,
+            vars.pendingPrincipal,
+            vars.pendingInterest
         ) = getEntireDebtAndColl(_borrower);
 
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
@@ -1661,8 +1704,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
-                vars.pendingDebt,
-                vars.pendingColl
+                vars.pendingColl,
+                vars.pendingPrincipal,
+                vars.pendingInterest
             );
             _removeStake(_borrower);
 
@@ -1693,8 +1737,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
-                vars.pendingDebt,
-                vars.pendingColl
+                vars.pendingColl,
+                vars.pendingPrincipal,
+                vars.pendingInterest
             );
             _removeStake(_borrower);
 
@@ -1740,8 +1785,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
-                vars.pendingDebt,
-                vars.pendingColl
+                vars.pendingColl,
+                vars.pendingPrincipal,
+                vars.pendingInterest
             );
             assert(_MUSDInStabPool != 0);
 
@@ -1935,8 +1981,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _updateTroveRewardSnapshots(address _borrower) internal {
         rewardSnapshots[_borrower].collateral = L_Collateral;
-        rewardSnapshots[_borrower].debt = L_Debt;
-        emit TroveSnapshotsUpdated(L_Collateral, L_Debt);
+        rewardSnapshots[_borrower].principal = L_Principal;
+        rewardSnapshots[_borrower].interest = L_Interest;
+        emit TroveSnapshotsUpdated(L_Collateral, L_Principal, L_Interest);
     }
 
     function _addTroveOwnerToArray(
@@ -1971,13 +2018,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _movePendingTroveRewardsToActivePool(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
-        uint256 _amount,
-        uint256 _collateral
+        uint256 _collateral,
+        uint256 _principal,
+        uint256 _interest
     ) internal {
         // slither-disable-next-line calls-loop
-        _defaultPool.decreaseDebt(_amount, 0);
+        _defaultPool.decreaseDebt(_principal, _interest);
         // slither-disable-next-line calls-loop
-        _activePool.increaseDebt(_amount, 0);
+        _activePool.increaseDebt(_principal, _interest);
         // slither-disable-next-line calls-loop
         _defaultPool.sendCollateralToActivePool(_collateral);
     }
@@ -1999,7 +2047,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Troves[_borrower].interestOwed = 0;
 
         rewardSnapshots[_borrower].collateral = 0;
-        rewardSnapshots[_borrower].debt = 0;
+        rewardSnapshots[_borrower].principal = 0;
+        rewardSnapshots[_borrower].interest = 0;
 
         _removeTroveOwner(_borrower, TroveOwnersArrayLength);
         // slither-disable-next-line calls-loop
@@ -2086,10 +2135,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _borrower
     ) internal view returns (uint currentCollateral, uint currentDebt) {
         uint256 pendingCollateral = getPendingCollateral(_borrower);
-        uint256 pendingDebt = getPendingDebt(_borrower);
+        (uint256 pendingPrincipal, uint256 pendingInterest) = getPendingDebt(
+            _borrower
+        );
 
         currentCollateral = Troves[_borrower].coll + pendingCollateral;
-        currentDebt = _getTotalDebt(_borrower) + pendingDebt;
+        currentDebt =
+            _getTotalDebt(_borrower) +
+            pendingPrincipal +
+            pendingInterest;
     }
 
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
