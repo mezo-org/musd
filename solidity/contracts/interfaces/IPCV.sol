@@ -16,6 +16,7 @@ interface IPCV {
     event PCVDebtPaid(uint256 _paidDebt);
     event RecipientAdded(address _recipient);
     event RecipientRemoved(address _recipient);
+    event PCVFeePaid(address _recipient, uint256 _amount);
 
     // --- Functions ---
 

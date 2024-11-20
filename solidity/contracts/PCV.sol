@@ -32,6 +32,12 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
+    // State variables for fee distribution
+    address public feeRecipient;
+
+    // whole number percentage representing the amount sent to the fee recipient
+    uint256 public feeSplitPercentage;
+
     modifier onlyAfterDebtPaid() {
         require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
         _;
@@ -76,11 +82,19 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
             "PCV: not enough tokens"
         );
         uint256 musdToBurn = LiquityMath._min(_musdToBurn, debtToPay);
-        debtToPay -= musdToBurn;
+        uint256 feeToRecipient = (musdToBurn * feeSplitPercentage) / 100;
+        uint256 feeToDebt = musdToBurn - feeToRecipient;
 
-        borrowerOperations.burnDebtFromPCV(musdToBurn);
+        debtToPay -= feeToDebt;
+
+        borrowerOperations.burnDebtFromPCV(feeToDebt);
+        if (feeRecipient != address(0)) {
+            musd.transfer(feeRecipient, feeToRecipient);
+        }
+
         // slither-disable-next-line reentrancy-events
         emit PCVDebtPaid(musdToBurn);
+        emit PCVFeePaid(feeRecipient, feeToRecipient);
     }
 
     function setAddresses(
@@ -117,6 +131,15 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         isInitialized = true;
         borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
         depositToStabilityPool(BOOTSTRAP_LOAN);
+    }
+
+    function setInterestRecipientAndSplit(
+        address _feeRecipient,
+        uint256 _feeSplitPercentage
+    ) external onlyOwnerOrCouncilOrTreasury {
+        require(_feeSplitPercentage <= 100, "PCV: Invalid split percentage");
+        feeRecipient = _feeRecipient;
+        feeSplitPercentage = _feeSplitPercentage;
     }
 
     function withdrawMUSD(
