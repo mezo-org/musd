@@ -226,13 +226,31 @@ describe("PCV", () => {
   })
 
   describe("payDebt()", () => {
-    it("pays some value of debt", async () => {
+    it("uses all fees to pay down the debt if feeRecipient is not set", async () => {
       const value = bootstrapLoan / 3n
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).payDebt(value)
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - value)
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
+    })
+
+    it("uses all fees to pay down the debt if feeSplitPercentage is 0, even if the feeRecipient is set", async () => {
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(0n)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const value = to1e18("1000")
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      const debtToPay = await contracts.pcv.debtToPay()
+      expect(debtToPay).to.equal(bootstrapLoan - value)
+
+      expect(bob.musd.after).to.equal(bob.musd.before)
     })
 
     it("sends the specified percentage to another recipient and uses the rest to pay the debt", async () => {
