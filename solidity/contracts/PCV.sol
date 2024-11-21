@@ -32,11 +32,8 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
-    // State variables for fee distribution
     address public feeRecipient;
-
-    // whole number percentage representing the amount sent to the fee recipient
-    uint256 public feeSplitPercentage;
+    uint256 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
 
     modifier onlyAfterDebtPaid() {
         require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
@@ -88,7 +85,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         debtToPay -= feeToDebt;
 
         borrowerOperations.burnDebtFromPCV(feeToDebt);
-        if (feeRecipient != address(0)) {
+        if (feeRecipient != address(0) && feeSplitPercentage > 0) {
             musd.transfer(feeRecipient, feeToRecipient);
         }
 
@@ -133,12 +130,16 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         depositToStabilityPool(BOOTSTRAP_LOAN);
     }
 
-    function setInterestRecipientAndSplit(
-        address _feeRecipient,
+    function setFeeRecipient(
+        address _feeRecipient
+    ) external onlyOwnerOrCouncilOrTreasury {
+        feeRecipient = _feeRecipient;
+    }
+
+    function setFeeSplit(
         uint256 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
         require(_feeSplitPercentage <= 100, "PCV: Invalid split percentage");
-        feeRecipient = _feeRecipient;
         feeSplitPercentage = _feeSplitPercentage;
     }
 
