@@ -3091,13 +3091,29 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  describe("updateDebtWithInterest()", () => {
+  describe("updateSystemAndTroveInterest()", async () => {
+    it("should mint additional calculated interest to the PCV", async () => {
+      await setupTroveWithInterestRate(1000, 365)
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updatePCVSnapshot(contracts, state, "before")
+
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updatePCVSnapshot(contracts, state, "after")
+
+      expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
+        state.troveManager.interestRateData[1000].interest.after,
+      )
+    })
+
     it("should update the trove with interest owed and set the lastInterestUpdatedTime", async () => {
       await setupTroveWithInterestRate(100, 30)
 
       await updateTroveSnapshot(contracts, alice, "before")
 
-      await contracts.troveManager.callUpdateDebtWithInterest(alice.wallet)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateTroveSnapshot(contracts, alice, "after")
 
@@ -3118,7 +3134,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("should add new interest to existing interest", async () => {
+    it("should add new interest to existing interest on a trove", async () => {
       await setInterestRate(contracts, council, 100)
 
       await openTrove(contracts, {
@@ -3130,10 +3146,10 @@ describe("TroveManager in Normal Mode", () => {
       const daysInSeconds = 30 * 24 * 60 * 60
       await fastForwardTime(daysInSeconds)
 
-      await contracts.troveManager.callUpdateDebtWithInterest(alice.wallet)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await fastForwardTime(daysInSeconds)
-      await contracts.troveManager.callUpdateDebtWithInterest(alice.wallet)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
       await updateTroveSnapshot(contracts, alice, "after")
 
       const expectedInterest = calculateInterestOwed(
@@ -3147,14 +3163,12 @@ describe("TroveManager in Normal Mode", () => {
         alice.trove.interestOwed.before + expectedInterest,
       )
     })
-  })
 
-  describe("updateSystemInterest()", () => {
     it("should update the system interest", async () => {
       await setupTroveWithInterestRate(100, 30)
       await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
-      await contracts.troveManager.callUpdateSystemInterest(100)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
@@ -3170,12 +3184,12 @@ describe("TroveManager in Normal Mode", () => {
 
     it("should update the system interest after a previous update", async () => {
       await setupTroveWithInterestRate(100, 30)
-      await contracts.troveManager.callUpdateSystemInterest(100)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.callUpdateSystemInterest(100)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
@@ -3202,7 +3216,7 @@ describe("TroveManager in Normal Mode", () => {
       await updateTroveSnapshots(contracts, [alice, bob], "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.callUpdateSystemInterest(100)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
       await updateTroveSnapshots(contracts, [alice, bob], "after")
@@ -3230,16 +3244,16 @@ describe("TroveManager in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 200, "before")
       await updateTroveSnapshots(contracts, [alice, bob], "before")
 
-      await contracts.troveManager.callUpdateSystemInterest(100)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.callUpdateSystemInterest(100)
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      await contracts.troveManager.callUpdateSystemInterest(200)
+      await contracts.troveManager.updateSystemAndTroveInterest(bob.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
@@ -3261,24 +3275,6 @@ describe("TroveManager in Normal Mode", () => {
             state.troveManager.interestRateData[200].lastUpdatedTime.before,
             state.troveManager.interestRateData[200].lastUpdatedTime.after,
           ),
-      )
-    })
-  })
-
-  describe("updateSystemAndTroveInterest()", async () => {
-    it("should mint additional calculated interest to the PCV", async () => {
-      await setupTroveWithInterestRate(1000, 365)
-
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
-      await updatePCVSnapshot(contracts, state, "before")
-
-      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
-
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
-      await updatePCVSnapshot(contracts, state, "after")
-
-      expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
-        state.troveManager.interestRateData[1000].interest.after,
       )
     })
   })
