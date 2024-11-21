@@ -3265,6 +3265,24 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
+  describe("updateSystemAndTroveInterest()", async () => {
+    it("should mint additional calculated interest to the PCV", async () => {
+      await setupTroveWithInterestRate(1000, 365)
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updatePCVSnapshot(contracts, state, "before")
+
+      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updatePCVSnapshot(contracts, state, "after")
+
+      expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
+        state.troveManager.interestRateData[1000].interest.after,
+      )
+    })
+  })
+
   describe("Getters", () => {
     it("getTroveStake(): Returns stake", async () => {
       const { collateral } = await openTrove(contracts, {

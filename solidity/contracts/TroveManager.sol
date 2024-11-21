@@ -1095,6 +1095,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
         // solhint-enable not-rely-on-time
 
+        musdToken.mint(address(pcv), interest);
         interestRateData[_rate].interest += interest;
 
         // slither-disable-next-line calls-loop
