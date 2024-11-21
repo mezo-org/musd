@@ -73,24 +73,29 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     function payDebt(
         uint256 _musdToBurn
     ) external override onlyOwnerOrCouncilOrTreasury {
-        require(debtToPay > 0, "PCV: debt has already paid");
+        require(debtToPay > 0 || feeRecipient != address(0), "PCV: debt has already paid");
         require(
             _musdToBurn <= musd.balanceOf(address(this)),
             "PCV: not enough tokens"
         );
-        uint256 musdToBurn = LiquityMath._min(_musdToBurn, debtToPay);
-        uint256 feeToRecipient = (musdToBurn * feeSplitPercentage) / 100;
-        uint256 feeToDebt = musdToBurn - feeToRecipient;
+
+        // if the debt has already been paid, the feeRecipient should receive all fees
+        if (debtToPay == 0) {
+            feeSplitPercentage = 100;
+        }
+
+        uint256 feeToRecipient = (_musdToBurn * feeSplitPercentage) / 100;
+        uint256 feeToDebt = _musdToBurn - feeToRecipient;
 
         debtToPay -= feeToDebt;
 
-        borrowerOperations.burnDebtFromPCV(feeToDebt);
         if (feeRecipient != address(0) && feeSplitPercentage > 0) {
             musd.transfer(feeRecipient, feeToRecipient);
         }
+        borrowerOperations.burnDebtFromPCV(feeToDebt);
 
         // slither-disable-next-line reentrancy-events
-        emit PCVDebtPaid(musdToBurn);
+        emit PCVDebtPaid(feeToDebt);
         emit PCVFeePaid(feeRecipient, feeToRecipient);
     }
 
