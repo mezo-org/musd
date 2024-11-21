@@ -30,14 +30,6 @@ contract TroveManagerTester is TroveManager {
         _removeTroveOwner(_troveOwner, troveOwnersArrayLength);
     }
 
-    function callUpdateDebtWithInterest(address _borrower) external {
-        _updateDebtWithInterest(_borrower);
-    }
-
-    function callUpdateSystemInterest(uint16 _rate) external {
-        _updateSystemInterest(_rate);
-    }
-
     function minutesPassedSinceLastFeeOp() external view returns (uint) {
         return _minutesPassedSinceLastFeeOp();
     }

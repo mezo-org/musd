@@ -266,5 +266,6 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         emit BorrowerOperationsAddressAdded(_borrowerOperationsAddress);
 
         mintList[_borrowerOperationsAddress] = true;
+        mintList[_troveManagerAddress] = true;
     }
 }
