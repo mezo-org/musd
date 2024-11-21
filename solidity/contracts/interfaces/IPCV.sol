@@ -32,14 +32,9 @@ interface IPCV {
 
     function initialize() external;
 
-    function withdrawMUSD(address _recipient, uint256 _amount) external;
-    function setFeeRecipient(
-        address _feeRecipient
-    ) external;
+    function setFeeRecipient(address _feeRecipient) external;
 
-    function setFeeSplit(
-        uint256 _feeSplitPercentage
-    ) external;
+    function setFeeSplit(uint256 _feeSplitPercentage) external;
 
     function withdrawMUSD(address _recipient, uint256 _musdAmount) external;
 
