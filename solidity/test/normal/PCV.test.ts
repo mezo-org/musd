@@ -2,12 +2,12 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
   Contracts,
-  TestingAddresses,
-  User,
   fastForwardTime,
   getLatestBlockTimestamp,
   setupTests,
+  TestingAddresses,
   updateWalletSnapshot,
+  User,
 } from "../helpers"
 import { to1e18, ZERO_ADDRESS } from "../utils"
 import { PCV } from "../../typechain"
@@ -272,6 +272,21 @@ describe("PCV", () => {
       expect(bob.musd.after - bob.musd.before).to.equal(value - pcvSplit)
     })
 
+    it("sends all fees to the feeRecipient if the debt is completely paid", async () => {
+      await debtPaid()
+
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(20n)
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
+      await contracts.pcv.connect(treasury.wallet).payDebt(bootstrapLoan)
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
+      expect(bob.musd.after - bob.musd.before).to.equal(bootstrapLoan)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when not enough tokens to burn", async () => {
         await expect(
@@ -279,7 +294,7 @@ describe("PCV", () => {
         ).to.be.revertedWith("PCV: not enough tokens")
       })
 
-      it("reverts when trying to pay again", async () => {
+      it("reverts when trying to pay again if no fee recipient is set", async () => {
         await debtPaid()
         await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
         await expect(
