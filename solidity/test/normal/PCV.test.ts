@@ -369,4 +369,14 @@ describe("PCV", () => {
       })
     })
   })
+
+  describe("setFeeSplit()", () => {
+    context("Expected Reverts", () => {
+      it("reverts if fee split is > 100", async () => {
+        await expect(PCVDeployer.setFeeSplit(101n)).to.be.revertedWith(
+          "PCV: Invalid split percentage",
+        )
+      })
+    })
+  })
 })
