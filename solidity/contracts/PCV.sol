@@ -73,7 +73,10 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     function payDebt(
         uint256 _musdToBurn
     ) external override onlyOwnerOrCouncilOrTreasury {
-        require(debtToPay > 0 || feeRecipient != address(0), "PCV: debt has already paid");
+        require(
+            debtToPay > 0 || feeRecipient != address(0),
+            "PCV: debt has already paid"
+        );
         require(
             _musdToBurn <= musd.balanceOf(address(this)),
             "PCV: not enough tokens"
