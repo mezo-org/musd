@@ -235,6 +235,25 @@ describe("PCV", () => {
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
     })
 
+    it("sends the specified percentage to another recipient and uses the rest to pay the debt", async () => {
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(60n)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const value = to1e18("1000")
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      const pcvSplit = (value * 40n) / 100n
+      const debtToPay = await contracts.pcv.debtToPay()
+      expect(debtToPay).to.equal(bootstrapLoan - pcvSplit)
+
+      expect(bob.musd.after - bob.musd.before).to.equal(value - pcvSplit)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when not enough tokens to burn", async () => {
         await expect(
