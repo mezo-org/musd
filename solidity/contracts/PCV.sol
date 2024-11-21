@@ -93,7 +93,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         debtToPay -= feeToDebt;
 
         if (feeRecipient != address(0) && feeSplitPercentage > 0) {
-            musd.transfer(feeRecipient, feeToRecipient);
+            require(musd.transfer(feeRecipient, feeToRecipient, "PCV: sending mUSD failed"));
         }
         borrowerOperations.burnDebtFromPCV(feeToDebt);
 
