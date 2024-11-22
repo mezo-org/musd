@@ -254,8 +254,9 @@ describe("PCV", () => {
     })
 
     it("sends the specified percentage to another recipient and uses the rest to pay the debt", async () => {
+      const split = 50n
       await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
-      await contracts.pcv.connect(council.wallet).setFeeSplit(60n)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(split)
 
       await updateWalletSnapshot(contracts, bob, "before")
 
@@ -265,7 +266,7 @@ describe("PCV", () => {
 
       await updateWalletSnapshot(contracts, bob, "after")
 
-      const pcvSplit = (value * 40n) / 100n
+      const pcvSplit = (value * (100n - split)) / 100n
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - pcvSplit)
 
@@ -424,7 +425,13 @@ describe("PCV", () => {
 
   describe("setFeeSplit()", () => {
     context("Expected Reverts", () => {
-      it("reverts if fee split is > 100", async () => {
+      it("reverts if fee split is > 50% before debt is paid", async () => {
+        await expect(PCVDeployer.setFeeSplit(51n)).to.be.revertedWith(
+          "PCV: Fee split too high.  Debt must be paid first.",
+        )
+      })
+      it("reverts if fee split is > 100, even after debt is paid", async () => {
+        await debtPaid()
         await expect(PCVDeployer.setFeeSplit(101n)).to.be.revertedWith(
           "PCV: Invalid split percentage",
         )
