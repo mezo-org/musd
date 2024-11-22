@@ -91,6 +91,11 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         uint256 feeToRecipient = (_musdToBurn * feeSplitPercentage) / 100;
         uint256 feeToDebt = _musdToBurn - feeToRecipient;
 
+        if (feeToDebt > debtToPay) {
+            feeToRecipient += feeToDebt - debtToPay;
+            feeToDebt = debtToPay;
+        }
+
         debtToPay -= feeToDebt;
 
         if (feeRecipient != address(0) && feeSplitPercentage > 0) {
@@ -151,10 +156,13 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     }
 
     function setFeeSplit(
-        uint256 _feeSplitPercentage
+        uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
         if (debtToPay > 0) {
-            require(_feeSplitPercentage <= FEE_SPLIT_MAX, "PCV: Fee split too high.  Debt must be paid first.");
+            require(
+                _feeSplitPercentage <= FEE_SPLIT_MAX,
+                "PCV: Fee split too high.  Debt must be paid first."
+            );
         }
         require(_feeSplitPercentage <= 100, "PCV: Invalid split percentage");
         feeSplitPercentage = _feeSplitPercentage;

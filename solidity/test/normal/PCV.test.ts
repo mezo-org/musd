@@ -288,6 +288,25 @@ describe("PCV", () => {
       expect(bob.musd.after - bob.musd.before).to.equal(bootstrapLoan)
     })
 
+    it("sends remaining fees to the feeRecipient if called with a value greater than the debt", async () => {
+      // pay down all but 5 musd of the debt
+      const debtToPay = await contracts.pcv.debtToPay()
+      const debtToLeaveRemaining = to1e18("5")
+      const value = debtToPay - debtToLeaveRemaining
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(50n)
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      await contracts.musd.unprotectedMint(addresses.pcv, to1e18("20"))
+      await contracts.pcv.connect(treasury.wallet).payDebt(to1e18("20"))
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      expect(bob.musd.after - bob.musd.before).to.equal(to1e18("15"))
+    })
+
     context("Expected Reverts", () => {
       it("reverts when not enough tokens to burn", async () => {
         await expect(
