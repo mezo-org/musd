@@ -274,10 +274,14 @@ describe("PCV", () => {
     })
 
     it("sends all fees to the feeRecipient if the debt is completely paid", async () => {
-      await debtPaid()
-
       await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
       await contracts.pcv.connect(council.wallet).setFeeSplit(20n)
+
+      const debtToPay = await contracts.pcv.debtToPay()
+      const amountToPay = (debtToPay * 10n) / 8n
+      await contracts.musd.unprotectedMint(addresses.pcv, amountToPay)
+      await contracts.pcv.connect(treasury.wallet).payDebt(amountToPay)
+
       await updateWalletSnapshot(contracts, bob, "before")
 
       await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
@@ -446,13 +450,13 @@ describe("PCV", () => {
     context("Expected Reverts", () => {
       it("reverts if fee split is > 50% before debt is paid", async () => {
         await expect(PCVDeployer.setFeeSplit(51n)).to.be.revertedWith(
-          "PCV: Fee split too high.  Debt must be paid first.",
+          "PCV: Fee split must be at most 50 while debt remains.",
         )
       })
-      it("reverts if fee split is > 100, even after debt is paid", async () => {
+      it("reverts if the debt is paid", async () => {
         await debtPaid()
-        await expect(PCVDeployer.setFeeSplit(101n)).to.be.revertedWith(
-          "PCV: Invalid split percentage",
+        await expect(PCVDeployer.setFeeSplit(1n)).to.be.revertedWith(
+          "PCV: Must have debt in order to set a fee split.",
         )
       })
     })

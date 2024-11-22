@@ -158,13 +158,14 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     function setFeeSplit(
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
-        if (debtToPay > 0) {
-            require(
-                _feeSplitPercentage <= FEE_SPLIT_MAX,
-                "PCV: Fee split too high.  Debt must be paid first."
-            );
-        }
-        require(_feeSplitPercentage <= 100, "PCV: Invalid split percentage");
+        require(
+            debtToPay > 0,
+            "PCV: Must have debt in order to set a fee split."
+        );
+        require(
+            _feeSplitPercentage <= FEE_SPLIT_MAX,
+            "PCV: Fee split must be at most 50 while debt remains."
+        );
         feeSplitPercentage = _feeSplitPercentage;
     }
 
