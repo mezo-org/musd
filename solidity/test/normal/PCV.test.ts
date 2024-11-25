@@ -2,12 +2,12 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
   Contracts,
-  TestingAddresses,
-  User,
   fastForwardTime,
   getLatestBlockTimestamp,
   setupTests,
+  TestingAddresses,
   updateWalletSnapshot,
+  User,
 } from "../helpers"
 import { to1e18, ZERO_ADDRESS } from "../utils"
 import { PCV } from "../../typechain"
@@ -226,13 +226,89 @@ describe("PCV", () => {
   })
 
   describe("payDebt()", () => {
-    it("pays some value of debt", async () => {
+    it("uses all fees to pay down the debt if feeRecipient is not set", async () => {
       const value = bootstrapLoan / 3n
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).payDebt(value)
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - value)
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
+    })
+
+    it("uses all fees to pay down the debt if feeSplitPercentage is 0, even if the feeRecipient is set", async () => {
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(0n)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const value = to1e18("1000")
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      const debtToPay = await contracts.pcv.debtToPay()
+      expect(debtToPay).to.equal(bootstrapLoan - value)
+
+      expect(bob.musd.after).to.equal(bob.musd.before)
+    })
+
+    it("sends the specified percentage to another recipient and uses the rest to pay the debt", async () => {
+      const split = 50n
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(split)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const value = to1e18("1000")
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      const pcvSplit = (value * (100n - split)) / 100n
+      const debtToPay = await contracts.pcv.debtToPay()
+      expect(debtToPay).to.equal(bootstrapLoan - pcvSplit)
+
+      expect(bob.musd.after - bob.musd.before).to.equal(value - pcvSplit)
+    })
+
+    it("sends all fees to the feeRecipient if the debt is completely paid", async () => {
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(20n)
+
+      const debtToPay = await contracts.pcv.debtToPay()
+      const amountToPay = (debtToPay * 10n) / 8n
+      await contracts.musd.unprotectedMint(addresses.pcv, amountToPay)
+      await contracts.pcv.connect(treasury.wallet).payDebt(amountToPay)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
+      await contracts.pcv.connect(treasury.wallet).payDebt(bootstrapLoan)
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
+      expect(bob.musd.after - bob.musd.before).to.equal(bootstrapLoan)
+    })
+
+    it("sends remaining fees to the feeRecipient if called with a value greater than the debt", async () => {
+      // pay down all but 5 musd of the debt
+      const debtToPay = await contracts.pcv.debtToPay()
+      const debtToLeaveRemaining = to1e18("5")
+      const value = debtToPay - debtToLeaveRemaining
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(50n)
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      await contracts.musd.unprotectedMint(addresses.pcv, to1e18("20"))
+      await contracts.pcv.connect(treasury.wallet).payDebt(to1e18("20"))
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      expect(bob.musd.after - bob.musd.before).to.equal(to1e18("15"))
     })
 
     context("Expected Reverts", () => {
@@ -242,7 +318,7 @@ describe("PCV", () => {
         ).to.be.revertedWith("PCV: not enough tokens")
       })
 
-      it("reverts when trying to pay again", async () => {
+      it("reverts when trying to pay again if no fee recipient is set", async () => {
         await debtPaid()
         await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
         await expect(
@@ -366,6 +442,22 @@ describe("PCV", () => {
             .connect(treasury.wallet)
             .withdrawCollateral(alice.address, 1n),
         ).to.be.revertedWith("Sending BTC failed")
+      })
+    })
+  })
+
+  describe("setFeeSplit()", () => {
+    context("Expected Reverts", () => {
+      it("reverts if fee split is > 50% before debt is paid", async () => {
+        await expect(PCVDeployer.setFeeSplit(51n)).to.be.revertedWith(
+          "PCV: Fee split must be at most 50 while debt remains.",
+        )
+      })
+      it("reverts if the debt is paid", async () => {
+        await debtPaid()
+        await expect(PCVDeployer.setFeeSplit(1n)).to.be.revertedWith(
+          "PCV: Must have debt in order to set a fee split.",
+        )
       })
     })
   })

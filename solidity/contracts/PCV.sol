@@ -32,6 +32,10 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
+    address public feeRecipient;
+    uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
+    uint8 public constant FEE_SPLIT_MAX = 50; // no more than 50% of fees can be sent until the debt is paid
+
     modifier onlyAfterDebtPaid() {
         require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
         _;
@@ -70,17 +74,41 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     function payDebt(
         uint256 _musdToBurn
     ) external override onlyOwnerOrCouncilOrTreasury {
-        require(debtToPay > 0, "PCV: debt has already paid");
+        require(
+            debtToPay > 0 || feeRecipient != address(0),
+            "PCV: debt has already paid"
+        );
         require(
             _musdToBurn <= musd.balanceOf(address(this)),
             "PCV: not enough tokens"
         );
-        uint256 musdToBurn = LiquityMath._min(_musdToBurn, debtToPay);
-        debtToPay -= musdToBurn;
 
-        borrowerOperations.burnDebtFromPCV(musdToBurn);
+        // if the debt has already been paid, the feeRecipient should receive all fees
+        if (debtToPay == 0) {
+            feeSplitPercentage = 100;
+        }
+
+        uint256 feeToRecipient = (_musdToBurn * feeSplitPercentage) / 100;
+        uint256 feeToDebt = _musdToBurn - feeToRecipient;
+
+        if (feeToDebt > debtToPay) {
+            feeToRecipient += feeToDebt - debtToPay;
+            feeToDebt = debtToPay;
+        }
+
+        debtToPay -= feeToDebt;
+
+        if (feeRecipient != address(0) && feeSplitPercentage > 0) {
+            require(
+                musd.transfer(feeRecipient, feeToRecipient),
+                "PCV: sending mUSD failed"
+            );
+        }
+        borrowerOperations.burnDebtFromPCV(feeToDebt);
+
         // slither-disable-next-line reentrancy-events
-        emit PCVDebtPaid(musdToBurn);
+        emit PCVDebtPaid(feeToDebt);
+        emit PCVFeePaid(feeRecipient, feeToRecipient);
     }
 
     function setAddresses(
@@ -117,6 +145,28 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         isInitialized = true;
         borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
         depositToStabilityPool(BOOTSTRAP_LOAN);
+    }
+
+    function setFeeRecipient(
+        address _feeRecipient
+    ) external onlyOwnerOrCouncilOrTreasury {
+        if (_feeRecipient != address(0)) {
+            feeRecipient = _feeRecipient;
+        }
+    }
+
+    function setFeeSplit(
+        uint8 _feeSplitPercentage
+    ) external onlyOwnerOrCouncilOrTreasury {
+        require(
+            debtToPay > 0,
+            "PCV: Must have debt in order to set a fee split."
+        );
+        require(
+            _feeSplitPercentage <= FEE_SPLIT_MAX,
+            "PCV: Fee split must be at most 50 while debt remains."
+        );
+        feeSplitPercentage = _feeSplitPercentage;
     }
 
     function withdrawMUSD(
