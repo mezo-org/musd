@@ -1488,6 +1488,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             vars.pendingInterest
         ) = getEntireDebtAndColl(_borrower);
 
+        _removeStake(_borrower);
         _movePendingTroveRewardsToActivePool(
             _activePool,
             _defaultPool,
@@ -1495,7 +1496,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             vars.pendingPrincipal,
             vars.pendingInterest
         );
-        _removeStake(_borrower);
 
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
@@ -1701,6 +1701,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         // If ICR <= 100%, purely redistribute the Trove across all active Troves
         if (_ICR <= _100pct) {
+            _removeStake(_borrower);
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
@@ -1708,7 +1709,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 vars.pendingPrincipal,
                 vars.pendingInterest
             );
-            _removeStake(_borrower);
 
             singleLiquidation.debtToOffset = 0;
             singleLiquidation.collToSendToSP = 0;
@@ -1734,6 +1734,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             // If 100% < ICR < MCR, offset as much as possible, and redistribute the remainder
         } else if ((_ICR > _100pct) && (_ICR < MCR)) {
+            _removeStake(_borrower);
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
@@ -1741,7 +1742,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 vars.pendingPrincipal,
                 vars.pendingInterest
             );
-            _removeStake(_borrower);
 
             (
                 singleLiquidation.debtToOffset,
@@ -1782,6 +1782,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (_ICR < _TCR) &&
             (singleLiquidation.entireTrovePrincipal <= _MUSDInStabPool)
         ) {
+            _removeStake(_borrower);
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
@@ -1791,7 +1792,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
             assert(_MUSDInStabPool != 0);
 
-            _removeStake(_borrower);
             singleLiquidation = _getCappedOffsetVals(
                 singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.entireTroveColl,
