@@ -913,6 +913,7 @@ export async function getRedemptionHints(
   redemptionAmount: bigint,
   price: bigint,
 ) {
+  await contracts.troveManager.updateDefaultPoolInterest(NO_GAS)
   const { firstRedemptionHint, partialRedemptionHintNICR } =
     await contracts.hintHelpers.getRedemptionHints(redemptionAmount, price, 0)
 

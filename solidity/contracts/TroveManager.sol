@@ -358,7 +358,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             contractsCache.activePool,
             contractsCache.defaultPool,
             totals.totalPrincipalToRedistribute,
-            0,
+            totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
@@ -1150,6 +1150,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _newInterestRate <= maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
         );
+        updateDefaultPoolInterest();
         interestRate = _newInterestRate;
         interestRateHistory.push(
             InterestRateChange(_newInterestRate, block.number)
@@ -1316,6 +1317,32 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return newBaseRate;
     }
 
+    function updateDefaultPoolInterest() public {
+        if (totalStakes > 0) {
+            uint256 interest = calculateInterestOwed(
+                defaultPool.getPrincipal(),
+                interestRate,
+                defaultPool.getLastInterestUpdatedTime(),
+                block.timestamp
+            );
+            uint256 interestNumerator = interest *
+                DECIMAL_PRECISION +
+                lastInterestError_Redistribution;
+
+            uint256 pendingInterestPerUnitStaked = interestNumerator /
+                totalStakes;
+
+            lastInterestError_Redistribution =
+                interestNumerator -
+                (pendingInterestPerUnitStaked * totalStakes);
+
+            L_Interest += pendingInterestPerUnitStaked;
+
+            defaultPool.increaseDebt(0, interest);
+            emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
+        }
+    }
+
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
     function _applyPendingRewards(
         IActivePool _activePool,
@@ -1325,17 +1352,25 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (hasPendingRewards(_borrower)) {
             _requireTroveIsActive(_borrower);
 
+            updateDefaultPoolInterest();
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
                 uint256 pendingPrincipal,
                 uint256 pendingInterest
             ) = getPendingDebt(_borrower);
+            updateSystemAndTroveInterest(_borrower);
 
             // Apply pending rewards to trove's state
             Troves[_borrower].coll += pendingCollateral;
             Troves[_borrower].principal += pendingPrincipal;
             Troves[_borrower].interestOwed += pendingInterest;
+
+            // Apply pending rewards to system interest rate data
+            interestRateData[Troves[_borrower].interestRate]
+                .interest += pendingInterest;
+            interestRateData[Troves[_borrower].interestRate]
+                .principal += pendingPrincipal;
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -1410,6 +1445,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (_principal == 0 && _interest == 0) {
             return;
         }
+
+        updateDefaultPoolInterest();
 
         /*
          * Add distributed coll and debt rewards-per-unit-staked to the running
@@ -1912,7 +1949,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 vars.newDebt -
                     calculateInterestOwed(
                         Troves[_borrower].principal,
-                        Troves[_borrower].interestRate,
+                        interestRate,
                         block.timestamp - 600,
                         block.timestamp
                     )
@@ -2022,6 +2059,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _principal,
         uint256 _interest
     ) internal {
+        updateDefaultPoolInterest();
         // slither-disable-next-line calls-loop
         _defaultPool.decreaseDebt(_principal, _interest);
         // slither-disable-next-line calls-loop

@@ -121,6 +121,8 @@ interface ITroveManager {
 
     function updateTroveRewardSnapshots(address _borrower) external;
 
+    function updateDefaultPoolInterest() external;
+
     function addTroveOwnerToArray(
         address _borrower
     ) external returns (uint256 index);

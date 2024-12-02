@@ -2595,6 +2595,92 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(collNeeded)
     })
 
+    it("updates the default pool's interest", async () => {
+      const interestRate = 1000
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "300",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+
+      // Open another trove for Dennis with a very high ICR
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "4000",
+        sender: dennis.wallet,
+      })
+
+      await setInterestRate(contracts, council, interestRate)
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      await dropPriceAndLiquidate(contracts, alice)
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "before",
+        addresses,
+      )
+
+      const startTime = BigInt(await getLatestBlockTimestamp())
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      const redemptionAmount = to1e18("100")
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "before",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, bob, "before")
+      await updatePendingSnapshot(contracts, bob, "before")
+
+      await performRedemption(contracts, dennis, bob, redemptionAmount)
+
+      await updateTroveSnapshot(contracts, bob, "after")
+      await updatePendingSnapshot(contracts, bob, "after")
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "after",
+        addresses,
+      )
+
+      expect(state.defaultPool.interest.after).to.be.closeTo(
+        state.defaultPool.interest.before +
+          calculateInterestOwed(
+            alice.trove.debt.before,
+            interestRate,
+            startTime,
+            endTime,
+          ) -
+          calculateInterestOwed(
+            bob.pending.principal.before,
+            interestRate,
+            startTime,
+            endTime,
+          ),
+        100n,
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts when TCR < MCR", async () => {
         const users = [alice, bob, carol, dennis]
@@ -3048,6 +3134,51 @@ describe("TroveManager in Normal Mode", () => {
           "TroveManager: Only governance can call this function",
         )
       })
+    })
+
+    it("update's the default pool's accrued interest", async () => {
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "8000",
+        ICR: "500",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: bob.wallet,
+      })
+
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, bob)
+
+      // Fast-forward 1 year
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await setInterestRate(contracts, council, 200)
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "after",
+        addresses,
+      )
+
+      expect(state.defaultPool.interest.after).to.be.closeTo(
+        calculateInterestOwed(
+          bob.trove.debt.before,
+          interestRate,
+          bob.trove.lastInterestUpdateTime.before,
+          endTime,
+        ),
+        1000,
+      )
     })
   })
 
