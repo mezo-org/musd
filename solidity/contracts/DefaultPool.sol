@@ -23,6 +23,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     uint256 internal collateral; // deposited collateral tracker
     uint256 internal principal;
     uint256 internal interest;
+    uint256 internal lastInterestUpdatedTime;
 
     constructor() Ownable(msg.sender) {}
 
@@ -77,6 +78,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         _requireCallerIsTroveManager();
         principal += _principal;
         interest += _interest;
+        lastInterestUpdatedTime = block.timestamp;
         emit DefaultPoolDebtUpdated(principal, interest);
     }
 
@@ -87,6 +89,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         _requireCallerIsTroveManager();
         principal -= _principal;
         interest -= _interest;
+        lastInterestUpdatedTime = block.timestamp;
         emit DefaultPoolDebtUpdated(principal, interest);
     }
 
@@ -114,6 +117,15 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
 
     function getInterest() external view override returns (uint) {
         return interest;
+    }
+
+    function getLastInterestUpdatedTime()
+        external
+        view
+        override
+        returns (uint)
+    {
+        return lastInterestUpdatedTime;
     }
 
     function _requireCallerIsTroveManager() internal view {
