@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/ITroveManager.sol";
-import "./interfaces/ISortedTroves.sol";
-import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
+import "./dependencies/LiquityBase.sol";
+import "./interfaces/ISortedTroves.sol";
+import "./interfaces/ITroveManager.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract HintHelpers is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
