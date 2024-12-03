@@ -753,7 +753,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await contracts.troveManager.updateDefaultPoolInterest()
+    await contracts.troveManager.callUpdateDefaultPoolInterest()
     const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
 
@@ -784,7 +784,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await contracts.troveManager.updateDefaultPoolInterest()
+    await contracts.troveManager.callUpdateDefaultPoolInterest()
     const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
 
@@ -811,7 +811,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await contracts.troveManager.updateDefaultPoolInterest()
+    await contracts.troveManager.callUpdateDefaultPoolInterest()
     const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshots(contracts, [alice, carol], "after")
 

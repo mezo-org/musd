@@ -325,6 +325,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
+        _updateDefaultPoolInterest();
+
         // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
         if (vars.recoveryModeAtStart) {
             totals = _getTotalsFromLiquidateTrovesSequenceRecoveryMode(
@@ -478,6 +480,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (_maxIterations == 0) {
             _maxIterations = type(uint256).max;
         }
+
+        _updateDefaultPoolInterest();
+
         while (
             currentBorrower != address(0) &&
             totals.remainingMUSD > 0 &&
@@ -588,6 +593,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function applyPendingRewards(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
+
+        _updateDefaultPoolInterest();
         return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
@@ -868,6 +875,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.price = priceFeed.fetchPrice();
         vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
+
+        _updateDefaultPoolInterest();
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         if (vars.recoveryModeAtStart) {
@@ -1150,7 +1159,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _newInterestRate <= maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
         );
-        updateDefaultPoolInterest();
+        _updateDefaultPoolInterest();
         interestRate = _newInterestRate;
         interestRateHistory.push(
             InterestRateChange(_newInterestRate, block.number)
@@ -1179,6 +1188,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
         vars.user = _contractsCache.sortedTroves.getLast();
         address firstUser = _contractsCache.sortedTroves.getFirst();
+
         for (vars.i = 0; vars.i < _n && vars.user != firstUser; vars.i++) {
             updateSystemAndTroveInterest(vars.user);
             // we need to cache it, because current user is likely going to be deleted
@@ -1317,7 +1327,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return newBaseRate;
     }
 
-    function updateDefaultPoolInterest() public {
+    function _updateDefaultPoolInterest() internal {
         if (totalStakes > 0) {
             uint256 interest = calculateInterestOwed(
                 defaultPool.getPrincipal(),
@@ -1325,6 +1335,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 defaultPool.getLastInterestUpdatedTime(),
                 block.timestamp
             );
+
+            // slither-disable-start divide-before-multiply
             uint256 interestNumerator = interest *
                 DECIMAL_PRECISION +
                 lastInterestError_Redistribution;
@@ -1335,6 +1347,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             lastInterestError_Redistribution =
                 interestNumerator -
                 (pendingInterestPerUnitStaked * totalStakes);
+            // slither-disable-end divide-before-multiply
 
             L_Interest += pendingInterestPerUnitStaked;
 
@@ -1352,7 +1365,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (hasPendingRewards(_borrower)) {
             _requireTroveIsActive(_borrower);
 
-            updateDefaultPoolInterest();
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
@@ -1446,7 +1458,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             return;
         }
 
-        updateDefaultPoolInterest();
+        _updateDefaultPoolInterest();
 
         /*
          * Add distributed coll and debt rewards-per-unit-staked to the running
@@ -1475,10 +1487,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             lastInterestError_Redistribution;
 
         // Get the per-unit-staked terms
-        // slither-disable-next-line divide-before-multiply
+        // slither-disable-start divide-before-multiply
         uint256 pendingCollateralPerUnitStaked = collateralNumerator /
             totalStakes;
-        // slither-disable-next-line divide-before-multiply
         uint256 pendingPrincipalPerUnitStaked = principalNumerator /
             totalStakes;
         uint256 pendingInterestPerUnitStaked = interestNumerator / totalStakes;
@@ -1492,6 +1503,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         lastInterestError_Redistribution =
             interestNumerator -
             (pendingInterestPerUnitStaked * totalStakes);
+        // slither-disable-end divide-before-multiply
 
         // Add per-unit-staked terms to the running totals
         L_Collateral += pendingCollateralPerUnitStaked;
@@ -2059,7 +2071,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _principal,
         uint256 _interest
     ) internal {
-        updateDefaultPoolInterest();
         // slither-disable-next-line calls-loop
         _defaultPool.decreaseDebt(_principal, _interest);
         // slither-disable-next-line calls-loop
