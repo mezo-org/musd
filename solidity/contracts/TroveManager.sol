@@ -866,19 +866,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _updateDebtWithInterest(_borrower);
     }
 
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    ) public returns (uint256 principalAdjustment, uint256 interestAdjustment) {
-        if (_payment >= _interestOwed) {
-            principalAdjustment = _payment - _interestOwed;
-            interestAdjustment = _interestOwed;
-        } else {
-            principalAdjustment = 0;
-            interestAdjustment = _payment;
-        }
-    }
-
     /*
      * Attempt to liquidate a custom list of troves provided by the caller.
      */
@@ -1112,6 +1099,23 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return
             (_principal * _interestRate * timeElapsed) /
             (10000 * SECONDS_IN_A_YEAR);
+    }
+
+    function calculateDebtAdjustment(
+        uint256 _interestOwed,
+        uint256 _payment
+    )
+        public
+        pure
+        returns (uint256 principalAdjustment, uint256 interestAdjustment)
+    {
+        if (_payment >= _interestOwed) {
+            principalAdjustment = _payment - _interestOwed;
+            interestAdjustment = _interestOwed;
+        } else {
+            principalAdjustment = 0;
+            interestAdjustment = _payment;
+        }
     }
 
     // TODO Change access modifier to limit calls to the contracts that need to call this

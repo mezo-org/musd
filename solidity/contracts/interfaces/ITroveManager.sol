@@ -183,11 +183,6 @@ interface ITroveManager {
 
     function setMaxInterestRate(uint16 _newMaxInterestRate) external;
 
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    ) external returns (uint, uint);
-
     function stabilityPool() external view returns (IStabilityPool);
 
     function pcv() external view returns (IPCV);
