@@ -13,6 +13,7 @@ import {
   setupTests,
   updatePendingSnapshot,
   updateRewardSnapshot,
+  updateTroveManagerSnapshot,
   updateTroveSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
@@ -109,10 +110,10 @@ describe("BorrowerOperations in Recovery Mode", () => {
       and L_MUSD should equal 18 mUSD per-ether-staked/per-tokens-staked. */
 
       const liquidatedCollateral = await contracts.troveManager.L_Collateral()
-      const liquidatedDebt = await contracts.troveManager.L_Debt()
+      const liquidatedPrincipal = await contracts.troveManager.L_Principal()
 
       expect(liquidatedCollateral).is.greaterThan(0n)
-      expect(liquidatedDebt).is.greaterThan(0n)
+      expect(liquidatedPrincipal).is.greaterThan(0n)
 
       // Carol opens trove
       await openTrove(contracts, {
@@ -120,12 +121,12 @@ describe("BorrowerOperations in Recovery Mode", () => {
         sender: carol.wallet,
       })
 
-      // Check Carol's snapshots of L_Collateral and L_MUSD equal the respective current values
+      // Check Carol's snapshots of L_Collateral and L_Principal equal the respective current values
       const snapshot = await contracts.troveManager.rewardSnapshots(
         carol.wallet,
       )
       expect(snapshot[0]).is.equal(liquidatedCollateral)
-      expect(snapshot[1]).is.equal(liquidatedDebt)
+      expect(snapshot[1]).is.equal(liquidatedPrincipal)
     })
 
     context("Expected Reverts", () => {
@@ -184,11 +185,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         false,
       )
 
-      state.troveManager.liquidation.collateral.before =
-        await contracts.troveManager.L_Collateral()
-      state.troveManager.liquidation.debt.before =
-        await contracts.troveManager.L_Debt()
-
+      await updateTroveManagerSnapshot(contracts, state, "before")
       await updateTroveSnapshot(contracts, bob, "before")
       await updateTroveSnapshot(contracts, carol, "before")
       await updateRewardSnapshot(contracts, bob, "before")
@@ -198,15 +195,15 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
       // check Bob and Carol's reward snapshots are zero before they alter their Troves
       expect(bob.rewardSnapshot.collateral.before).is.equal(0n)
-      expect(bob.rewardSnapshot.debt.before).is.equal(0n)
+      expect(bob.rewardSnapshot.principal.before).is.equal(0n)
       expect(carol.rewardSnapshot.collateral.before).is.equal(0n)
-      expect(carol.rewardSnapshot.debt.before).is.equal(0n)
+      expect(carol.rewardSnapshot.principal.before).is.equal(0n)
 
       // check Bob and Carol have pending reward and debt from the liquidation redistribution
       expect(carol.pending.collateral.before).to.greaterThan(0n)
       expect(bob.pending.collateral.before).to.greaterThan(0n)
-      expect(carol.pending.debt.before).to.greaterThan(0n)
-      expect(bob.pending.debt.before).to.greaterThan(0n)
+      expect(carol.pending.principal.before).to.greaterThan(0n)
+      expect(bob.pending.principal.before).to.greaterThan(0n)
 
       const bobTopUp = to1e18(5)
       await addColl(contracts, {
@@ -227,7 +224,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         bob.trove.collateral.before + bobTopUp + bob.pending.collateral.before,
       )
       expect(bob.trove.debt.after).to.equal(
-        bob.trove.debt.before + bob.pending.debt.before,
+        bob.trove.debt.before + bob.pending.principal.before,
       )
       expect(carol.trove.collateral.after).to.equal(
         carol.trove.collateral.before +
@@ -235,7 +232,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
           carol.pending.collateral.before,
       )
       expect(carol.trove.debt.after).to.equal(
-        carol.trove.debt.before + carol.pending.debt.before,
+        carol.trove.debt.before + carol.pending.principal.before,
       )
 
       /* Check that both Bob and Carol's snapshots of the rewards-per-unit-staked metrics should be updated
@@ -247,14 +244,14 @@ describe("BorrowerOperations in Recovery Mode", () => {
       expect(bob.rewardSnapshot.collateral.after).is.equal(
         state.troveManager.liquidation.collateral.before,
       )
-      expect(bob.rewardSnapshot.debt.after).is.equal(
-        state.troveManager.liquidation.debt.before,
+      expect(bob.rewardSnapshot.principal.after).is.equal(
+        state.troveManager.liquidation.principal.before,
       )
       expect(carol.rewardSnapshot.collateral.after).is.equal(
         state.troveManager.liquidation.collateral.before,
       )
-      expect(carol.rewardSnapshot.debt.after).is.equal(
-        state.troveManager.liquidation.debt.before,
+      expect(carol.rewardSnapshot.principal.after).is.equal(
+        state.troveManager.liquidation.principal.before,
       )
     })
 

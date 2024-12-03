@@ -84,7 +84,8 @@ function initializeContractState(): ContractsState {
       lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
-        debt: beforeAndAfter(),
+        principal: beforeAndAfter(),
+        interest: beforeAndAfter(),
       },
       stakes: beforeAndAfter(),
       stakesSnapshot: beforeAndAfter(),
@@ -136,11 +137,13 @@ async function initializeUserObject(
     musd: beforeAndAfter(),
     rewardSnapshot: {
       collateral: beforeAndAfter(),
-      debt: beforeAndAfter(),
+      principal: beforeAndAfter(),
+      interest: beforeAndAfter(),
     },
     pending: {
       collateral: beforeAndAfter(),
-      debt: beforeAndAfter(),
+      principal: beforeAndAfter(),
+      interest: beforeAndAfter(),
     },
     stabilityPool: {
       compoundedDeposit: beforeAndAfter(),

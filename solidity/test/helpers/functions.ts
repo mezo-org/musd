@@ -191,9 +191,11 @@ export async function updatePendingSnapshot(
   const collateral = await contracts.troveManager.getPendingCollateral(
     user.address,
   )
-  const debt = await contracts.troveManager.getPendingDebt(user.address)
+  const { pendingPrincipal, pendingInterest } =
+    await contracts.troveManager.getPendingDebt(user.address)
   user.pending.collateral[checkPoint] = collateral
-  user.pending.debt[checkPoint] = debt
+  user.pending.principal[checkPoint] = pendingPrincipal
+  user.pending.interest[checkPoint] = pendingInterest
 }
 
 export async function updatePendingSnapshots(
@@ -211,12 +213,12 @@ export async function updateRewardSnapshot(
   user: User,
   checkPoint: CheckPoint,
 ) {
-  const [collateral, debt] = await contracts.troveManager.rewardSnapshots(
-    user.address,
-  )
+  const { collateral, principal, interest } =
+    await contracts.troveManager.rewardSnapshots(user.address)
 
   user.rewardSnapshot.collateral[checkPoint] = collateral
-  user.rewardSnapshot.debt[checkPoint] = debt
+  user.rewardSnapshot.principal[checkPoint] = principal
+  user.rewardSnapshot.interest[checkPoint] = interest
 }
 
 export async function updateStabilityPoolSnapshot(
@@ -294,6 +296,12 @@ export async function updateTroveManagerSnapshot(
     await contracts.troveManager.baseRate()
   state.troveManager.lastFeeOperationTime[checkPoint] =
     await contracts.troveManager.lastFeeOperationTime()
+  state.troveManager.liquidation.collateral[checkPoint] =
+    await contracts.troveManager.L_Collateral()
+  state.troveManager.liquidation.principal[checkPoint] =
+    await contracts.troveManager.L_Principal()
+  state.troveManager.liquidation.interest[checkPoint] =
+    await contracts.troveManager.L_Interest()
 }
 
 export async function getTroveEntireColl(
@@ -908,6 +916,7 @@ export async function getRedemptionHints(
   redemptionAmount: bigint,
   price: bigint,
 ) {
+  await contracts.troveManager.callUpdateDefaultPoolInterest(NO_GAS)
   const { firstRedemptionHint, partialRedemptionHintNICR } =
     await contracts.hintHelpers.getRedemptionHints(redemptionAmount, price, 0)
 

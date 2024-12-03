@@ -1049,9 +1049,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateRewardSnapshot(contracts, alice, "after")
 
       expect(alice.rewardSnapshot.collateral.before).to.be.greaterThan(0)
-      expect(alice.rewardSnapshot.debt.before).to.be.greaterThan(0)
+      expect(alice.rewardSnapshot.principal.before).to.be.greaterThan(0)
       expect(alice.rewardSnapshot.collateral.after).to.be.equal(0)
-      expect(alice.rewardSnapshot.debt.after).to.be.equal(0)
+      expect(alice.rewardSnapshot.principal.after).to.be.equal(0)
     })
 
     it("sets trove's status to closed and removes it from sorted troves list", async () => {
@@ -1490,7 +1490,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("applies pending rewards and updates user's L_Collateral, L_Debt snapshots", async () => {
+    it("applies pending rewards and updates user's L_Collateral, L_Principal snapshots", async () => {
       await openTrove(contracts, {
         musdAmount: "50,000",
         ICR: "1000",
@@ -1515,10 +1515,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(deployer.wallet)
         .liquidate(alice.wallet)
 
-      state.troveManager.liquidation.collateral.before =
-        await contracts.troveManager.L_Collateral()
-      state.troveManager.liquidation.debt.before =
-        await contracts.troveManager.L_Debt()
+      await updateTroveManagerSnapshot(contracts, state, "before")
 
       await updateRewardSnapshot(contracts, carol, "before")
       await updateRewardSnapshot(contracts, dennis, "before")
@@ -1528,8 +1525,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       // Check Bob and Carol have pending rewards from the liquidation
       expect(carol.pending.collateral.before).to.greaterThan(0n)
       expect(dennis.pending.collateral.before).to.greaterThan(0n)
-      expect(carol.pending.debt.before).to.greaterThan(0n)
-      expect(dennis.pending.debt.before).to.greaterThan(0n)
+      expect(carol.pending.principal.before).to.greaterThan(0n)
+      expect(dennis.pending.principal.before).to.greaterThan(0n)
 
       const withdrawalAmount = 1n
       await contracts.borrowerOperations
@@ -1563,11 +1560,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(dennis.rewardSnapshot.collateral.after).to.equal(
         state.troveManager.liquidation.collateral.before,
       )
-      expect(carol.rewardSnapshot.debt.after).to.equal(
-        state.troveManager.liquidation.debt.before,
+      expect(carol.rewardSnapshot.principal.after).to.equal(
+        state.troveManager.liquidation.principal.before,
       )
-      expect(dennis.rewardSnapshot.debt.after).to.equal(
-        state.troveManager.liquidation.debt.before,
+      expect(dennis.rewardSnapshot.principal.after).to.equal(
+        state.troveManager.liquidation.principal.before,
       )
     })
 

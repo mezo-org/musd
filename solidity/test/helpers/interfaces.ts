@@ -64,7 +64,8 @@ export interface ContractsState {
     lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
-      debt: BeforeAndAfter
+      principal: BeforeAndAfter
+      interest: BeforeAndAfter
     }
     stakes: BeforeAndAfter
     stakesSnapshot: BeforeAndAfter
@@ -141,11 +142,13 @@ export interface User {
   }
   rewardSnapshot: {
     collateral: BeforeAndAfter
-    debt: BeforeAndAfter
+    principal: BeforeAndAfter
+    interest: BeforeAndAfter
   }
   pending: {
     collateral: BeforeAndAfter
-    debt: BeforeAndAfter
+    principal: BeforeAndAfter
+    interest: BeforeAndAfter
   }
   stabilityPool: {
     compoundedDeposit: BeforeAndAfter

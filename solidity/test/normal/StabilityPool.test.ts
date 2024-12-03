@@ -1871,7 +1871,7 @@ describe("StabilityPool in Normal Mode", () => {
             user.stabilityPool.collateralGain.before,
         )
         expect(user.trove.debt.after).to.equal(
-          user.trove.debt.before + user.pending.debt.before,
+          user.trove.debt.before + user.pending.principal.before,
         )
       })
     })

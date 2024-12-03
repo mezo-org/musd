@@ -69,8 +69,16 @@ interface ITroveManager {
         uint256 _totalStakesSnapshot,
         uint256 _totalCollateralSnapshot
     );
-    event LTermsUpdated(uint256 _L_Collateral, uint256 _L_Debt);
-    event TroveSnapshotsUpdated(uint256 _L_Collateral, uint256 _L_Debt);
+    event LTermsUpdated(
+        uint256 _L_Collateral,
+        uint256 _L_Principal,
+        uint256 _L_Interest
+    );
+    event TroveSnapshotsUpdated(
+        uint256 _L_Collateral,
+        uint256 _L_Principal,
+        uint256 _L_Interest
+    );
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
     event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
     event InterestRateUpdated(uint256 _newInterestRate);
@@ -196,7 +204,9 @@ interface ITroveManager {
         address _borrower
     ) external view returns (uint);
 
-    function getPendingDebt(address _borrower) external view returns (uint);
+    function getPendingDebt(
+        address _borrower
+    ) external view returns (uint256, uint256);
 
     function hasPendingRewards(address _borrower) external view returns (bool);
 
@@ -206,11 +216,12 @@ interface ITroveManager {
         external
         view
         returns (
-            uint256 debt,
-            uint256 interest,
             uint256 coll,
-            uint256 pendingDebt,
-            uint256 pendingCollateral
+            uint256 principal,
+            uint256 interest,
+            uint256 pendingCollateral,
+            uint256 pendingPrincipal,
+            uint256 pendingInterest
         );
 
     function getRedemptionRate() external view returns (uint);

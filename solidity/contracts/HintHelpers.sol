@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/ITroveManager.sol";
-import "./interfaces/ISortedTroves.sol";
-import "./dependencies/LiquityBase.sol";
 import "./dependencies/CheckContract.sol";
+import "./dependencies/LiquityBase.sol";
+import "./interfaces/ISortedTroves.sol";
+import "./interfaces/ITroveManager.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract HintHelpers is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
@@ -96,9 +96,15 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
             _maxIterations > 0
         ) {
             _maxIterations--;
+
+            (uint256 pendingPrincipal, uint256 pendingInterest) = troveManager
+                .getPendingDebt(currentTroveuser);
+
             uint256 netDebt = _getNetDebt(
                 troveManager.getTroveDebt(currentTroveuser)
-            ) + troveManager.getPendingDebt(currentTroveuser);
+            ) +
+                pendingPrincipal +
+                pendingInterest;
 
             if (netDebt > remainingMUSD) {
                 if (netDebt > MIN_NET_DEBT) {

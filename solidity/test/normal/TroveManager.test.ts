@@ -746,96 +746,215 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("updates the L_Collateral and L_Debt reward-per-unit-staked totals", async () => {
+    it("updates the L_Collateral reward-per-unit-staked totals", async () => {
       await setupTroves()
       await openTrove(contracts, {
         musdAmount: "5000",
-        ICR: "111",
+        ICR: "130",
         sender: carol.wallet,
       })
 
-      await updateTroveSnapshot(contracts, alice, "before")
-      await updateTroveSnapshot(contracts, bob, "before")
-      await updateTroveSnapshot(contracts, carol, "before")
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await dropPriceAndLiquidate(contracts, carol)
 
-      // Drop the price to lower Carol's ICR below MCR and close Carol's trove
-      await contracts.mockAggregator.setPrice(to1e18(49000))
-      await contracts.troveManager.liquidate(carol.wallet.address)
-      expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
-        false,
-      )
-
-      // Carol's collateral less the liquidation fee and mUSD should be added to the default pool
+      // Carol's collateral less the liquidation fee should be added to the default pool
       const liquidatedColl = to1e18(
         applyLiquidationFee(carol.trove.collateral.before),
       )
-      const remainingColl =
-        bob.trove.collateral.before + alice.trove.collateral.before
-      const expectedLCollateralAfterCarolLiquidated =
-        liquidatedColl / remainingColl
+
       expect(await contracts.troveManager.L_Collateral()).to.equal(
-        expectedLCollateralAfterCarolLiquidated,
+        liquidatedColl /
+          (bob.trove.collateral.before + alice.trove.collateral.before),
+      )
+    })
+
+    it("updates the L_Principal reward-per-unit-staked totals", async () => {
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "130",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await dropPriceAndLiquidate(contracts, carol)
+
+      expect(await contracts.troveManager.L_Principal()).to.equal(
+        to1e18(carol.trove.debt.before) /
+          (bob.trove.collateral.before + alice.trove.collateral.before),
+      )
+    })
+
+    it("updates the L_Interest reward-per-unit-staked totals", async () => {
+      const interestRate = 1000
+      await setInterestRate(contracts, council, interestRate)
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "130",
+        sender: carol.wallet,
+      })
+
+      await fastForwardTime(365 * 24 * 60 * 60) // fast forward 1 year.
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await dropPriceAndLiquidate(contracts, carol)
+      const carolLiquidationTime = BigInt(await getLatestBlockTimestamp())
+
+      const expectedLInterestAfterCarolLiquidated =
+        to1e18(
+          calculateInterestOwed(
+            carol.trove.debt.before,
+            interestRate,
+            carol.trove.lastInterestUpdateTime.before,
+            carolLiquidationTime,
+          ),
+        ) /
+        (bob.trove.collateral.before + alice.trove.collateral.before)
+
+      expect(await contracts.troveManager.L_Interest()).to.equal(
+        expectedLInterestAfterCarolLiquidated,
+      )
+    })
+
+    it("updates the L_Collateral reward-per-unit-staked totals after multiple liquidations", async () => {
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "130",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await dropPriceAndLiquidate(contracts, carol)
+
+      // Carol's collateral less the liquidation fee should be added to the default pool
+      const liquidatedColl = to1e18(
+        applyLiquidationFee(carol.trove.collateral.before),
       )
 
-      const expectedLMUSDDebtAfterCarolLiquidated =
-        to1e18(carol.trove.debt.before) / remainingColl
-      expect(await contracts.troveManager.L_Debt()).to.equal(
-        expectedLMUSDDebtAfterCarolLiquidated,
-      )
+      const expectedLCollateralAfterCarolLiquidated =
+        liquidatedColl /
+        (bob.trove.collateral.before + alice.trove.collateral.before)
 
-      // Alice now withdraws mUSD, bring her ICR to 1.11
-      const { increasedTotalDebt } = await adjustTroveToICR(
-        contracts,
-        alice.wallet,
-        1111111111111111111n,
-      )
+      await updatePendingSnapshot(contracts, alice, "before")
 
-      // price drops again, reducing Alice's ICR below MCR
-      await contracts.mockAggregator.setPrice(to1e18(40000))
-
-      // Close Alice's Trove
-      await contracts.troveManager.liquidate(alice.wallet.address)
-      expect(await contracts.sortedTroves.contains(alice.wallet)).to.equal(
-        false,
-      )
+      await dropPriceAndLiquidate(contracts, alice)
 
       /*
        * Alice's pending reward was applied to her trove before liquidation.  We account for that here using the previous
        * L_Collateral value computed after Carol's liquidation.
        */
-      const aliceCollWithReward = to1e18(
+      const aliceCollWithPending = to1e18(
         applyLiquidationFee(
-          alice.trove.collateral.before +
-            (alice.trove.collateral.before *
-              expectedLCollateralAfterCarolLiquidated) /
-              to1e18(1),
+          alice.trove.collateral.before + alice.pending.collateral.before,
         ),
       )
 
-      // Bob now has all the active stake.  We now add the reward-per-unit-staked from Alice's liquidation to the L_Collateral.
+      // Bob now has all the active stake. We now add the reward-per-unit-staked
+      // from Alice's liquidation to the L_Collateral.
       const expectedLCollateralAfterAliceLiquidated =
         expectedLCollateralAfterCarolLiquidated +
-        aliceCollWithReward / bob.trove.collateral.before
+        aliceCollWithPending / bob.trove.collateral.before
 
-      expect(await contracts.troveManager.L_Collateral()).to.equal(
+      expect(await contracts.troveManager.L_Collateral()).to.be.closeTo(
         expectedLCollateralAfterAliceLiquidated,
+        100n,
       )
+    })
+
+    it("updates the L_Principal reward-per-unit-staked totals after multiple liquidations", async () => {
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "130",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await dropPriceAndLiquidate(contracts, carol)
+
+      const lPrincipalAfterCarolLiquidated =
+        to1e18(carol.trove.debt.before) /
+        (bob.trove.collateral.before + alice.trove.collateral.before)
+
+      await updatePendingSnapshot(contracts, alice, "before")
+
+      await dropPriceAndLiquidate(contracts, alice)
 
       // Apply Alice's pending debt rewards and calculate the new LMUSDDebt
-      const expectedLMUSDDebtAfterAliceLiquidated =
-        expectedLMUSDDebtAfterCarolLiquidated +
-        ((alice.trove.debt.before +
-          increasedTotalDebt +
-          (alice.trove.collateral.before *
-            expectedLMUSDDebtAfterCarolLiquidated) /
-            to1e18(1)) *
-          to1e18(1)) /
+      const expectedLPrincipalAfterAliceLiquidated =
+        lPrincipalAfterCarolLiquidated +
+        to1e18(alice.trove.debt.before + alice.pending.principal.before) /
           bob.trove.collateral.before
 
-      const tolerance = 100n
-      expect(await contracts.troveManager.L_Debt()).to.be.closeTo(
-        expectedLMUSDDebtAfterAliceLiquidated,
-        tolerance,
+      expect(await contracts.troveManager.L_Principal()).to.be.closeTo(
+        expectedLPrincipalAfterAliceLiquidated,
+        100n,
+      )
+    })
+
+    it("updates the L_Interest reward-per-unit-staked totals after multiple liquidations", async () => {
+      const interestRate = 1000
+      await setInterestRate(contracts, council, interestRate)
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "130",
+        sender: carol.wallet,
+      })
+
+      await fastForwardTime(365 * 24 * 60 * 60) // fast forward 1 year.
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await dropPriceAndLiquidate(contracts, carol)
+      const carolLiquidationTime = BigInt(await getLatestBlockTimestamp())
+
+      const lInterestAfterCarolLiquidated =
+        to1e18(
+          calculateInterestOwed(
+            carol.trove.debt.before,
+            interestRate,
+            carol.trove.lastInterestUpdateTime.before,
+            carolLiquidationTime,
+          ),
+        ) /
+        (bob.trove.collateral.before + alice.trove.collateral.before)
+
+      await updatePendingSnapshot(contracts, alice, "before")
+
+      await dropPriceAndLiquidate(contracts, alice)
+
+      const aliceLiquidateTime = BigInt(await getLatestBlockTimestamp())
+
+      const defaultInterestAccruedBetweenCarolAndAlice = to1e18(
+        calculateInterestOwed(
+          carol.trove.debt.before,
+          interestRate,
+          carolLiquidationTime,
+          aliceLiquidateTime,
+        ),
+      )
+
+      const pendingDebtLUpdated =
+        lInterestAfterCarolLiquidated +
+        defaultInterestAccruedBetweenCarolAndAlice / bob.trove.collateral.before
+
+      const expectedLInterestAfterAliceLiquidated =
+        pendingDebtLUpdated +
+        to1e18(
+          calculateInterestOwed(
+            alice.trove.debt.before,
+            interestRate,
+            alice.trove.lastInterestUpdateTime.before,
+            aliceLiquidateTime,
+          ) + alice.pending.interest.before,
+        ) /
+          bob.trove.collateral.before
+
+      expect(await contracts.troveManager.L_Interest()).to.be.closeTo(
+        expectedLInterestAfterAliceLiquidated,
+        100n,
       )
     })
 
@@ -2597,6 +2716,93 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(collNeeded)
     })
 
+    it("updates the default pool's interest", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "300",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+
+      // Open another trove for Dennis with a very high ICR
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "4000",
+        sender: dennis.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      await dropPriceAndLiquidate(contracts, alice)
+
+      const interestRate = 1000
+      await setInterestRate(contracts, council, interestRate)
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "before",
+        addresses,
+      )
+
+      const startTime = BigInt(await getLatestBlockTimestamp())
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      const redemptionAmount = to1e18("100")
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "before",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, bob, "before")
+      await updatePendingSnapshot(contracts, bob, "before")
+
+      await performRedemption(contracts, dennis, bob, redemptionAmount)
+
+      await updateTroveSnapshot(contracts, bob, "after")
+      await updatePendingSnapshot(contracts, bob, "after")
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "after",
+        addresses,
+      )
+
+      expect(state.defaultPool.interest.after).to.be.closeTo(
+        state.defaultPool.interest.before +
+          calculateInterestOwed(
+            alice.trove.debt.before,
+            interestRate,
+            startTime,
+            endTime,
+          ) -
+          calculateInterestOwed(
+            bob.pending.principal.before,
+            interestRate,
+            startTime,
+            endTime,
+          ),
+        100n,
+      )
+    })
+
     context("Expected Reverts", () => {
       it("reverts when TCR < MCR", async () => {
         const users = [alice, bob, carol, dennis]
@@ -2848,7 +3054,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await dropPriceAndLiquidate(contracts, carol)
       await updatePendingSnapshot(contracts, alice, "after")
-      expect(alice.pending.debt.after).to.equal(0n)
+      expect(alice.pending.principal.after).to.equal(0n)
     })
   })
 
@@ -3050,6 +3256,51 @@ describe("TroveManager in Normal Mode", () => {
           "TroveManager: Only governance can call this function",
         )
       })
+    })
+
+    it("updates the default pool's accrued interest", async () => {
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "8000",
+        ICR: "500",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: bob.wallet,
+      })
+
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, bob)
+
+      // Fast-forward 1 year
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await setInterestRate(contracts, council, 200)
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "defaultPool",
+        "after",
+        addresses,
+      )
+
+      expect(state.defaultPool.interest.after).to.be.closeTo(
+        calculateInterestOwed(
+          bob.trove.debt.before,
+          interestRate,
+          bob.trove.lastInterestUpdateTime.before,
+          endTime,
+        ),
+        1000,
+      )
     })
   })
 
