@@ -446,9 +446,8 @@ contract BorrowerOperations is
             amount,
             _maxFeePercentage
         );
+        // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(msg.sender, fee);
-
-        emit RefinancingFeePaid(msg.sender, fee);
 
         troveManagerCached.removeInterestFromRate(oldRate, oldInterest);
         troveManagerCached.removePrincipalFromRate(oldRate, oldPrincipal);
@@ -469,6 +468,9 @@ contract BorrowerOperations is
             msg.sender,
             maxBorrowingCapacity
         );
+
+        // slither-disable-next-line reentrancy-events
+        emit RefinancingFeePaid(msg.sender, fee);
     }
 
     function adjustTrove(

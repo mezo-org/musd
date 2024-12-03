@@ -1087,20 +1087,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
-    // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
-    function calculateInterestOwed(
-        uint256 _principal,
-        uint16 _interestRate,
-        uint256 startTime,
-        uint256 endTime
-    ) public pure returns (uint256) {
-        uint256 timeElapsed = endTime - startTime;
-
-        return
-            (_principal * _interestRate * timeElapsed) /
-            (10000 * SECONDS_IN_A_YEAR);
-    }
-
     function calculateDebtAdjustment(
         uint256 _interestOwed,
         uint256 _payment
@@ -1116,6 +1102,20 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             principalAdjustment = 0;
             interestAdjustment = _payment;
         }
+    }
+
+    // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
+    function calculateInterestOwed(
+        uint256 _principal,
+        uint16 _interestRate,
+        uint256 startTime,
+        uint256 endTime
+    ) public pure returns (uint256) {
+        uint256 timeElapsed = endTime - startTime;
+
+        return
+            (_principal * _interestRate * timeElapsed) /
+            (10000 * SECONDS_IN_A_YEAR);
     }
 
     // TODO Change access modifier to limit calls to the contracts that need to call this
@@ -1167,6 +1167,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 _principalAdjustment,
             uint256 _interestAdjustment
         ) = calculateDebtAdjustment(trove.interestOwed, _payment);
+
         trove.principal -= _principalAdjustment;
         trove.interestOwed -= _interestAdjustment;
         interestRateData[trove.interestRate].principal -= _principalAdjustment;
