@@ -1387,7 +1387,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (hasPendingRewards(_borrower)) {
             _requireTroveIsActive(_borrower);
 
-            _updateDefaultPoolInterest();
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
@@ -2094,7 +2093,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _principal,
         uint256 _interest
     ) internal {
-        _updateDefaultPoolInterest();
         // slither-disable-next-line calls-loop
         _defaultPool.decreaseDebt(_principal, _interest);
         // slither-disable-next-line calls-loop
