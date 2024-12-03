@@ -726,6 +726,25 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
+    function addInterestToRate(uint16 _rate, uint256 _interest) external {
+        interestRateData[_rate].interest += _interest;
+    }
+
+    // Used when refinancing to move to a new interest rate
+    function removePrincipalFromRate(
+        uint16 _rate,
+        uint256 _principal
+    ) external {
+        _requireCallerIsBorrowerOperations();
+        interestRateData[_rate].principal -= _principal;
+    }
+
+    // Used when refinancing to move to a new interest rate
+    function removeInterestFromRate(uint16 _rate, uint256 _interest) external {
+        _requireCallerIsBorrowerOperations();
+        interestRateData[_rate].interest -= _interest;
+    }
+
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -845,6 +864,19 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function updateSystemAndTroveInterest(address _borrower) public {
         _updateSystemInterest(Troves[_borrower].interestRate);
         _updateDebtWithInterest(_borrower);
+    }
+
+    function calculateDebtAdjustment(
+        uint256 _interestOwed,
+        uint256 _payment
+    ) public returns (uint256 principalAdjustment, uint256 interestAdjustment) {
+        if (_payment >= _interestOwed) {
+            principalAdjustment = _payment - _interestOwed;
+            interestAdjustment = _interestOwed;
+        } else {
+            principalAdjustment = 0;
+            interestAdjustment = _payment;
+        }
     }
 
     /*
@@ -1068,23 +1100,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    )
-        public
-        pure
-        returns (uint256 principalAdjustment, uint256 interestAdjustment)
-    {
-        if (_payment >= _interestOwed) {
-            principalAdjustment = _payment - _interestOwed;
-            interestAdjustment = _interestOwed;
-        } else {
-            principalAdjustment = 0;
-            interestAdjustment = _payment;
-        }
-    }
-
     // Calculate the interest owed on a trove.  Note this is using simple interest and not compounding for simplicity.
     function calculateInterestOwed(
         uint256 _principal,
@@ -1148,7 +1163,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             uint256 _principalAdjustment,
             uint256 _interestAdjustment
         ) = calculateDebtAdjustment(trove.interestOwed, _payment);
-
         trove.principal -= _principalAdjustment;
         trove.interestOwed -= _interestAdjustment;
         interestRateData[trove.interestRate].principal -= _principalAdjustment;
@@ -1331,12 +1345,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _updateDefaultPoolInterest() internal {
         if (totalStakes > 0) {
+            // solhint-disable not-rely-on-time
             uint256 interest = calculateInterestOwed(
                 defaultPool.getPrincipal(),
                 interestRate,
                 defaultPool.getLastInterestUpdatedTime(),
                 block.timestamp
             );
+            // solhint-enable not-rely-on-time
 
             // slither-disable-start divide-before-multiply
             uint256 interestNumerator = interest *
@@ -1367,6 +1383,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (hasPendingRewards(_borrower)) {
             _requireTroveIsActive(_borrower);
 
+            _updateDefaultPoolInterest();
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
@@ -2073,6 +2090,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _principal,
         uint256 _interest
     ) internal {
+        _updateDefaultPoolInterest();
         // slither-disable-next-line calls-loop
         _defaultPool.decreaseDebt(_principal, _interest);
         // slither-disable-next-line calls-loop

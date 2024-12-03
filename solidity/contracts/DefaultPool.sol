@@ -78,6 +78,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         _requireCallerIsTroveManager();
         principal += _principal;
         interest += _interest;
+        // solhint-disable-next-line not-rely-on-time
         lastInterestUpdatedTime = block.timestamp;
         emit DefaultPoolDebtUpdated(principal, interest);
     }
@@ -89,6 +90,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         _requireCallerIsTroveManager();
         principal -= _principal;
         interest -= _interest;
+        // solhint-disable-next-line not-rely-on-time
         lastInterestUpdatedTime = block.timestamp;
         emit DefaultPoolDebtUpdated(principal, interest);
     }

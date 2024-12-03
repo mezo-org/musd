@@ -12,7 +12,6 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {console} from "./debugging/console.sol";
 
 contract BorrowerOperations is
     LiquityBase,
@@ -199,8 +198,10 @@ contract BorrowerOperations is
         // solhint-enable not-rely-on-time
 
         // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
-        uint256 maxBorrowingCapacity = (_assetAmount * vars.price) /
-            (110 * 1e16);
+        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            _assetAmount,
+            vars.price
+        );
         contractsCache.troveManager.setTroveMaxBorrowingCapacity(
             msg.sender,
             maxBorrowingCapacity
@@ -424,6 +425,50 @@ contract BorrowerOperations is
 
         // Send the collateral back to the user
         activePoolCached.sendCollateral(msg.sender, coll);
+    }
+
+    function refinance(uint256 _maxFeePercentage) external payable override {
+        ITroveManager troveManagerCached = troveManager;
+        _requireTroveisActive(troveManagerCached, msg.sender);
+        troveManagerCached.updateSystemAndTroveInterest(msg.sender);
+
+        // TODO Fix hardcoded 50% fee
+        uint16 oldRate = troveManagerCached.getTroveInterestRate(msg.sender);
+        uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
+            msg.sender
+        );
+        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
+        uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
+        uint256 amount = (50 * oldDebt) / 100;
+        uint256 fee = _triggerBorrowingFee(
+            troveManagerCached,
+            musd,
+            amount,
+            _maxFeePercentage
+        );
+        troveManagerCached.increaseTroveDebt(msg.sender, fee);
+
+        emit RefinancingFeePaid(msg.sender, fee);
+
+        troveManagerCached.removeInterestFromRate(oldRate, oldInterest);
+        troveManagerCached.removePrincipalFromRate(oldRate, oldPrincipal);
+        uint16 newRate = troveManagerCached.interestRate();
+        troveManagerCached.addInterestToRate(newRate, oldInterest);
+        troveManagerCached.addPrincipalToRate(newRate, oldPrincipal + fee);
+
+        troveManagerCached.setTroveInterestRate(
+            msg.sender,
+            troveManagerCached.interestRate()
+        );
+
+        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            troveManagerCached.getTroveColl(msg.sender),
+            priceFeed.fetchPrice()
+        );
+        troveManagerCached.setTroveMaxBorrowingCapacity(
+            msg.sender,
+            maxBorrowingCapacity
+        );
     }
 
     function adjustTrove(
@@ -1037,6 +1082,13 @@ contract BorrowerOperations is
         return LiquityMath._computeNominalCR(newColl, newDebt);
     }
 
+    function _calculateMaxBorrowingCapacity(
+        uint256 _coll,
+        uint256 _price
+    ) internal pure returns (uint) {
+        return (_coll * _price) / (110 * 1e16);
+    }
+
     function _requireValidMaxFeePercentage(
         uint256 _maxFeePercentage,
         bool _isRecoveryMode
@@ -1044,7 +1096,7 @@ contract BorrowerOperations is
         if (_isRecoveryMode) {
             require(
                 _maxFeePercentage <= DECIMAL_PRECISION,
-                "Max fee percentage must less than or equal to 100%"
+                "Max fee percentage must be less than or equal to 100%"
             );
         } else {
             require(

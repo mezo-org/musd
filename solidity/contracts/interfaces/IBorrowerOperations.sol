@@ -28,6 +28,7 @@ interface IBorrowerOperations {
         uint8 operation
     );
     event BorrowingFeePaid(address indexed _borrower, uint256 _fee);
+    event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
 
     // --- Functions ---
 
@@ -86,6 +87,8 @@ interface IBorrowerOperations {
     ) external;
 
     function closeTrove() external;
+
+    function refinance(uint256 _maxFeePercentage) external payable;
 
     function adjustTrove(
         uint256 _maxFeePercentage,

@@ -142,6 +142,12 @@ interface ITroveManager {
 
     function addPrincipalToRate(uint16 _rate, uint256 _principal) external;
 
+    function addInterestToRate(uint16 _rate, uint256 _interest) external;
+
+    function removePrincipalFromRate(uint16 _rate, uint256 _principal) external;
+
+    function removeInterestFromRate(uint16 _rate, uint256 _interest) external;
+
     function updateSystemAndTroveInterest(address _borrower) external;
 
     function increaseTroveColl(
@@ -176,6 +182,11 @@ interface ITroveManager {
     function proposeInterestRate(uint16 _newProposedInterestRate) external;
 
     function setMaxInterestRate(uint16 _newMaxInterestRate) external;
+
+    function calculateDebtAdjustment(
+        uint256 _interestOwed,
+        uint256 _payment
+    ) external returns (uint, uint);
 
     function stabilityPool() external view returns (IStabilityPool);
 
@@ -268,9 +279,4 @@ interface ITroveManager {
         external
         view
         returns (InterestRateChange[] memory);
-
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    ) external pure returns (uint, uint);
 }
