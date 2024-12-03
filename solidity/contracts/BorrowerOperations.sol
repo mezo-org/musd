@@ -427,7 +427,7 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(msg.sender, coll);
     }
 
-    function refinance(uint256 _maxFeePercentage) external payable override {
+    function refinance(uint256 _maxFeePercentage) external override {
         ITroveManager troveManagerCached = troveManager;
         _requireTroveisActive(troveManagerCached, msg.sender);
         troveManagerCached.updateSystemAndTroveInterest(msg.sender);

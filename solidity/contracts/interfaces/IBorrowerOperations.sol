@@ -88,7 +88,7 @@ interface IBorrowerOperations {
 
     function closeTrove() external;
 
-    function refinance(uint256 _maxFeePercentage) external payable;
+    function refinance(uint256 _maxFeePercentage) external;
 
     function adjustTrove(
         uint256 _maxFeePercentage,
