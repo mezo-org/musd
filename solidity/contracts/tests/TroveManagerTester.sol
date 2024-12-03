@@ -30,7 +30,7 @@ contract TroveManagerTester is TroveManager {
         _removeTroveOwner(_troveOwner, troveOwnersArrayLength);
     }
 
-    function callUpdateDefaultPoolInterest() external {
+   function callUpdateDefaultPoolInterest() external {
         _updateDefaultPoolInterest();
     }
 
@@ -41,7 +41,7 @@ contract TroveManagerTester is TroveManager {
     function callUpdateSystemInterest(uint16 _rate) external {
         _updateSystemInterest(_rate);
     }
-
+    
     function minutesPassedSinceLastFeeOp() external view returns (uint) {
         return _minutesPassedSinceLastFeeOp();
     }
