@@ -91,7 +91,6 @@ export interface ContractsState {
   }
   pcv: {
     collateral: BeforeAndAfter
-    debt: BeforeAndAfter
     musd: BeforeAndAfter
   }
   stabilityPool: {
