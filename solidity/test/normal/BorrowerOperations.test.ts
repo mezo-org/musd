@@ -6,7 +6,6 @@ import {
   calculateInterestOwed,
   createLiquidationEvent,
   dropPrice,
-  dropPriceAndLiquidate,
   fastForwardTime,
   getEventArgByName,
   getLatestBlockTimestamp,
