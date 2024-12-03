@@ -1461,14 +1461,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         _updateDefaultPoolInterest();
 
         /*
-         * Add distributed coll and debt rewards-per-unit-staked to the running
-         * totals. Division uses a "feedback" * error correction, to keep the
-         * cumulative error low in the running totals L_Collateral, L_Principal,
-         * and L_Interest:
+         * Add distributed collateral, principal, and interest
+         * rewards-per-unit-staked to the running totals. Division uses a
+         * "feedback" error correction, to keep the cumulative error low in
+         * the running totals L_Collateral, L_Principal, and L_Interest:
          *
          * 1) Form numerators which compensate for the floor division errors
-         *    that occurred the last time this * function was called. * 2) Calculate
-         *    "per-unit-staked" ratios.
+         *    that occurred the last time this function was called.
+         * 2) Calculate "per-unit-staked" ratios.
          * 3) Multiply each ratio back by its denominator, to reveal the current
          *    floor division error.
          * 4) Store these errors for use in the next correction when this
