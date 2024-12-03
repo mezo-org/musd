@@ -3258,7 +3258,7 @@ describe("TroveManager in Normal Mode", () => {
       })
     })
 
-    it("update's the default pool's accrued interest", async () => {
+    it("updates the default pool's accrued interest", async () => {
       const interestRate = 100
       await setInterestRate(contracts, council, interestRate)
 
