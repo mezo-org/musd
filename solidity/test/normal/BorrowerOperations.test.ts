@@ -3991,7 +3991,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it.only("refinancing at zero base rate charges minimum fee", async () => {
+    it("refinancing at zero base rate charges minimum fee", async () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
@@ -4003,8 +4003,34 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const BORROWING_FEE_FLOOR =
         await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+
+      // default fee percentage is 20% or 1/5
       const expectedFee =
         (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("5")
+
+      expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
+        expectedFee,
+      )
+    })
+
+    it("charges the correct fee percentage after a fee percentage change", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .setRefinancingFeePercentage(50)
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(to1e18(1))
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const BORROWING_FEE_FLOOR =
+        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+      const expectedFee =
+        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("2")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
