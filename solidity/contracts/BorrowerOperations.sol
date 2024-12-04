@@ -444,6 +444,7 @@ contract BorrowerOperations is
     function refinance(uint256 _maxFeePercentage) external override {
         ITroveManager troveManagerCached = troveManager;
         _requireTroveisActive(troveManagerCached, msg.sender);
+        troveManagerCached.applyPendingRewards(msg.sender);
         troveManagerCached.updateSystemAndTroveInterest(msg.sender);
 
         // TODO Fix hardcoded 50% fee

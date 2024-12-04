@@ -6,6 +6,7 @@ import {
   calculateInterestOwed,
   createLiquidationEvent,
   dropPrice,
+  dropPriceAndLiquidate,
   fastForwardTime,
   getEventArgByName,
   getLatestBlockTimestamp,
@@ -4093,6 +4094,54 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.interestOwed.after).to.equal(expectedInterest)
       expect(carol.trove.collateral.after).to.equal(
         carol.trove.collateral.before,
+      )
+    })
+
+    it("applies pending rewards to the trove", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: dennis.wallet,
+      })
+      await updateTroveSnapshots(contracts, [carol, dennis], "before")
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await dropPriceAndLiquidate(contracts, dennis)
+      await setInterestRate(contracts, council, 0)
+      await updatePendingSnapshot(contracts, carol, "before")
+
+      const tx = await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(to1e18(1))
+
+      const emittedFee = await getEventArgByName(
+        tx,
+        REFINANCING_FEE_PAID,
+        "RefinancingFeePaid",
+        1,
+      )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const now = BigInt(await getLatestBlockTimestamp())
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        now,
+      )
+
+      expect(carol.trove.debt.after).to.equal(
+        carol.trove.debt.before + emittedFee + carol.pending.principal.before,
+      )
+      expect(carol.trove.interestOwed.after).to.equal(
+        expectedInterest + carol.pending.interest.before,
+      )
+      expect(carol.trove.collateral.after).to.equal(
+        carol.trove.collateral.before + carol.pending.collateral.before,
       )
     })
 
