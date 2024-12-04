@@ -1,10 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
+import { Deployment, DeployOptions } from "hardhat-deploy/types"
 
 export function waitConfirmationsNumber(
   hre: HardhatRuntimeEnvironment,
 ): number {
   switch (hre.network.name) {
-    case "mainnet":
     case "sepolia":
       return 6
     default:
@@ -35,5 +35,64 @@ export default async function waitForTransaction(
     await new Promise((resolve) => setTimeout(resolve, 1000))
     // eslint-disable-next-line no-await-in-loop
     currentConfirmations = await transaction.confirmations()
+  }
+}
+
+type PartialDeployOptions = Omit<DeployOptions, "from"> & { from?: string }
+
+export async function setupDeploymentBoilerplate(
+  hre: HardhatRuntimeEnvironment,
+) {
+  const { deployments, getNamedAccounts, helpers, network } = hre
+  const { log } = deployments
+  const { deployer } = await getNamedAccounts()
+  const getValidDeployment = async (
+    contractName: string,
+  ): Promise<Deployment | null> => {
+    const contract = await deployments.getOrNull(contractName)
+    if (contract && helpers.address.isValid(contract.address)) {
+      return contract
+    }
+    return null
+  }
+
+  const defaultDeployOptions: DeployOptions = {
+    from: deployer,
+    log: true,
+    waitConfirmations: waitConfirmationsNumber(hre),
+  }
+
+  const deploy = (name: string, options: PartialDeployOptions) => {
+    log(`Deploying ${name} contract...`)
+    return deployments.deploy(name, { ...defaultDeployOptions, ...options })
+  }
+
+  const getOrDeploy = async (
+    contractName: string,
+    options: PartialDeployOptions = {},
+  ) => {
+    const deployment = await getValidDeployment(contractName)
+    if (deployment) {
+      log(`Using ${contractName} at ${deployment.address}`)
+    } else {
+      await deploy(contractName, {
+        ...{
+          contract: contractName,
+          args: [],
+        },
+        ...options,
+      })
+    }
+  }
+
+  return {
+    deploy,
+    deployer,
+    deployments,
+    getOrDeploy,
+    getValidDeployment,
+    isHardhatNetwork: network.name === "hardhat",
+    log,
+    network,
   }
 }
