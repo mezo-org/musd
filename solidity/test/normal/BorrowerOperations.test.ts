@@ -4038,6 +4038,55 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it.only("includes pending rewards when calculating the fee", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: dennis.wallet,
+      })
+      await updateTroveSnapshots(contracts, [carol, dennis], "before")
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await dropPriceAndLiquidate(contracts, dennis)
+      await setInterestRate(contracts, council, 0)
+      await updatePendingSnapshot(contracts, carol, "before")
+
+      const tx = await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(to1e18(1))
+
+      const BORROWING_FEE_FLOOR =
+        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+
+      const emittedFee = await getEventArgByName(
+        tx,
+        REFINANCING_FEE_PAID,
+        "RefinancingFeePaid",
+        1,
+      )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const now = BigInt(await getLatestBlockTimestamp())
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        now,
+      )
+      // default fee percentage is 20% or 1/5
+      const expectedPrincipal =
+        carol.trove.debt.before +
+        carol.pending.principal.before +
+        carol.trove.interestOwed.before +
+        carol.pending.interest.before
+      const expectedFee =
+        (BORROWING_FEE_FLOOR * expectedPrincipal) / to1e18("5")
+      expect(emittedFee).to.equal(expectedFee)
+    })
+
     it("emits RefinancingFeePaid event with the correct fee value", async () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
