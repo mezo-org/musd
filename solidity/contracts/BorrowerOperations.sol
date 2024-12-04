@@ -371,10 +371,12 @@ contract BorrowerOperations is
         troveManagerCached.applyPendingRewards(msg.sender);
 
         uint256 coll = troveManagerCached.getTroveColl(msg.sender);
-        uint256 debt = troveManagerCached.getTroveDebt(msg.sender);
+        uint256 principal = troveManagerCached.getTrovePrincipal(msg.sender);
         uint256 interestOwed = troveManagerCached.getTroveInterestOwed(
             msg.sender
         );
+        uint256 debt = principal + interestOwed;
+        uint16 rate = troveManagerCached.getTroveInterestRate(msg.sender);
 
         _requireSufficientMUSDBalance(
             musdTokenCached,
@@ -408,6 +410,15 @@ contract BorrowerOperations is
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
         activePoolCached.decreaseDebt(
             debt - MUSD_GAS_COMPENSATION - interestOwed,
+            interestOwed
+        );
+
+        troveManagerCached.removePrincipalFromRate(
+            rate,
+            principal
+        );
+        troveManagerCached.removeInterestFromRate(
+            rate,
             interestOwed
         );
 
