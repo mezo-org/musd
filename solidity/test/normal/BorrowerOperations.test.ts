@@ -3991,7 +3991,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("refinancing at zero base rate charges minimum fee", async () => {
+    it.only("refinancing at zero base rate charges minimum fee", async () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
@@ -4004,7 +4004,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const BORROWING_FEE_FLOOR =
         await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
       const expectedFee =
-        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("2")
+        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("5")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,

@@ -72,7 +72,7 @@ contract BorrowerOperations is
     string public constant name = "BorrowerOperations";
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
-    uint8 public refinanceFeePercentage = 20;
+    uint8 public refinancingFeePercentage = 20;
 
     // --- Connected contract declarations ---
 
@@ -451,7 +451,7 @@ contract BorrowerOperations is
         );
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
         uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 amount = (50 * oldDebt) / 100;
+        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(
             troveManagerCached,
             musd,
@@ -598,7 +598,7 @@ contract BorrowerOperations is
         onlyOwnerOrGovernance
     {
         require(_refinanceFeePercentage <= 100, "BorrowerOps: Refinancing fee percentage must be <= 100");
-        refinanceFeePercentage = _refinanceFeePercentage;
+        refinancingFeePercentage = _refinanceFeePercentage;
     }
 
     function getCompositeDebt(
