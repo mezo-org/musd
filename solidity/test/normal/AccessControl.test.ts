@@ -5,6 +5,7 @@ import {
   User,
   openTrove,
   setupTests,
+  dropPriceAndLiquidate,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -60,6 +61,13 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
           .connect(alice.wallet)
           .burnDebtFromPCV(to1e18("2")),
       ).to.be.revertedWith("BorrowerOperations: caller must be PCV")
+    })
+
+    it("refinance(): reverts when called on a trove that is not active", async () => {
+      await dropPriceAndLiquidate(contracts, carol)
+      await expect(
+        contracts.borrowerOperations.connect(carol.wallet).refinance(to1e18(1)),
+      ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
     })
   })
 

@@ -157,7 +157,6 @@ export async function updatePCVSnapshot(
   state.pcv.musd[checkPoint] = await contracts.musd.balanceOf(
     await contracts.pcv.getAddress(),
   )
-  state.pcv.debt[checkPoint] = await contracts.pcv.debtToPay()
 }
 
 export async function updateInterestRateDataSnapshot(

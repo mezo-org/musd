@@ -726,6 +726,25 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         interestRateData[_rate].principal += _principal;
     }
 
+    function addInterestToRate(uint16 _rate, uint256 _interest) external {
+        interestRateData[_rate].interest += _interest;
+    }
+
+    // Used when refinancing to move to a new interest rate
+    function removePrincipalFromRate(
+        uint16 _rate,
+        uint256 _principal
+    ) external {
+        _requireCallerIsBorrowerOperations();
+        interestRateData[_rate].principal -= _principal;
+    }
+
+    // Used when refinancing to move to a new interest rate
+    function removeInterestFromRate(uint16 _rate, uint256 _interest) external {
+        _requireCallerIsBorrowerOperations();
+        interestRateData[_rate].interest -= _interest;
+    }
+
     function getTroveOwnersCount() external view override returns (uint) {
         return TroveOwners.length;
     }
@@ -1331,12 +1350,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function _updateDefaultPoolInterest() internal {
         if (totalStakes > 0) {
+            // solhint-disable not-rely-on-time
             uint256 interest = calculateInterestOwed(
                 defaultPool.getPrincipal(),
                 interestRate,
                 defaultPool.getLastInterestUpdatedTime(),
                 block.timestamp
             );
+            // solhint-enable not-rely-on-time
 
             // slither-disable-start divide-before-multiply
             uint256 interestNumerator = interest *

@@ -9,3 +9,7 @@ export const LIQUIDATION_ABI = [
 export const BORROWING_FEE_PAID = [
   "event BorrowingFeePaid(address indexed _borrower, uint256 _MUSDFee)",
 ]
+
+export const REFINANCING_FEE_PAID = [
+  "event RefinancingFeePaid(address indexed _borrower, uint256 _fee)",
+]
