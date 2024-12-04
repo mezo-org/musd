@@ -71,6 +71,9 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
 
+    // refinancing fee is always a percentage of the borrowing (issuance) fee
+    uint8 public refinanceFeePercentage = 20;
+
     // --- Connected contract declarations ---
 
     ITroveManager public troveManager;
@@ -83,6 +86,7 @@ contract BorrowerOperations is
     ICollSurplusPool public collSurplusPool;
 
     IMUSD public musd;
+    IPCV public pcv;
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
@@ -104,6 +108,14 @@ contract BorrowerOperations is
             "BorrowerOperations: caller must be PCV"
         );
         musd.burn(pcvAddress, _musdToBurn);
+    }
+
+    modifier onlyOwnerOrGovernance() {
+        require(
+            msg.sender == owner() || msg.sender == pcv.council() || msg.sender == pcv.treasury(),
+            "TroveManager: Only governance can call this function"
+        );
+        _;
     }
 
     // --- Borrower Trove Operations ---
@@ -542,6 +554,7 @@ contract BorrowerOperations is
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         musd = IMUSD(_musdTokenAddress);
+        pcv = IPCV(_pcvAddress);
         // slither-disable-next-line missing-zero-check
         pcvAddress = _pcvAddress;
         // slither-disable-next-line missing-zero-check
@@ -577,6 +590,15 @@ contract BorrowerOperations is
         emit CollateralAddressChanged(_collateralAddress);
 
         renounceOwnership();
+    }
+
+    function setRefinancingFeePercentage(uint8 _refinanceFeePercentage)
+        external
+        override
+        onlyOwnerOrGovernance
+    {
+        require(_refinanceFeePercentage <= 100, "BorrowerOps: Refinancing fee percentage must be <= 100");
+        refinanceFeePercentage = _refinanceFeePercentage;
     }
 
     function getCompositeDebt(

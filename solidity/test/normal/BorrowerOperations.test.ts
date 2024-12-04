@@ -4116,4 +4116,18 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
     })
   })
+
+  describe.only("setRefinancingFeePercentage()", () => {
+    context("Expected Reverts", () => {
+      it("reverts if fee percentage is > 100%", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .setRefinancingFeePercentage(101),
+        ).to.be.revertedWith(
+          "BorrowerOps: Refinancing fee percentage must be <= 100",
+        )
+      })
+    })
+  })
 })
