@@ -4003,6 +4003,32 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const BORROWING_FEE_FLOOR =
         await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+
+      // default fee percentage is 20% or 1/5
+      const expectedFee =
+        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("5")
+
+      expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
+        expectedFee,
+      )
+    })
+
+    it("charges the correct fee percentage after a fee percentage change", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .setRefinancingFeePercentage(50)
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(to1e18(1))
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const BORROWING_FEE_FLOOR =
+        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
       const expectedFee =
         (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("2")
 
@@ -4113,6 +4139,20 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(carol.wallet)
             .refinance(to1e18("0.01")),
         ).to.be.revertedWith("Fee exceeded provided maximum")
+      })
+    })
+  })
+
+  describe("setRefinancingFeePercentage()", () => {
+    context("Expected Reverts", () => {
+      it("reverts if fee percentage is > 100%", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .setRefinancingFeePercentage(101),
+        ).to.be.revertedWith(
+          "BorrowerOps: Refinancing fee percentage must be <= 100",
+        )
       })
     })
   })

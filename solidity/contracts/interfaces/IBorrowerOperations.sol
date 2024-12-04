@@ -46,6 +46,10 @@ interface IBorrowerOperations {
         address _troveManagerAddress
     ) external;
 
+    function setRefinancingFeePercentage(
+        uint8 _refinanceFeePercentage
+    ) external;
+
     function openTrove(
         uint256 _maxFeePercentage,
         uint256 _debtAmount,

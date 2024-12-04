@@ -71,6 +71,9 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
 
+    // refinancing fee is always a percentage of the borrowing (issuance) fee
+    uint8 public refinancingFeePercentage = 20;
+
     // --- Connected contract declarations ---
 
     ITroveManager public troveManager;
@@ -83,9 +86,20 @@ contract BorrowerOperations is
     ICollSurplusPool public collSurplusPool;
 
     IMUSD public musd;
+    IPCV public pcv;
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
+
+    modifier onlyOwnerOrGovernance() {
+        require(
+            msg.sender == owner() ||
+                msg.sender == pcv.council() ||
+                msg.sender == pcv.treasury(),
+            "BorrowerOps: Only governance can call this function"
+        );
+        _;
+    }
 
     constructor() Ownable(msg.sender) {}
 
@@ -439,7 +453,7 @@ contract BorrowerOperations is
         );
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
         uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 amount = (50 * oldDebt) / 100;
+        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(
             troveManagerCached,
             musd,
@@ -542,6 +556,7 @@ contract BorrowerOperations is
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         musd = IMUSD(_musdTokenAddress);
+        pcv = IPCV(_pcvAddress);
         // slither-disable-next-line missing-zero-check
         pcvAddress = _pcvAddress;
         // slither-disable-next-line missing-zero-check
@@ -577,6 +592,16 @@ contract BorrowerOperations is
         emit CollateralAddressChanged(_collateralAddress);
 
         renounceOwnership();
+    }
+
+    function setRefinancingFeePercentage(
+        uint8 _refinanceFeePercentage
+    ) external override onlyOwnerOrGovernance {
+        require(
+            _refinanceFeePercentage <= 100,
+            "BorrowerOps: Refinancing fee percentage must be <= 100"
+        );
+        refinancingFeePercentage = _refinanceFeePercentage;
     }
 
     function getCompositeDebt(

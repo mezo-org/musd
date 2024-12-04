@@ -69,6 +69,16 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
         contracts.borrowerOperations.connect(carol.wallet).refinance(to1e18(1)),
       ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
     })
+
+    it("setRefinancingFeePercentage(): reverts if called by anyone other than governance", async () => {
+      await expect(
+        contracts.borrowerOperations
+          .connect(alice.wallet)
+          .setRefinancingFeePercentage(1),
+      ).to.be.revertedWith(
+        "BorrowerOps: Only governance can call this function",
+      )
+    })
   })
 
   describe("TroveManager", () => {
