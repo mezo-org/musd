@@ -91,6 +91,16 @@ contract BorrowerOperations is
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
+    modifier onlyOwnerOrGovernance() {
+        require(
+            msg.sender == owner() ||
+                msg.sender == pcv.council() ||
+                msg.sender == pcv.treasury(),
+            "BorrowerOps: Only governance can call this function"
+        );
+        _;
+    }
+
     constructor() Ownable(msg.sender) {}
 
     // Calls on PCV behalf
@@ -108,14 +118,6 @@ contract BorrowerOperations is
             "BorrowerOperations: caller must be PCV"
         );
         musd.burn(pcvAddress, _musdToBurn);
-    }
-
-    modifier onlyOwnerOrGovernance() {
-        require(
-            msg.sender == owner() || msg.sender == pcv.council() || msg.sender == pcv.treasury(),
-            "BorrowerOps: Only governance can call this function"
-        );
-        _;
     }
 
     // --- Borrower Trove Operations ---
@@ -592,12 +594,13 @@ contract BorrowerOperations is
         renounceOwnership();
     }
 
-    function setRefinancingFeePercentage(uint8 _refinanceFeePercentage)
-        external
-        override
-        onlyOwnerOrGovernance
-    {
-        require(_refinanceFeePercentage <= 100, "BorrowerOps: Refinancing fee percentage must be <= 100");
+    function setRefinancingFeePercentage(
+        uint8 _refinanceFeePercentage
+    ) external override onlyOwnerOrGovernance {
+        require(
+            _refinanceFeePercentage <= 100,
+            "BorrowerOps: Refinancing fee percentage must be <= 100"
+        );
         refinancingFeePercentage = _refinanceFeePercentage;
     }
 
