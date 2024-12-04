@@ -4117,7 +4117,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe.only("setRefinancingFeePercentage()", () => {
+  describe("setRefinancingFeePercentage()", () => {
     context("Expected Reverts", () => {
       it("reverts if fee percentage is > 100%", async () => {
         await expect(

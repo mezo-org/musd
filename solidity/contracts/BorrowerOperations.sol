@@ -113,7 +113,7 @@ contract BorrowerOperations is
     modifier onlyOwnerOrGovernance() {
         require(
             msg.sender == owner() || msg.sender == pcv.council() || msg.sender == pcv.treasury(),
-            "TroveManager: Only governance can call this function"
+            "BorrowerOps: Only governance can call this function"
         );
         _;
     }
