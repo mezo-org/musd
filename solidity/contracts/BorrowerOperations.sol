@@ -447,7 +447,6 @@ contract BorrowerOperations is
         troveManagerCached.applyPendingRewards(msg.sender);
         troveManagerCached.updateSystemAndTroveInterest(msg.sender);
 
-        // TODO Fix hardcoded 50% fee
         uint16 oldRate = troveManagerCached.getTroveInterestRate(msg.sender);
         uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
             msg.sender
