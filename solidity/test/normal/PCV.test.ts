@@ -9,7 +9,8 @@ import {
   updateWalletSnapshot,
   User,
 } from "../helpers"
-import { to1e18, ZERO_ADDRESS } from "../utils"
+import { to1e18 } from "../utils"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 import { PCV } from "../../typechain"
 
 describe("PCV", () => {

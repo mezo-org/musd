@@ -3,7 +3,8 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
 import { assert, expect } from "chai"
-import { GOVERNANCE_TIME_DELAY, to1e18, ZERO_ADDRESS } from "../utils"
+import { GOVERNANCE_TIME_DELAY, to1e18 } from "../utils"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 import {
   AddCollParams,
   Contracts,
