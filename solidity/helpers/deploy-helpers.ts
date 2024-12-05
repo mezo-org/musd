@@ -1,5 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { Deployment, DeployOptions } from "hardhat-deploy/types"
+import { deployments, ethers, helpers } from "hardhat"
+import type { BaseContract } from "ethers"
 
 function waitConfirmationsNumber(networkName: string): number {
   switch (networkName) {
@@ -38,10 +40,27 @@ export default async function waitForTransaction(
 
 type PartialDeployOptions = Omit<DeployOptions, "from"> & { from?: string }
 
+const { getUnnamedSigners } = helpers.signers
+
+/**
+ * Get instance of a contract from Hardhat Deployments.
+ * @param deploymentName Name of the contract deployment.
+ * @returns Deployed Ethers contract instance.
+ */
+// eslint-disable-next-line import/prefer-default-export
+export async function getDeployedContract<T extends BaseContract>(
+  deploymentName: string,
+): Promise<T> {
+  const { address, abi } = await deployments.get(deploymentName)
+  // Use default unnamed signer from index 0 to initialize the contract runner.
+  const [defaultSigner] = await getUnnamedSigners()
+  return new ethers.BaseContract(address, abi, defaultSigner) as T
+}
+
 export async function setupDeploymentBoilerplate(
   hre: HardhatRuntimeEnvironment,
 ) {
-  const { deployments, getNamedAccounts, helpers, network } = hre
+  const { getNamedAccounts, network } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 

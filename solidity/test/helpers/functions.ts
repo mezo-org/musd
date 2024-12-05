@@ -15,12 +15,7 @@ import {
 } from "./interfaces"
 import { LIQUIDATION_ABI } from "./abi"
 import { fastForwardTime } from "./time"
-import {
-  beforeAndAfter,
-  connectContracts,
-  getAddresses,
-  loadTestSetup,
-} from "./context"
+import { beforeAndAfter, getAddresses, loadTestSetup } from "./context"
 
 export const NO_GAS = {
   maxFeePerGas: 0,
@@ -774,8 +769,6 @@ export async function setBaseRate(contracts: Contracts, rate: bigint) {
 export async function setupTests() {
   const testSetup = await loadTestSetup()
   const { contracts, state } = testSetup
-
-  await connectContracts(contracts, testSetup.users)
 
   // users
   const {
