@@ -17,6 +17,9 @@ interface IBorrowerOperations {
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event PCVAddressChanged(address _pcvAddress);
     event CollateralAddressChanged(address _newCollateralAddress);
+    event InterestRateManagerAddressChanged(
+        address _interestRateManagerAddress
+    );
 
     event TroveCreated(address indexed _borrower, uint256 arrayIndex);
     event TroveUpdated(
@@ -43,7 +46,8 @@ interface IBorrowerOperations {
         address _priceFeedAddress,
         address _stabilityPoolAddress,
         address _sortedTrovesAddress,
-        address _troveManagerAddress
+        address _troveManagerAddress,
+        address _interestRateManagerAddress
     ) external;
 
     function setRefinancingFeePercentage(
