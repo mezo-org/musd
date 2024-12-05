@@ -90,7 +90,7 @@ contract BorrowerOperations is
 
     IMUSD public musd;
     IPCV public pcv;
-    InterestRateManager interestRateManager;
+    InterestRateManager public interestRateManager;
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
@@ -660,7 +660,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        (vars.principalAdjustment, vars.interestAdjustment) = TroveMath
+        (vars.principalAdjustment, vars.interestAdjustment) = contractsCache.troveManager.troveMath()
             .calculateDebtAdjustment(vars.interestOwed, _mUSDChange);
 
         vars.price = priceFeed.fetchPrice();

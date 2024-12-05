@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 
 import "./IStabilityPool.sol";
 import "./IPCV.sol";
+import {TroveMath} from "../dependencies/TroveMath.sol";
 
 // Common interface for the Trove Manager.
 interface ITroveManager {
@@ -37,6 +38,7 @@ interface ITroveManager {
     event InterestRateManagerAddressChanged(
         address _interestRateManagerAddress
     );
+    event TroveMathAddressChanged(address _troveMathAddress);
 
     event Liquidation(
         uint256 _liquidatedPrincipal,
@@ -97,7 +99,8 @@ interface ITroveManager {
         address _priceFeedAddress,
         address _sortedTrovesAddress,
         address _stabilityPoolAddress,
-        address _interestRateManagerAddress
+        address _interestRateManagerAddress,
+        address _troveMathAddress
     ) external;
 
     function liquidate(address _borrower) external;
@@ -173,6 +176,8 @@ interface ITroveManager {
     function stabilityPool() external view returns (IStabilityPool);
 
     function pcv() external view returns (IPCV);
+
+    function troveMath() external view returns (TroveMath);
 
     function getTroveOwnersCount() external view returns (uint);
 

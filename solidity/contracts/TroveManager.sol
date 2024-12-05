@@ -152,6 +152,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     InterestRateManager public interestRateManager;
 
+    TroveMath public troveMath;
+
     // --- Data structures ---
 
     /*
@@ -234,7 +236,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _priceFeedAddress,
         address _sortedTrovesAddress,
         address _stabilityPoolAddress,
-        address _interestRateManagerAddress
+        address _interestRateManagerAddress,
+        address _troveMathAddress
     ) external override onlyOwner {
         checkContract(_activePoolAddress);
         checkContract(_borrowerOperationsAddress);
@@ -247,6 +250,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         checkContract(_sortedTrovesAddress);
         checkContract(_stabilityPoolAddress);
         checkContract(_interestRateManagerAddress);
+        checkContract(_troveMathAddress);
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
@@ -261,6 +265,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         pcv = IPCV(_pcvAddress);
         interestRateManager = InterestRateManager(_interestRateManagerAddress);
+        troveMath = TroveMath(_troveMathAddress);
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -273,6 +278,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
+        emit TroveMathAddressChanged(_troveMathAddress);
 
         renounceOwnership();
     }
@@ -1055,7 +1061,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         (
             uint256 _principalAdjustment,
             uint256 _interestAdjustment
-        ) = TroveMath.calculateDebtAdjustment(trove.interestOwed, _payment);
+        ) = troveMath.calculateDebtAdjustment(trove.interestOwed, _payment);
 
         trove.principal -= _principalAdjustment;
         trove.interestOwed -= _interestAdjustment;
@@ -1467,7 +1473,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             singleLiquidation.principalToRedistribute,
             singleLiquidation.interestToRedistribute,
             singleLiquidation.collToRedistribute
-        ) = _getOffsetAndRedistributionVals(
+        ) = troveMath.getOffsetAndRedistributionVals(
             singleLiquidation.entireTrovePrincipal,
             singleLiquidation.entireTroveInterest,
             collToLiquidate,
@@ -1706,7 +1712,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 singleLiquidation.principalToRedistribute,
                 singleLiquidation.interestToRedistribute,
                 singleLiquidation.collToRedistribute
-            ) = _getOffsetAndRedistributionVals(
+            ) = troveMath.getOffsetAndRedistributionVals(
                 singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.entireTroveInterest,
                 vars.collToLiquidate,
@@ -2168,58 +2174,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             Troves[_borrower].status == Status.active,
             "TroveManager: Trove does not exist or is closed"
         );
-    }
-
-    /* In a full liquidation, returns the values for a trove's coll and debt to be offset, and coll and debt to be
-     * redistributed to active troves.
-     */
-    function _getOffsetAndRedistributionVals(
-        uint256 _principal,
-        uint256 _interest,
-        uint256 _coll,
-        uint256 _MUSDInStabPool
-    )
-        internal
-        pure
-        returns (
-            uint256 debtToOffset,
-            uint256 collToSendToSP,
-            uint256 principalToRedistribute,
-            uint256 interestToRedistribute,
-            uint256 collToRedistribute
-        )
-    {
-        if (_MUSDInStabPool > 0) {
-            /*
-             * Offset as much debt & collateral as possible against the Stability Pool, and redistribute the remainder
-             * between all active troves.
-             *
-             *  If the trove's debt is larger than the deposited mUSD in the Stability Pool:
-             *
-             *  - Offset an amount of the trove's debt equal to the mUSD in the Stability Pool
-             *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
-             *
-             */
-            uint256 interestToOffset = LiquityMath._min(
-                _interest,
-                _MUSDInStabPool
-            );
-            uint256 principalToOffset = LiquityMath._min(
-                _principal,
-                _MUSDInStabPool - interestToOffset
-            );
-            debtToOffset = principalToOffset + interestToOffset;
-            collToSendToSP = (_coll * debtToOffset) / (_principal + _interest);
-            interestToRedistribute = _interest - interestToOffset;
-            principalToRedistribute = _principal - principalToOffset;
-            collToRedistribute = _coll - collToSendToSP;
-        } else {
-            debtToOffset = 0;
-            collToSendToSP = 0;
-            principalToRedistribute = _principal;
-            interestToRedistribute = _interest;
-            collToRedistribute = _coll;
-        }
     }
 
     function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
