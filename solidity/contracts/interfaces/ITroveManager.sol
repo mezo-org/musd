@@ -270,11 +270,6 @@ interface ITroveManager {
 
     function interestRate() external view returns (uint16);
 
-    function getInterestRateHistory()
-        external
-        view
-        returns (InterestRateChange[] memory);
-
     function calculateDebtAdjustment(
         uint256 _interestOwed,
         uint256 _payment

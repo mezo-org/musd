@@ -215,9 +215,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
-    // Array of historical interest rate changes
-    InterestRateChange[] public interestRateHistory;
-
     // Current interest rate per year in basis points
     uint16 public interestRate;
 
@@ -777,14 +774,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
     }
 
-    function getInterestRateHistory()
-        external
-        view
-        returns (InterestRateChange[] memory)
-    {
-        return interestRateHistory;
-    }
-
     // --- Borrowing fee functions ---
 
     function getBorrowingFee(
@@ -1181,9 +1170,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
         _updateDefaultPoolInterest();
         interestRate = _newInterestRate;
-        interestRateHistory.push(
-            InterestRateChange(_newInterestRate, block.number)
-        );
         emit InterestRateUpdated(_newInterestRate);
     }
 

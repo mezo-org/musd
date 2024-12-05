@@ -3606,27 +3606,5 @@ describe("TroveManager in Normal Mode", () => {
         await contracts.troveManager.hasPendingRewards(alice.address),
       ).to.equal(false)
     })
-
-    it("getInterestRateHistory(): Returns the interest rate values and the blocks they were set", async () => {
-      const blockNumbers = []
-
-      // Add three interest rates to the history
-      for (let i = 1; i <= 3; i++) {
-        await contracts.troveManager
-          .connect(council.wallet)
-          .proposeInterestRate(i)
-        await fastForwardTime(7 * 24 * 60 * 60) // 7 days in seconds
-        await contracts.troveManager
-          .connect(council.wallet)
-          .approveInterestRate()
-        blockNumbers.push(await ethers.provider.getBlockNumber())
-      }
-
-      const history = await contracts.troveManager.getInterestRateHistory()
-      for (let i = 0; i < 3; i++) {
-        expect(history[i].interestRate).to.equal(i + 1)
-        expect(history[i].blockNumber).to.equal(blockNumbers[i])
-      }
-    })
   })
 })
