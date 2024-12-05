@@ -34,6 +34,7 @@ import {
   withdrawCollateralGainToTroves,
 } from "../helpers"
 import { to1e18 } from "../utils"
+import { MAX_BYTES_32 } from "../../helpers/constants"
 
 describe("StabilityPool in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -378,11 +379,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       it("reverts if user tries to provide 2^256-1 mUSD, which exceeds their balance", async () => {
         // Alice attempts to deposit 2^256-1 MUSD
-        const maxBytes32 = BigInt(
-          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-        )
-
-        await expect(provideToSP(contracts, alice, maxBytes32)).to.be.reverted
+        await expect(provideToSP(contracts, alice, MAX_BYTES_32)).to.be.reverted
       })
 
       it("providing $0 reverts", async () => {
@@ -755,9 +752,6 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("Request to withdraw 2^256-1 mUSD only withdraws the caller's compounded deposit", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
-      const maxBytes32 = BigInt(
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      )
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
       await updateWalletSnapshot(contracts, whale, "before")
@@ -765,7 +759,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await contracts.stabilityPool
         .connect(whale.wallet)
-        .withdrawFromSP(maxBytes32)
+        .withdrawFromSP(MAX_BYTES_32)
 
       await updateStabilityPoolSnapshot(contracts, state, "after")
       await updateWalletSnapshot(contracts, whale, "after")

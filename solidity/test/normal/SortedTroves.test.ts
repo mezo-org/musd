@@ -1,6 +1,7 @@
 import { expect } from "chai"
 import { Contracts, User, openTrove, openTroves, setupTests } from "../helpers"
 import { to1e18 } from "../utils"
+import { MAX_BYTES_32 } from "../../helpers/constants"
 
 describe("SortedTroves", () => {
   let alice: User
@@ -90,11 +91,7 @@ describe("SortedTroves", () => {
 
   describe("getMaxSize()", () => {
     it("Returns the maximum list size", async () => {
-      const maxBytes32 = BigInt(
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      )
-
-      expect(await contracts.sortedTroves.getMaxSize()).to.equal(maxBytes32)
+      expect(await contracts.sortedTroves.getMaxSize()).to.equal(MAX_BYTES_32)
     })
   })
 
