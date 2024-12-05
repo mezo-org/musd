@@ -6,10 +6,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getOrDeploy, isHardhatNetwork } =
     await setupDeploymentBoilerplate(hre)
 
-  await getOrDeploy("TroveManager")
-  if (isHardhatNetwork) {
-    await getOrDeploy("TroveManagerTester")
-  }
+  await getOrDeploy(isHardhatNetwork ? "TroveManagerTester" : "TroveManager")
 }
 
 export default func
