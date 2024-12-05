@@ -46,6 +46,7 @@ export async function setupDeploymentBoilerplate(
   const { deployments, getNamedAccounts, helpers, network } = hre
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
+
   const getValidDeployment = async (
     contractName: string,
   ): Promise<Deployment | null> => {
