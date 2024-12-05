@@ -77,10 +77,8 @@ export async function setupDeploymentBoilerplate(
       log(`Using ${contractName} at ${deployment.address}`)
     } else {
       await deploy(contractName, {
-        ...{
-          contract: contractName,
-          args: [],
-        },
+        contract: contractName,
+        args: [],
         ...options,
       })
     }

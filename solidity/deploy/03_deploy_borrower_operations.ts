@@ -4,7 +4,6 @@ import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getOrDeploy } = await setupDeploymentBoilerplate(hre)
-
   await getOrDeploy("BorrowerOperations")
 }
 
