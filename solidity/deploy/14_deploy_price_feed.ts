@@ -1,36 +1,16 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { waitConfirmationsNumber } from "../helpers/deploy-helpers"
+import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployments, helpers, getNamedAccounts, network } = hre
-  const { log } = deployments
-  const { deployer } = await getNamedAccounts()
+  const { deploy, getOrDeploy, isHardhatNetwork } =
+    await setupDeploymentBoilerplate(hre)
 
-  const deployment = await deployments.getOrNull("PriceFeed")
-  if (deployment && helpers.address.isValid(deployment.address)) {
-    log(`Using PriceFeed at ${deployment.address}`)
-  } else {
-    log("Deploying PriceFeed contract...")
+  await getOrDeploy("PriceFeed")
 
-    await deployments.deploy("PriceFeed", {
+  if (isHardhatNetwork) {
+    await deploy("UnconnectedPriceFeed", {
       contract: "PriceFeed",
-      args: [],
-      from: deployer,
-      log: true,
-      waitConfirmations: waitConfirmationsNumber(hre),
-    })
-  }
-
-  if (network.name === "hardhat") {
-    log("Deploying Unconnected PriceFeed contract...")
-
-    await deployments.deploy("UnconnectedPriceFeed", {
-      contract: "PriceFeed",
-      args: [],
-      from: deployer,
-      log: true,
-      waitConfirmations: waitConfirmationsNumber(hre),
     })
   }
 }
