@@ -6,12 +6,12 @@
 
 pragma solidity ^0.8.24;
 
-import "./InterestRateManager.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/TroveMath.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
+import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
@@ -150,7 +150,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
-    InterestRateManager public interestRateManager;
+    IInterestRateManager public interestRateManager;
 
     TroveMath public troveMath;
 
@@ -264,7 +264,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         musdToken = IMUSD(_musdTokenAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         pcv = IPCV(_pcvAddress);
-        interestRateManager = InterestRateManager(_interestRateManagerAddress);
+        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         troveMath = TroveMath(_troveMathAddress);
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
@@ -1028,7 +1028,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _updateSystemInterest(uint16 _rate) internal {
-        InterestRateInfo memory _interestRateData = interestRateManager
+        IInterestRateManager.InterestRateInfo memory _interestRateData = interestRateManager
             .getInterestRateData(_rate);
         // solhint-disable not-rely-on-time
         uint256 interest = interestRateManager.calculateInterestOwed(

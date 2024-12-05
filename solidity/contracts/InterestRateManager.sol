@@ -2,14 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {IInterestRateManager} from "./interfaces/IInterestRateManager.sol";
 
-struct InterestRateInfo {
-    uint256 principal;
-    uint256 interest;
-    uint256 lastUpdatedTime;
-}
 
-contract InterestRateManager is Ownable {
+
+contract InterestRateManager is Ownable, IInterestRateManager {
     // Current interest rate per year in basis points
     uint16 public interestRate;
 
