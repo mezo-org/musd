@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.24;
 
+import "./debugging/console.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
@@ -454,6 +455,9 @@ contract BorrowerOperations is
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
         uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
         uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
+        console.log("oldDebt", oldDebt);
+        console.log("oldInterest", oldInterest);
+        console.log("oldPrincipal", oldPrincipal);
         uint256 fee = _triggerBorrowingFee(
             troveManagerCached,
             musd,

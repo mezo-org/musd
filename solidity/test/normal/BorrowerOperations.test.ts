@@ -4083,6 +4083,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         carol.pending.principal.before +
         carol.pending.interest.before
 
+      console.log("carolTotalDebt", carolTotalDebt)
+      console.log(carolInterest)
+      console.log(carol.trove.debt.before + carol.pending.principal.before)
+
       const BORROWING_FEE_FLOOR =
         await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
 
