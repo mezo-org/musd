@@ -1,6 +1,11 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { getDeployedContract } from "../helpers/deploy-helpers"
+import {
+  getDeployedContract,
+  setupDeploymentBoilerplate,
+} from "../helpers/deploy-helpers"
+
+import { MAX_BYTES_32, ZERO_ADDRESS } from "../helpers/constants"
 
 import {
   ActivePool,
@@ -10,37 +15,48 @@ import {
   GasPool,
   HintHelpers,
   MockAggregator,
-  MUSDTester,
   PCV,
   PriceFeed,
   SortedTroves,
   StabilityPool,
+  TroveManager,
   TroveManagerTester,
 } from "../typechain"
 
-const maxBytes32 = `0x${"f".repeat(64)}`
-export const ZERO_ADDRESS = `0x${"0".repeat(40)}`
-
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await hre.helpers.signers.getNamedSigners()
+  const { isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+
   const activePool: ActivePool = await getDeployedContract("ActivePool")
+
   const borrowerOperations: BorrowerOperations =
     await getDeployedContract("BorrowerOperations")
+
   const collSurplusPool: CollSurplusPool =
     await getDeployedContract("CollSurplusPool")
+
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
   const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
+
+  // TODO: replace with a real aggregator
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
-  const musd: MUSDTester = await getDeployedContract("MUSDTester")
+
+  const musd = isHardhatNetwork
+    ? await getDeployedContract("MUSDTester")
+    : await getDeployedContract("MUSD")
+
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
+
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
-  const troveManager: TroveManagerTester =
-    await getDeployedContract("TroveManagerTester")
+
+  const troveManager: TroveManager | TroveManagerTester = isHardhatNetwork
+    ? await getDeployedContract("TroveManagerTester")
+    : await getDeployedContract("TroveManager")
 
   await stabilityPool
     .connect(deployer)
@@ -135,11 +151,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await sortedTroves
     .connect(deployer)
     .setParams(
-      maxBytes32,
+      MAX_BYTES_32,
       await troveManager.getAddress(),
       await borrowerOperations.getAddress(),
     )
 
+  // TODO: replace with a real aggregator
   await priceFeed.connect(deployer).setOracle(await mockAggregator.getAddress())
 }
 
