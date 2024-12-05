@@ -1,10 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { Deployment, DeployOptions } from "hardhat-deploy/types"
 
-export function waitConfirmationsNumber(
-  hre: HardhatRuntimeEnvironment,
-): number {
-  switch (hre.network.name) {
+function waitConfirmationsNumber(networkName: string): number {
+  switch (networkName) {
     case "sepolia":
       return 6
     default:
@@ -60,7 +58,7 @@ export async function setupDeploymentBoilerplate(
   const defaultDeployOptions: DeployOptions = {
     from: deployer,
     log: true,
-    waitConfirmations: waitConfirmationsNumber(hre),
+    waitConfirmations: waitConfirmationsNumber(network.name),
   }
 
   const deploy = (name: string, options: PartialDeployOptions) => {
