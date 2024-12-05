@@ -4041,25 +4041,24 @@ describe("BorrowerOperations in Normal Mode", () => {
     it.only("includes pending rewards when calculating the fee", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
       await openTrove(contracts, {
-        musdAmount: "2000",
+        musdAmount: "10,000",
         ICR: "200",
         sender: dennis.wallet,
       })
-      await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
-      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+      // fast-forward 1 year, gaining interest for carol and dennis
+      await fastForwardTime(60 * 60 * 24 * 365)
 
+      // liquidate dennis, creating pending rewards in interest and principal for carol
       await dropPriceAndLiquidate(contracts, dennis)
-      await setInterestRate(contracts, council, 0)
+
       await updatePendingSnapshot(contracts, carol, "before")
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
         .refinance(to1e18(1))
-
-      const BORROWING_FEE_FLOOR =
-        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -4068,22 +4067,27 @@ describe("BorrowerOperations in Normal Mode", () => {
         1,
       )
 
+      const afterRefi = BigInt(await getLatestBlockTimestamp())
       await updateTroveSnapshot(contracts, carol, "after")
-      const now = BigInt(await getLatestBlockTimestamp())
-      const expectedInterest = calculateInterestOwed(
+
+      const carolInterest = calculateInterestOwed(
         carol.trove.debt.before,
         1000,
         carol.trove.lastInterestUpdateTime.before,
-        now,
+        afterRefi,
       )
-      // default fee percentage is 20% or 1/5
-      const expectedPrincipal =
+
+      const carolTotalDebt =
         carol.trove.debt.before +
+        carolInterest +
         carol.pending.principal.before +
-        carol.trove.interestOwed.before +
         carol.pending.interest.before
-      const expectedFee =
-        (BORROWING_FEE_FLOOR * expectedPrincipal) / to1e18("5")
+
+      const BORROWING_FEE_FLOOR =
+        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+
+      const expectedFee = (BORROWING_FEE_FLOOR * carolTotalDebt) / to1e18("5")
+
       expect(emittedFee).to.equal(expectedFee)
     })
 
