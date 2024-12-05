@@ -1118,7 +1118,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             (10000 * SECONDS_IN_A_YEAR);
     }
 
-    // TODO Change access modifier to limit calls to the contracts that need to call this
     function _updateDebtWithInterest(address _borrower) internal {
         // solhint-disable not-rely-on-time
         Troves[_borrower].interestOwed += calculateInterestOwed(
