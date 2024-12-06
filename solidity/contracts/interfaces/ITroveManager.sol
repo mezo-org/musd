@@ -99,8 +99,7 @@ interface ITroveManager {
         address _priceFeedAddress,
         address _sortedTrovesAddress,
         address _stabilityPoolAddress,
-        address _interestRateManagerAddress,
-        address _troveMathAddress
+        address _interestRateManagerAddress
     ) external;
 
     function liquidate(address _borrower) external;
@@ -176,8 +175,6 @@ interface ITroveManager {
     function stabilityPool() external view returns (IStabilityPool);
 
     function pcv() external view returns (IPCV);
-
-    function troveMath() external view returns (TroveMath);
 
     function getTroveOwnersCount() external view returns (uint);
 

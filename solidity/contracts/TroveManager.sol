@@ -152,8 +152,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     IInterestRateManager public interestRateManager;
 
-    TroveMath public troveMath;
-
     // --- Data structures ---
 
     /*
@@ -236,8 +234,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _priceFeedAddress,
         address _sortedTrovesAddress,
         address _stabilityPoolAddress,
-        address _interestRateManagerAddress,
-        address _troveMathAddress
+        address _interestRateManagerAddress
     ) external override onlyOwner {
         checkContract(_activePoolAddress);
         checkContract(_borrowerOperationsAddress);
@@ -250,7 +247,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         checkContract(_sortedTrovesAddress);
         checkContract(_stabilityPoolAddress);
         checkContract(_interestRateManagerAddress);
-        checkContract(_troveMathAddress);
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
@@ -265,7 +261,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         pcv = IPCV(_pcvAddress);
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
-        troveMath = TroveMath(_troveMathAddress);
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -278,7 +273,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
-        emit TroveMathAddressChanged(_troveMathAddress);
 
         renounceOwnership();
     }
@@ -1041,7 +1035,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         (
             uint256 _principalAdjustment,
             uint256 _interestAdjustment
-        ) = troveMath.calculateDebtAdjustment(trove.interestOwed, _payment);
+        ) = TroveMath.calculateDebtAdjustment(trove.interestOwed, _payment);
 
         trove.principal -= _principalAdjustment;
         trove.interestOwed -= _interestAdjustment;
@@ -1453,7 +1447,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             singleLiquidation.principalToRedistribute,
             singleLiquidation.interestToRedistribute,
             singleLiquidation.collToRedistribute
-        ) = troveMath.getOffsetAndRedistributionVals(
+        ) = TroveMath.getOffsetAndRedistributionVals(
             singleLiquidation.entireTrovePrincipal,
             singleLiquidation.entireTroveInterest,
             collToLiquidate,
@@ -1692,7 +1686,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 singleLiquidation.principalToRedistribute,
                 singleLiquidation.interestToRedistribute,
                 singleLiquidation.collToRedistribute
-            ) = troveMath.getOffsetAndRedistributionVals(
+            ) = TroveMath.getOffsetAndRedistributionVals(
                 singleLiquidation.entireTrovePrincipal,
                 singleLiquidation.entireTroveInterest,
                 vars.collToLiquidate,

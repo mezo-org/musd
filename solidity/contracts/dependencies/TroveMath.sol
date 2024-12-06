@@ -1,8 +1,6 @@
 import "./LiquityMath.sol";
 
-contract TroveMath {
-
-    constructor() {}
+library TroveMath {
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
@@ -30,7 +28,6 @@ contract TroveMath {
         uint256 _MUSDInStabPool
     )
     public
-    pure
     returns (
         uint256 debtToOffset,
         uint256 collToSendToSP,

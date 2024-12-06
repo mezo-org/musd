@@ -660,7 +660,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        (vars.principalAdjustment, vars.interestAdjustment) = contractsCache.troveManager.troveMath()
+        (vars.principalAdjustment, vars.interestAdjustment) = TroveMath
             .calculateDebtAdjustment(vars.interestOwed, _mUSDChange);
 
         vars.price = priceFeed.fetchPrice();
