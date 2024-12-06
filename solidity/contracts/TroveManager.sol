@@ -236,9 +236,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Mapping from interest rate to total principal and interest owed at that rate
     mapping(uint16 => InterestRateInfo) public interestRateData;
 
-    modifier onlyOwnerOrGovernance() {
+    modifier onlyGovernance() {
         require(
-            msg.sender == owner() || msg.sender == pcv.council(),
+            msg.sender == pcv.council(),
             "TroveManager: Only governance can call this function"
         );
         _;
@@ -693,7 +693,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function proposeInterestRate(
         uint16 _newProposedInterestRate
-    ) external onlyOwnerOrGovernance {
+    ) external onlyGovernance {
         require(
             _newProposedInterestRate <= maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
@@ -705,7 +705,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         emit InterestRateProposed(proposedInterestRate, proposalTime);
     }
 
-    function approveInterestRate() external onlyOwnerOrGovernance {
+    function approveInterestRate() external onlyGovernance {
         // solhint-disable not-rely-on-time
         require(
             block.timestamp >= proposalTime + MIN_DELAY,
@@ -717,7 +717,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function setMaxInterestRate(
         uint16 _newMaxInterestRate
-    ) external onlyOwnerOrGovernance {
+    ) external onlyGovernance {
         maxInterestRate = _newMaxInterestRate;
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
