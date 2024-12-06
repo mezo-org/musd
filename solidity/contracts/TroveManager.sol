@@ -788,7 +788,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function updateSystemAndTroveInterest(address _borrower) public {
         _updateSystemInterest(Troves[_borrower].interestRate);
-        _updateDebtWithInterest(_borrower);
+        (uint256 newInterest, uint256 newLastInterestUpdateTime) =
+        interestRateManager.updateDebtWithInterest(
+            Troves[_borrower].principal,
+            Troves[_borrower].interestOwed,
+            Troves[_borrower].interestRate,
+            Troves[_borrower].lastInterestUpdateTime
+        );
+        Troves[_borrower].interestOwed += newInterest;
+        Troves[_borrower].lastInterestUpdateTime = newLastInterestUpdateTime;
     }
 
     /*
@@ -1010,21 +1018,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getRedemptionRate() public view override returns (uint) {
         return _calcRedemptionRate(baseRate);
-    }
-
-    function _updateDebtWithInterest(address _borrower) internal {
-        // solhint-disable not-rely-on-time
-        Troves[_borrower].interestOwed += interestRateManager
-            .calculateInterestOwed(
-                Troves[_borrower].principal,
-                Troves[_borrower].interestRate,
-                Troves[_borrower].lastInterestUpdateTime,
-                block.timestamp
-            );
-        // solhint-enable not-rely-on-time
-
-        // solhint-disable-next-line not-rely-on-time
-        Troves[_borrower].lastInterestUpdateTime = block.timestamp;
     }
 
     function _updateSystemInterest(uint16 _rate) internal {

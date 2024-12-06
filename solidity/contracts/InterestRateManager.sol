@@ -1,6 +1,7 @@
 // InterestRateManager.sol
 pragma solidity ^0.8.24;
 
+import "./TroveManager.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IInterestRateManager} from "./interfaces/IInterestRateManager.sol";
 
@@ -106,5 +107,18 @@ contract InterestRateManager is Ownable, IInterestRateManager {
         );
         interestRate = _newInterestRate;
         emit InterestRateUpdated(_newInterestRate);
+    }
+
+    function updateDebtWithInterest(uint256 _principal, uint256 _interestOwed, uint16 _interestRate, uint256 _lastInterestUpdateTime)
+        external
+        returns (uint256 interestOwed, uint256 lastInterestUpdateTime) {
+        interestOwed = _interestOwed + calculateInterestOwed(
+            _principal,
+            _interestRate,
+            _lastInterestUpdateTime,
+            block.timestamp
+        );
+
+       lastInterestUpdateTime = block.timestamp;
     }
 }

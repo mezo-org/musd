@@ -8,8 +8,7 @@ contract TroveMath {
         uint256 _interestOwed,
         uint256 _payment
     )
-    public
-    pure
+    external
     returns (uint256 principalAdjustment, uint256 interestAdjustment)
     {
         if (_payment >= _interestOwed) {
