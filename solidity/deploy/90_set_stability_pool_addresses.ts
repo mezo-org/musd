@@ -35,7 +35,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["SetAddresses"]
+func.tags = ["SetAddresses", "SetStabilityPoolAddresses"]
 func.dependencies = [
   "ActivePool",
   "BorrowerOperations",
