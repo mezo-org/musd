@@ -8,8 +8,7 @@ import {
 import { MAX_BYTES_32 } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer } = await hre.helpers.signers.getNamedSigners()
-  const { isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
   const { borrowerOperations, sortedTroves, troveManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)

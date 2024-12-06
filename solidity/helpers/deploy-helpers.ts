@@ -124,9 +124,9 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
 export async function setupDeploymentBoilerplate(
   hre: HardhatRuntimeEnvironment,
 ) {
-  const { getNamedAccounts, network } = hre
+  const { network } = hre
   const { log } = deployments
-  const { deployer } = await getNamedAccounts()
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   const getValidDeployment = async (
     contractName: string,
@@ -139,7 +139,7 @@ export async function setupDeploymentBoilerplate(
   }
 
   const defaultDeployOptions: DeployOptions = {
-    from: deployer,
+    from: deployer.address,
     log: true,
     waitConfirmations: waitConfirmationsNumber(network.name),
   }

@@ -6,8 +6,7 @@ import {
 } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer } = await hre.helpers.signers.getNamedSigners()
-  const { isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
   const {
     activePool,
