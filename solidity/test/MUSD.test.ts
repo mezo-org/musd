@@ -8,9 +8,10 @@ import {
   getLatestBlockTimestamp,
   setupTests,
 } from "./helpers"
-import { to1e18, ZERO_ADDRESS, GOVERNANCE_TIME_DELAY } from "./utils"
+import { to1e18, GOVERNANCE_TIME_DELAY } from "./utils"
 import { BorrowerOperations, TroveManager } from "../typechain"
 import { StabilityPool } from "../typechain/contracts/StabilityPool"
+import { ZERO_ADDRESS } from "../helpers/constants"
 
 describe("MUSD", () => {
   let alice: User

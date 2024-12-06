@@ -215,7 +215,6 @@ beforeEach(async () => {
   testSetup = { ...cachedTestSetup }
   contracts = testSetup.contracts
 
-  await connectContracts(contracts, testSetup.users)
   // users
   alice = testSetup.users.alice
   bob = testSetup.users.bob

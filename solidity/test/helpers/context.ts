@@ -2,7 +2,6 @@ import { deployments, helpers } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { getDeployedContract } from "./contract"
-import { ZERO_ADDRESS } from "../utils"
 import {
   Contracts,
   ContractsState,
@@ -27,8 +26,6 @@ import {
   StabilityPool,
   TroveManagerTester,
 } from "../../typechain"
-
-const maxBytes32 = `0x${"f".repeat(64)}`
 
 export async function deployment() {
   await deployments.fixture()
@@ -237,113 +234,4 @@ export async function getAddresses(contracts: Contracts, users: Users) {
   }
 
   return addresses
-}
-
-export async function connectContracts(contracts: Contracts, users: Users) {
-  //  connect contracts
-
-  await contracts.stabilityPool
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.borrowerOperations.getAddress(),
-      await contracts.troveManager.getAddress(),
-      await contracts.activePool.getAddress(),
-      await contracts.musd.getAddress(),
-      await contracts.sortedTroves.getAddress(),
-      await contracts.priceFeed.getAddress(),
-      ZERO_ADDRESS,
-    )
-
-  await contracts.hintHelpers
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.sortedTroves.getAddress(),
-      await contracts.troveManager.getAddress(),
-    )
-
-  await contracts.pcv
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.musd.getAddress(),
-      await contracts.borrowerOperations.getAddress(),
-      ZERO_ADDRESS,
-    )
-
-  await contracts.defaultPool
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.troveManager.getAddress(),
-      await contracts.activePool.getAddress(),
-      ZERO_ADDRESS,
-    )
-
-  await contracts.activePool
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.borrowerOperations.getAddress(),
-      ZERO_ADDRESS,
-      await contracts.collSurplusPool.getAddress(),
-      await contracts.defaultPool.getAddress(),
-      await contracts.troveManager.getAddress(),
-      await contracts.stabilityPool.getAddress(),
-    )
-
-  await contracts.borrowerOperations
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.activePool.getAddress(),
-      ZERO_ADDRESS,
-      await contracts.collSurplusPool.getAddress(),
-      await contracts.defaultPool.getAddress(),
-      await contracts.gasPool.getAddress(),
-      await contracts.musd.getAddress(),
-      await contracts.pcv.getAddress(),
-      await contracts.priceFeed.getAddress(),
-      await contracts.stabilityPool.getAddress(),
-      await contracts.sortedTroves.getAddress(),
-      await contracts.troveManager.getAddress(),
-    )
-
-  await contracts.collSurplusPool
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.borrowerOperations.getAddress(),
-      await contracts.troveManager.getAddress(),
-      await contracts.activePool.getAddress(),
-      ZERO_ADDRESS,
-    )
-
-  await contracts.troveManager
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.activePool.getAddress(),
-      await contracts.borrowerOperations.getAddress(),
-      await contracts.collSurplusPool.getAddress(),
-      await contracts.defaultPool.getAddress(),
-      await contracts.gasPool.getAddress(),
-      await contracts.musd.getAddress(),
-      await contracts.pcv.getAddress(),
-      await contracts.priceFeed.getAddress(),
-      await contracts.sortedTroves.getAddress(),
-      await contracts.stabilityPool.getAddress(),
-    )
-
-  await contracts.gasPool
-    .connect(users.deployer.wallet)
-    .setAddresses(
-      await contracts.troveManager.getAddress(),
-      await contracts.musd.getAddress(),
-    )
-
-  await contracts.sortedTroves
-    .connect(users.deployer.wallet)
-    .setParams(
-      maxBytes32,
-      await contracts.troveManager.getAddress(),
-      await contracts.borrowerOperations.getAddress(),
-    )
-
-  await contracts.priceFeed
-    .connect(users.deployer.wallet)
-    .setOracle(await contracts.mockAggregator.getAddress())
 }

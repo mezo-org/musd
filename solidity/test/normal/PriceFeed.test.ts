@@ -1,5 +1,6 @@
 import { expect } from "chai"
-import { ZERO_ADDRESS, to1e18 } from "../utils"
+import { to1e18 } from "../utils"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 
 import { Contracts, User, getDeployedContract, setupTests } from "../helpers"
 import type { PriceFeed } from "../../typechain"

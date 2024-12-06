@@ -1,6 +1,7 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
+import { ZERO_ADDRESS } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const {
@@ -20,7 +21,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (musd) {
     log(`Using MUSD at ${musd.address}`)
   } else {
-    const ZERO_ADDRESS = `0x${"0".repeat(40)}`
     const delay = 90 * 24 * 60 * 60 // 90 days in seconds
 
     await deploy("MUSD", {
