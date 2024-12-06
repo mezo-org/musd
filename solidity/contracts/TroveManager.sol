@@ -781,16 +781,17 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function updateSystemAndTroveInterest(address _borrower) public {
+        Trove storage trove = Troves[_borrower];
         _updateSystemInterest(Troves[_borrower].interestRate);
         (uint256 newInterest, uint256 newLastInterestUpdateTime) =
         interestRateManager.updateDebtWithInterest(
-            Troves[_borrower].principal,
-            Troves[_borrower].interestOwed,
-            Troves[_borrower].interestRate,
-            Troves[_borrower].lastInterestUpdateTime
+                trove.principal,
+                trove.interestOwed,
+                trove.interestRate,
+                trove.lastInterestUpdateTime
         );
-        Troves[_borrower].interestOwed += newInterest;
-        Troves[_borrower].lastInterestUpdateTime = newLastInterestUpdateTime;
+        trove.interestOwed += newInterest;
+        trove.lastInterestUpdateTime = newLastInterestUpdateTime;
     }
 
     /*
