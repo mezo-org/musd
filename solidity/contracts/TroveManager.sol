@@ -1021,26 +1021,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _updateSystemInterest(uint16 _rate) internal {
-        IInterestRateManager.InterestRateInfo memory _interestRateData = interestRateManager
-            .getInterestRateData(_rate);
-        // solhint-disable not-rely-on-time
-        uint256 interest = interestRateManager.calculateInterestOwed(
-            _interestRateData.principal,
-            _rate,
-            _interestRateData.lastUpdatedTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
+        uint256 interest = interestRateManager.updateSystemInterest(_rate);
 
         // slither-disable-next-line calls-loop
         musdToken.mint(address(pcv), interest);
-        interestRateManager.addInterestToRate(_rate, interest);
 
         // slither-disable-next-line calls-loop
         activePool.increaseDebt(0, interest);
-
-        // solhint-disable-next-line not-rely-on-time
-        interestRateManager.setLastUpdatedTime(_rate, block.timestamp);
     }
 
     /**

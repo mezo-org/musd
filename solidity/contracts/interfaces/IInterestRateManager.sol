@@ -23,4 +23,5 @@ interface IInterestRateManager {
     function updateDebtWithInterest(uint256 _principal, uint256 _interestOwed, uint16 _interestRate, uint256 _lastInterestUpdateTime)
     external
     returns (uint256 interestOwed, uint256 lastInterestUpdateTime);
+    function updateSystemInterest(uint16 _rate) external returns (uint256 interest);
 }

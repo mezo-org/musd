@@ -61,7 +61,7 @@ contract InterestRateManager is Ownable, IInterestRateManager {
         interestRateData[_rate].principal += _principal;
     }
 
-    function addInterestToRate(uint16 _rate, uint256 _interest) external {
+    function addInterestToRate(uint16 _rate, uint256 _interest) public {
         interestRateData[_rate].interest += _interest;
     }
 
@@ -120,5 +120,22 @@ contract InterestRateManager is Ownable, IInterestRateManager {
         );
 
        lastInterestUpdateTime = block.timestamp;
+    }
+
+    function updateSystemInterest(uint16 _rate) external returns (uint256 interest) {
+        InterestRateInfo memory _interestRateData = interestRateData[_rate];
+        // solhint-disable not-rely-on-time
+        interest = calculateInterestOwed(
+            _interestRateData.principal,
+            _rate,
+            _interestRateData.lastUpdatedTime,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        addInterestToRate(_rate, interest);
+
+        // solhint-disable-next-line not-rely-on-time
+        interestRateData[_rate].lastUpdatedTime = block.timestamp;
     }
 }
