@@ -1,27 +1,16 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import {
-  getDeployedContract,
+  fetchAllDeployedContracts,
   setupDeploymentBoilerplate,
 } from "../helpers/deploy-helpers"
-
-import {
-  HintHelpers,
-  SortedTroves,
-  TroveManager,
-  TroveManagerTester,
-} from "../typechain"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await hre.helpers.signers.getNamedSigners()
   const { isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
-  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
-
-  const troveManager: TroveManager | TroveManagerTester = isHardhatNetwork
-    ? await getDeployedContract("TroveManagerTester")
-    : await getDeployedContract("TroveManager")
+  const { hintHelpers, sortedTroves, troveManager } =
+    await fetchAllDeployedContracts(isHardhatNetwork)
 
   await hintHelpers
     .connect(deployer)

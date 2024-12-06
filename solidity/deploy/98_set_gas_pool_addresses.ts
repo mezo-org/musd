@@ -1,25 +1,16 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import {
-  getDeployedContract,
+  fetchAllDeployedContracts,
   setupDeploymentBoilerplate,
 } from "../helpers/deploy-helpers"
-
-import { GasPool, TroveManager, TroveManagerTester } from "../typechain"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await hre.helpers.signers.getNamedSigners()
   const { isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const gasPool: GasPool = await getDeployedContract("GasPool")
-
-  const musd = isHardhatNetwork
-    ? await getDeployedContract("MUSDTester")
-    : await getDeployedContract("MUSD")
-
-  const troveManager: TroveManager | TroveManagerTester = isHardhatNetwork
-    ? await getDeployedContract("TroveManagerTester")
-    : await getDeployedContract("TroveManager")
+  const { gasPool, musd, troveManager } =
+    await fetchAllDeployedContracts(isHardhatNetwork)
 
   await gasPool
     .connect(deployer)

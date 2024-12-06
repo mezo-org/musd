@@ -1,26 +1,18 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import {
-  getDeployedContract,
+  fetchAllDeployedContracts,
   setupDeploymentBoilerplate,
 } from "../helpers/deploy-helpers"
 
 import { ZERO_ADDRESS } from "../helpers/constants"
 
-import { BorrowerOperations, PCV } from "../typechain"
-
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await hre.helpers.signers.getNamedSigners()
   const { isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const borrowerOperations: BorrowerOperations =
-    await getDeployedContract("BorrowerOperations")
-
-  const musd = isHardhatNetwork
-    ? await getDeployedContract("MUSDTester")
-    : await getDeployedContract("MUSD")
-
-  const pcv: PCV = await getDeployedContract("PCV")
+  const { borrowerOperations, musd, pcv } =
+    await fetchAllDeployedContracts(isHardhatNetwork)
 
   await pcv
     .connect(deployer)
