@@ -68,11 +68,11 @@ contract InterestRateManager is Ownable, IInterestRateManager {
     function removePrincipalFromRate(
         uint16 _rate,
         uint256 _principal
-    ) external {
+    ) public {
         interestRateData[_rate].principal -= _principal;
     }
 
-    function removeInterestFromRate(uint16 _rate, uint256 _interest) external {
+    function removeInterestFromRate(uint16 _rate, uint256 _interest) public {
         interestRateData[_rate].interest -= _interest;
     }
 
@@ -137,5 +137,18 @@ contract InterestRateManager is Ownable, IInterestRateManager {
 
         // solhint-disable-next-line not-rely-on-time
         interestRateData[_rate].lastUpdatedTime = block.timestamp;
+    }
+
+    function updateTroveDebt(uint256 _interestOwed, uint256 _payment, uint16 _rate) external returns (uint256 principalAdjustment, uint256 interestAdjustment) {
+        if (_payment >= _interestOwed) {
+            principalAdjustment = _payment - _interestOwed;
+            interestAdjustment = _interestOwed;
+        } else {
+            principalAdjustment = 0;
+            interestAdjustment = _payment;
+        }
+
+        removeInterestFromRate(_rate, interestAdjustment);
+        removePrincipalFromRate(_rate, principalAdjustment);
     }
 }

@@ -1032,22 +1032,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      */
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
-
-        (
-            uint256 _principalAdjustment,
-            uint256 _interestAdjustment
-        ) = TroveMath.calculateDebtAdjustment(trove.interestOwed, _payment);
-
-        trove.principal -= _principalAdjustment;
-        trove.interestOwed -= _interestAdjustment;
-        interestRateManager.removePrincipalFromRate(
-            trove.interestRate,
-            _principalAdjustment
-        );
-        interestRateManager.removeInterestFromRate(
-            trove.interestRate,
-            _interestAdjustment
-        );
+        interestRateManager.updateTroveDebt(trove.interestOwed, _payment, trove.interestRate);
     }
 
     /*

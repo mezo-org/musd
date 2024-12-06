@@ -1,6 +1,7 @@
 import "./LiquityMath.sol";
 
 library TroveMath {
+    uint256 public constant DECIMAL_PRECISION = 1e18;
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
@@ -68,5 +69,6 @@ library TroveMath {
             collToRedistribute = _coll;
         }
     }
+
 
 }

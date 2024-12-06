@@ -24,4 +24,5 @@ interface IInterestRateManager {
     external
     returns (uint256 interestOwed, uint256 lastInterestUpdateTime);
     function updateSystemInterest(uint16 _rate) external returns (uint256 interest);
+    function updateTroveDebt(uint256 _interestOwed, uint256 _payment, uint16 _rate) external returns (uint256 principalAdjustment, uint256 interestAdjustment);
 }
