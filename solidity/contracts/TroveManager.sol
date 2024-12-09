@@ -1035,7 +1035,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         (uint256 principalAdjustment, uint256 interestAdjustment) = interestRateManager.updateTroveDebt(trove.interestOwed, _payment, trove.interestRate);
         trove.principal += principalAdjustment;
         trove.interestOwed += interestAdjustment;
-
     }
 
     /*
