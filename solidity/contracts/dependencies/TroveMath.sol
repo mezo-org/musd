@@ -2,6 +2,10 @@ import "./LiquityMath.sol";
 
 library TroveMath {
     uint256 public constant DECIMAL_PRECISION = 1e18;
+    uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
+    uint256 public constant MCR = 1.1e18; // 110%
+    uint256 public constant CCR = 1.5e18; // 150%
+    uint256 public constant MUSD_GAS_COMPENSATION = 200e18;
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
@@ -70,5 +74,13 @@ library TroveMath {
         }
     }
 
+    function calcDecayedBaseRate(uint256 baseRate, uint256 lastFeeOperationTime) external view returns (uint) {
+        uint256 minutesPassed = minutesPassedSinceLastFeeOp(lastFeeOperationTime);
+        uint256 decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
+        return (baseRate * decayFactor) / DECIMAL_PRECISION;
+    }
 
+    function minutesPassedSinceLastFeeOp(uint256 lastFeeOperationTime) internal view returns (uint) {
+        return (block.timestamp - lastFeeOperationTime) / 1 minutes;
+    }
 }

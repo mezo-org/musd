@@ -2111,18 +2111,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _calcDecayedBaseRate() internal view returns (uint) {
-        uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
-        uint256 decayFactor = LiquityMath._decPow(
-            MINUTE_DECAY_FACTOR,
-            minutesPassed
-        );
-
-        return (baseRate * decayFactor) / DECIMAL_PRECISION;
-    }
-
-    function _minutesPassedSinceLastFeeOp() internal view returns (uint) {
-        // solhint-disable-next-line not-rely-on-time
-        return (block.timestamp - lastFeeOperationTime) / 1 minutes;
+        return TroveMath.calcDecayedBaseRate(baseRate, lastFeeOperationTime);
     }
 
     function _requireCallerIsBorrowerOperations() internal view {
