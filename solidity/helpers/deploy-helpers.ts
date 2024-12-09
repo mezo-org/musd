@@ -2,6 +2,21 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { Deployment, DeployOptions } from "hardhat-deploy/types"
 import { deployments, ethers, helpers } from "hardhat"
 import type { BaseContract } from "ethers"
+import {
+  ActivePool,
+  BorrowerOperations,
+  CollSurplusPool,
+  DefaultPool,
+  GasPool,
+  HintHelpers,
+  MockAggregator,
+  PCV,
+  PriceFeed,
+  SortedTroves,
+  StabilityPool,
+  TroveManager,
+  TroveManagerTester,
+} from "../typechain"
 
 function waitConfirmationsNumber(networkName: string): number {
   switch (networkName) {
@@ -57,12 +72,61 @@ export async function getDeployedContract<T extends BaseContract>(
   return new ethers.BaseContract(address, abi, defaultSigner) as T
 }
 
+export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
+  const activePool: ActivePool = await getDeployedContract("ActivePool")
+
+  const borrowerOperations: BorrowerOperations =
+    await getDeployedContract("BorrowerOperations")
+
+  const collSurplusPool: CollSurplusPool =
+    await getDeployedContract("CollSurplusPool")
+
+  const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
+  const gasPool: GasPool = await getDeployedContract("GasPool")
+  const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
+
+  // TODO: replace with a real aggregator
+  const mockAggregator: MockAggregator =
+    await getDeployedContract("MockAggregator")
+
+  const musd = isHardhatNetwork
+    ? await getDeployedContract("MUSDTester")
+    : await getDeployedContract("MUSD")
+
+  const pcv: PCV = await getDeployedContract("PCV")
+  const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
+  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
+
+  const stabilityPool: StabilityPool =
+    await getDeployedContract("StabilityPool")
+
+  const troveManager: TroveManager | TroveManagerTester = isHardhatNetwork
+    ? await getDeployedContract("TroveManagerTester")
+    : await getDeployedContract("TroveManager")
+
+  return {
+    activePool,
+    borrowerOperations,
+    collSurplusPool,
+    defaultPool,
+    gasPool,
+    hintHelpers,
+    mockAggregator,
+    musd,
+    pcv,
+    priceFeed,
+    sortedTroves,
+    stabilityPool,
+    troveManager,
+  }
+}
+
 export async function setupDeploymentBoilerplate(
   hre: HardhatRuntimeEnvironment,
 ) {
-  const { getNamedAccounts, network } = hre
+  const { network } = hre
   const { log } = deployments
-  const { deployer } = await getNamedAccounts()
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   const getValidDeployment = async (
     contractName: string,
@@ -75,7 +139,7 @@ export async function setupDeploymentBoilerplate(
   }
 
   const defaultDeployOptions: DeployOptions = {
-    from: deployer,
+    from: deployer.address,
     log: true,
     waitConfirmations: waitConfirmationsNumber(network.name),
   }
