@@ -701,7 +701,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _collateralDrawn
     ) external view override returns (uint) {
         return
-            _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
+            TroveMath.calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
     }
 
     // --- Borrowing fee functions ---
@@ -897,7 +897,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
-        return _calcRedemptionRate(_calcDecayedBaseRate());
+        return TroveMath.calcRedemptionRate(_calcDecayedBaseRate());
     }
 
     function getCurrentICR(
@@ -959,11 +959,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function getBorrowingRate() public view override returns (uint) {
-        return _calcBorrowingRate(baseRate);
+        return TroveMath.calcBorrowingRate(baseRate);
     }
 
     function getBorrowingRateWithDecay() public view override returns (uint) {
-        return _calcBorrowingRate(_calcDecayedBaseRate());
+        return TroveMath.calcBorrowingRate(_calcDecayedBaseRate());
     }
 
     function getPendingCollateral(
@@ -1012,7 +1012,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function getRedemptionRate() public view override returns (uint) {
-        return _calcRedemptionRate(baseRate);
+        return TroveMath.calcRedemptionRate(baseRate);
     }
 
     function _updateSystemInterest(uint16 _rate) internal {
@@ -2107,7 +2107,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _getRedemptionFee(
         uint256 _collateralDrawn
     ) internal view returns (uint) {
-        return _calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
+        return TroveMath.calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
     }
 
     function _calcDecayedBaseRate() internal view returns (uint) {
@@ -2240,39 +2240,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _debt
     ) internal pure returns (uint) {
         return (_borrowingRate * _debt) / DECIMAL_PRECISION;
-    }
-
-    function _calcBorrowingRate(
-        uint256 _baseRate
-    ) internal pure returns (uint) {
-        return
-            LiquityMath._min(
-                BORROWING_FEE_FLOOR + _baseRate,
-                MAX_BORROWING_FEE
-            );
-    }
-
-    function _calcRedemptionFee(
-        uint256 _redemptionRate,
-        uint256 _collateralDrawn
-    ) internal pure returns (uint) {
-        uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
-            DECIMAL_PRECISION;
-        require(
-            redemptionFee < _collateralDrawn,
-            "TroveManager: Fee would eat up all returned collateral"
-        );
-        return redemptionFee;
-    }
-
-    function _calcRedemptionRate(
-        uint256 _baseRate
-    ) internal pure returns (uint) {
-        return
-            LiquityMath._min(
-                REDEMPTION_FEE_FLOOR + _baseRate,
-                DECIMAL_PRECISION // cap at a maximum of 100%
-            );
     }
 }
 // slither-disable-end reentrancy-benign

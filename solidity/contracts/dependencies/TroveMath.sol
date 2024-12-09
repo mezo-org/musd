@@ -6,6 +6,11 @@ library TroveMath {
     uint256 public constant MCR = 1.1e18; // 110%
     uint256 public constant CCR = 1.5e18; // 150%
     uint256 public constant MUSD_GAS_COMPENSATION = 200e18;
+    uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /
+        1000);
+    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
+    uint256 public constant REDEMPTION_FEE_FLOOR =
+    (DECIMAL_PRECISION * 5) / 1000; // 0.5%
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
@@ -78,6 +83,46 @@ library TroveMath {
         uint256 minutesPassed = minutesPassedSinceLastFeeOp(lastFeeOperationTime);
         uint256 decayFactor = LiquityMath._decPow(MINUTE_DECAY_FACTOR, minutesPassed);
         return (baseRate * decayFactor) / DECIMAL_PRECISION;
+    }
+
+    function calcBorrowingRate(
+        uint256 _baseRate
+    ) external view returns (uint) {
+        return
+            LiquityMath._min(
+            BORROWING_FEE_FLOOR + _baseRate,
+            MAX_BORROWING_FEE
+        );
+    }
+
+    function calcBorrowingFee(
+        uint256 _borrowingRate,
+        uint256 _debt
+    ) external view returns (uint) {
+        return (_borrowingRate * _debt) / DECIMAL_PRECISION;
+    }
+
+    function calcRedemptionFee(
+        uint256 _redemptionRate,
+        uint256 _collateralDrawn
+    ) external view returns (uint) {
+        uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
+                    DECIMAL_PRECISION;
+        require(
+            redemptionFee < _collateralDrawn,
+            "TroveManager: Fee would eat up all returned collateral"
+        );
+        return redemptionFee;
+    }
+
+    function calcRedemptionRate(
+        uint256 _baseRate
+    ) external view returns (uint) {
+        return
+            LiquityMath._min(
+            REDEMPTION_FEE_FLOOR + _baseRate,
+            DECIMAL_PRECISION // cap at a maximum of 100%
+        );
     }
 
     function minutesPassedSinceLastFeeOp(uint256 lastFeeOperationTime) internal view returns (uint) {
