@@ -91,11 +91,9 @@ contract BorrowerOperations is
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
-    modifier onlyOwnerOrGovernance() {
+    modifier onlyGovernance() {
         require(
-            msg.sender == owner() ||
-                msg.sender == pcv.council() ||
-                msg.sender == pcv.treasury(),
+            msg.sender == pcv.council() || msg.sender == pcv.treasury(),
             "BorrowerOps: Only governance can call this function"
         );
         _;
@@ -596,7 +594,7 @@ contract BorrowerOperations is
 
     function setRefinancingFeePercentage(
         uint8 _refinanceFeePercentage
-    ) external override onlyOwnerOrGovernance {
+    ) external override onlyGovernance {
         require(
             _refinanceFeePercentage <= 100,
             "BorrowerOps: Refinancing fee percentage must be <= 100"
