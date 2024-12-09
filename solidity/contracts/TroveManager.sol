@@ -1032,7 +1032,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      */
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
-        interestRateManager.updateTroveDebt(trove.interestOwed, _payment, trove.interestRate);
+        (uint256 principalAdjustment, uint256 interestAdjustment) = interestRateManager.updateTroveDebt(trove.interestOwed, _payment, trove.interestRate);
+        trove.principal += principalAdjustment;
+        trove.interestOwed += interestAdjustment;
+
     }
 
     /*
@@ -1232,6 +1235,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         IDefaultPool _defaultPool,
         address _borrower
     ) internal {
+        Trove storage trove = Troves[_borrower];
         if (hasPendingRewards(_borrower)) {
             _requireTroveIsActive(_borrower);
 
@@ -1244,17 +1248,17 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             updateSystemAndTroveInterest(_borrower);
 
             // Apply pending rewards to trove's state
-            Troves[_borrower].coll += pendingCollateral;
-            Troves[_borrower].principal += pendingPrincipal;
-            Troves[_borrower].interestOwed += pendingInterest;
+            trove.coll += pendingCollateral;
+            trove.principal += pendingPrincipal;
+            trove.interestOwed += pendingInterest;
 
             // Apply pending rewards to system interest rate data
             interestRateManager.addPrincipalToRate(
-                Troves[_borrower].interestRate,
+                trove.interestRate,
                 pendingPrincipal
             );
             interestRateManager.addInterestToRate(
-                Troves[_borrower].interestRate,
+                trove.interestRate,
                 pendingInterest
             );
 
@@ -1271,10 +1275,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
             emit TroveUpdated(
                 _borrower,
-                Troves[_borrower].principal,
-                Troves[_borrower].interestOwed,
-                Troves[_borrower].coll,
-                Troves[_borrower].stake,
+                trove.principal,
+                trove.interestOwed,
+                trove.coll,
+                trove.stake,
                 uint8(TroveManagerOperation.applyPendingRewards)
             );
         }
