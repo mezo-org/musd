@@ -1,6 +1,5 @@
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
-import { ethers } from "hardhat"
 import {
   NO_GAS,
   Contracts,
@@ -489,17 +488,17 @@ describe("TroveManager in Normal Mode", () => {
       // Calculate interest on total system debt
       const interestOwed =
         calculateInterestOwed(
-          state.troveManager.interestRateData[1000].principal.before,
+          state.interestRateManager.interestRateData[1000].principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           carol.trove.lastInterestUpdateTime.after,
-        ) + state.troveManager.interestRateData[1000].interest.before
+        ) + state.interestRateManager.interestRateData[1000].interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
       const remainingDebt =
-        state.troveManager.interestRateData[1000].principal.before +
+        state.interestRateManager.interestRateData[1000].principal.before +
         interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
@@ -1460,17 +1459,17 @@ describe("TroveManager in Normal Mode", () => {
       const after = await getLatestBlockTimestamp()
       const interestOwed =
         calculateInterestOwed(
-          state.troveManager.interestRateData[1000].principal.before,
+          state.interestRateManager.interestRateData[1000].principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           BigInt(after),
-        ) + state.troveManager.interestRateData[1000].interest.before
+        ) + state.interestRateManager.interestRateData[1000].interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
       const remainingDebt =
-        state.troveManager.interestRateData[1000].principal.before +
+        state.interestRateManager.interestRateData[1000].principal.before +
         interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
@@ -3175,14 +3174,18 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("setMaxInterestRate()", () => {
     it("sets the max interest rate", async () => {
-      await contracts.troveManager.connect(council.wallet).setMaxInterestRate(5)
-      expect(await contracts.troveManager.maxInterestRate()).to.equal(5)
+      await contracts.interestRateManager
+        .connect(council.wallet)
+        .setMaxInterestRate(5)
+      expect(await contracts.interestRateManager.maxInterestRate()).to.equal(5)
     })
 
     context("Expected Reverts", () => {
       it("reverts if a non-whitelisted address tries to set the maximum interest rate", async () => {
         await expect(
-          contracts.troveManager.connect(alice.wallet).setMaxInterestRate(1),
+          contracts.interestRateManager
+            .connect(alice.wallet)
+            .setMaxInterestRate(1),
         ).to.be.revertedWith(
           "TroveManager: Only governance can call this function",
         )
@@ -3192,9 +3195,11 @@ describe("TroveManager in Normal Mode", () => {
     context("Emitted Events", () => {
       it("emits MaxInterestRateUpdated when the maximum interest rate is updated", async () => {
         await expect(
-          contracts.troveManager.connect(council.wallet).setMaxInterestRate(50),
+          contracts.interestRateManager
+            .connect(council.wallet)
+            .setMaxInterestRate(50),
         )
-          .to.emit(contracts.troveManager, "MaxInterestRateUpdated")
+          .to.emit(contracts.interestRateManager, "MaxInterestRateUpdated")
           .withArgs(50)
       })
     })
@@ -3204,7 +3209,7 @@ describe("TroveManager in Normal Mode", () => {
     context("Expected Reverts", () => {
       it("reverts if the proposed rate exceeds the maximum interest rate", async () => {
         await expect(
-          contracts.troveManager
+          contracts.interestRateManager
             .connect(council.wallet)
             .proposeInterestRate(10001),
         ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
@@ -3214,7 +3219,7 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("approveInterestRate()", () => {
     it("requires two transactions to change the interest rate with a 7 day time delay", async () => {
-      await contracts.troveManager
+      await contracts.interestRateManager
         .connect(council.wallet)
         .proposeInterestRate(100)
 
@@ -3222,13 +3227,15 @@ describe("TroveManager in Normal Mode", () => {
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
       await fastForwardTime(timeToIncrease)
 
-      await contracts.troveManager.connect(council.wallet).approveInterestRate()
-      expect(await contracts.troveManager.interestRate()).to.equal(100)
+      await contracts.interestRateManager
+        .connect(council.wallet)
+        .approveInterestRate()
+      expect(await contracts.interestRateManager.interestRate()).to.equal(100)
     })
 
     context("Expected Reverts", () => {
       it("reverts if the time delay has not finished", async () => {
-        await contracts.troveManager
+        await contracts.interestRateManager
           .connect(council.wallet)
           .proposeInterestRate(100)
 
@@ -3237,12 +3244,14 @@ describe("TroveManager in Normal Mode", () => {
         await fastForwardTime(timeToIncrease)
 
         await expect(
-          contracts.troveManager.connect(council.wallet).approveInterestRate(),
+          contracts.interestRateManager
+            .connect(council.wallet)
+            .approveInterestRate(),
         ).to.be.revertedWith("Proposal delay not met")
       })
 
       it("reverts if called by a non-governance address", async () => {
-        await contracts.troveManager
+        await contracts.interestRateManager
           .connect(council.wallet)
           .proposeInterestRate(100)
 
@@ -3251,7 +3260,9 @@ describe("TroveManager in Normal Mode", () => {
         await fastForwardTime(timeToIncrease)
 
         await expect(
-          contracts.troveManager.connect(alice.wallet).approveInterestRate(),
+          contracts.interestRateManager
+            .connect(alice.wallet)
+            .approveInterestRate(),
         ).to.be.revertedWith(
           "TroveManager: Only governance can call this function",
         )
@@ -3306,12 +3317,13 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("calculateInterestOwed()", () => {
     it("should calculate the interest owed for a trove after 15 days", async () => {
-      const interest = await contracts.troveManager.calculateInterestOwed(
-        to1e18("10,250"),
-        100n,
-        0n,
-        1296000n, // 15 days in seconds
-      )
+      const interest =
+        await contracts.interestRateManager.calculateInterestOwed(
+          to1e18("10,250"),
+          100n,
+          0n,
+          1296000n, // 15 days in seconds
+        )
 
       const expectedInterest = calculateInterestOwed(
         to1e18("10,250"),
@@ -3324,12 +3336,13 @@ describe("TroveManager in Normal Mode", () => {
 
     it("should calculate the interest owed for a trove after 30 days", async () => {
       await setupTroveWithInterestRate(100, 30)
-      const interest = await contracts.troveManager.calculateInterestOwed(
-        to1e18("10,250"),
-        100n,
-        0n,
-        2592000n, // 30 days in seconds
-      )
+      const interest =
+        await contracts.interestRateManager.calculateInterestOwed(
+          to1e18("10,250"),
+          100n,
+          0n,
+          2592000n, // 30 days in seconds
+        )
 
       const expectedInterest = calculateInterestOwed(
         to1e18("10,250"),
@@ -3355,7 +3368,7 @@ describe("TroveManager in Normal Mode", () => {
       await updatePCVSnapshot(contracts, state, "after")
 
       expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
-        state.troveManager.interestRateData[1000].interest.after,
+        state.interestRateManager.interestRateData[1000].interest.after,
       )
     })
 
@@ -3423,11 +3436,14 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
         calculateInterestOwed(
           to1e18(10250),
           100,
-          state.troveManager.interestRateData[100].lastUpdatedTime.before,
+          state.interestRateManager.interestRateData[100].lastUpdatedTime
+            .before,
           BigInt(await getLatestBlockTimestamp()),
         ),
       )
@@ -3444,13 +3460,17 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        state.troveManager.interestRateData[100].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             to1e18(10250),
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
     })
@@ -3472,13 +3492,17 @@ describe("TroveManager in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
       await updateTroveSnapshots(contracts, [alice, bob], "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        state.troveManager.interestRateData[100].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             alice.trove.debt.before + bob.trove.debt.before,
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
     })
@@ -3508,23 +3532,31 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        state.troveManager.interestRateData[100].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             alice.trove.debt.before,
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
 
-      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
-        state.troveManager.interestRateData[200].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[200].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[200].interest.before +
           calculateInterestOwed(
             bob.trove.debt.before,
             200,
-            state.troveManager.interestRateData[200].lastUpdatedTime.before,
-            state.troveManager.interestRateData[200].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[200].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[200].lastUpdatedTime
+              .after,
           ),
       )
     })
@@ -3605,28 +3637,6 @@ describe("TroveManager in Normal Mode", () => {
       expect(
         await contracts.troveManager.hasPendingRewards(alice.address),
       ).to.equal(false)
-    })
-
-    it("getInterestRateHistory(): Returns the interest rate values and the blocks they were set", async () => {
-      const blockNumbers = []
-
-      // Add three interest rates to the history
-      for (let i = 1; i <= 3; i++) {
-        await contracts.troveManager
-          .connect(council.wallet)
-          .proposeInterestRate(i)
-        await fastForwardTime(7 * 24 * 60 * 60) // 7 days in seconds
-        await contracts.troveManager
-          .connect(council.wallet)
-          .approveInterestRate()
-        blockNumbers.push(await ethers.provider.getBlockNumber())
-      }
-
-      const history = await contracts.troveManager.getInterestRateHistory()
-      for (let i = 0; i < 3; i++) {
-        expect(history[i].interestRate).to.equal(i + 1)
-        expect(history[i].blockNumber).to.equal(blockNumbers[i])
-      }
     })
   })
 })

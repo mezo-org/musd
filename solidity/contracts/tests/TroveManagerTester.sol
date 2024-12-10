@@ -18,7 +18,7 @@ contract TroveManagerTester is TroveManager {
     }
 
     function callUpdateDefaultPoolInterest() external {
-        _updateDefaultPoolInterest();
+        updateDefaultPoolInterest();
     }
 
     function computeICR(

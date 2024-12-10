@@ -22,18 +22,21 @@ interface ITroveManager {
 
     // --- Events ---
 
+    event ActivePoolAddressChanged(address _activePoolAddress);
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress
     );
-    event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event MUSDTokenAddressChanged(address _newMUSDTokenAddress);
-    event ActivePoolAddressChanged(address _activePoolAddress);
-    event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event StabilityPoolAddressChanged(address _stabilityPoolAddress);
-    event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
-    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
+    event DefaultPoolAddressChanged(address _defaultPoolAddress);
+    event GasPoolAddressChanged(address _gasPoolAddress);
+    event InterestRateManagerAddressChanged(
+        address _interestRateManagerAddress
+    );
+    event MUSDTokenAddressChanged(address _newMUSDTokenAddress);
     event PCVAddressChanged(address _pcvAddress);
+    event PriceFeedAddressChanged(address _newPriceFeedAddress);
+    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
+    event StabilityPoolAddressChanged(address _stabilityPoolAddress);
 
     event Liquidation(
         uint256 _liquidatedPrincipal,
@@ -80,9 +83,6 @@ interface ITroveManager {
         uint256 _L_Interest
     );
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
-    event InterestRateProposed(uint256 _proposedRate, uint256 _proposalTime);
-    event InterestRateUpdated(uint256 _newInterestRate);
-    event MaxInterestRateUpdated(uint256 _newMaxInterestRate);
 
     // --- Functions ---
 
@@ -92,6 +92,7 @@ interface ITroveManager {
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
+        address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
@@ -140,13 +141,7 @@ interface ITroveManager {
         uint256 _maxBorrowingCapacity
     ) external;
 
-    function addPrincipalToRate(uint16 _rate, uint256 _principal) external;
-
-    function addInterestToRate(uint16 _rate, uint256 _interest) external;
-
-    function removePrincipalFromRate(uint16 _rate, uint256 _principal) external;
-
-    function removeInterestFromRate(uint16 _rate, uint256 _interest) external;
+    function updateDefaultPoolInterest() external;
 
     function updateSystemAndTroveInterest(address _borrower) external;
 
@@ -176,12 +171,6 @@ interface ITroveManager {
         address _borrower,
         uint256 _timestamp
     ) external;
-
-    function approveInterestRate() external;
-
-    function proposeInterestRate(uint16 _newProposedInterestRate) external;
-
-    function setMaxInterestRate(uint16 _newMaxInterestRate) external;
 
     function stabilityPool() external view returns (IStabilityPool);
 
@@ -267,16 +256,4 @@ interface ITroveManager {
     function getTCR(uint256 _price) external view returns (uint);
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
-
-    function interestRate() external view returns (uint16);
-
-    function getInterestRateHistory()
-        external
-        view
-        returns (InterestRateChange[] memory);
-
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    ) external pure returns (uint, uint);
 }

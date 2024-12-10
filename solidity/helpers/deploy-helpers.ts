@@ -9,6 +9,7 @@ import {
   DefaultPool,
   GasPool,
   HintHelpers,
+  InterestRateManager,
   MockAggregator,
   PCV,
   PriceFeed,
@@ -85,6 +86,10 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
   const gasPool: GasPool = await getDeployedContract("GasPool")
   const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
 
+  const interestRateManager: InterestRateManager = await getDeployedContract(
+    "InterestRateManager",
+  )
+
   // TODO: replace with a real aggregator
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
@@ -111,6 +116,7 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
     defaultPool,
     gasPool,
     hintHelpers,
+    interestRateManager,
     mockAggregator,
     musd,
     pcv,

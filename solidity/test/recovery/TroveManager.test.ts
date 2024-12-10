@@ -203,17 +203,17 @@ describe("TroveManager in Recovery Mode", () => {
       const after = await getLatestBlockTimestamp()
       const interestOwed =
         calculateInterestOwed(
-          state.troveManager.interestRateData[1000].principal.before,
+          state.interestRateManager.interestRateData[1000].principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           BigInt(after),
-        ) + state.troveManager.interestRateData[1000].interest.before
+        ) + state.interestRateManager.interestRateData[1000].interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
       const remainingDebt =
-        state.troveManager.interestRateData[1000].principal.before +
+        state.interestRateManager.interestRateData[1000].principal.before +
         interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")

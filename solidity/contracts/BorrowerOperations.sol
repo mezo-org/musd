@@ -7,6 +7,7 @@ import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
+import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
@@ -61,6 +62,7 @@ contract BorrowerOperations is
         ITroveManager troveManager;
         IActivePool activePool;
         IMUSD musd;
+        IInterestRateManager interestRateManager;
     }
 
     enum BorrowerOperation {
@@ -87,6 +89,7 @@ contract BorrowerOperations is
 
     IMUSD public musd;
     IPCV public pcv;
+    IInterestRateManager public interestRateManager;
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
@@ -129,7 +132,8 @@ contract BorrowerOperations is
         ContractsCache memory contractsCache = ContractsCache(
             troveManager,
             activePool,
-            musd
+            musd,
+            interestRateManager
         );
         // slither-disable-next-line uninitialized-local
         LocalVariables_openTrove memory vars;
@@ -200,7 +204,7 @@ contract BorrowerOperations is
 
         contractsCache.troveManager.setTroveInterestRate(
             msg.sender,
-            contractsCache.troveManager.interestRate()
+            contractsCache.interestRateManager.interestRate()
         );
         // solhint-disable not-rely-on-time
         contractsCache.troveManager.setTroveLastInterestUpdateTime(
@@ -222,8 +226,8 @@ contract BorrowerOperations is
         contractsCache.troveManager.updateSystemAndTroveInterest(msg.sender);
 
         // Add trove's principal to the total principal for it's interest rate
-        contractsCache.troveManager.addPrincipalToRate(
-            contractsCache.troveManager.interestRate(),
+        contractsCache.interestRateManager.addPrincipalToRate(
+            contractsCache.interestRateManager.interestRate(),
             vars.compositeDebt
         );
 
@@ -441,10 +445,10 @@ contract BorrowerOperations is
 
     function refinance(uint256 _maxFeePercentage) external override {
         ITroveManager troveManagerCached = troveManager;
+        IInterestRateManager interestRateManagerCached = interestRateManager;
         _requireTroveisActive(troveManagerCached, msg.sender);
         troveManagerCached.updateSystemAndTroveInterest(msg.sender);
 
-        // TODO Fix hardcoded 50% fee
         uint16 oldRate = troveManagerCached.getTroveInterestRate(msg.sender);
         uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
             msg.sender
@@ -461,15 +465,21 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(msg.sender, fee);
 
-        troveManagerCached.removeInterestFromRate(oldRate, oldInterest);
-        troveManagerCached.removePrincipalFromRate(oldRate, oldPrincipal);
-        uint16 newRate = troveManagerCached.interestRate();
-        troveManagerCached.addInterestToRate(newRate, oldInterest);
-        troveManagerCached.addPrincipalToRate(newRate, oldPrincipal + fee);
+        interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
+        interestRateManagerCached.removePrincipalFromRate(
+            oldRate,
+            oldPrincipal
+        );
+        uint16 newRate = interestRateManagerCached.interestRate();
+        interestRateManagerCached.addInterestToRate(newRate, oldInterest);
+        interestRateManagerCached.addPrincipalToRate(
+            newRate,
+            oldPrincipal + fee
+        );
 
         troveManagerCached.setTroveInterestRate(
             msg.sender,
-            troveManagerCached.interestRate()
+            interestRateManagerCached.interestRate()
         );
 
         uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
@@ -519,6 +529,7 @@ contract BorrowerOperations is
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
+        address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
@@ -542,6 +553,7 @@ contract BorrowerOperations is
         checkContract(_stabilityPoolAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_troveManagerAddress);
+        checkContract(_interestRateManagerAddress);
 
         troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
@@ -559,6 +571,7 @@ contract BorrowerOperations is
         pcvAddress = _pcvAddress;
         // slither-disable-next-line missing-zero-check
         collateralAddress = _collateralAddress;
+        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
 
         require(
             (Ownable(_defaultPoolAddress).owner() != address(0) ||
@@ -628,7 +641,8 @@ contract BorrowerOperations is
         ContractsCache memory contractsCache = ContractsCache(
             troveManager,
             activePool,
-            musd
+            musd,
+            interestRateManager
         );
 
         contractsCache.troveManager.updateSystemAndTroveInterest(_borrower);
@@ -642,7 +656,7 @@ contract BorrowerOperations is
         );
 
         (vars.principalAdjustment, vars.interestAdjustment) = contractsCache
-            .troveManager
+            .interestRateManager
             .calculateDebtAdjustment(vars.interestOwed, _mUSDChange);
 
         vars.price = priceFeed.fetchPrice();

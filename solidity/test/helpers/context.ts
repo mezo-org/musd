@@ -17,6 +17,7 @@ import {
   DefaultPool,
   GasPool,
   HintHelpers,
+  InterestRateManager,
   MockAggregator,
   MockERC20,
   MUSDTester,
@@ -38,6 +39,9 @@ export async function deployment() {
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
   const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
+  const interestRateManager: InterestRateManager = await getDeployedContract(
+    "InterestRateManager",
+  )
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
   const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
@@ -57,6 +61,7 @@ export async function deployment() {
     defaultPool,
     gasPool,
     hintHelpers,
+    interestRateManager,
     mockAggregator,
     mockERC20,
     musd,
@@ -77,7 +82,6 @@ function initializeContractState(): ContractsState {
     troveManager: {
       baseRate: beforeAndAfter(),
       collateralSnapshot: beforeAndAfter(),
-      interestRateData: {},
       lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
@@ -88,6 +92,9 @@ function initializeContractState(): ContractsState {
       stakesSnapshot: beforeAndAfter(),
       troves: beforeAndAfter(),
       TCR: beforeAndAfter(),
+    },
+    interestRateManager: {
+      interestRateData: {},
     },
     activePool: {
       btc: beforeAndAfter(),

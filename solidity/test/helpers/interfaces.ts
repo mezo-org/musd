@@ -8,6 +8,7 @@ import {
   DefaultPool,
   GasPool,
   HintHelpers,
+  InterestRateManager,
   MockAggregator,
   MockERC20,
   MUSDTester,
@@ -60,7 +61,6 @@ export interface ContractsState {
   troveManager: {
     baseRate: BeforeAndAfter
     collateralSnapshot: BeforeAndAfter
-    interestRateData: Record<number, InterestRateInfo>
     lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
@@ -101,6 +101,9 @@ export interface ContractsState {
     currentEpoch: BeforeAndAfter
     currentScale: BeforeAndAfter
   }
+  interestRateManager: {
+    interestRateData: Record<number, InterestRateInfo>
+  }
 }
 
 export interface Contracts {
@@ -110,6 +113,7 @@ export interface Contracts {
   defaultPool: DefaultPool
   gasPool: GasPool
   hintHelpers: HintHelpers
+  interestRateManager: InterestRateManager
   mockAggregator: MockAggregator
   mockERC20: MockERC20
   musd: MUSDTester
