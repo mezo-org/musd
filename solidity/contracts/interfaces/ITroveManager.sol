@@ -102,8 +102,6 @@ interface ITroveManager {
 
     function liquidate(address _borrower) external;
 
-    function liquidateTroves(uint256 _n) external;
-
     function batchLiquidateTroves(address[] calldata _troveArray) external;
 
     function redeemCollateral(

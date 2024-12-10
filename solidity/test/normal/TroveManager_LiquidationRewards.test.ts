@@ -5,7 +5,6 @@ import {
   calculateInterestOwed,
   calculateSystemCollFromUsers,
   Contracts,
-  dropPrice,
   dropPriceAndLiquidate,
   expectedCollRewardAmount,
   expectedRewardAmountForUsers,
@@ -873,13 +872,11 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
 
-    await dropPrice(contracts, bob)
-    await contracts.troveManager.liquidateTroves(1n)
+    await dropPriceAndLiquidate(contracts, bob)
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await dropPrice(contracts, carol)
-    await contracts.troveManager.liquidateTroves(1n)
+    await dropPriceAndLiquidate(contracts, carol)
 
     const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
