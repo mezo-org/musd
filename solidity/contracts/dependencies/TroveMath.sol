@@ -42,7 +42,8 @@ library TroveMath {
         uint256 _coll,
         uint256 _MUSDInStabPool
     )
-    public
+    external
+    view
     returns (
         uint256 debtToOffset,
         uint256 collToSendToSP,
@@ -100,12 +101,12 @@ library TroveMath {
         );
     }
 
-    function calcBorrowingFee(
-        uint256 _borrowingRate,
-        uint256 _debt
-    ) external view returns (uint) {
-        return (_borrowingRate * _debt) / DECIMAL_PRECISION;
-    }
+//    function calcBorrowingFee(
+//        uint256 _borrowingRate,
+//        uint256 _debt
+//    ) external view returns (uint) {
+//        return (_borrowingRate * _debt) / DECIMAL_PRECISION;
+//    }
 
     function calcRedemptionFee(
         uint256 _redemptionRate,

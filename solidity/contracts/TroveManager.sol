@@ -198,14 +198,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
-    modifier onlyOwnerOrGovernance() {
-        require(
-            msg.sender == owner() || msg.sender == pcv.council(),
-            "TroveManager: Only governance can call this function"
-        );
-        _;
-    }
-
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
@@ -271,96 +263,18 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function liquidateTroves(uint256 _n) external override {
-        ContractsCache memory contractsCache = ContractsCache(
+        address[] memory troveArray = new address[](_n);
+        for (uint i = 0; i < _n; i++) {
+            troveArray[i] = sortedTroves.getLast();
+        }
+        _liquidateTroves(
             activePool,
             defaultPool,
-            IMUSD(address(0)),
-            IPCV(address(0)),
+            stabilityPool,
             sortedTroves,
-            ICollSurplusPool(address(0)),
-            address(0)
-        );
-        IStabilityPool stabilityPoolCached = stabilityPool;
-
-        // slither-disable-next-line uninitialized-local
-        LocalVariables_OuterLiquidationFunction memory vars;
-
-        LiquidationTotals memory totals;
-
-        vars.price = priceFeed.fetchPrice();
-        vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
-        vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
-
-        _updateDefaultPoolInterest();
-
-        // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
-        if (vars.recoveryModeAtStart) {
-            totals = _getTotalsFromLiquidateTrovesSequenceRecoveryMode(
-                contractsCache,
-                vars.price,
-                vars.mUSDInStabPool,
-                _n
-            );
-        } else {
-            // if !vars.recoveryModeAtStart
-            totals = _getTotalsFromLiquidateTrovesSequenceNormalMode(
-                contractsCache.activePool,
-                contractsCache.defaultPool,
-                vars.price,
-                vars.mUSDInStabPool,
-                _n
-            );
-        }
-
-        require(
-            totals.totalPrincipalInSequence > 0,
-            "TroveManager: nothing to liquidate"
-        );
-
-        // Move liquidated collateral and mUSD to the appropriate pools
-        stabilityPoolCached.offset(
-            totals.totalDebtToOffset,
-            totals.totalCollToSendToSP
-        );
-        _redistributeDebtAndColl(
-            contractsCache.activePool,
-            contractsCache.defaultPool,
-            totals.totalPrincipalToRedistribute,
-            totals.totalInterestToRedistribute,
-            totals.totalCollToRedistribute
-        );
-        if (totals.totalCollSurplus > 0) {
-            contractsCache.activePool.sendCollateral(
-                address(collSurplusPool),
-                totals.totalCollSurplus
-            );
-        }
-
-        // Update system snapshots
-        _updateSystemSnapshotsExcludeCollRemainder(
-            contractsCache.activePool,
-            totals.totalCollGasCompensation
-        );
-
-        vars.liquidatedColl =
-            totals.totalCollInSequence -
-            totals.totalCollGasCompensation -
-            totals.totalCollSurplus;
-
-        emit Liquidation(
-            totals.totalPrincipalInSequence,
-            totals.totalInterestInSequence,
-            vars.liquidatedColl,
-            totals.totalCollGasCompensation,
-            totals.totalMUSDGasCompensation
-        );
-
-        // Send gas compensation to caller
-        _sendGasCompensation(
-            contractsCache.activePool,
-            msg.sender,
-            totals.totalMUSDGasCompensation,
-            totals.totalCollGasCompensation
+            priceFeed,
+            troveArray,
+            _n
         );
     }
 
@@ -782,88 +696,92 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     /*
      * Attempt to liquidate a custom list of troves provided by the caller.
      */
-    function batchLiquidateTroves(
-        address[] memory _troveArray
-    ) public override {
-        require(
-            _troveArray.length != 0,
-            "TroveManager: Calldata address array must not be empty"
+    function batchLiquidateTroves(address[] memory _troveArray) public override {
+        _liquidateTroves(
+            activePool,
+            defaultPool,
+            stabilityPool,
+            sortedTroves,
+            priceFeed,
+            _troveArray,
+            _troveArray.length
         );
+    }
+
+    function _liquidateTroves(
+        IActivePool _activePool,
+        IDefaultPool _defaultPool,
+        IStabilityPool _stabilityPool,
+        ISortedTroves _sortedTroves,
+        IPriceFeed _priceFeed,
+        address[] memory _troveArray,
+        uint256 _n
+    ) internal {
+        require(_troveArray.length != 0, "TroveManager: Calldata address array must not be empty");
 
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
             updateSystemAndTroveInterest(borrower);
         }
 
-        IActivePool activePoolCached = activePool;
-        IDefaultPool defaultPoolCached = defaultPool;
-        IStabilityPool stabilityPoolCached = stabilityPool;
-
         // slither-disable-next-line uninitialized-local
         LocalVariables_OuterLiquidationFunction memory vars;
         // slither-disable-next-line uninitialized-local
         LiquidationTotals memory totals;
 
-        vars.price = priceFeed.fetchPrice();
-        vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
+        vars.price = _priceFeed.fetchPrice();
+        vars.mUSDInStabPool = _stabilityPool.getTotalMUSDDeposits();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
         _updateDefaultPoolInterest();
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         if (vars.recoveryModeAtStart) {
-            totals = _getTotalFromBatchLiquidateRecoveryMode(
-                activePoolCached,
-                defaultPoolCached,
+            ContractsCache memory contractsCache = ContractsCache(
+                activePool,
+                defaultPool,
+                IMUSD(address(0)),
+                IPCV(address(0)),
+                sortedTroves,
+                ICollSurplusPool(address(0)),
+                address(0)
+            );
+            totals = _getTotalsFromLiquidateTrovesSequenceRecoveryMode(
+                contractsCache,
                 vars.price,
                 vars.mUSDInStabPool,
-                _troveArray
+                _n
             );
         } else {
-            //  if !vars.recoveryModeAtStart
-            totals = _getTotalsFromBatchLiquidateNormalMode(
-                activePoolCached,
-                defaultPoolCached,
+            totals = _getTotalsFromLiquidateTrovesSequenceNormalMode(
+                _activePool,
+                _defaultPool,
                 vars.price,
                 vars.mUSDInStabPool,
-                _troveArray
+                _n
             );
         }
 
-        require(
-            totals.totalPrincipalInSequence > 0,
-            "TroveManager: nothing to liquidate"
-        );
+        require(totals.totalPrincipalInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated collateral and debt to the appropriate pools
-        stabilityPoolCached.offset(
-            totals.totalDebtToOffset,
-            totals.totalCollToSendToSP
-        );
+        // Move liquidated collateral and mUSD to the appropriate pools
+        _stabilityPool.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(
-            activePoolCached,
-            defaultPoolCached,
+            _activePool,
+            _defaultPool,
             totals.totalPrincipalToRedistribute,
             totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
-            activePoolCached.sendCollateral(
-                address(collSurplusPool),
-                totals.totalCollSurplus
-            );
+            _activePool.sendCollateral(address(collSurplusPool), totals.totalCollSurplus);
         }
 
         // Update system snapshots
-        _updateSystemSnapshotsExcludeCollRemainder(
-            activePoolCached,
-            totals.totalCollGasCompensation
-        );
+        _updateSystemSnapshotsExcludeCollRemainder(_activePool, totals.totalCollGasCompensation);
 
-        vars.liquidatedColl =
-            totals.totalCollInSequence -
-            totals.totalCollGasCompensation -
-            totals.totalCollSurplus;
+        vars.liquidatedColl = totals.totalCollInSequence - totals.totalCollGasCompensation - totals.totalCollSurplus;
+
         emit Liquidation(
             totals.totalPrincipalInSequence,
             totals.totalInterestInSequence,
@@ -873,12 +791,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
 
         // Send gas compensation to caller
-        _sendGasCompensation(
-            activePoolCached,
-            msg.sender,
-            totals.totalMUSDGasCompensation,
-            totals.totalCollGasCompensation
-        );
+        _sendGasCompensation(_activePool, msg.sender, totals.totalMUSDGasCompensation, totals.totalCollGasCompensation);
     }
 
     function getRedemptionRateWithDecay() public view override returns (uint) {
