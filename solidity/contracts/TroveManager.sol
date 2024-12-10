@@ -154,21 +154,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     // --- Data structures ---
 
-    /*
-     * Half-life of 12h. 12h = 720 min
-     * (1/2) = d^720 => d = (1/2)^(1/720)
-     */
-    uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
-    uint256 public constant REDEMPTION_FEE_FLOOR =
-        (DECIMAL_PRECISION * 5) / 1000; // 0.5%
-    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
-
-    /*
-     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
-     * Corresponds to (1 / ALPHA) in the white paper.
-     */
-    uint256 public constant BETA = 2;
-
     uint256 public baseRate;
 
     // The timestamp of the latest fee operation (redemption or new mUSD issuance)
@@ -1183,7 +1168,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
          * the fraction of total supply that was redeemed at face value. */
         uint256 redeemedMUSDFraction = (_collateralDrawn * _price) / _totalDebt;
 
-        uint256 newBaseRate = decayedBaseRate + (redeemedMUSDFraction / BETA);
+        uint256 newBaseRate = decayedBaseRate + (redeemedMUSDFraction / TroveMath.BETA);
         newBaseRate = LiquityMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
         //assert(newBaseRate <= DECIMAL_PRECISION); // This is already enforced in the line above
         assert(newBaseRate > 0); // Base rate is always non-zero after redemption
@@ -2136,7 +2121,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _maxFeePercentage
     ) internal pure {
         require(
-            _maxFeePercentage >= REDEMPTION_FEE_FLOOR &&
+            _maxFeePercentage >= TroveMath.REDEMPTION_FEE_FLOOR &&
                 _maxFeePercentage <= DECIMAL_PRECISION,
             "Max fee percentage must be between 0.5% and 100%"
         );

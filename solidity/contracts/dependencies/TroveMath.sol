@@ -11,6 +11,11 @@ library TroveMath {
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
     uint256 public constant REDEMPTION_FEE_FLOOR =
     (DECIMAL_PRECISION * 5) / 1000; // 0.5%
+    /*
+     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
+     * Corresponds to (1 / ALPHA) in the white paper.
+     */
+    uint256 public constant BETA = 2;
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
