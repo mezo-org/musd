@@ -7,19 +7,12 @@ import {
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { mockAggregator } = await fetchAllDeployedContracts(isHardhatNetwork)
 
-  const { musd, troveManager } =
-    await fetchAllDeployedContracts(isHardhatNetwork)
-
-  await execute(
-    "GasPool",
-    "setAddresses",
-    await troveManager.getAddress(),
-    await musd.getAddress(),
-  )
+  await execute("PriceFeed", "setOracle", await mockAggregator.getAddress())
 }
 
 export default func
 
-func.tags = ["SetAddresses", "SetGasPoolAddresses"]
-func.dependencies = ["GasPool", "MUSD", "TroveManager"]
+func.tags = ["SetAddresses", "SetPriceFeedOracle"]
+func.dependencies = ["PriceFeed", "MockAggregator"]

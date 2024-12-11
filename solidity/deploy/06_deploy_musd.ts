@@ -15,7 +15,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const borrowerOperations = await deployments.get("BorrowerOperations")
   const stabilityPool = await deployments.get("StabilityPool")
-  const troveManager = await deployments.get("TroveManagerTester")
+  const troveManager = await deployments.get(
+    isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
+  )
 
   const musd = await getValidDeployment("MUSD")
   if (musd) {

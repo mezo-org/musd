@@ -8,11 +8,10 @@ import {
 import { ZERO_ADDRESS } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
   const {
     activePool,
-    borrowerOperations,
     collSurplusPool,
     defaultPool,
     gasPool,
@@ -25,22 +24,22 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     troveManager,
   } = await fetchAllDeployedContracts(isHardhatNetwork)
 
-  await borrowerOperations
-    .connect(deployer)
-    .setAddresses(
-      await activePool.getAddress(),
-      ZERO_ADDRESS,
-      await collSurplusPool.getAddress(),
-      await defaultPool.getAddress(),
-      await gasPool.getAddress(),
-      await interestRateManager.getAddress(),
-      await musd.getAddress(),
-      await pcv.getAddress(),
-      await priceFeed.getAddress(),
-      await stabilityPool.getAddress(),
-      await sortedTroves.getAddress(),
-      await troveManager.getAddress(),
-    )
+  await execute(
+    "BorrowerOperations",
+    "setAddresses",
+    await activePool.getAddress(),
+    ZERO_ADDRESS,
+    await collSurplusPool.getAddress(),
+    await defaultPool.getAddress(),
+    await gasPool.getAddress(),
+    await interestRateManager.getAddress(),
+    await musd.getAddress(),
+    await pcv.getAddress(),
+    await priceFeed.getAddress(),
+    await stabilityPool.getAddress(),
+    await sortedTroves.getAddress(),
+    await troveManager.getAddress(),
+  )
 }
 
 export default func
