@@ -6,7 +6,6 @@
 
 pragma solidity ^0.8.24;
 
-import "hardhat/console.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
@@ -712,6 +711,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         Trove storage trove = Troves[_borrower];
         _updateSystemInterest(trove.interestRate);
         // solhint-disable not-rely-on-time
+        // slither-disable-next-line calls-loop
         trove.interestOwed += interestRateManager.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
@@ -944,6 +944,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _updateSystemInterest(uint16 _rate) internal {
+        // slither-disable-next-line calls-loop
         uint256 interest = interestRateManager.updateSystemInterest(_rate);
 
         // slither-disable-next-line calls-loop
@@ -961,6 +962,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 
+        // slither-disable-start calls-loop
         (
             uint256 principalAdjustment,
             uint256 interestAdjustment
@@ -969,6 +971,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _payment,
                 trove.interestRate
             );
+        // slither-disable-end calls-loop
         trove.principal -= principalAdjustment;
         trove.interestOwed -= interestAdjustment;
     }
@@ -1027,6 +1030,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             trove.principal += pendingPrincipal;
             trove.interestOwed += pendingInterest;
 
+            // slither-disable-start calls-loop
             // Apply pending rewards to system interest rate data
             interestRateManager.addPrincipalToRate(
                 trove.interestRate,
@@ -1036,6 +1040,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 trove.interestRate,
                 pendingInterest
             );
+            // slither-disable-end calls-loop
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -1608,6 +1613,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             );
         } else {
             // calculate 10 minutes worth of interest to account for delay between the hint call and now
+            // slither-disable-start calls-loop
             // solhint-disable not-rely-on-time
             vars.upperBoundNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
@@ -1620,6 +1626,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                     )
             );
             // solhint-enable not-rely-on-time
+            // slither-disable-end calls-loop
             vars.newNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt
@@ -1849,6 +1856,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     }
 
     function _getTotalDebt(address _borrower) internal view returns (uint256) {
+        // slither-disable-start calls-loop
         // solhint-disable not-rely-on-time
         return
             Troves[_borrower].principal +
@@ -1860,6 +1868,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 block.timestamp
             );
         // solhint-enable not-rely-on-time
+        // slither-disable-end calls-loop
     }
 
     // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation

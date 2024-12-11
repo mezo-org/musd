@@ -175,6 +175,8 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         }
     }
 
+    // slither-disable-start reentrancy-benign
+    // slither-disable-start reentrancy-events
     function _setInterestRate(uint16 _newInterestRate) internal {
         require(
             _newInterestRate <= maxInterestRate,
@@ -184,4 +186,6 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         interestRate = _newInterestRate;
         emit InterestRateUpdated(_newInterestRate);
     }
+    // slither-disable-end reentrancy-benign
+    // slither-disable-end reentrancy-events
 }
