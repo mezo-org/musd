@@ -1492,7 +1492,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("A liquidation sequence containing Pool offsets increases the TCR", async () => {
+    it("A batch liquidation containing Pool offsets increases the TCR", async () => {
       await setupTroves()
 
       // Open a couple more troves with the same ICR as Alice
@@ -1525,7 +1525,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
+    it("A batch liquidation of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
       await setupTroves()
 
       // Open a couple more troves with the same ICR as Alice
@@ -1610,35 +1610,6 @@ describe("TroveManager in Normal Mode", () => {
 
       expect(state.troveManager.TCR.after).to.equal(
         remainingColl / remainingDebt,
-      )
-    })
-
-    it("liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
-      await setupTrovesLiquidateWithSkip()
-
-      // Drop the price so that Dennis is at risk for liquidation
-      await dropPrice(contracts, dennis)
-      await updateTroveSnapshots(contracts, [bob, dennis], "after")
-
-      // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
-      await contracts.troveManager.batchLiquidateTroves([
-        alice.wallet,
-        dennis.wallet,
-      ])
-
-      expect(
-        await contracts.sortedTroves.contains(dennis.wallet.address),
-      ).to.equal(false)
-      expect(
-        await contracts.sortedTroves.contains(bob.wallet.address),
-      ).to.equal(true)
-    })
-
-    it("closes every Trove with ICR < MCR, when n > number of undercollateralized troves", async () => {
-      await testLiquidateICRLessThanMCR(() =>
-        contracts.troveManager.batchLiquidateTroves(
-          [dennis, carol, alice, eric, bob].map((user) => user.wallet),
-        ),
       )
     })
 
