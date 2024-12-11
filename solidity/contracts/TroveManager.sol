@@ -711,6 +711,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function updateSystemAndTroveInterest(address _borrower) public {
         Trove storage trove = Troves[_borrower];
         _updateSystemInterest(trove.interestRate);
+        // solhint-disable not-rely-on-time
         trove.interestOwed += interestRateManager.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
@@ -718,6 +719,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             block.timestamp
         );
         trove.lastInterestUpdateTime = block.timestamp;
+        // solhint-enable not-rely-on-time
     }
 
     /*

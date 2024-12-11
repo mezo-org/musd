@@ -10,8 +10,9 @@ interface IInterestRateManager {
     }
     event PCVAddressChanged(address _pcvAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
-
-    function interestRate() external view returns (uint16);
+    event InterestRateProposed(uint16 proposedRate, uint256 proposalTime);
+    event InterestRateUpdated(uint16 newInterestRate);
+    event MaxInterestRateUpdated(uint16 newMaxInterestRate);
 
     function setAddresses(
         address _pcvAddress,
@@ -34,25 +35,6 @@ interface IInterestRateManager {
 
     function setLastUpdatedTime(uint16 _rate, uint256 _time) external;
 
-    function getInterestRateData(
-        uint16 _rate
-    ) external view returns (InterestRateInfo memory);
-
-    function calculateInterestOwed(
-        uint256 _principal,
-        uint16 _interestRate,
-        uint256 startTime,
-        uint256 endTime
-    ) external pure returns (uint256);
-
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    )
-        external
-        pure
-        returns (uint256 principalAdjustment, uint256 interestAdjustment);
-
     function updateSystemInterest(
         uint16 _rate
     ) external returns (uint256 interest);
@@ -64,4 +46,25 @@ interface IInterestRateManager {
     )
         external
         returns (uint256 principalAdjustment, uint256 interestAdjustment);
+
+    function interestRate() external view returns (uint16);
+
+    function getInterestRateData(
+        uint16 _rate
+    ) external view returns (InterestRateInfo memory);
+
+    function calculateDebtAdjustment(
+        uint256 _interestOwed,
+        uint256 _payment
+    )
+        external
+        pure
+        returns (uint256 principalAdjustment, uint256 interestAdjustment);
+
+    function calculateInterestOwed(
+        uint256 _principal,
+        uint16 _interestRate,
+        uint256 startTime,
+        uint256 endTime
+    ) external pure returns (uint256);
 }
