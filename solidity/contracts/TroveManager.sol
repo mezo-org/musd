@@ -542,6 +542,10 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
         uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
+        interestRateManager.addPrincipalToRate(
+            Troves[_borrower].interestRate,
+            _debtIncrease
+        );
         Troves[_borrower].principal = newDebt;
         return newDebt;
     }

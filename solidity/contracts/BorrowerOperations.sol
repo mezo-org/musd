@@ -226,10 +226,10 @@ contract BorrowerOperations is
         contractsCache.troveManager.updateSystemAndTroveInterest(msg.sender);
 
         // Add trove's principal to the total principal for it's interest rate
-        contractsCache.interestRateManager.addPrincipalToRate(
-            contractsCache.interestRateManager.interestRate(),
-            vars.compositeDebt
-        );
+//        contractsCache.interestRateManager.addPrincipalToRate(
+//            contractsCache.interestRateManager.interestRate(),
+//            vars.compositeDebt
+//        );
 
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
         vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
@@ -472,10 +472,10 @@ contract BorrowerOperations is
         );
         uint16 newRate = interestRateManagerCached.interestRate();
         interestRateManagerCached.addInterestToRate(newRate, oldInterest);
-        interestRateManagerCached.addPrincipalToRate(
-            newRate,
-            oldPrincipal + fee
-        );
+//        interestRateManagerCached.addPrincipalToRate(
+//            newRate,
+//            oldPrincipal + fee
+//        );
 
         troveManagerCached.setTroveInterestRate(
             msg.sender,
