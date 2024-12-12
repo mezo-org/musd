@@ -2552,6 +2552,69 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("adjustTrove()", () => {
+    it("removes principal and interest from system interest rate data when decreasing debt", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "200",
+        sender: dennis.wallet,
+      })
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateTroveSnapshots(contracts, [carol, dennis], "before")
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updateTroveSnapshots(contracts, [carol, dennis], "after")
+      const after = BigInt(await getLatestBlockTimestamp())
+
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(
+        calculateInterestOwed(
+          dennis.trove.debt.before,
+          1000,
+          dennis.trove.lastInterestUpdateTime.before,
+          after,
+        ),
+      )
+
+      const principalAdjustment =
+        debtChange -
+        calculateInterestOwed(
+          carol.trove.debt.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          after,
+        )
+
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[1000].principal.before -
+          principalAdjustment,
+      )
+    })
     it("updates the Trove's interest owed", async () => {
       await testUpdatesInterestOwed(contracts, carol, council, () =>
         contracts.borrowerOperations

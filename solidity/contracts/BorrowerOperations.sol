@@ -839,6 +839,9 @@ contract BorrowerOperations is
         bool _isDebtIncrease,
         uint256 _netDebtChange
     ) internal {
+        IInterestRateManager interestRateManagerCached = interestRateManager;
+        ITroveManager troveManagerCached = troveManager;
+        uint16 rate = troveManagerCached.getTroveInterestRate(_borrower);
         if (_isDebtIncrease) {
             _withdrawMUSD(
                 _activePool,
