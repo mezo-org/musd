@@ -430,15 +430,6 @@ contract BorrowerOperations is
             interestOwed
         );
 
-        interestRateManagerCached.removePrincipalFromRate(
-            rate,
-            principal
-        );
-        interestRateManagerCached.removeInterestFromRate(
-            rate,
-            interestOwed
-        );
-
         // Burn the repaid mUSD from the user's balance
         musdTokenCached.burn(msg.sender, debt - MUSD_GAS_COMPENSATION);
 

@@ -6,6 +6,7 @@
 
 pragma solidity ^0.8.24;
 
+import "./debugging/console.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ICollSurplusPool.sol";
@@ -1594,6 +1595,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
 
         if (vars.newDebt == MUSD_GAS_COMPENSATION) {
+            console.log("redeemCollateralFromTrove: Closing Trove");
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _closeTrove(_borrower, Status.closedByRedemption);
