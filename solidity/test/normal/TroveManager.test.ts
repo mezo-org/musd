@@ -1,6 +1,5 @@
 import { expect } from "chai"
 import { ContractTransactionResponse } from "ethers"
-import { ethers } from "hardhat"
 import {
   NO_GAS,
   Contracts,
@@ -489,17 +488,17 @@ describe("TroveManager in Normal Mode", () => {
       // Calculate interest on total system debt
       const interestOwed =
         calculateInterestOwed(
-          state.troveManager.interestRateData[1000].principal.before,
+          state.interestRateManager.interestRateData[1000].principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           carol.trove.lastInterestUpdateTime.after,
-        ) + state.troveManager.interestRateData[1000].interest.before
+        ) + state.interestRateManager.interestRateData[1000].interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
       const remainingDebt =
-        state.troveManager.interestRateData[1000].principal.before +
+        state.interestRateManager.interestRateData[1000].principal.before +
         interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
@@ -1368,347 +1367,15 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  describe("liquidateTroves()", () => {
-    it("A liquidation sequence containing Pool offsets increases the TCR", async () => {
-      await setupTroves()
-
-      // Open a couple more troves with the same ICR as Alice
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "400",
-        sender: carol.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "400",
-        sender: dennis.wallet,
-      })
-
-      // Bob provides funds to SP
-      await provideToSP(contracts, bob, to1e18("10,000"))
-
-      // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
-      await dropPrice(contracts, alice)
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      // Perform liquidation and check that TCR has improved
-      await contracts.troveManager.liquidateTroves(4)
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      expect(state.troveManager.TCR.after).to.be.greaterThan(
-        state.troveManager.TCR.before,
-      )
-    })
-
-    it("A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
-      await setupTroves()
-
-      // Open a couple more troves with the same ICR as Alice
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "400",
-        sender: carol.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "400",
-        sender: dennis.wallet,
-      })
-
-      // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
-      await dropPrice(contracts, alice)
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      // Perform liquidation and check that TCR has decreased
-      await contracts.troveManager.liquidateTroves(4)
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      expect(state.troveManager.TCR.before).to.be.greaterThan(
-        state.troveManager.TCR.after,
-      )
-
-      // Check that the TCR has decreased by no more than the liquidation fee
-      expect(state.troveManager.TCR.after).to.be.greaterThanOrEqual(
-        applyLiquidationFee(state.troveManager.TCR.before),
-      )
-    })
-
-    it("a pure redistribution reduces the TCR due to gas compensation and interest", async () => {
-      await setInterestRate(contracts, council, 1000)
-      await setupTroves()
-
-      await openTrove(contracts, {
-        musdAmount: "1800",
-        ICR: "120",
-        sender: carol.wallet,
-      })
-
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
-      await updateTroveSnapshot(contracts, carol, "before")
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      const entireSystemCollBefore =
-        await contracts.troveManager.getEntireSystemColl()
-
-      await fastForwardTime(365 * 24 * 60 * 60)
-
-      const newPrice = await dropPrice(contracts, carol)
-      const liquidationTx = await contracts.troveManager.liquidateTroves(1)
-      await updateTroveSnapshot(contracts, carol, "after")
-      const { collGasCompensation } =
-        await getEmittedLiquidationValues(liquidationTx)
-
-      // Calculate interest on total system debt
-      const after = await getLatestBlockTimestamp()
-      const interestOwed =
-        calculateInterestOwed(
-          state.troveManager.interestRateData[1000].principal.before,
-          1000,
-          carol.trove.lastInterestUpdateTime.before,
-          BigInt(after),
-        ) + state.troveManager.interestRateData[1000].interest.before
-
-      // Calculate expected tcr
-      const remainingColl =
-        (entireSystemCollBefore - collGasCompensation) * newPrice
-      const remainingDebt =
-        state.troveManager.interestRateData[1000].principal.before +
-        interestOwed
-
-      await updateTroveManagerSnapshot(contracts, state, "after")
-
-      expect(state.troveManager.TCR.after).to.equal(
-        remainingColl / remainingDebt,
-      )
-    })
-
-    it("liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
-      await setupTrovesLiquidateWithSkip()
-
-      // Drop the price so that Dennis is at risk for liquidation
-      await dropPrice(contracts, dennis)
-      await updateTroveSnapshots(contracts, [bob, dennis], "after")
-
-      // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
-      await contracts.troveManager.liquidateTroves(2)
-      expect(
-        await contracts.sortedTroves.contains(dennis.wallet.address),
-      ).to.equal(false)
-      expect(
-        await contracts.sortedTroves.contains(bob.wallet.address),
-      ).to.equal(true)
-    })
-
-    it("closes every Trove with ICR < MCR, when n > number of undercollateralized troves", async () => {
-      await testLiquidateICRLessThanMCR(() =>
-        contracts.troveManager.liquidateTroves(5),
-      )
-    })
-
-    it("liquidates up to (but no more than) the requested number of undercollateralized troves", async () => {
-      await testLiquidateOnly(() => contracts.troveManager.liquidateTroves(2))
-    })
-
-    it("liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "400",
-        sender: alice.wallet,
-      })
-
-      // Open a trove for Bob, then two troves with slightly lower ICRs for Carol and Dennis
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "200.01",
-        sender: bob.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "200",
-        sender: carol.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "200",
-        sender: dennis.wallet,
-      })
-
-      // Drop the price so that Carol and Dennis are at risk for liquidation, but do not liquidate anyone yet
-      const newPrice = await dropPrice(contracts, dennis)
-
-      // Check that Bob's ICR is above the MCR after the price drop and before liquidation
-      await updateTroveSnapshot(contracts, bob, "before")
-      const mcr = await contracts.troveManager.MCR()
-      expect(bob.trove.icr.before).to.be.greaterThan(mcr)
-
-      // Liquidate Dennis, creating rewards for everyone
-      await contracts.troveManager.liquidate(dennis.wallet)
-
-      // Check that Bob's ICR is below the MCR following liquidation
-      await updateTroveSnapshot(contracts, bob, "after")
-      expect(bob.trove.icr.after).to.be.lessThan(mcr)
-
-      // Check that Bob's raw ICR (debt and coll less pending rewards) is above the MCR
-      const rawICR =
-        (bob.trove.collateral.after * newPrice) / bob.trove.debt.after
-      expect(rawICR).to.be.greaterThan(mcr)
-
-      // Attempt to liquidate all troves
-      await contracts.troveManager.liquidateTroves(3)
-
-      // Check that Alice stays active and Carol and Bob get liquidated
-      expect(await checkTroveActive(contracts, alice)).to.equal(true)
-      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
-      expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
-        true,
-      )
-    })
-
-    it("liquidates based on actual ICR including interest", async () => {
-      await setInterestRate(contracts, council, 1000)
-      await openTrove(contracts, {
-        musdAmount: "10,000",
-        ICR: "1000",
-        sender: alice.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        ICR: "150",
-        sender: bob.wallet,
-      })
-
-      // Drop the price so Bob is just above MCR
-      await dropPrice(contracts, bob, to1e18("111"))
-
-      await fastForwardTime(365 * 24 * 60 * 60)
-
-      await contracts.troveManager.liquidateTroves(1n)
-      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
-    })
-
-    it("does not affect the liquidated user's token balances", async () => {
-      await setupTroves()
-      await updateWalletSnapshot(contracts, alice, "before")
-      await updateWalletSnapshot(contracts, bob, "before")
-
-      // Attempt to liquidate both troves, only Alice gets liquidated
-      await dropPrice(contracts, alice)
-      await contracts.troveManager.liquidateTroves(2)
-      await updateWalletSnapshot(contracts, alice, "after")
-      await updateWalletSnapshot(contracts, bob, "after")
-
-      // Balances should remain unchanged except for gas compensation
-      expect(alice.musd.after).to.equal(alice.musd.before + to1e18("200"))
-      expect(bob.musd.after).to.equal(bob.musd.before)
-    })
-
-    it("Liquidating troves with SP deposits correctly impacts their SP deposit and collateral gain", async () => {
-      // Open three troves: Alice, Bob, Carol
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "200",
-        sender: alice.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "200",
-        sender: bob.wallet,
-      })
-      await openTrove(contracts, {
-        musdAmount: "20000",
-        ICR: "2000",
-        sender: carol.wallet,
-      })
-
-      // All deposit into the stability pool
-      const aliceDeposit = to1e18("500")
-      const bobDeposit = to1e18("1000")
-      const carolDeposit = to1e18("3000")
-      await provideToSP(contracts, alice, aliceDeposit)
-      await provideToSP(contracts, bob, bobDeposit)
-      await provideToSP(contracts, carol, carolDeposit)
-
-      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-
-      // Price drops so we can liquidate Alice and Bob
-      await dropPriceAndLiquidate(contracts, alice, false)
-
-      await updateStabilityPoolUserSnapshots(
-        contracts,
-        [alice, bob, carol],
-        "before",
-      )
-
-      // Liquidate
-      await contracts.troveManager.liquidateTroves(2)
-
-      // Check that each user's deposit has decreased by their share of the total liquidated debt
-      const totalDeposits = aliceDeposit + bobDeposit + carolDeposit
-      const liquidatedDebt = alice.trove.debt.before + bob.trove.debt.before
-      await updateStabilityPoolUserSnapshots(
-        contracts,
-        [alice, bob, carol],
-        "after",
-      )
-
-      expect(
-        aliceDeposit - (liquidatedDebt * aliceDeposit) / totalDeposits,
-      ).to.be.closeTo(alice.stabilityPool.compoundedDeposit.after, 1000)
-      expect(
-        bobDeposit - (liquidatedDebt * bobDeposit) / totalDeposits,
-      ).to.be.closeTo(bob.stabilityPool.compoundedDeposit.after, 1000)
-      expect(
-        carolDeposit - (liquidatedDebt * carolDeposit) / totalDeposits,
-      ).to.be.closeTo(carol.stabilityPool.compoundedDeposit.after, 10000)
-
-      // Check that each user's collateral gain has increased by their share of the total liquidated collateral
-      const liquidatedColl = applyLiquidationFee(
-        alice.trove.collateral.before + bob.trove.collateral.before,
-      )
-      expect((liquidatedColl * aliceDeposit) / totalDeposits).to.be.closeTo(
-        alice.stabilityPool.collateralGain.after,
-        1000,
-      )
-      expect((liquidatedColl * bobDeposit) / totalDeposits).to.be.closeTo(
-        bob.stabilityPool.collateralGain.after,
-        1000,
-      )
-      expect((liquidatedColl * carolDeposit) / totalDeposits).to.be.closeTo(
-        carol.stabilityPool.collateralGain.after,
-        10000,
-      ) // TODO Determine correct error tolerance
-    })
-
-    context("Expected Reverts", () => {
-      it("does nothing if all troves have ICR > 110%", async () => {
-        await setupTroves()
-        await updateTroveManagerSnapshot(contracts, state, "before")
-        await expect(
-          contracts.troveManager.liquidateTroves(2),
-        ).to.be.revertedWith("TroveManager: nothing to liquidate")
-        await updateTroveManagerSnapshot(contracts, state, "after")
-        expect(state.troveManager.troves.before).to.equal(
-          state.troveManager.troves.after,
-        )
-        expect(state.troveManager.TCR.before).to.equal(
-          state.troveManager.TCR.after,
-        )
-      })
-
-      it("reverts if n = 0", async () => {
-        await setupTroves()
-        // Drop the price so Alice is eligible for liquidation but do not perform the liquidation yet
-        await dropPrice(contracts, alice)
-        await expect(
-          contracts.troveManager.liquidateTroves(0),
-        ).to.be.revertedWith("TroveManager: nothing to liquidate")
-      })
-    })
-  })
-
   describe("batchLiquidateTroves()", () => {
     it("liquidates a Trove that was skipped in a previous liquidation and has pending rewards", async () => {
       await setupTrovesLiquidateWithSkip()
       // attempt to liquidate Alice, Bob, and Dennis. Bob and Dennis are skipped
-      await contracts.troveManager.liquidateTroves(3)
+      await contracts.troveManager.batchLiquidateTroves([
+        alice.wallet,
+        bob.wallet,
+        dennis.wallet,
+      ])
 
       // Drop the price so that Dennis is at risk for liquidation
       await dropPrice(contracts, dennis)
@@ -1823,6 +1490,306 @@ describe("TroveManager in Normal Mode", () => {
       expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
         true,
       )
+    })
+
+    it("A batch liquidation containing Pool offsets increases the TCR", async () => {
+      await setupTroves()
+
+      // Open a couple more troves with the same ICR as Alice
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: dennis.wallet,
+      })
+
+      // Bob provides funds to SP
+      await provideToSP(contracts, bob, to1e18("10,000"))
+
+      // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
+      await dropPrice(contracts, alice)
+      await updateTroveManagerSnapshot(contracts, state, "before")
+
+      // Perform liquidation and check that TCR has improved
+      await contracts.troveManager.batchLiquidateTroves(
+        [alice, bob, carol, dennis].map((user) => user.wallet),
+      )
+
+      await updateTroveManagerSnapshot(contracts, state, "after")
+      expect(state.troveManager.TCR.after).to.be.greaterThan(
+        state.troveManager.TCR.before,
+      )
+    })
+
+    it("A batch liquidation of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
+      await setupTroves()
+
+      // Open a couple more troves with the same ICR as Alice
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: dennis.wallet,
+      })
+
+      // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
+      await dropPrice(contracts, alice)
+      await updateTroveManagerSnapshot(contracts, state, "before")
+
+      // Perform liquidation and check that TCR has decreased
+      await contracts.troveManager.batchLiquidateTroves(
+        [alice, bob, carol, dennis].map((user) => user.wallet),
+      )
+
+      await updateTroveManagerSnapshot(contracts, state, "after")
+      expect(state.troveManager.TCR.before).to.be.greaterThan(
+        state.troveManager.TCR.after,
+      )
+
+      // Check that the TCR has decreased by no more than the liquidation fee
+      expect(state.troveManager.TCR.after).to.be.greaterThanOrEqual(
+        applyLiquidationFee(state.troveManager.TCR.before),
+      )
+    })
+
+    it("a pure redistribution reduces the TCR due to gas compensation and interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+
+      await openTrove(contracts, {
+        musdAmount: "1800",
+        ICR: "120",
+        sender: carol.wallet,
+      })
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateTroveManagerSnapshot(contracts, state, "before")
+
+      const entireSystemCollBefore =
+        await contracts.troveManager.getEntireSystemColl()
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      const newPrice = await dropPrice(contracts, carol)
+
+      const liquidationTx = await contracts.troveManager.batchLiquidateTroves([
+        carol.wallet,
+      ])
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      const { collGasCompensation } =
+        await getEmittedLiquidationValues(liquidationTx)
+
+      // Calculate interest on total system debt
+      const after = await getLatestBlockTimestamp()
+      const interestOwed =
+        calculateInterestOwed(
+          state.interestRateManager.interestRateData[1000].principal.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          BigInt(after),
+        ) + state.interestRateManager.interestRateData[1000].interest.before
+
+      // Calculate expected tcr
+      const remainingColl =
+        (entireSystemCollBefore - collGasCompensation) * newPrice
+      const remainingDebt =
+        state.interestRateManager.interestRateData[1000].principal.before +
+        interestOwed
+
+      await updateTroveManagerSnapshot(contracts, state, "after")
+
+      expect(state.troveManager.TCR.after).to.equal(
+        remainingColl / remainingDebt,
+      )
+    })
+
+    it("liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "400",
+        sender: alice.wallet,
+      })
+
+      // Open a trove for Bob, then two troves with slightly lower ICRs for Carol and Dennis
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200.01",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: dennis.wallet,
+      })
+
+      // Drop the price so that Carol and Dennis are at risk for liquidation, but do not liquidate anyone yet
+      const newPrice = await dropPrice(contracts, dennis)
+
+      // Check that Bob's ICR is above the MCR after the price drop and before liquidation
+      await updateTroveSnapshot(contracts, bob, "before")
+      const mcr = await contracts.troveManager.MCR()
+      expect(bob.trove.icr.before).to.be.greaterThan(mcr)
+
+      // Liquidate Dennis, creating rewards for everyone
+      await contracts.troveManager.liquidate(dennis.wallet)
+
+      // Check that Bob's ICR is below the MCR following liquidation
+      await updateTroveSnapshot(contracts, bob, "after")
+      expect(bob.trove.icr.after).to.be.lessThan(mcr)
+
+      // Check that Bob's raw ICR (debt and coll less pending rewards) is above the MCR
+      const rawICR =
+        (bob.trove.collateral.after * newPrice) / bob.trove.debt.after
+      expect(rawICR).to.be.greaterThan(mcr)
+
+      // Attempt to liquidate all troves
+      await contracts.troveManager.batchLiquidateTroves(
+        [carol, bob, alice].map((user) => user.wallet),
+      )
+
+      // Check that Alice stays active and Carol and Bob get liquidated
+      expect(await checkTroveActive(contracts, alice)).to.equal(true)
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
+      expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
+        true,
+      )
+    })
+
+    it("liquidates based on actual ICR including interest", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "1000",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2,000",
+        ICR: "150",
+        sender: bob.wallet,
+      })
+
+      // Drop the price so Bob is just above MCR
+      await dropPrice(contracts, bob, to1e18("111"))
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await contracts.troveManager.batchLiquidateTroves([bob.wallet])
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
+    })
+
+    it("does not affect the liquidated user's token balances", async () => {
+      await setupTroves()
+      await updateWalletSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      // Attempt to liquidate both troves, only Alice gets liquidated
+      await dropPrice(contracts, alice)
+
+      await contracts.troveManager.batchLiquidateTroves([
+        alice.wallet,
+        bob.wallet,
+      ])
+
+      await updateWalletSnapshot(contracts, alice, "after")
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      // Balances should remain unchanged except for gas compensation
+      expect(alice.musd.after).to.equal(alice.musd.before + to1e18("200"))
+      expect(bob.musd.after).to.equal(bob.musd.before)
+    })
+
+    it("Liquidating troves with SP deposits correctly impacts their SP deposit and collateral gain", async () => {
+      // Open three troves: Alice, Bob, Carol
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "2000",
+        sender: carol.wallet,
+      })
+
+      // All deposit into the stability pool
+      const aliceDeposit = to1e18("500")
+      const bobDeposit = to1e18("1000")
+      const carolDeposit = to1e18("3000")
+      await provideToSP(contracts, alice, aliceDeposit)
+      await provideToSP(contracts, bob, bobDeposit)
+      await provideToSP(contracts, carol, carolDeposit)
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+
+      // Price drops so we can liquidate Alice and Bob
+      await dropPriceAndLiquidate(contracts, alice, false)
+
+      await updateStabilityPoolUserSnapshots(
+        contracts,
+        [alice, bob, carol],
+        "before",
+      )
+
+      await contracts.troveManager.batchLiquidateTroves([
+        alice.wallet,
+        bob.wallet,
+      ])
+
+      // Check that each user's deposit has decreased by their share of the total liquidated debt
+      const totalDeposits = aliceDeposit + bobDeposit + carolDeposit
+      const liquidatedDebt = alice.trove.debt.before + bob.trove.debt.before
+      await updateStabilityPoolUserSnapshots(
+        contracts,
+        [alice, bob, carol],
+        "after",
+      )
+
+      expect(
+        aliceDeposit - (liquidatedDebt * aliceDeposit) / totalDeposits,
+      ).to.be.closeTo(alice.stabilityPool.compoundedDeposit.after, 1000)
+      expect(
+        bobDeposit - (liquidatedDebt * bobDeposit) / totalDeposits,
+      ).to.be.closeTo(bob.stabilityPool.compoundedDeposit.after, 1000)
+      expect(
+        carolDeposit - (liquidatedDebt * carolDeposit) / totalDeposits,
+      ).to.be.closeTo(carol.stabilityPool.compoundedDeposit.after, 10000)
+
+      // Check that each user's collateral gain has increased by their share of the total liquidated collateral
+      const liquidatedColl = applyLiquidationFee(
+        alice.trove.collateral.before + bob.trove.collateral.before,
+      )
+      expect((liquidatedColl * aliceDeposit) / totalDeposits).to.be.closeTo(
+        alice.stabilityPool.collateralGain.after,
+        1000,
+      )
+      expect((liquidatedColl * bobDeposit) / totalDeposits).to.be.closeTo(
+        bob.stabilityPool.collateralGain.after,
+        1000,
+      )
+      expect((liquidatedColl * carolDeposit) / totalDeposits).to.be.closeTo(
+        carol.stabilityPool.collateralGain.after,
+        10000,
+      ) // TODO Determine correct error tolerance
     })
 
     context("Expected Reverts", () => {
@@ -3175,14 +3142,18 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("setMaxInterestRate()", () => {
     it("sets the max interest rate", async () => {
-      await contracts.troveManager.connect(council.wallet).setMaxInterestRate(5)
-      expect(await contracts.troveManager.maxInterestRate()).to.equal(5)
+      await contracts.interestRateManager
+        .connect(council.wallet)
+        .setMaxInterestRate(5)
+      expect(await contracts.interestRateManager.maxInterestRate()).to.equal(5)
     })
 
     context("Expected Reverts", () => {
       it("reverts if a non-whitelisted address tries to set the maximum interest rate", async () => {
         await expect(
-          contracts.troveManager.connect(alice.wallet).setMaxInterestRate(1),
+          contracts.interestRateManager
+            .connect(alice.wallet)
+            .setMaxInterestRate(1),
         ).to.be.revertedWith(
           "TroveManager: Only governance can call this function",
         )
@@ -3192,9 +3163,11 @@ describe("TroveManager in Normal Mode", () => {
     context("Emitted Events", () => {
       it("emits MaxInterestRateUpdated when the maximum interest rate is updated", async () => {
         await expect(
-          contracts.troveManager.connect(council.wallet).setMaxInterestRate(50),
+          contracts.interestRateManager
+            .connect(council.wallet)
+            .setMaxInterestRate(50),
         )
-          .to.emit(contracts.troveManager, "MaxInterestRateUpdated")
+          .to.emit(contracts.interestRateManager, "MaxInterestRateUpdated")
           .withArgs(50)
       })
     })
@@ -3204,7 +3177,7 @@ describe("TroveManager in Normal Mode", () => {
     context("Expected Reverts", () => {
       it("reverts if the proposed rate exceeds the maximum interest rate", async () => {
         await expect(
-          contracts.troveManager
+          contracts.interestRateManager
             .connect(council.wallet)
             .proposeInterestRate(10001),
         ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
@@ -3214,7 +3187,7 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("approveInterestRate()", () => {
     it("requires two transactions to change the interest rate with a 7 day time delay", async () => {
-      await contracts.troveManager
+      await contracts.interestRateManager
         .connect(council.wallet)
         .proposeInterestRate(100)
 
@@ -3222,13 +3195,15 @@ describe("TroveManager in Normal Mode", () => {
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
       await fastForwardTime(timeToIncrease)
 
-      await contracts.troveManager.connect(council.wallet).approveInterestRate()
-      expect(await contracts.troveManager.interestRate()).to.equal(100)
+      await contracts.interestRateManager
+        .connect(council.wallet)
+        .approveInterestRate()
+      expect(await contracts.interestRateManager.interestRate()).to.equal(100)
     })
 
     context("Expected Reverts", () => {
       it("reverts if the time delay has not finished", async () => {
-        await contracts.troveManager
+        await contracts.interestRateManager
           .connect(council.wallet)
           .proposeInterestRate(100)
 
@@ -3237,12 +3212,14 @@ describe("TroveManager in Normal Mode", () => {
         await fastForwardTime(timeToIncrease)
 
         await expect(
-          contracts.troveManager.connect(council.wallet).approveInterestRate(),
+          contracts.interestRateManager
+            .connect(council.wallet)
+            .approveInterestRate(),
         ).to.be.revertedWith("Proposal delay not met")
       })
 
       it("reverts if called by a non-governance address", async () => {
-        await contracts.troveManager
+        await contracts.interestRateManager
           .connect(council.wallet)
           .proposeInterestRate(100)
 
@@ -3251,7 +3228,9 @@ describe("TroveManager in Normal Mode", () => {
         await fastForwardTime(timeToIncrease)
 
         await expect(
-          contracts.troveManager.connect(alice.wallet).approveInterestRate(),
+          contracts.interestRateManager
+            .connect(alice.wallet)
+            .approveInterestRate(),
         ).to.be.revertedWith(
           "TroveManager: Only governance can call this function",
         )
@@ -3306,12 +3285,13 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("calculateInterestOwed()", () => {
     it("should calculate the interest owed for a trove after 15 days", async () => {
-      const interest = await contracts.troveManager.calculateInterestOwed(
-        to1e18("10,250"),
-        100n,
-        0n,
-        1296000n, // 15 days in seconds
-      )
+      const interest =
+        await contracts.interestRateManager.calculateInterestOwed(
+          to1e18("10,250"),
+          100n,
+          0n,
+          1296000n, // 15 days in seconds
+        )
 
       const expectedInterest = calculateInterestOwed(
         to1e18("10,250"),
@@ -3324,12 +3304,13 @@ describe("TroveManager in Normal Mode", () => {
 
     it("should calculate the interest owed for a trove after 30 days", async () => {
       await setupTroveWithInterestRate(100, 30)
-      const interest = await contracts.troveManager.calculateInterestOwed(
-        to1e18("10,250"),
-        100n,
-        0n,
-        2592000n, // 30 days in seconds
-      )
+      const interest =
+        await contracts.interestRateManager.calculateInterestOwed(
+          to1e18("10,250"),
+          100n,
+          0n,
+          2592000n, // 30 days in seconds
+        )
 
       const expectedInterest = calculateInterestOwed(
         to1e18("10,250"),
@@ -3355,7 +3336,7 @@ describe("TroveManager in Normal Mode", () => {
       await updatePCVSnapshot(contracts, state, "after")
 
       expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
-        state.troveManager.interestRateData[1000].interest.after,
+        state.interestRateManager.interestRateData[1000].interest.after,
       )
     })
 
@@ -3423,11 +3404,14 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
         calculateInterestOwed(
           to1e18(10250),
           100,
-          state.troveManager.interestRateData[100].lastUpdatedTime.before,
+          state.interestRateManager.interestRateData[100].lastUpdatedTime
+            .before,
           BigInt(await getLatestBlockTimestamp()),
         ),
       )
@@ -3444,13 +3428,17 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        state.troveManager.interestRateData[100].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             to1e18(10250),
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
     })
@@ -3472,13 +3460,17 @@ describe("TroveManager in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 100, "after")
       await updateTroveSnapshots(contracts, [alice, bob], "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        state.troveManager.interestRateData[100].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             alice.trove.debt.before + bob.trove.debt.before,
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
     })
@@ -3508,23 +3500,31 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        state.troveManager.interestRateData[100].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].interest.before +
           calculateInterestOwed(
             alice.trove.debt.before,
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
 
-      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
-        state.troveManager.interestRateData[200].interest.before +
+      expect(
+        state.interestRateManager.interestRateData[200].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[200].interest.before +
           calculateInterestOwed(
             bob.trove.debt.before,
             200,
-            state.troveManager.interestRateData[200].lastUpdatedTime.before,
-            state.troveManager.interestRateData[200].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[200].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[200].lastUpdatedTime
+              .after,
           ),
       )
     })
@@ -3605,28 +3605,6 @@ describe("TroveManager in Normal Mode", () => {
       expect(
         await contracts.troveManager.hasPendingRewards(alice.address),
       ).to.equal(false)
-    })
-
-    it("getInterestRateHistory(): Returns the interest rate values and the blocks they were set", async () => {
-      const blockNumbers = []
-
-      // Add three interest rates to the history
-      for (let i = 1; i <= 3; i++) {
-        await contracts.troveManager
-          .connect(council.wallet)
-          .proposeInterestRate(i)
-        await fastForwardTime(7 * 24 * 60 * 60) // 7 days in seconds
-        await contracts.troveManager
-          .connect(council.wallet)
-          .approveInterestRate()
-        blockNumbers.push(await ethers.provider.getBlockNumber())
-      }
-
-      const history = await contracts.troveManager.getInterestRateHistory()
-      for (let i = 0; i < 3; i++) {
-        expect(history[i].interestRate).to.equal(i + 1)
-        expect(history[i].blockNumber).to.equal(blockNumbers[i])
-      }
     })
   })
 })

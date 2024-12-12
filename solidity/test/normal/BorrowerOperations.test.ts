@@ -562,8 +562,9 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Adds the trove's principal to the principal for its interest rate", async () => {
-      const principalBefore = (await contracts.troveManager.interestRateData(0))
-        .principal
+      const principalBefore = (
+        await contracts.interestRateManager.interestRateData(0)
+      ).principal
 
       await openTrove(contracts, {
         musdAmount: "5,000",
@@ -571,8 +572,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         sender: dennis.wallet,
       })
 
-      const principalAfter = (await contracts.troveManager.interestRateData(0))
-        .principal
+      const principalAfter = (
+        await contracts.interestRateManager.interestRateData(0)
+      ).principal
 
       await updateTroveSnapshot(contracts, dennis, "before")
       expect(principalAfter - principalBefore).to.equal(
@@ -2206,27 +2208,33 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
       // Check that 100 bps interest rate data is updated
-      expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-        0n,
-      )
-      expect(state.troveManager.interestRateData[100].principal.after).to.equal(
-        state.troveManager.interestRateData[100].principal.before -
+      expect(
+        state.interestRateManager.interestRateData[100].interest.after,
+      ).to.equal(0n)
+      expect(
+        state.interestRateManager.interestRateData[100].principal.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[100].principal.before -
           amount +
           calculateInterestOwed(
-            state.troveManager.interestRateData[100].principal.before,
+            state.interestRateManager.interestRateData[100].principal.before,
             100,
-            state.troveManager.interestRateData[100].lastUpdatedTime.before,
-            state.troveManager.interestRateData[100].lastUpdatedTime.after,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .before,
+            state.interestRateManager.interestRateData[100].lastUpdatedTime
+              .after,
           ),
       )
 
       // Check that 200 bps interest rate data is unchanged
-      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
-        state.troveManager.interestRateData[200].interest.before,
+      expect(
+        state.interestRateManager.interestRateData[200].interest.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[200].interest.before,
       )
-      expect(state.troveManager.interestRateData[200].interest.after).to.equal(
-        dennis.trove.interestOwed.after,
-      )
+      expect(
+        state.interestRateManager.interestRateData[200].interest.after,
+      ).to.equal(dennis.trove.interestOwed.after)
     })
 
     it("succeeds when it would leave trove with net debt >= minimum net debt", async () => {
@@ -3912,7 +3920,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
       const after = BigInt(await getLatestBlockTimestamp())
 
-      expect(state.troveManager.interestRateData[1000].interest.after).to.equal(
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(
         calculateInterestOwed(
           dennis.trove.debt.before,
           1000,
@@ -3921,14 +3931,14 @@ describe("BorrowerOperations in Normal Mode", () => {
         ),
       )
       expect(
-        state.troveManager.interestRateData[1000].principal.after,
+        state.interestRateManager.interestRateData[1000].principal.after,
       ).to.equal(dennis.trove.debt.before)
-      expect(state.troveManager.interestRateData[500].interest.after).to.equal(
-        carol.trove.interestOwed.after,
-      )
-      expect(state.troveManager.interestRateData[500].principal.after).to.equal(
-        carol.trove.debt.after,
-      )
+      expect(
+        state.interestRateManager.interestRateData[500].interest.after,
+      ).to.equal(carol.trove.interestOwed.after)
+      expect(
+        state.interestRateManager.interestRateData[500].principal.after,
+      ).to.equal(carol.trove.debt.after)
     })
 
     it("updates the ActivePool interest", async () => {

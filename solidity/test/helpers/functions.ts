@@ -162,9 +162,9 @@ export async function updateInterestRateDataSnapshot(
   checkPoint: CheckPoint,
 ) {
   const { principal, interest, lastUpdatedTime } =
-    await contracts.troveManager.interestRateData(interestRate)
+    await contracts.interestRateManager.interestRateData(interestRate)
 
-  const data = state.troveManager.interestRateData[interestRate] ?? {}
+  const data = state.interestRateManager.interestRateData[interestRate] ?? {}
 
   data.principal ??= beforeAndAfter()
   data.principal[checkPoint] = principal
@@ -175,7 +175,7 @@ export async function updateInterestRateDataSnapshot(
   data.lastUpdatedTime ??= beforeAndAfter()
   data.lastUpdatedTime[checkPoint] = lastUpdatedTime
 
-  state.troveManager.interestRateData[interestRate] = data
+  state.interestRateManager.interestRateData[interestRate] = data
 }
 
 export async function updatePendingSnapshot(
@@ -979,12 +979,14 @@ export async function setInterestRate(
   sender: User,
   interestRate: number,
 ) {
-  await contracts.troveManager
+  await contracts.interestRateManager
     .connect(sender.wallet)
     .proposeInterestRate(interestRate)
   const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
   await fastForwardTime(timeToIncrease)
-  await contracts.troveManager.connect(sender.wallet).approveInterestRate()
+  await contracts.interestRateManager
+    .connect(sender.wallet)
+    .approveInterestRate()
 }
 
 export async function testUpdatesInterestOwed(
@@ -1049,17 +1051,19 @@ export async function testUpdatesSystemInterestOwed(
 
   // Check that 100 bps interest rate data is updated
   expect(
-    state.troveManager.interestRateData[100].interest.after,
-  ).to.be.greaterThan(state.troveManager.interestRateData[100].interest.before)
-  expect(state.troveManager.interestRateData[100].interest.after).to.equal(
-    userA.trove.interestOwed.after,
+    state.interestRateManager.interestRateData[100].interest.after,
+  ).to.be.greaterThan(
+    state.interestRateManager.interestRateData[100].interest.before,
   )
+  expect(
+    state.interestRateManager.interestRateData[100].interest.after,
+  ).to.equal(userA.trove.interestOwed.after)
 
   // Check that 200 bps interest rate data is unchanged
-  expect(state.troveManager.interestRateData[200].interest.after).to.equal(
-    state.troveManager.interestRateData[200].interest.before,
-  )
-  expect(state.troveManager.interestRateData[200].interest.after).to.equal(
-    userB.trove.interestOwed.after,
-  )
+  expect(
+    state.interestRateManager.interestRateData[200].interest.after,
+  ).to.equal(state.interestRateManager.interestRateData[200].interest.before)
+  expect(
+    state.interestRateManager.interestRateData[200].interest.after,
+  ).to.equal(userB.trove.interestOwed.after)
 }

@@ -38,6 +38,7 @@ interface IBorrowerOperations {
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
+        address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
