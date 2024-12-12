@@ -1059,6 +1059,35 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("sends interest owed to the PCV", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await updatePCVSnapshot(contracts, state, "before")
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+
+      await updatePCVSnapshot(contracts, state, "after")
+
+      const now = BigInt(await getLatestBlockTimestamp())
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        now,
+      )
+
+      expect(state.pcv.musd.after).to.equal(
+        state.pcv.musd.before + expectedInterest,
+      )
+    })
+
     it("zero's the troves reward snapshots", async () => {
       await setupCarolsTrove()
 
