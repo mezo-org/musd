@@ -2636,7 +2636,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(5000)
-      await contracts.borrowerOperations
+      const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
         .adjustTrove(
           maxFeePercentage,
@@ -2647,6 +2647,12 @@ describe("BorrowerOperations in Normal Mode", () => {
           carol.wallet,
           carol.wallet,
         )
+      const emittedFee = await getEventArgByName(
+        tx,
+        BORROWING_FEE_PAID,
+        "BorrowingFeePaid",
+        1,
+      )
 
       await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
@@ -2673,7 +2679,8 @@ describe("BorrowerOperations in Normal Mode", () => {
         state.interestRateManager.interestRateData[1000].principal.after,
       ).to.equal(
         state.interestRateManager.interestRateData[1000].principal.before +
-          debtChange,
+          debtChange +
+          emittedFee,
       )
     })
 

@@ -373,7 +373,6 @@ contract BorrowerOperations is
     function closeTrove() external override {
         ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
-        IInterestRateManager interestRateManagerCached = interestRateManager;
         IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
 
@@ -388,12 +387,10 @@ contract BorrowerOperations is
         troveManagerCached.applyPendingRewards(msg.sender);
 
         uint256 coll = troveManagerCached.getTroveColl(msg.sender);
-        uint256 principal = troveManagerCached.getTrovePrincipal(msg.sender);
+        uint256 debt = troveManagerCached.getTroveDebt(msg.sender);
         uint256 interestOwed = troveManagerCached.getTroveInterestOwed(
             msg.sender
         );
-        uint256 debt = principal + interestOwed;
-        uint16 rate = troveManagerCached.getTroveInterestRate(msg.sender);
 
         _requireSufficientMUSDBalance(
             musdTokenCached,
@@ -830,9 +827,6 @@ contract BorrowerOperations is
         bool _isDebtIncrease,
         uint256 _netDebtChange
     ) internal {
-        IInterestRateManager interestRateManagerCached = interestRateManager;
-        ITroveManager troveManagerCached = troveManager;
-        uint16 rate = troveManagerCached.getTroveInterestRate(_borrower);
         if (_isDebtIncrease) {
             _withdrawMUSD(
                 _activePool,
@@ -841,7 +835,6 @@ contract BorrowerOperations is
                 _principalChange,
                 _netDebtChange
             );
-            interestRateManagerCached.addPrincipalToRate(rate, _principalChange);
         } else {
             _repayMUSD(
                 _activePool,

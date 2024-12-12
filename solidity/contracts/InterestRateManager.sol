@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.24;
 
-import "./debugging/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {CheckContract} from "./dependencies/CheckContract.sol";
 import {IInterestRateManager} from "./interfaces/IInterestRateManager.sol";
@@ -117,7 +116,6 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         external
         returns (uint256 principalAdjustment, uint256 interestAdjustment)
     {
-        console.log("Interest owed: %d", _interestOwed);
         if (_payment >= _interestOwed) {
             principalAdjustment = _payment - _interestOwed;
             interestAdjustment = _interestOwed;
