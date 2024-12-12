@@ -850,6 +850,7 @@ contract BorrowerOperations is
                 _principalChange,
                 _netDebtChange
             );
+            interestRateManagerCached.addPrincipalToRate(rate, _principalChange);
         } else {
             _repayMUSD(
                 _activePool,
