@@ -1225,6 +1225,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         );
 
         _closeTrove(_borrower, Status.closedByLiquidation);
+        interestRateManager.removePrincipalFromRate(
+            Troves[_borrower].interestRate,
+            Troves[_borrower].principal
+        );
+        interestRateManager.removeInterestFromRate(
+            Troves[_borrower].interestRate,
+            Troves[_borrower].interestOwed
+        );
         emit TroveLiquidated(
             _borrower,
             singleLiquidation.entireTrovePrincipal,
@@ -1749,10 +1757,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (musdToken.mintList(borrowerOperationsAddress)) {
             _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
         }
-
-        uint16 rate = Troves[_borrower].interestRate;
-        interestRateManager.removePrincipalFromRate(rate, Troves[_borrower].principal);
-        interestRateManager.removeInterestFromRate(rate, Troves[_borrower].interestOwed);
 
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
