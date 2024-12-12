@@ -373,6 +373,7 @@ contract BorrowerOperations is
     function closeTrove() external override {
         ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
+        IInterestRateManager interestRateManagerCached = interestRateManager;
         IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
 
@@ -429,11 +430,11 @@ contract BorrowerOperations is
             interestOwed
         );
 
-        troveManagerCached.removePrincipalFromRate(
+        interestRateManagerCached.removePrincipalFromRate(
             rate,
             principal
         );
-        troveManagerCached.removeInterestFromRate(
+        interestRateManagerCached.removeInterestFromRate(
             rate,
             interestOwed
         );

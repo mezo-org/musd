@@ -949,7 +949,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.interestOwed.after).to.equal(0)
     })
 
-    it.only("removes principal and interest from system interest rate data", async () => {
+    it("removes principal and interest from system interest rate data", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupCarolsTrove()
 
@@ -966,11 +966,11 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
       expect(
-        state.troveManager.interestRateData[1000].principal.after,
+        state.interestRateManager.interestRateData[1000].principal.after,
       ).to.equal(0)
-      expect(state.troveManager.interestRateData[1000].interest.after).to.equal(
-        0,
-      )
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(0)
     })
 
     it("sets Trove's stake to zero", async () => {
