@@ -640,7 +640,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("a liquidation sequence containing Pool offsets increases the TCR", async () => {
+    it("a batch liquidation containing Pool offsets increases the TCR", async () => {
       await setupTrove(alice, "5000", "150")
       await setupTrove(bob, "50,000", "400")
       await setupTrove(carol, "5000", "150")
@@ -659,7 +659,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("A liquidation sequence of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
+    it("A batch liquidation of pure redistributions decreases the TCR, due to gas compensation, but up to 0.5%", async () => {
       await setupTrove(alice, "5000", "400")
       await setupTrove(bob, "50,000", "405")
       await setupTrove(carol, "2000", "400")
@@ -732,7 +732,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("With all ICRs > 110%, Liquidates Troves until system leaves recovery mode", async () => {
+    it("with all ICRs > 110%, liquidates Troves until system leaves recovery mode", async () => {
       // Open 5 troves
       await setupTroveAndSnapshot(bob, "5000", "240")
       await setupTroveAndSnapshot(carol, "5000", "240")
@@ -838,7 +838,7 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("liquidates only up to the requested number of undercollateralized troves", async () => {
+    it("liquidates only the specified trove", async () => {
       await setupTrove(alice, "5000", "150")
       await setupTrove(bob, "5000", "150")
 
@@ -852,7 +852,7 @@ describe("TroveManager in Recovery Mode", () => {
       expect(await checkTroveActive(contracts, bob)).to.equal(true)
     })
 
-    it("closes every Trove with ICR < MCR, when n > number of undercollateralized troves", async () => {
+    it("closes every Trove with ICR < MCR in the trove array", async () => {
       const underCollateralizedUsers = [alice, carol, dennis, eric]
       await Promise.all(
         underCollateralizedUsers.map((user) => setupTrove(user, "5000", "150")),

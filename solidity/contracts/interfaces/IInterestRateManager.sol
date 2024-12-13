@@ -8,12 +8,18 @@ interface IInterestRateManager {
         uint256 interest;
         uint256 lastUpdatedTime;
     }
+
+    event ActivePoolAddressChanged(address _activePoolAddress);
+    event MUSDTokenAddressChanged(address _musdTokenAddress);
     event PCVAddressChanged(address _pcvAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
-
-    function interestRate() external view returns (uint16);
+    event InterestRateProposed(uint16 proposedRate, uint256 proposalTime);
+    event InterestRateUpdated(uint16 newInterestRate);
+    event MaxInterestRateUpdated(uint16 newMaxInterestRate);
 
     function setAddresses(
+        address _activePoolAddress,
+        address _musdTokenAddress,
         address _pcvAddress,
         address _troveManagerAddress
     ) external;
@@ -34,16 +40,21 @@ interface IInterestRateManager {
 
     function setLastUpdatedTime(uint16 _rate, uint256 _time) external;
 
+    function updateSystemInterest(uint16 _rate) external;
+
+    function updateTroveDebt(
+        uint256 _interestOwed,
+        uint256 _payment,
+        uint16 _rate
+    )
+        external
+        returns (uint256 principalAdjustment, uint256 interestAdjustment);
+
+    function interestRate() external view returns (uint16);
+
     function getInterestRateData(
         uint16 _rate
     ) external view returns (InterestRateInfo memory);
-
-    function calculateInterestOwed(
-        uint256 _principal,
-        uint16 _interestRate,
-        uint256 startTime,
-        uint256 endTime
-    ) external pure returns (uint256);
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,
@@ -53,15 +64,10 @@ interface IInterestRateManager {
         pure
         returns (uint256 principalAdjustment, uint256 interestAdjustment);
 
-    function updateSystemInterest(
-        uint16 _rate
-    ) external returns (uint256 interest);
-
-    function updateTroveDebt(
-        uint256 _interestOwed,
-        uint256 _payment,
-        uint16 _rate
-    )
-        external
-        returns (uint256 principalAdjustment, uint256 interestAdjustment);
+    function calculateInterestOwed(
+        uint256 _principal,
+        uint16 _interestRate,
+        uint256 startTime,
+        uint256 endTime
+    ) external pure returns (uint256);
 }

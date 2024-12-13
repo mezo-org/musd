@@ -18,4 +18,3 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["PriceFeed"]
-func.dependencies = ["MockAggregator"]

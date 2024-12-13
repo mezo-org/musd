@@ -26,6 +26,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public defaultPoolAddress;
     address public stabilityPoolAddress;
     address public troveManagerAddress;
+    address public interestRateManagerAddress;
     uint256 internal collateral; // deposited collateral tracker
     uint256 internal principal;
     uint256 internal interest;
@@ -53,6 +54,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         address _collateralAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
+        address _interestRateManagerAddress,
         address _troveManagerAddress,
         address _stabilityPoolAddress
     ) external onlyOwner {
@@ -64,6 +66,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         checkContract(_defaultPoolAddress);
         checkContract(_stabilityPoolAddress);
         checkContract(_troveManagerAddress);
+        checkContract(_interestRateManagerAddress);
 
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
@@ -72,6 +75,8 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         collSurplusPoolAddress = _collSurplusPoolAddress;
         // slither-disable-next-line missing-zero-check
         defaultPoolAddress = _defaultPoolAddress;
+        // slither-disable-next-line missing-zero-check
+        interestRateManagerAddress = _interestRateManagerAddress;
         // slither-disable-next-line missing-zero-check
         stabilityPoolAddress = _stabilityPoolAddress;
         // slither-disable-next-line missing-zero-check
@@ -99,6 +104,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         emit CollateralAddressChanged(_collateralAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
+        emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
         emit StabilityPoolAddressChanged(_stabilityPoolAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
 
@@ -109,7 +115,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         uint256 _principal,
         uint256 _interest
     ) external override {
-        _requireCallerIsBorrowerOperationsOrTroveManager();
+        _requireCallerIsBorrowerOperationsOrTroveManagerOrInterestRateManager();
         principal += _principal;
         interest += _interest;
         emit ActivePoolDebtUpdated(principal, interest);
@@ -166,11 +172,15 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         );
     }
 
-    function _requireCallerIsBorrowerOperationsOrTroveManager() internal view {
+    function _requireCallerIsBorrowerOperationsOrTroveManagerOrInterestRateManager()
+        internal
+        view
+    {
         require(
             msg.sender == borrowerOperationsAddress ||
-                msg.sender == troveManagerAddress,
-            "ActivePool: Caller is neither BorrowerOperations nor TroveManager"
+                msg.sender == troveManagerAddress ||
+                msg.sender == interestRateManagerAddress,
+            "ActivePool: Caller must be BorrowerOperations, TroveManager, or InterestRateManager"
         );
     }
 

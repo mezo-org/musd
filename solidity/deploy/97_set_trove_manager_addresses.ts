@@ -48,6 +48,7 @@ func.dependencies = [
   "CollSurplusPool",
   "DefaultPool",
   "GasPool",
+  "InterestRateManager",
   "MUSD",
   "PCV",
   "PriceFeed",

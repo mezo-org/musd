@@ -14,6 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     borrowerOperations,
     collSurplusPool,
     defaultPool,
+    interestRateManager,
     stabilityPool,
     troveManager,
   } = await fetchAllDeployedContracts(isHardhatNetwork)
@@ -25,6 +26,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     ZERO_ADDRESS,
     await collSurplusPool.getAddress(),
     await defaultPool.getAddress(),
+    await interestRateManager.getAddress(),
     await troveManager.getAddress(),
     await stabilityPool.getAddress(),
   )
