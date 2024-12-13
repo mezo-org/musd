@@ -1745,6 +1745,15 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
         }
 
+        interestRateManager.removePrincipalFromRate(
+            Troves[_borrower].interestRate,
+            Troves[_borrower].principal
+        );
+        interestRateManager.removeInterestFromRate(
+            Troves[_borrower].interestRate,
+            Troves[_borrower].interestOwed
+        );
+
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
         Troves[_borrower].principal = 0;
