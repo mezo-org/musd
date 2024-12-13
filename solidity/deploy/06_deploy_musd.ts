@@ -1,7 +1,6 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
-import { ZERO_ADDRESS } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const {
@@ -16,6 +15,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const borrowerOperations = await deployments.get("BorrowerOperations")
   const stabilityPool = await deployments.get("StabilityPool")
   const troveManager = await deployments.get("TroveManagerTester")
+  const interestRateManager = await deployments.get("InterestRateManager")
 
   const musd = await getValidDeployment("MUSD")
   if (musd) {
@@ -31,9 +31,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         troveManager.address,
         stabilityPool.address,
         borrowerOperations.address,
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
+        interestRateManager.address,
         delay,
       ],
     })
@@ -45,6 +43,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         troveManager.address,
         stabilityPool.address,
         borrowerOperations.address,
+        interestRateManager.address,
         10,
       ],
     })

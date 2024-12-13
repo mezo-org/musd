@@ -9,6 +9,7 @@ interface IMUSD is IERC20Metadata, IERC20Permit {
     // --- Events ---
     event BorrowerOperationsAddressAdded(address _newBorrowerOperationsAddress);
     event BalanceUpdated(address _user, uint256 _amount);
+    event InterestRateManagerAddressAdded(address _interestRateManagerAddress);
     event StabilityPoolAddressAdded(address _newStabilityPoolAddress);
     event TroveManagerAddressAdded(address _troveManagerAddress);
 
@@ -24,7 +25,8 @@ interface IMUSD is IERC20Metadata, IERC20Permit {
     function startAddContracts(
         address _troveManagerAddress,
         address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
+        address _borrowerOperationsAddress,
+        address _interestRateManagerAddress
     ) external;
 
     function startAddMintList(address _account) external;

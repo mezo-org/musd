@@ -8,12 +8,17 @@ import {
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { interestRateManager, pcv, troveManager } =
+  const { activePool, musd, interestRateManager, pcv, troveManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
   await interestRateManager
     .connect(deployer)
-    .setAddresses(await pcv.getAddress(), await troveManager.getAddress())
+    .setAddresses(
+      await activePool.getAddress(),
+      musd.getAddress(),
+      await pcv.getAddress(),
+      await troveManager.getAddress(),
+    )
 }
 
 export default func

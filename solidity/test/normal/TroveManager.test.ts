@@ -245,6 +245,63 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   describe("liquidate()", () => {
+    it("removes liquidated trove's principal and interest from system interest rate data", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+      await fastForwardTime(365 * 24 * 60 * 60)
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await dropPriceAndLiquidate(contracts, alice)
+      const after = BigInt(await getLatestBlockTimestamp())
+      await updateTroveSnapshots(contracts, [alice, bob], "after")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(bob.trove.debt.after)
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(
+        calculateInterestOwed(
+          bob.trove.debt.before,
+          1000,
+          bob.trove.lastInterestUpdateTime.before,
+          after,
+        ),
+      )
+    })
+
+    it("removes liquidated trove's principal and interest from system interest rate data including pending rewards", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "150",
+        sender: carol.wallet,
+      })
+      await fastForwardTime(365 * 24 * 60 * 60)
+      // liquidate Carol to create pending rewards for everyone
+      await dropPriceAndLiquidate(contracts, carol)
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await dropPriceAndLiquidate(contracts, alice)
+      const after = BigInt(await getLatestBlockTimestamp())
+      await updateTroveSnapshots(contracts, [alice, bob], "after")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(bob.trove.debt.after)
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(
+        calculateInterestOwed(
+          bob.trove.debt.before,
+          1000,
+          bob.trove.lastInterestUpdateTime.before,
+          after,
+        ),
+      )
+    })
+
     it("removes the Trove's stake from the total stakes", async () => {
       await setupTroves()
       await updateTroveSnapshot(contracts, alice, "before")

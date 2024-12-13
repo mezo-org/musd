@@ -949,6 +949,30 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.interestOwed.after).to.equal(0)
     })
 
+    it("removes principal and interest from system interest rate data", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+
+      await updateTroveSnapshot(contracts, carol, "after")
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(0)
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(0)
+    })
+
     it("sets Trove's stake to zero", async () => {
       const amount = to1e18("10,000")
       await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
@@ -1032,6 +1056,35 @@ describe("BorrowerOperations in Normal Mode", () => {
           carol.trove.debt.before -
           expectedInterest +
           MUSD_GAS_COMPENSATION,
+      )
+    })
+
+    it("sends interest owed to the PCV", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await fastForwardTime(60 * 60 * 24 * 365)
+
+      await updatePCVSnapshot(contracts, state, "before")
+
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(carol.wallet, to1e18("10,000"))
+      await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
+
+      await updatePCVSnapshot(contracts, state, "after")
+
+      const now = BigInt(await getLatestBlockTimestamp())
+      const expectedInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        1000,
+        carol.trove.lastInterestUpdateTime.before,
+        now,
+      )
+
+      expect(state.pcv.musd.after).to.equal(
+        state.pcv.musd.before + expectedInterest,
       )
     })
 
@@ -2499,6 +2552,134 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("adjustTrove()", () => {
+    it("removes principal and interest from system interest rate data when decreasing debt", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "2000",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "2000",
+        sender: dennis.wallet,
+      })
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateTroveSnapshots(contracts, [carol, dennis], "before")
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          false,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updateTroveSnapshots(contracts, [carol, dennis], "after")
+      const after = BigInt(await getLatestBlockTimestamp())
+
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(
+        calculateInterestOwed(
+          dennis.trove.debt.before,
+          1000,
+          dennis.trove.lastInterestUpdateTime.before,
+          after,
+        ),
+      )
+
+      const principalAdjustment =
+        debtChange -
+        calculateInterestOwed(
+          carol.trove.debt.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          after,
+        )
+
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[1000].principal.before -
+          principalAdjustment,
+      )
+    })
+
+    it("adds principal and interest to system interest rate data when increasing debt", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "2000",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "2000",
+        sender: dennis.wallet,
+      })
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateTroveSnapshots(contracts, [carol, dennis], "before")
+
+      const maxFeePercentage = to1e18(1)
+      const debtChange = to1e18(5000)
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(
+          maxFeePercentage,
+          0,
+          debtChange,
+          true,
+          0,
+          carol.wallet,
+          carol.wallet,
+        )
+
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updateTroveSnapshots(contracts, [carol, dennis], "after")
+      const after = BigInt(await getLatestBlockTimestamp())
+
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(
+        calculateInterestOwed(
+          dennis.trove.debt.before,
+          1000,
+          dennis.trove.lastInterestUpdateTime.before,
+          after,
+        ) +
+          calculateInterestOwed(
+            carol.trove.debt.before,
+            1000,
+            carol.trove.lastInterestUpdateTime.before,
+            after,
+          ),
+      )
+
+      const fee = await contracts.troveManager.getBorrowingFee(debtChange)
+
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[1000].principal.before +
+          debtChange +
+          fee,
+      )
+    })
+
     it("updates the Trove's interest owed", async () => {
       await testUpdatesInterestOwed(contracts, carol, council, () =>
         contracts.borrowerOperations

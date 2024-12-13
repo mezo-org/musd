@@ -9,7 +9,11 @@ import {
   setupTests,
 } from "./helpers"
 import { to1e18, GOVERNANCE_TIME_DELAY } from "./utils"
-import { BorrowerOperations, TroveManager } from "../typechain"
+import {
+  BorrowerOperations,
+  InterestRateManager,
+  TroveManager,
+} from "../typechain"
 import { StabilityPool } from "../typechain/contracts/StabilityPool"
 import { ZERO_ADDRESS } from "../helpers/constants"
 
@@ -22,6 +26,7 @@ describe("MUSD", () => {
   let contracts: Contracts
   let addresses: TestingAddresses
   let newBorrowerOperations: BorrowerOperations
+  let newInterestRateManager: InterestRateManager
   let newStabilityPool: StabilityPool
   let newTroveManager: TroveManager
 
@@ -32,6 +37,9 @@ describe("MUSD", () => {
     // new contracts to add.
     newBorrowerOperations = await (
       await ethers.getContractFactory("BorrowerOperations")
+    ).deploy()
+    newInterestRateManager = await (
+      await ethers.getContractFactory("InterestRateManager")
     ).deploy()
     newStabilityPool = await (
       await ethers.getContractFactory("StabilityPool")
@@ -282,6 +290,7 @@ describe("MUSD", () => {
           await newTroveManager.getAddress(),
           await newStabilityPool.getAddress(),
           await newBorrowerOperations.getAddress(),
+          await newInterestRateManager.getAddress(),
         )
       const timeNow = await getLatestBlockTimestamp()
       expect(await contracts.musd.pendingTroveManager()).to.be.eq(
@@ -318,6 +327,7 @@ describe("MUSD", () => {
               await newTroveManager.getAddress(),
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
+              await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWithCustomError(
           contracts.musd,
@@ -333,6 +343,7 @@ describe("MUSD", () => {
               await newTroveManager.getAddress(),
               await newStabilityPool.getAddress(),
               alice.address,
+              bob.address,
             ),
         ).to.be.revertedWith("Account code size cannot be zero")
 
@@ -343,6 +354,7 @@ describe("MUSD", () => {
               await newTroveManager.getAddress(),
               alice.address,
               await newBorrowerOperations.getAddress(),
+              await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWith("Account code size cannot be zero")
 
@@ -353,6 +365,7 @@ describe("MUSD", () => {
               alice.wallet,
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
+              await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWith("Account code size cannot be zero")
 
@@ -363,6 +376,7 @@ describe("MUSD", () => {
               await newTroveManager.getAddress(),
               await newStabilityPool.getAddress(),
               ZERO_ADDRESS,
+              await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWith("Account cannot be zero address")
 
@@ -373,6 +387,7 @@ describe("MUSD", () => {
               await newTroveManager.getAddress(),
               ZERO_ADDRESS,
               await newBorrowerOperations.getAddress(),
+              await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWith("Account cannot be zero address")
 
@@ -383,6 +398,7 @@ describe("MUSD", () => {
               ZERO_ADDRESS,
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
+              await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWith("Account cannot be zero address")
       })
@@ -397,6 +413,7 @@ describe("MUSD", () => {
           await newTroveManager.getAddress(),
           await newStabilityPool.getAddress(),
           await newBorrowerOperations.getAddress(),
+          await newInterestRateManager.getAddress(),
         )
 
       await contracts.musd.connect(deployer.wallet).cancelAddContracts()
@@ -448,6 +465,7 @@ describe("MUSD", () => {
           await newTroveManager.getAddress(),
           await newStabilityPool.getAddress(),
           await newBorrowerOperations.getAddress(),
+          await newInterestRateManager.getAddress(),
         )
       await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
 
@@ -515,6 +533,7 @@ describe("MUSD", () => {
             await newTroveManager.getAddress(),
             await newStabilityPool.getAddress(),
             await newBorrowerOperations.getAddress(),
+            await newInterestRateManager.getAddress(),
           )
 
         await expect(

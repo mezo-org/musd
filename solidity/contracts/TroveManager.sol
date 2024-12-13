@@ -541,6 +541,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _debtIncrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
+        updateSystemAndTroveInterest(_borrower);
+        interestRateManager.addPrincipalToRate(
+            Troves[_borrower].interestRate,
+            _debtIncrease
+        );
         uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
         Troves[_borrower].principal = newDebt;
         return newDebt;
@@ -709,9 +714,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function updateSystemAndTroveInterest(address _borrower) public {
         Trove storage trove = Troves[_borrower];
-        _updateSystemInterest(trove.interestRate);
-        // solhint-disable not-rely-on-time
-        // slither-disable-next-line calls-loop
+        // slither-disable-start calls-loop
+        interestRateManager.updateSystemInterest(trove.interestRate);
+        // solhint-disable-start not-rely-on-time
         trove.interestOwed += interestRateManager.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
@@ -719,7 +724,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             block.timestamp
         );
         trove.lastInterestUpdateTime = block.timestamp;
-        // solhint-enable not-rely-on-time
+        // slither-disable-end calls-loop
+        // solhint-disable-end not-rely-on-time
     }
 
     /*
@@ -943,17 +949,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         return _calcRedemptionRate(baseRate);
     }
 
-    function _updateSystemInterest(uint16 _rate) internal {
-        // slither-disable-next-line calls-loop
-        uint256 interest = interestRateManager.updateSystemInterest(_rate);
-
-        // slither-disable-next-line calls-loop
-        musdToken.mint(address(pcv), interest);
-
-        // slither-disable-next-line calls-loop
-        activePool.increaseDebt(0, interest);
-    }
-
     /**
      * Updates the debt on the given trove by first paying down interest owed, then the principal.
      * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
@@ -961,6 +956,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
      */
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
+
+        updateSystemAndTroveInterest(_borrower);
 
         // slither-disable-start calls-loop
         (
@@ -1655,7 +1652,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _lowerPartialRedemptionHint
             );
 
-            updateSystemAndTroveInterest(_borrower);
             _updateTroveDebt(_borrower, singleRedemption.mUSDLot);
             Troves[_borrower].coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);
@@ -1749,6 +1745,17 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (musdToken.mintList(borrowerOperationsAddress)) {
             _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
         }
+
+        // slither-disable-start calls-loop
+        interestRateManager.removePrincipalFromRate(
+            Troves[_borrower].interestRate,
+            Troves[_borrower].principal
+        );
+        interestRateManager.removeInterestFromRate(
+            Troves[_borrower].interestRate,
+            Troves[_borrower].interestOwed
+        );
+        // slither-disable-end calls-loop
 
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;

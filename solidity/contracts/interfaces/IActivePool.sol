@@ -9,11 +9,15 @@ interface IActivePool is IPool {
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress
     );
+    event CollSurplusPoolAddressChanged(address _newCollSurplusPoolAddress);
+    event CollateralAddressChanged(address _newCollateralAddress);
+    event InterestRateManagerAddressChanged(
+        address _interestRateManagerAddress
+    );
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
+
     event ActivePoolDebtUpdated(uint256 _principal, uint256 _interest);
     event ActivePoolCollateralBalanceUpdated(uint256 _collateral);
-    event CollateralAddressChanged(address _newCollateralAddress);
-    event CollSurplusPoolAddressChanged(address _newCollSurplusPoolAddress);
 
     // --- Functions ---
     function sendCollateral(address _account, uint256 _amount) external;
