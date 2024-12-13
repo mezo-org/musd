@@ -714,9 +714,9 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function updateSystemAndTroveInterest(address _borrower) public {
         Trove storage trove = Troves[_borrower];
+        // slither-disable-start calls-loop
         interestRateManager.updateSystemInterest(trove.interestRate);
-        // solhint-disable not-rely-on-time
-        // slither-disable-next-line calls-loop
+        // solhint-disable-start not-rely-on-time
         trove.interestOwed += interestRateManager.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
@@ -724,7 +724,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             block.timestamp
         );
         trove.lastInterestUpdateTime = block.timestamp;
-        // solhint-enable not-rely-on-time
+        // slither-disable-end calls-loop
+        // solhint-disable-end not-rely-on-time
     }
 
     /*
@@ -1745,6 +1746,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
         }
 
+        // slither-disable-start calls-loop
         interestRateManager.removePrincipalFromRate(
             Troves[_borrower].interestRate,
             Troves[_borrower].principal
@@ -1753,6 +1755,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             Troves[_borrower].interestRate,
             Troves[_borrower].interestOwed
         );
+        // slither-disable-end calls-loop
 
         Troves[_borrower].status = closedStatus;
         Troves[_borrower].coll = 0;
