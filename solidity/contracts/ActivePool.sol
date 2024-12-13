@@ -180,7 +180,7 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
             msg.sender == borrowerOperationsAddress ||
                 msg.sender == troveManagerAddress ||
                 msg.sender == interestRateManagerAddress,
-            "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor InterestRateManager"
+            "ActivePool: Caller must be BorrowerOperations, TroveManager, or InterestRateManager"
         );
     }
 

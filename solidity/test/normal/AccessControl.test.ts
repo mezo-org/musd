@@ -204,7 +204,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       await expect(
         contracts.activePool.connect(alice.wallet).increaseDebt(100n, 0n),
       ).to.be.revertedWith(
-        "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor InterestRateManager",
+        "ActivePool: Caller must be BorrowerOperations, TroveManager, or InterestRateManager",
       )
     })
 
