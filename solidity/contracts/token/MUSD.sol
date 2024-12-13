@@ -255,7 +255,6 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         checkContract(_interestRateManagerAddress);
 
         burnList[_troveManagerAddress] = true;
-        mintList[_troveManagerAddress] = true;
         emit TroveManagerAddressAdded(_troveManagerAddress);
 
         burnList[_stabilityPoolAddress] = true;
