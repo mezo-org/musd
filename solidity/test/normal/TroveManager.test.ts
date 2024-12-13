@@ -2400,6 +2400,57 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
+    it("correctly updates system interest rate and principal data for a partial redemption", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupRedemptionTroves()
+
+      const redemptionAmount = to1e18("200")
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+
+      await performRedemption(contracts, dennis, alice, redemptionAmount)
+
+      await updateTroveSnapshot(contracts, alice, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+
+      const now = BigInt(await getLatestBlockTimestamp())
+      const beforeRedemptionInterest = [alice, bob, carol, dennis].reduce(
+        (acc, user) =>
+          calculateInterestOwed(
+            user.trove.debt.before,
+            1000,
+            user.trove.lastInterestUpdateTime.before,
+            now,
+          ) + acc,
+        0n,
+      )
+
+      const interestAccrued = calculateInterestOwed(
+        alice.trove.debt.before,
+        1000,
+        alice.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
+      )
+
+      // interest adjustment is the minimum of interest accrued and redemption amount
+      const interestAdjustment =
+        interestAccrued < redemptionAmount ? interestAccrued : redemptionAmount
+      const principalAdjustment = redemptionAmount - interestAdjustment
+
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(beforeRedemptionInterest - redemptionAmount)
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[1000].principal.before -
+          principalAdjustment,
+      )
+    })
+
     it("has the same functionality with invalid first hint, zero address", async () => {
       await setupRedemptionTroves()
 
