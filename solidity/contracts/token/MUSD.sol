@@ -18,6 +18,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     address public pendingTroveManager;
     address public pendingStabilityPool;
     address public pendingBorrowerOperations;
+    address public pendingInterestRateManager;
 
     address public pendingRevokedMintAddress;
     address public pendingRevokedBurnAddress;
@@ -42,30 +43,19 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     constructor(
         string memory name,
         string memory symbol,
-        // slither-disable-next-line similar-names
-        address _troveManagerAddress1,
-        // slither-disable-next-line similar-names
-        address _stabilityPoolAddress1,
-        // slither-disable-next-line similar-names
-        address _borrowerOperationsAddress1,
-        address _troveManagerAddress2,
-        address _stabilityPoolAddress2,
-        address _borrowerOperationsAddress2,
+        address _troveManagerAddress,
+        address _stabilityPoolAddress,
+        address _borrowerOperationsAddress,
+        address _interestRateManagerAddress,
         uint256 _governanceTimeDelay
     ) Ownable(msg.sender) ERC20(name, symbol) ERC20Permit(name) {
         // when created its linked to one set of contracts and collateral, other collateral types can be added via governance
         _addSystemContracts(
-            _troveManagerAddress1,
-            _stabilityPoolAddress1,
-            _borrowerOperationsAddress1
+            _troveManagerAddress,
+            _stabilityPoolAddress,
+            _borrowerOperationsAddress,
+            _interestRateManagerAddress
         );
-        if (_troveManagerAddress2 != address(0)) {
-            _addSystemContracts(
-                _troveManagerAddress2,
-                _stabilityPoolAddress2,
-                _borrowerOperationsAddress2
-            );
-        }
         governanceTimeDelay = _governanceTimeDelay;
         require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
     }
@@ -131,7 +121,8 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     function startAddContracts(
         address _troveManagerAddress,
         address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
+        address _borrowerOperationsAddress,
+        address _interestRateManagerAddress
     ) external onlyOwner {
         checkContract(_troveManagerAddress);
         checkContract(_stabilityPoolAddress);
@@ -144,6 +135,8 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         pendingStabilityPool = _stabilityPoolAddress;
         // slither-disable-next-line missing-zero-check
         pendingBorrowerOperations = _borrowerOperationsAddress;
+        // slither-disable-next-line missing-zero-check
+        pendingInterestRateManager = _interestRateManagerAddress;
 
         // save block number
         // solhint-disable-next-line not-rely-on-time
@@ -157,6 +150,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         pendingTroveManager = address(0);
         pendingStabilityPool = address(0);
         pendingBorrowerOperations = address(0);
+        pendingInterestRateManager = address(0);
     }
 
     function finalizeAddContracts()
@@ -168,12 +162,14 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         _addSystemContracts(
             pendingTroveManager,
             pendingStabilityPool,
-            pendingBorrowerOperations
+            pendingBorrowerOperations,
+            pendingInterestRateManager
         );
         addContractsInitiated = 0;
         pendingTroveManager = address(0);
         pendingStabilityPool = address(0);
         pendingBorrowerOperations = address(0);
+        pendingInterestRateManager = address(0);
     }
 
     function startRevokeBurnList(address _account) external onlyOwner {
@@ -250,22 +246,26 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     function _addSystemContracts(
         address _troveManagerAddress,
         address _stabilityPoolAddress,
-        address _borrowerOperationsAddress
+        address _borrowerOperationsAddress,
+        address _interestRateManagerAddress
     ) internal {
         checkContract(_troveManagerAddress);
         checkContract(_stabilityPoolAddress);
         checkContract(_borrowerOperationsAddress);
+        checkContract(_interestRateManagerAddress);
 
         burnList[_troveManagerAddress] = true;
+        mintList[_troveManagerAddress] = true;
         emit TroveManagerAddressAdded(_troveManagerAddress);
 
         burnList[_stabilityPoolAddress] = true;
         emit StabilityPoolAddressAdded(_stabilityPoolAddress);
 
         burnList[_borrowerOperationsAddress] = true;
+        mintList[_borrowerOperationsAddress] = true;
         emit BorrowerOperationsAddressAdded(_borrowerOperationsAddress);
 
-        mintList[_borrowerOperationsAddress] = true;
-        mintList[_troveManagerAddress] = true;
+        mintList[_interestRateManagerAddress] = true;
+        emit InterestRateManagerAddressAdded(_interestRateManagerAddress);
     }
 }

@@ -9,6 +9,7 @@ contract MUSDTester is MUSD {
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
+        address _interestRateManagerAddress,
         uint256 _governanceTimeDelay
     )
         MUSD(
@@ -17,9 +18,7 @@ contract MUSDTester is MUSD {
             _troveManagerAddress,
             _stabilityPoolAddress,
             _borrowerOperationsAddress,
-            address(0),
-            address(0),
-            address(0),
+            _interestRateManagerAddress,
             _governanceTimeDelay
         )
     {}

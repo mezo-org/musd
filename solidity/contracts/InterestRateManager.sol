@@ -3,7 +3,9 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./token/IMUSD.sol";
 import {CheckContract} from "./dependencies/CheckContract.sol";
+import {IActivePool} from "./interfaces/IActivePool.sol";
 import {IInterestRateManager} from "./interfaces/IInterestRateManager.sol";
 import {IPCV} from "./interfaces/IPCV.sol";
 import {ITroveManager} from "./interfaces/ITroveManager.sol";
@@ -26,6 +28,8 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
     // Mapping from interest rate to total principal and interest owed at that rate
     mapping(uint16 => InterestRateInfo) public interestRateData;
 
+    IActivePool public activePool;
+    IMUSD public musdToken;
     IPCV internal pcv;
     ITroveManager internal troveManager;
 
@@ -40,13 +44,19 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
+        address _activePoolAddress,
+        address _musdTokenAddress,
         address _pcvAddress,
         address _troveManagerAddress
     ) external onlyOwner {
         checkContract(_pcvAddress);
+        activePool = IActivePool(_activePoolAddress);
+        musdToken = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
         troveManager = ITroveManager(_troveManagerAddress);
 
+        emit ActivePoolAddressChanged(_activePoolAddress);
+        emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
     }
@@ -89,12 +99,10 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         interestRateData[_rate].lastUpdatedTime = _time;
     }
 
-    function updateSystemInterest(
-        uint16 _rate
-    ) external returns (uint256 interest) {
+    function updateSystemInterest(uint16 _rate) external {
         InterestRateInfo memory _interestRateData = interestRateData[_rate];
         // solhint-disable not-rely-on-time
-        interest = calculateInterestOwed(
+        uint256 interest = calculateInterestOwed(
             _interestRateData.principal,
             _rate,
             _interestRateData.lastUpdatedTime,
@@ -106,6 +114,12 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
 
         // solhint-disable-next-line not-rely-on-time
         interestRateData[_rate].lastUpdatedTime = block.timestamp;
+
+        // slither-disable-next-line calls-loop
+        musdToken.mint(address(pcv), interest);
+
+        // slither-disable-next-line calls-loop
+        activePool.increaseDebt(0, interest);
     }
 
     function updateTroveDebt(

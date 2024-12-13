@@ -709,7 +709,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function updateSystemAndTroveInterest(address _borrower) public {
         Trove storage trove = Troves[_borrower];
-        _updateSystemInterest(trove.interestRate);
+        interestRateManager.updateSystemInterest(trove.interestRate);
         // solhint-disable not-rely-on-time
         // slither-disable-next-line calls-loop
         trove.interestOwed += interestRateManager.calculateInterestOwed(
@@ -941,17 +941,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
 
     function getRedemptionRate() public view override returns (uint) {
         return _calcRedemptionRate(baseRate);
-    }
-
-    function _updateSystemInterest(uint16 _rate) internal {
-        // slither-disable-next-line calls-loop
-        uint256 interest = interestRateManager.updateSystemInterest(_rate);
-
-        // slither-disable-next-line calls-loop
-        musdToken.mint(address(pcv), interest);
-
-        // slither-disable-next-line calls-loop
-        activePool.increaseDebt(0, interest);
     }
 
     /**
