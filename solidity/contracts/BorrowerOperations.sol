@@ -189,6 +189,11 @@ contract BorrowerOperations is
             _requireNewTCRisAboveCCR(newTCR);
         }
 
+        contractsCache.troveManager.setTroveInterestRate(
+            msg.sender,
+            contractsCache.interestRateManager.interestRate()
+        );
+
         // Set the trove struct's properties
         contractsCache.troveManager.setTroveStatus(
             msg.sender,
@@ -202,10 +207,6 @@ contract BorrowerOperations is
             vars.compositeDebt
         );
 
-        contractsCache.troveManager.setTroveInterestRate(
-            msg.sender,
-            contractsCache.interestRateManager.interestRate()
-        );
         // solhint-disable not-rely-on-time
         contractsCache.troveManager.setTroveLastInterestUpdateTime(
             msg.sender,
@@ -221,14 +222,6 @@ contract BorrowerOperations is
         contractsCache.troveManager.setTroveMaxBorrowingCapacity(
             msg.sender,
             maxBorrowingCapacity
-        );
-
-        contractsCache.troveManager.updateSystemAndTroveInterest(msg.sender);
-
-        // Add trove's principal to the total principal for it's interest rate
-        contractsCache.interestRateManager.addPrincipalToRate(
-            contractsCache.interestRateManager.interestRate(),
-            vars.compositeDebt
         );
 
         contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
@@ -453,7 +446,6 @@ contract BorrowerOperations is
         uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
             msg.sender
         );
-        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
         uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
         uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(
@@ -465,6 +457,8 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(msg.sender, fee);
 
+        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
+
         interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
         interestRateManagerCached.removePrincipalFromRate(
             oldRate,
@@ -472,10 +466,7 @@ contract BorrowerOperations is
         );
         uint16 newRate = interestRateManagerCached.interestRate();
         interestRateManagerCached.addInterestToRate(newRate, oldInterest);
-        interestRateManagerCached.addPrincipalToRate(
-            newRate,
-            oldPrincipal + fee
-        );
+        interestRateManagerCached.addPrincipalToRate(newRate, oldPrincipal);
 
         troveManagerCached.setTroveInterestRate(
             msg.sender,
