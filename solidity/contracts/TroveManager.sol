@@ -956,6 +956,8 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 
+        updateSystemAndTroveInterest(_borrower);
+
         // slither-disable-start calls-loop
         (
             uint256 principalAdjustment,
@@ -1649,7 +1651,6 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
                 _lowerPartialRedemptionHint
             );
 
-            updateSystemAndTroveInterest(_borrower);
             _updateTroveDebt(_borrower, singleRedemption.mUSDLot);
             Troves[_borrower].coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);
