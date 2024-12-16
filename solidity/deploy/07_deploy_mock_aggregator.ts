@@ -3,12 +3,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getOrDeploy, isHardhatNetwork } =
-    await setupDeploymentBoilerplate(hre)
+  const { getOrDeploy } = await setupDeploymentBoilerplate(hre)
 
-  if (isHardhatNetwork) {
-    await getOrDeploy("MockAggregator", { args: ["18"] })
-  }
+  // FIXME: Use a real aggregator in non-hardhat environments
+  await getOrDeploy("MockAggregator", { args: ["18"] })
 }
 
 export default func

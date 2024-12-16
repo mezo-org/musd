@@ -8,18 +8,18 @@ import {
 import { ZERO_ADDRESS } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { borrowerOperations, musd, pcv } =
+  const { borrowerOperations, musd } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
-  await pcv
-    .connect(deployer)
-    .setAddresses(
-      await musd.getAddress(),
-      await borrowerOperations.getAddress(),
-      ZERO_ADDRESS,
-    )
+  await execute(
+    "PCV",
+    "setAddresses",
+    await musd.getAddress(),
+    await borrowerOperations.getAddress(),
+    ZERO_ADDRESS,
+  )
 }
 
 export default func

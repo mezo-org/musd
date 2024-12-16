@@ -8,19 +8,19 @@ import {
 import { ZERO_ADDRESS } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { activePool, borrowerOperations, collSurplusPool, troveManager } =
+  const { activePool, borrowerOperations, troveManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
-  await collSurplusPool
-    .connect(deployer)
-    .setAddresses(
-      await borrowerOperations.getAddress(),
-      await troveManager.getAddress(),
-      await activePool.getAddress(),
-      ZERO_ADDRESS,
-    )
+  await execute(
+    "CollSurplusPool",
+    "setAddresses",
+    await borrowerOperations.getAddress(),
+    await troveManager.getAddress(),
+    await activePool.getAddress(),
+    ZERO_ADDRESS,
+  )
 }
 
 export default func

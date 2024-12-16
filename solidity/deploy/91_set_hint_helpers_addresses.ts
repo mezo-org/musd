@@ -6,17 +6,17 @@ import {
 } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { hintHelpers, sortedTroves, troveManager } =
+  const { sortedTroves, troveManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
-  await hintHelpers
-    .connect(deployer)
-    .setAddresses(
-      await sortedTroves.getAddress(),
-      await troveManager.getAddress(),
-    )
+  await execute(
+    "HintHelpers",
+    "setAddresses",
+    await sortedTroves.getAddress(),
+    await troveManager.getAddress(),
+  )
 }
 
 export default func

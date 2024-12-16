@@ -6,22 +6,28 @@ import {
 } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { activePool, musd, interestRateManager, pcv, troveManager } =
+  const { activePool, musd, pcv, troveManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
-  await interestRateManager
-    .connect(deployer)
-    .setAddresses(
-      await activePool.getAddress(),
-      musd.getAddress(),
-      await pcv.getAddress(),
-      await troveManager.getAddress(),
-    )
+  await execute(
+    "InterestRateManager",
+    "setAddresses",
+    await activePool.getAddress(),
+    await musd.getAddress(),
+    await pcv.getAddress(),
+    await troveManager.getAddress(),
+  )
 }
 
 export default func
 
 func.tags = ["SetAddresses", "SetInterestRateManagerAddresses"]
-func.dependencies = ["InterestRateManager", "PCV", "TroveManager"]
+func.dependencies = [
+  "ActivePool",
+  "MUSD",
+  "InterestRateManager",
+  "PCV",
+  "TroveManager",
+]

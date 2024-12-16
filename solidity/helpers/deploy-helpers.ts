@@ -105,9 +105,10 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
 
-  const troveManager: TroveManager | TroveManagerTester = isHardhatNetwork
-    ? await getDeployedContract("TroveManagerTester")
-    : await getDeployedContract("TroveManager")
+  const troveManager: TroveManager | TroveManagerTester =
+    await getDeployedContract(
+      isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
+    )
 
   return {
     activePool,
@@ -171,10 +172,29 @@ export async function setupDeploymentBoilerplate(
     }
   }
 
+  const execute = (
+    contractName: string,
+    functionName: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...args: any[]
+  ) =>
+    hre.deployments.execute(
+      contractName,
+      {
+        from: deployer.address,
+        log: true,
+        waitConfirmations: waitConfirmationsNumber(network.name),
+        gasLimit: 3000000,
+      },
+      functionName,
+      ...args,
+    )
+
   return {
     deploy,
     deployer,
     deployments,
+    execute,
     getOrDeploy,
     getValidDeployment,
     isHardhatNetwork: network.name === "hardhat",
