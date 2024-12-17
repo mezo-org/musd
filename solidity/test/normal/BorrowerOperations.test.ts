@@ -4227,6 +4227,37 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("calculates the correct fee even with the minimum fee percentage and debt", async () => {
+      // Open a trove for Carol with the minimum amount of debt
+      await openTrove(contracts, {
+        musdAmount: "1800",
+        ICR: "500",
+        sender: carol.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      // 1% is effectively the minimum fee percentage not counting zero
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .setRefinancingFeePercentage(1)
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(to1e18(1))
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const BORROWING_FEE_FLOOR =
+        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+
+      const expectedFee =
+        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("100")
+
+      expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
+        expectedFee,
+      )
+    })
+
     it("charges the correct fee percentage after a fee percentage change", async () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
