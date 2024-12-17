@@ -1548,6 +1548,12 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         uint256 _collateral
     ) internal {
         // slither-disable-next-line calls-loop
+        interestRateManager.removePrincipalFromRate(
+            Troves[_borrower].interestRate,
+            _amount
+        );
+        Troves[_borrower].principal -= _amount;
+        // slither-disable-next-line calls-loop
         _contractsCache.musdToken.burn(gasPoolAddress, _amount);
         // Update Active Pool mUSD, and send collateral to account
         // slither-disable-next-line calls-loop
@@ -1593,13 +1599,13 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         if (vars.newDebt == MUSD_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
-            _closeTrove(_borrower, Status.closedByRedemption);
             _redeemCloseTrove(
                 _contractsCache,
                 _borrower,
                 MUSD_GAS_COMPENSATION,
                 vars.newColl
             );
+            _closeTrove(_borrower, Status.closedByRedemption);
             emit TroveUpdated(
                 _borrower,
                 0,
