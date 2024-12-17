@@ -2,6 +2,6 @@
   "extends": "thesis",
   "plugins": [],
   "rules": {
-    "max-states-count": ["warn", 30]
+    "max-states-count": ["warn", 25]
   }
 }
