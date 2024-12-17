@@ -402,7 +402,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Allows a user to open a Trove, then close it, then re-open it", async () => {
-      // Send mUSD to Alice so she has sufficent funds to close the trove
+      // Send mUSD to Alice so she has sufficient funds to close the trove
       await contracts.musd
         .connect(bob.wallet)
         .transfer(alice.address, to1e18("10,000"))
@@ -411,7 +411,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
       await updateTroveSnapshot(contracts, alice, "before")
 
-      // Check Alices trove is closed
+      // Check Alice's trove is closed
       expect(alice.trove.status.before).is.equal(2)
       expect(await contracts.sortedTroves.contains(alice.address)).to.equal(
         false,
@@ -454,6 +454,29 @@ describe("BorrowerOperations in Normal Mode", () => {
       const currentTime = await getLatestBlockTimestamp()
 
       expect(lastInterestUpdatedTime).is.equal(currentTime)
+    })
+
+    it("sets the correct interest rate and lastInterestUpdatedTime on a Trove that was previously closed", async () => {
+      // Send mUSD to Alice so she has sufficient funds to close the trove
+      await contracts.musd
+        .connect(bob.wallet)
+        .transfer(alice.address, to1e18("10,000"))
+
+      // Repay and close Trove
+      await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      // Set new interest rate and re-open the trove
+      await setInterestRate(contracts, council, 1000)
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        sender: alice.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, alice, "after")
+      const now = BigInt(await getLatestBlockTimestamp())
+      expect(alice.trove.interestRate.after).to.equal(1000)
+      expect(alice.trove.lastInterestUpdateTime.after).to.equal(now)
     })
 
     it("Increases user mUSD balance by correct amount", async () => {
