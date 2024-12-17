@@ -84,6 +84,8 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
+
+        renounceOwnership();
     }
 
     function proposeInterestRate(
