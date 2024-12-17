@@ -10,15 +10,18 @@ interface IInterestRateManager {
     }
 
     event ActivePoolAddressChanged(address _activePoolAddress);
+    event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event PCVAddressChanged(address _pcvAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
+
     event InterestRateProposed(uint16 proposedRate, uint256 proposalTime);
     event InterestRateUpdated(uint16 newInterestRate);
     event MaxInterestRateUpdated(uint16 newMaxInterestRate);
 
     function setAddresses(
         address _activePoolAddress,
+        address _borrowerOperationsAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _troveManagerAddress
@@ -37,8 +40,6 @@ interface IInterestRateManager {
     function removePrincipalFromRate(uint16 _rate, uint256 _principal) external;
 
     function removeInterestFromRate(uint16 _rate, uint256 _interest) external;
-
-    function setLastUpdatedTime(uint16 _rate, uint256 _time) external;
 
     function updateSystemInterest(uint16 _rate) external;
 
