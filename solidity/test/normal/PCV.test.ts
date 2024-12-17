@@ -312,6 +312,26 @@ describe("PCV", () => {
       expect(bob.musd.after - bob.musd.before).to.equal(to1e18("15"))
     })
 
+    it("rounding errors in fee splitting favor the debt", async () => {
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(1n)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const value = 1n
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).payDebt(value)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      // With only 1 unit of debt to split, all the fee goes to the debt
+      const debtToPay = await contracts.pcv.debtToPay()
+      expect(debtToPay).to.equal(bootstrapLoan - value)
+
+      // Bob's musd balance should be unchanged as he receives none of the fee
+      expect(bob.musd.after).to.equal(bob.musd.before)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when not enough tokens to burn", async () => {
         await expect(

@@ -2400,6 +2400,138 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
+    it("correctly updates system interest rate and principal data for a partial redemption", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupRedemptionTroves()
+
+      const redemptionAmount = to1e18("200")
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+
+      await performRedemption(contracts, dennis, alice, redemptionAmount)
+
+      await updateTroveSnapshot(contracts, alice, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+
+      const now = BigInt(await getLatestBlockTimestamp())
+      const beforeRedemptionInterest = [alice, bob, carol, dennis].reduce(
+        (acc, user) =>
+          calculateInterestOwed(
+            user.trove.debt.before,
+            1000,
+            user.trove.lastInterestUpdateTime.before,
+            now,
+          ) + acc,
+        0n,
+      )
+
+      const interestAccrued = calculateInterestOwed(
+        alice.trove.debt.before,
+        1000,
+        alice.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
+      )
+
+      // interest adjustment is the minimum of interest accrued and redemption amount
+      const interestAdjustment =
+        interestAccrued < redemptionAmount ? interestAccrued : redemptionAmount
+      const principalAdjustment = redemptionAmount - interestAdjustment
+
+      expect(
+        state.interestRateManager.interestRateData[1000].interest.after,
+      ).to.equal(beforeRedemptionInterest - interestAdjustment)
+      expect(
+        state.interestRateManager.interestRateData[1000].principal.after,
+      ).to.equal(
+        state.interestRateManager.interestRateData[1000].principal.before -
+          principalAdjustment,
+      )
+    })
+
+    it("correctly updates system interest rate and principal data for a full redemption", async () => {
+      const interestRate = 1000
+      await setInterestRate(contracts, council, interestRate)
+      await setupRedemptionTroves()
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      // stop interest from accruing to make calculations easier
+      await setInterestRate(contracts, council, 0)
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .refinance(to1e18(1))
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      await updateInterestRateDataSnapshot(
+        contracts,
+        state,
+        interestRate,
+        "before",
+      )
+
+      // subtract 200 mUSD from Alice's debt for gas compensation
+      const redemptionAmount =
+        (await contracts.troveManager.getTroveDebt(alice.address)) -
+        to1e18("200")
+      await performRedemption(contracts, dennis, alice, redemptionAmount)
+
+      await updateTroveSnapshot(contracts, alice, "after")
+      await updateInterestRateDataSnapshot(contracts, state, 0, "after")
+
+      expect(
+        state.interestRateManager.interestRateData[0].interest.after,
+      ).to.equal(0)
+      expect(
+        state.interestRateManager.interestRateData[0].principal.after,
+      ).to.equal(0)
+    })
+
+    it("correctly updates system interest rate and principal data for a mix of full and partial redemptions", async () => {
+      const interestRate = 1000
+      await setInterestRate(contracts, council, interestRate)
+      await setupRedemptionTroves()
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      // stop interest from accruing to make calculations easier
+      await setInterestRate(contracts, council, 0)
+
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .refinance(to1e18(1))
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      await contracts.borrowerOperations
+        .connect(bob.wallet)
+        .refinance(to1e18(1))
+      await updateTroveSnapshot(contracts, bob, "before")
+
+      await updateInterestRateDataSnapshot(
+        contracts,
+        state,
+        interestRate,
+        "before",
+      )
+
+      const redemptionAmount =
+        (await contracts.troveManager.getTroveDebt(alice.address)) +
+        to1e18("400")
+      await performRedemption(contracts, dennis, alice, redemptionAmount)
+
+      await updateTroveSnapshots(contracts, [alice, bob], "after")
+      await updateInterestRateDataSnapshot(contracts, state, 0, "after")
+
+      expect(
+        state.interestRateManager.interestRateData[0].interest.after,
+      ).to.equal(bob.trove.interestOwed.after)
+      expect(
+        state.interestRateManager.interestRateData[0].principal.after,
+      ).to.equal(bob.trove.debt.after)
+    })
+
     it("has the same functionality with invalid first hint, zero address", async () => {
       await setupRedemptionTroves()
 

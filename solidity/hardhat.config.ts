@@ -59,6 +59,11 @@ const config: HardhatUserConfig = {
       chainId: 11155111,
       tags: ["allowStubs", "etherscan"],
     },
+    matsnet: {
+      url: "https://rpc.test.mezo.org",
+      chainId: 31611,
+      accounts: SEPOLIA_PRIVATE_KEY,
+    },
     hardhat: {
       initialBaseFeePerGas: 0,
       allowUnlimitedContractSize: true, // Allow larger contracts for testing

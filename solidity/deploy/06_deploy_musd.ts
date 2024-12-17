@@ -13,9 +13,11 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   } = await setupDeploymentBoilerplate(hre)
 
   const borrowerOperations = await deployments.get("BorrowerOperations")
-  const stabilityPool = await deployments.get("StabilityPool")
-  const troveManager = await deployments.get("TroveManagerTester")
   const interestRateManager = await deployments.get("InterestRateManager")
+  const troveManager = await deployments.get(
+    isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
+  )
+  const stabilityPool = await deployments.get("StabilityPool")
 
   const musd = await getValidDeployment("MUSD")
   if (musd) {
@@ -53,4 +55,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MUSD"]
-func.dependencies = ["BorrowerOperations", "TroveManager", "StabilityPool"]
+func.dependencies = [
+  "BorrowerOperations",
+  "InterestRateManager",
+  "StabilityPool",
+  "TroveManager",
+]
