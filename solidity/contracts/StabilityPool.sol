@@ -39,7 +39,6 @@ contract StabilityPool is
     // --- State ---
 
     IBorrowerOperations public borrowerOperations;
-    address public collateralAddress;
     IMUSD public musd;
     ISortedTroves public sortedTroves;
     ITroveManager public troveManager;
@@ -108,7 +107,6 @@ contract StabilityPool is
 
         activePool = IActivePool(_activePoolAddress);
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
-        collateralAddress = address(0);
         musd = IMUSD(_musdTokenAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -231,18 +229,9 @@ contract StabilityPool is
         emit StabilityPoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(msg.sender, depositorCollateralGain);
 
-        if (collateralAddress == address(0)) {
-            borrowerOperations.moveCollateralGainToTrove{
-                value: depositorCollateralGain
-            }(msg.sender, 0, _upperHint, _lowerHint);
-        } else {
-            borrowerOperations.moveCollateralGainToTrove{value: 0}(
-                msg.sender,
-                depositorCollateralGain,
-                _upperHint,
-                _lowerHint
-            );
-        }
+        borrowerOperations.moveCollateralGainToTrove{
+            value: depositorCollateralGain
+        }(msg.sender, 0, _upperHint, _lowerHint);
     }
 
     /*
@@ -403,7 +392,7 @@ contract StabilityPool is
         emit StabilityPoolCollateralBalanceUpdated(newCollateral);
         emit CollateralSent(msg.sender, _amount);
 
-        sendCollateral(IERC20(collateralAddress), msg.sender, _amount);
+        sendCollateral(IERC20(address(0)), msg.sender, _amount);
     }
 
     function _computeRewardsPerUnitStaked(
