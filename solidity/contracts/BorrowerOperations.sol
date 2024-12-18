@@ -80,7 +80,6 @@ contract BorrowerOperations is
 
     ITroveManager public troveManager;
 
-    address public collateralAddress;
     address public gasPoolAddress;
     address public pcvAddress;
     address public stabilityPoolAddress;
@@ -164,7 +163,7 @@ contract BorrowerOperations is
         assert(vars.compositeDebt > 0);
 
         // if BTC overwrite the asset value
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         vars.ICR = LiquityMath._computeCR(
             _assetAmount,
             vars.compositeDebt,
@@ -274,7 +273,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         _adjustTrove(
             msg.sender,
             0,
@@ -295,7 +294,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external payable override {
         _requireCallerIsStabilityPool();
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         _adjustTrove(
             _borrower,
             0,
@@ -495,7 +494,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         _adjustTrove(
             msg.sender,
             _collWithdrawal,
@@ -544,7 +543,6 @@ contract BorrowerOperations is
 
         // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
-        collateralAddress = address(0);
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         gasPoolAddress = _gasPoolAddress;
@@ -825,7 +823,7 @@ contract BorrowerOperations is
         uint256 _amount
     ) internal {
         sendCollateralFrom(
-            IERC20(collateralAddress),
+            IERC20(address(0)),
             msg.sender,
             address(_activePool),
             _amount
@@ -877,20 +875,6 @@ contract BorrowerOperations is
         // Send fee to PCV contract
         _musd.mint(pcvAddress, fee);
         return fee;
-    }
-
-    function getAssetAmount(
-        uint256 _assetAmount
-    ) internal view returns (uint256) {
-        if (collateralAddress == address(0)) {
-            return msg.value;
-        }
-
-        require(
-            msg.value == 0,
-            "BorrowerOperations: ERC20 collateral needed, not BTC"
-        );
-        return _assetAmount;
     }
 
     function _requireNotInRecoveryMode(uint256 _price) internal view {
