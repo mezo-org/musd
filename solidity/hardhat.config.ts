@@ -7,6 +7,7 @@ import "hardhat-deploy"
 import "hardhat-contract-sizer"
 import "hardhat-gas-reporter"
 import dotenv from "dotenv-safer"
+import { accountsList } from "./test/utils"
 
 dotenv.config({
   allowEmptyValues: true,
@@ -120,6 +121,9 @@ const config: HardhatUserConfig = {
             "0xaD55BABd2FdceD7aa85eB1FEf47C455DBB7a57a46a16aC9ACFFBE66d7Caf83Ee",
           balance: "1000000000000000000009",
         },
+        ...(process.env.LOAD_TESTING === "true"
+          ? accountsList.slice(0, 1000)
+          : []),
       ],
       tags: ["allowStubs"],
     },

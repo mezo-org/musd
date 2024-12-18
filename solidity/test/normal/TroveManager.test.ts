@@ -2651,6 +2651,36 @@ describe("TroveManager in Normal Mode", () => {
       ).to.be.closeTo(collNeeded, 1000n)
     })
 
+    it("redeems from the trove with the lowest ICR > MCR first", async () => {
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: alice.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "150",
+        sender: bob.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "250",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+
+      const redemptionAmount = to1e18("100")
+      await performRedemption(contracts, carol, alice, redemptionAmount)
+
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "after")
+
+      expect(alice.trove.debt.after).to.equal(alice.trove.debt.before)
+      expect(bob.trove.debt.after).to.equal(
+        bob.trove.debt.before - redemptionAmount,
+      )
+    })
+
     it("a redemption that closes a trove leaves the trove's collateral surplus available for the trove owner after re-opening trove", async () => {
       await setupRedemptionTroves()
 
