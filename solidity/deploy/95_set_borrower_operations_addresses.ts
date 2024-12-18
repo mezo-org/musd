@@ -5,8 +5,6 @@ import {
   setupDeploymentBoilerplate,
 } from "../helpers/deploy-helpers"
 
-import { ZERO_ADDRESS } from "../helpers/constants"
-
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
@@ -28,7 +26,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     "BorrowerOperations",
     "setAddresses",
     await activePool.getAddress(),
-    ZERO_ADDRESS,
     await collSurplusPool.getAddress(),
     await defaultPool.getAddress(),
     await gasPool.getAddress(),
@@ -36,8 +33,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await musd.getAddress(),
     await pcv.getAddress(),
     await priceFeed.getAddress(),
-    await stabilityPool.getAddress(),
     await sortedTroves.getAddress(),
+    await stabilityPool.getAddress(),
     await troveManager.getAddress(),
   )
 }

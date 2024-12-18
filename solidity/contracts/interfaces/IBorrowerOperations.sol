@@ -6,17 +6,16 @@ pragma solidity ^0.8.24;
 interface IBorrowerOperations {
     // --- Events ---
 
-    event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
-    event DefaultPoolAddressChanged(address _defaultPoolAddress);
-    event StabilityPoolAddressChanged(address _stabilityPoolAddress);
-    event GasPoolAddressChanged(address _gasPoolAddress);
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
-    event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
+    event DefaultPoolAddressChanged(address _defaultPoolAddress);
+    event GasPoolAddressChanged(address _gasPoolAddress);
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event PCVAddressChanged(address _pcvAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
+    event PriceFeedAddressChanged(address _newPriceFeedAddress);
+    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
+    event StabilityPoolAddressChanged(address _stabilityPoolAddress);
+    event TroveManagerAddressChanged(address _newTroveManagerAddress);
 
     event TroveCreated(address indexed _borrower, uint256 arrayIndex);
     event TroveUpdated(
@@ -34,7 +33,6 @@ interface IBorrowerOperations {
 
     function setAddresses(
         address _activePoolAddress,
-        address _collateralAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -42,8 +40,8 @@ interface IBorrowerOperations {
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
-        address _stabilityPoolAddress,
         address _sortedTrovesAddress,
+        address _stabilityPoolAddress,
         address _troveManagerAddress
     ) external;
 
