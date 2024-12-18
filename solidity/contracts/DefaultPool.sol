@@ -18,7 +18,6 @@ import "./interfaces/IDefaultPool.sol";
  */
 contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     address public activePoolAddress;
-    address public collateralAddress;
     address public troveManagerAddress;
 
     uint256 internal collateral; // deposited collateral tracker
@@ -31,10 +30,6 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsActivePool();
-        require(
-            collateralAddress == address(0),
-            "DefaultPool: ERC20 collateral needed, not BTC"
-        );
         collateral += msg.value;
         emit DefaultPoolCollateralBalanceUpdated(collateral);
     }
@@ -50,7 +45,6 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
 
         // slither-disable-start missing-zero-check
         activePoolAddress = _activePoolAddress;
-        collateralAddress = address(0);
         troveManagerAddress = _troveManagerAddress;
         // slither-disable-end missing-zero-check
 
@@ -91,7 +85,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         emit DefaultPoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(activePool, _amount);
 
-        sendCollateral(IERC20(collateralAddress), activePool, _amount);
+        sendCollateral(IERC20(address(0)), activePool, _amount);
     }
 
     function getCollateralBalance() external view override returns (uint) {
