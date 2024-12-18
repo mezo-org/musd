@@ -28,16 +28,15 @@ interface IStabilityPool {
     event StabilityPoolCollateralBalanceUpdated(uint256 _newBalance);
     event StabilityPoolMUSDBalanceUpdated(uint256 _newBalance);
 
+    event ActivePoolAddressChanged(address _newActivePoolAddress);
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress
     );
-    event TroveManagerAddressChanged(address _newTroveManagerAddress);
-    event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
     event MUSDTokenAddressChanged(address _newMUSDTokenAddress);
-    event SortedTrovesAddressChanged(address _newSortedTrovesAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
+    event SortedTrovesAddressChanged(address _newSortedTrovesAddress);
+    event TroveManagerAddressChanged(address _newTroveManagerAddress);
 
     event PUpdated(uint256 _P);
     event SUpdated(uint256 _S, uint128 _epoch, uint128 _scale);
@@ -65,13 +64,12 @@ interface IStabilityPool {
      * Callable only by owner, renounces ownership at the end
      */
     function setAddresses(
-        address _borrowerOperationsAddress,
-        address _troveManagerAddress,
         address _activePoolAddress,
+        address _borrowerOperationsAddress,
         address _musdTokenAddress,
-        address _sortedTrovesAddress,
         address _priceFeedAddress,
-        address _collateralAddress
+        address _sortedTrovesAddress,
+        address _troveManagerAddress
     ) external;
 
     /*

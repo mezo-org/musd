@@ -38,12 +38,12 @@ contract StabilityPool is
 
     // --- State ---
 
-    address public collateralAddress;
     IBorrowerOperations public borrowerOperations;
-    ITroveManager public troveManager;
+    address public collateralAddress;
     IMUSD public musd;
-    // Needed to check if there are pending liquidations
     ISortedTroves public sortedTroves;
+    ITroveManager public troveManager;
+
     // Tracker for mUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
     uint256 internal totalMUSDDeposits;
     uint256 internal collateral; // deposited collateral tracker
@@ -92,47 +92,34 @@ contract StabilityPool is
     // --- External ---
 
     function setAddresses(
-        address _borrowerOperationsAddress,
-        address _troveManagerAddress,
         address _activePoolAddress,
+        address _borrowerOperationsAddress,
         address _musdTokenAddress,
-        address _sortedTrovesAddress,
         address _priceFeedAddress,
-        address _collateralAddress
+        address _sortedTrovesAddress,
+        address _troveManagerAddress
     ) external override onlyOwner {
-        checkContract(_borrowerOperationsAddress);
-        checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
+        checkContract(_borrowerOperationsAddress);
         checkContract(_musdTokenAddress);
-        checkContract(_sortedTrovesAddress);
         checkContract(_priceFeedAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
+        checkContract(_sortedTrovesAddress);
+        checkContract(_troveManagerAddress);
 
-        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
-        troveManager = ITroveManager(_troveManagerAddress);
         activePool = IActivePool(_activePoolAddress);
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
+        collateralAddress = address(0);
         musd = IMUSD(_musdTokenAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
-        collateralAddress = _collateralAddress;
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        troveManager = ITroveManager(_troveManagerAddress);
 
-        require(
-            (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                borrowerOperations.collateralAddress() == _collateralAddress) &&
-                (Ownable(_activePoolAddress).owner() != address(0) ||
-                    activePool.collateralAddress() == _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
-
-        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
-        emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
-        emit CollateralAddressChanged(_collateralAddress);
+        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
+        emit TroveManagerAddressChanged(_troveManagerAddress);
 
         renounceOwnership();
     }
