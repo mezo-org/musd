@@ -75,6 +75,7 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         checkContract(_troveManagerAddress);
 
         activePool = IActivePool(_activePoolAddress);
+        // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
         musdToken = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
