@@ -29,6 +29,7 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
     mapping(uint16 => InterestRateInfo) public interestRateData;
 
     IActivePool public activePool;
+    address public borrowerOperationsAddress;
     IMUSD public musdToken;
     IPCV internal pcv;
     ITroveManager internal troveManager;
@@ -36,7 +37,24 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
     modifier onlyGovernance() {
         require(
             msg.sender == pcv.council(),
-            "TroveManager: Only governance can call this function"
+            "InterestRateManager: Only governance can call this function"
+        );
+        _;
+    }
+
+    modifier onlyTroveManager() {
+        require(
+            msg.sender == address(troveManager),
+            "InterestRateManager: Only TroveManager may call this function."
+        );
+        _;
+    }
+
+    modifier onlyBorrowerOperationsOrTroveManager() {
+        require(
+            msg.sender == borrowerOperationsAddress ||
+                msg.sender == address(troveManager),
+            "InterestRateManager: Only BorrowerOperations or TroveManager may call this function."
         );
         _;
     }
@@ -45,12 +63,20 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
 
     function setAddresses(
         address _activePoolAddress,
+        address _borrowerOperationsAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _troveManagerAddress
     ) external onlyOwner {
+        checkContract(_activePoolAddress);
+        checkContract(_borrowerOperationsAddress);
+        checkContract(_musdTokenAddress);
         checkContract(_pcvAddress);
+        checkContract(_troveManagerAddress);
+
         activePool = IActivePool(_activePoolAddress);
+        // slither-disable-next-line missing-zero-check
+        borrowerOperationsAddress = _borrowerOperationsAddress;
         musdToken = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
         troveManager = ITroveManager(_troveManagerAddress);
@@ -59,6 +85,8 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
+
+        renounceOwnership();
     }
 
     function proposeInterestRate(
@@ -91,12 +119,11 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
 
-    function addPrincipalToRate(uint16 _rate, uint256 _principal) external {
+    function addPrincipalToRate(
+        uint16 _rate,
+        uint256 _principal
+    ) external onlyBorrowerOperationsOrTroveManager {
         interestRateData[_rate].principal += _principal;
-    }
-
-    function setLastUpdatedTime(uint16 _rate, uint256 _time) external {
-        interestRateData[_rate].lastUpdatedTime = _time;
     }
 
     function updateSystemInterest(uint16 _rate) external {
@@ -128,6 +155,7 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         uint16 _rate
     )
         external
+        onlyTroveManager
         returns (uint256 principalAdjustment, uint256 interestAdjustment)
     {
         if (_payment >= _interestOwed) {
@@ -148,15 +176,24 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         return interestRateData[_rate];
     }
 
-    function addInterestToRate(uint16 _rate, uint256 _interest) public {
+    function addInterestToRate(
+        uint16 _rate,
+        uint256 _interest
+    ) public onlyBorrowerOperationsOrTroveManager {
         interestRateData[_rate].interest += _interest;
     }
 
-    function removePrincipalFromRate(uint16 _rate, uint256 _principal) public {
+    function removePrincipalFromRate(
+        uint16 _rate,
+        uint256 _principal
+    ) public onlyBorrowerOperationsOrTroveManager {
         interestRateData[_rate].principal -= _principal;
     }
 
-    function removeInterestFromRate(uint16 _rate, uint256 _interest) public {
+    function removeInterestFromRate(
+        uint16 _rate,
+        uint256 _interest
+    ) public onlyBorrowerOperationsOrTroveManager {
         interestRateData[_rate].interest -= _interest;
     }
 

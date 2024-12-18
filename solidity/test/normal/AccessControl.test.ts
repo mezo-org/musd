@@ -8,6 +8,7 @@ import {
   dropPriceAndLiquidate,
 } from "../helpers"
 import { to1e18 } from "../utils"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 
 describe("Access Control: Liquity functions with the caller restricted to Liquity contract(s)", () => {
   let alice: User
@@ -77,6 +78,103 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
           .setRefinancingFeePercentage(1),
       ).to.be.revertedWith(
         "BorrowerOps: Only governance can call this function",
+      )
+    })
+  })
+
+  describe("InterestRateManager", () => {
+    it("setAddresses(): can only be called once", async () => {
+      await expect(
+        contracts.interestRateManager.setAddresses(
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+        ),
+      ).to.be.revertedWithCustomError(
+        contracts.interestRateManager,
+        "OwnableUnauthorizedAccount",
+      )
+    })
+
+    it("proposeInterestRate(): reverts when called by an account that is not governance", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .proposeInterestRate(1000n),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only governance can call this function",
+      )
+    })
+
+    it("approveInterestRate(): reverts when called by account that is not governance", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .approveInterestRate(),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only governance can call this function",
+      )
+    })
+
+    it("setMaxInterestRate(): reverts when called by account that is not governance", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .setMaxInterestRate(1000n),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only governance can call this function",
+      )
+    })
+
+    it("addPrincipalToRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .addPrincipalToRate(1000n, to1e18(2300)),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
+      )
+    })
+
+    it("updateTroveDebt(): reverts when called by account that is not trove manager", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .updateTroveDebt(to1e18(4300), to1e18(2300), 1000n),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only TroveManager may call this function.",
+      )
+    })
+
+    it("addInterestToRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .addInterestToRate(1000n, to1e18(4300)),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
+      )
+    })
+
+    it("removePrincipalFromRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .removePrincipalFromRate(1000n, to1e18(4300)),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
+      )
+    })
+
+    it("removeInterestFromRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
+      await expect(
+        contracts.interestRateManager
+          .connect(alice.wallet)
+          .removeInterestFromRate(1000n, to1e18(4300)),
+      ).to.be.revertedWith(
+        "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
       )
     })
   })

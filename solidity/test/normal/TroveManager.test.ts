@@ -3344,7 +3344,7 @@ describe("TroveManager in Normal Mode", () => {
             .connect(alice.wallet)
             .setMaxInterestRate(1),
         ).to.be.revertedWith(
-          "TroveManager: Only governance can call this function",
+          "InterestRateManager: Only governance can call this function",
         )
       })
     })
@@ -3421,7 +3421,7 @@ describe("TroveManager in Normal Mode", () => {
             .connect(alice.wallet)
             .approveInterestRate(),
         ).to.be.revertedWith(
-          "TroveManager: Only governance can call this function",
+          "InterestRateManager: Only governance can call this function",
         )
       })
     })
