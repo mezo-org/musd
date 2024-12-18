@@ -7,9 +7,11 @@ interface IPool {
     // --- Events ---
 
     event CollateralBalanceUpdated(uint256 _newBalance);
+
     event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
     event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
+
     event CollateralSent(address _to, uint256 _amount);
 
     // --- Functions ---

@@ -17,8 +17,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     "SortedTroves",
     "setParams",
     MAX_BYTES_32,
-    await troveManager.getAddress(),
     await borrowerOperations.getAddress(),
+    await troveManager.getAddress(),
   )
 }
 

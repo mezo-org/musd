@@ -15,9 +15,9 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
 
     uint256 public immutable governanceTimeDelay;
 
-    IMUSD public musd;
-    IERC20 public collateralERC20;
     BorrowerOperations public borrowerOperations;
+    IERC20 public collateralERC20;
+    IMUSD public musd;
 
     // TODO ideal initialization in constructor/setAddresses
     uint256 public debtToPay;
@@ -112,30 +112,22 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     }
 
     function setAddresses(
-        address _musdTokenAddress,
         address _borrowerOperations,
-        address _collateralERC20
+        address _musdTokenAddress
     ) external override onlyOwner {
         require(address(musd) == address(0), "PCV: contacts already set");
-        checkContract(_musdTokenAddress);
+
         checkContract(_borrowerOperations);
-        if (_collateralERC20 != address(0)) {
-            checkContract(_collateralERC20);
-        }
+        checkContract(_musdTokenAddress);
 
-        musd = IMUSD(_musdTokenAddress);
-        collateralERC20 = IERC20(_collateralERC20);
+        // slither-disable-start missing-zero-check
         borrowerOperations = BorrowerOperations(_borrowerOperations);
+        collateralERC20 = IERC20(address(0));
+        musd = IMUSD(_musdTokenAddress);
+        // slither-disable-end missing-zero-check
 
-        require(
-            (Ownable(_borrowerOperations).owner() != address(0) ||
-                borrowerOperations.collateralAddress() == _collateralERC20),
-            "The same collateral address must be used for the entire set of contracts"
-        );
-
-        emit MUSDTokenAddressSet(_musdTokenAddress);
         emit BorrowerOperationsAddressSet(_borrowerOperations);
-        emit CollateralAddressSet(_collateralERC20);
+        emit MUSDTokenAddressSet(_musdTokenAddress);
     }
 
     function initialize() external override onlyOwnerOrCouncilOrTreasury {

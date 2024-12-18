@@ -69,8 +69,8 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
 
     function setParams(
         uint256 _size,
-        address _troveManagerAddress,
-        address _borrowerOperationsAddress
+        address _borrowerOperationsAddress,
+        address _troveManagerAddress
     ) external override onlyOwner {
         require(_size > 0, "SortedTroves: Size cant be zero");
         checkContract(_troveManagerAddress);
@@ -78,12 +78,12 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
 
         data.maxSize = _size;
 
-        troveManager = ITroveManager(_troveManagerAddress);
         // slither-disable-next-line missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
+        troveManager = ITroveManager(_troveManagerAddress);
 
-        emit TroveManagerAddressChanged(_troveManagerAddress);
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        emit TroveManagerAddressChanged(_troveManagerAddress);
 
         renounceOwnership();
     }

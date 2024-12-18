@@ -21,12 +21,13 @@ import "./interfaces/IStabilityPool.sol";
  */
 contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public borrowerOperationsAddress;
-    address public collateralAddress;
     address public collSurplusPoolAddress;
+    address public collateralAddress;
     address public defaultPoolAddress;
+    address public interestRateManagerAddress;
     address public stabilityPoolAddress;
     address public troveManagerAddress;
-    address public interestRateManagerAddress;
+
     uint256 internal collateral; // deposited collateral tracker
     uint256 internal principal;
     uint256 internal interest;
@@ -51,57 +52,30 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
     function setAddresses(
         address _borrowerOperationsAddress,
-        address _collateralAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _interestRateManagerAddress,
-        address _troveManagerAddress,
-        address _stabilityPoolAddress
+        address _stabilityPoolAddress,
+        address _troveManagerAddress
     ) external onlyOwner {
         checkContract(_borrowerOperationsAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
+        checkContract(_interestRateManagerAddress);
         checkContract(_stabilityPoolAddress);
         checkContract(_troveManagerAddress);
-        checkContract(_interestRateManagerAddress);
 
-        // slither-disable-next-line missing-zero-check
+        // slither-disable-start missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
-        collateralAddress = _collateralAddress;
-        // slither-disable-next-line missing-zero-check
+        collateralAddress = address(0);
         collSurplusPoolAddress = _collSurplusPoolAddress;
-        // slither-disable-next-line missing-zero-check
         defaultPoolAddress = _defaultPoolAddress;
-        // slither-disable-next-line missing-zero-check
         interestRateManagerAddress = _interestRateManagerAddress;
-        // slither-disable-next-line missing-zero-check
         stabilityPoolAddress = _stabilityPoolAddress;
-        // slither-disable-next-line missing-zero-check
         troveManagerAddress = _troveManagerAddress;
-
-        require(
-            (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                IBorrowerOperations(_borrowerOperationsAddress)
-                    .collateralAddress() ==
-                _collateralAddress) &&
-                (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
-                    ICollSurplusPool(_collSurplusPoolAddress)
-                        .collateralAddress() ==
-                    _collateralAddress) &&
-                (Ownable(_defaultPoolAddress).owner() != address(0) ||
-                    IDefaultPool(_defaultPoolAddress).collateralAddress() ==
-                    _collateralAddress) &&
-                (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPool(stabilityPoolAddress).collateralAddress() ==
-                    _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
+        // slither-disable-end missing-zero-check
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
-        emit CollateralAddressChanged(_collateralAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit InterestRateManagerAddressChanged(_interestRateManagerAddress);

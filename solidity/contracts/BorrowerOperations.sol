@@ -516,7 +516,6 @@ contract BorrowerOperations is
 
     function setAddresses(
         address _activePoolAddress,
-        address _collateralAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -524,74 +523,51 @@ contract BorrowerOperations is
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
-        address _stabilityPoolAddress,
         address _sortedTrovesAddress,
+        address _stabilityPoolAddress,
         address _troveManagerAddress
     ) external override onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
         assert(MIN_NET_DEBT > 0);
 
         checkContract(_activePoolAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_gasPoolAddress);
+        checkContract(_interestRateManagerAddress);
         checkContract(_musdTokenAddress);
         checkContract(_pcvAddress);
         checkContract(_priceFeedAddress);
-        checkContract(_stabilityPoolAddress);
         checkContract(_sortedTrovesAddress);
+        checkContract(_stabilityPoolAddress);
         checkContract(_troveManagerAddress);
-        checkContract(_interestRateManagerAddress);
 
-        troveManager = ITroveManager(_troveManagerAddress);
+        // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
-        // slither-disable-next-line missing-zero-check
-        stabilityPoolAddress = _stabilityPoolAddress;
-        // slither-disable-next-line missing-zero-check
-        gasPoolAddress = _gasPoolAddress;
+        collateralAddress = address(0);
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        priceFeed = IPriceFeed(_priceFeedAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        defaultPool = IDefaultPool(_defaultPoolAddress);
+        gasPoolAddress = _gasPoolAddress;
+        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         musd = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
-        // slither-disable-next-line missing-zero-check
         pcvAddress = _pcvAddress;
-        // slither-disable-next-line missing-zero-check
-        collateralAddress = _collateralAddress;
-        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        stabilityPoolAddress = _stabilityPoolAddress;
+        troveManager = ITroveManager(_troveManagerAddress);
+        // slither-disable-end missing-zero-check
 
-        require(
-            (Ownable(_defaultPoolAddress).owner() != address(0) ||
-                defaultPool.collateralAddress() == _collateralAddress) &&
-                (Ownable(_activePoolAddress).owner() != address(0) ||
-                    activePool.collateralAddress() == _collateralAddress) &&
-                (Ownable(_stabilityPoolAddress).owner() != address(0) ||
-                    IStabilityPool(stabilityPoolAddress).collateralAddress() ==
-                    _collateralAddress) &&
-                (Ownable(_collSurplusPoolAddress).owner() != address(0) ||
-                    collSurplusPool.collateralAddress() ==
-                    _collateralAddress) &&
-                (address(IPCV(pcvAddress).musd()) == address(0) ||
-                    address(IPCV(pcvAddress).collateralERC20()) ==
-                    _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
-
-        emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
-        emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
-        emit PriceFeedAddressChanged(_priceFeedAddress);
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
+        emit DefaultPoolAddressChanged(_defaultPoolAddress);
+        emit GasPoolAddressChanged(_gasPoolAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
-        emit CollateralAddressChanged(_collateralAddress);
+        emit PriceFeedAddressChanged(_priceFeedAddress);
+        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
+        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
+        emit TroveManagerAddressChanged(_troveManagerAddress);
 
         renounceOwnership();
     }

@@ -24,15 +24,15 @@ contract GasPool is Ownable, CheckContract, IGasPool {
     constructor() Ownable(msg.sender) {}
 
     function setAddresses(
-        address _troveManagerAddress,
-        address _musdTokenAddress
+        address _musdTokenAddress,
+        address _troveManagerAddress
     ) external onlyOwner {
-        checkContract(_troveManagerAddress);
         checkContract(_musdTokenAddress);
+        checkContract(_troveManagerAddress);
 
+        musdToken = IMUSD(_musdTokenAddress);
         // slither-disable-next-line missing-zero-check
         troveManagerAddress = _troveManagerAddress;
-        musdToken = IMUSD(_musdTokenAddress);
 
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);

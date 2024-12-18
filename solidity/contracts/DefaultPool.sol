@@ -20,6 +20,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     address public activePoolAddress;
     address public collateralAddress;
     address public troveManagerAddress;
+
     uint256 internal collateral; // deposited collateral tracker
     uint256 internal principal;
     uint256 internal interest;
@@ -41,32 +42,20 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     // --- Dependency setters ---
 
     function setAddresses(
-        address _troveManagerAddress,
         address _activePoolAddress,
-        address _collateralAddress
+        address _troveManagerAddress
     ) external onlyOwner {
-        checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
+        checkContract(_troveManagerAddress);
 
-        // slither-disable-next-line missing-zero-check
-        troveManagerAddress = _troveManagerAddress;
-        // slither-disable-next-line missing-zero-check
+        // slither-disable-start missing-zero-check
         activePoolAddress = _activePoolAddress;
-        collateralAddress = _collateralAddress;
-
-        require(
-            (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePool(_activePoolAddress).collateralAddress() ==
-                _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
+        collateralAddress = address(0);
+        troveManagerAddress = _troveManagerAddress;
+        // slither-disable-end missing-zero-check
 
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
-        emit CollateralAddressChanged(_collateralAddress);
 
         renounceOwnership();
     }

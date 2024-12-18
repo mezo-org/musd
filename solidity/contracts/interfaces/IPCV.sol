@@ -9,7 +9,7 @@ interface IPCV {
     // --- Events --
     event MUSDTokenAddressSet(address _musdTokenAddress);
     event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);
-    event CollateralAddressSet(address _collateralAddress);
+
     event RolesSet(address _council, address _treasury);
     event MUSDWithdraw(address _recipient, uint256 _amount);
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
@@ -25,9 +25,8 @@ interface IPCV {
     function payDebt(uint256 _musdToBurn) external;
 
     function setAddresses(
-        address _musdTokenAddress,
         address _borrowerOperations,
-        address _collateralERC20
+        address _musdTokenAddress
     ) external;
 
     function initialize() external;

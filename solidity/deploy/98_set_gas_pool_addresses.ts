@@ -14,8 +14,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await execute(
     "GasPool",
     "setAddresses",
-    await troveManager.getAddress(),
     await musd.getAddress(),
+    await troveManager.getAddress(),
   )
 }
 

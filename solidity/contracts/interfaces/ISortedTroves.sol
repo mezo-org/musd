@@ -6,8 +6,9 @@ pragma solidity ^0.8.24;
 interface ISortedTroves {
     // --- Events ---
 
-    event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);
     event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
+    event SortedTrovesAddressChanged(address _sortedDoublyLLAddress);
+
     event NodeAdded(address _id, uint256 _NICR);
     event NodeRemoved(address _id);
 

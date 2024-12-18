@@ -45,41 +45,25 @@ contract CollSurplusPool is
     // --- Contract setters ---
 
     function setAddresses(
-        address _borrowerOperationsAddress,
-        address _troveManagerAddress,
         address _activePoolAddress,
-        address _collateralAddress
+        address _borrowerOperationsAddress,
+        address _troveManagerAddress
     ) external override onlyOwner {
         checkContract(_borrowerOperationsAddress);
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
-        if (_collateralAddress != address(0)) {
-            checkContract(_collateralAddress);
-        }
 
         // checkContract does the zero address check so disable slither warning
         // slither-disable-start missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
         troveManagerAddress = _troveManagerAddress;
         activePoolAddress = _activePoolAddress;
-        collateralAddress = _collateralAddress;
+        collateralAddress = address(0);
         // slither-disable-end missing-zero-check
-
-        require(
-            (Ownable(_activePoolAddress).owner() != address(0) ||
-                IActivePool(_activePoolAddress).collateralAddress() ==
-                _collateralAddress) &&
-                (Ownable(_borrowerOperationsAddress).owner() != address(0) ||
-                    IBorrowerOperations(_borrowerOperationsAddress)
-                        .collateralAddress() ==
-                    _collateralAddress),
-            "The same collateral address must be used for the entire set of contracts"
-        );
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
-        emit CollateralAddressChanged(_collateralAddress);
 
         renounceOwnership();
     }
