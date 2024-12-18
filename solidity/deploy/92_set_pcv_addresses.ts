@@ -5,8 +5,6 @@ import {
   setupDeploymentBoilerplate,
 } from "../helpers/deploy-helpers"
 
-import { ZERO_ADDRESS } from "../helpers/constants"
-
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
@@ -16,9 +14,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await execute(
     "PCV",
     "setAddresses",
-    await musd.getAddress(),
     await borrowerOperations.getAddress(),
-    ZERO_ADDRESS,
+    await musd.getAddress(),
   )
 }
 
