@@ -26,8 +26,10 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
         uint256 oldMultiplier = 10 ** uint8(precision);
         uint256 basePrice = uint256(_price / oldMultiplier);
         uint256 multiplier = 10 ** uint8(_precision);
+        // slither-disable-start events-maths
         _price = basePrice * multiplier;
         precision = _precision;
+        // slither-disable-end events-maths
         return true;
     }
 
