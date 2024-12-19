@@ -49,7 +49,7 @@ describe("PriceFeed in Normal Mode", () => {
         const mockAggregatorAddress =
           await contracts.mockAggregator.getAddress()
 
-        await contracts.mockAggregator.setPrice(0n)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(0n)
 
         await expect(
           priceFeed.connect(deployer.wallet).setOracle(mockAggregatorAddress),
@@ -60,21 +60,21 @@ describe("PriceFeed in Normal Mode", () => {
 
   describe("fetchPrice()", () => {
     it("Handles an 8 decimal oracle", async () => {
-      await contracts.mockAggregator.setPrecision(8n)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrecision(8n)
       expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
         to1e18("50,000"),
       )
     })
 
     it("Handles an 18 decimal oracle", async () => {
-      await contracts.mockAggregator.setPrecision(18n)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrecision(18n)
       expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
         to1e18("50,000"),
       )
     })
 
     it("Handles a 25 decimal oracle", async () => {
-      await contracts.mockAggregator.setPrecision(25n)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrecision(25n)
       expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
         to1e18("50,000"),
       )

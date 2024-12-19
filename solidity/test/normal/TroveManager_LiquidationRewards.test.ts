@@ -81,18 +81,18 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await updateTroveSnapshots(contracts, [alice, bob], "before")
 
     const price = await contracts.priceFeed.fetchPrice()
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
 
     await updatePendingSnapshot(contracts, alice, "before")
 
-    await contracts.mockAggregator.setPrice(price)
+    await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
     await setupTrove(carol, "1800", "400")
     await setupTrove(dennis, "1800", "210")
     await updateTroveSnapshots(contracts, [carol, dennis], "before")
     await updateTroveSnapshot(contracts, alice, "after")
 
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshot(contracts, alice, "after")
     await updatePendingSnapshot(contracts, carol, "after")
 
@@ -129,25 +129,25 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     // L1: A liquidated
     const price = await contracts.priceFeed.fetchPrice()
-    await dropPriceAndLiquidate(contracts, alice)
+    await dropPriceAndLiquidate(contracts, deployer, alice)
 
     // Price bounces back to original price
-    await contracts.mockAggregator.setPrice(price)
+    await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
     // C opens trove
     await setupTroveAndSnapshot(carol, "1800", "210")
 
     // L2: B liquidated
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
 
     // Price bounces back to original price
-    await contracts.mockAggregator.setPrice(price)
+    await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
     // D opens trove
     await setupTroveAndSnapshot(dennis, "1800", "210")
 
     // L3: C liquidated
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
 
     // Check that D's collateral is sum of A, B, C's collateral less fees
     await updatePendingSnapshot(contracts, dennis, "after")
@@ -169,7 +169,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       users.map((user) => setupTroveAndSnapshot(user, "20000", "210")),
     )
 
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
 
     const collFromL1 = expectedCollRewardAmount(
       bob.trove.collateral.before,
@@ -186,7 +186,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     const aliceCollAtL2 = await getTroveEntireColl(contracts, alice.wallet)
     const collFromL2 = applyLiquidationFee(aliceCollAtL2)
 
-    await dropPriceAndLiquidate(contracts, alice)
+    await dropPriceAndLiquidate(contracts, deployer, alice)
 
     const bobDebt = await getTroveEntireDebt(contracts, bob.wallet)
     expect(bobDebt).to.be.closeTo(
@@ -208,7 +208,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       users.map((user) => setupTroveAndSnapshot(user, "20000", "210")),
     )
 
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
     await updatePendingSnapshots(contracts, users, "before")
 
     const addedColl = to1e18(1)
@@ -224,7 +224,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       dennis,
       [alice, bob, carol, dennis],
     )
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshots(contracts, [...users, dennis], "after")
 
     // Check collateral values
@@ -271,7 +271,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(carol, "200,000", "4000")
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const addedColl = to1e18(0.01)
@@ -286,7 +286,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       ...initialUsers,
       eric,
     ])
-    await dropPriceAndLiquidate(contracts, eric)
+    await dropPriceAndLiquidate(contracts, deployer, eric)
     await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note C topped up so their rewards from the first liquidation were applied
@@ -334,7 +334,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
     await setupTroveAndSnapshot(carol, "200,000", "400")
 
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const addedColl = to1e18(1)
@@ -352,7 +352,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       ...initialUsers,
       eric,
     ])
-    await dropPriceAndLiquidate(contracts, eric)
+    await dropPriceAndLiquidate(contracts, deployer, eric)
     await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note A, B, C topped up so their rewards from the first liquidation were applied
@@ -400,7 +400,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(bob, "20000", "2000")
     await setupTroveAndSnapshot(carol, "20000", "210")
 
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
 
     const collFromL1 = expectedCollRewardAmount(
       bob.trove.collateral.before,
@@ -417,7 +417,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     const aliceCollAtL2 = await getTroveEntireColl(contracts, alice.wallet)
     const collFromL2 = applyLiquidationFee(aliceCollAtL2)
 
-    await dropPriceAndLiquidate(contracts, alice)
+    await dropPriceAndLiquidate(contracts, deployer, alice)
 
     const bobDebt = await getTroveEntireDebt(contracts, bob.wallet)
     expect(bobDebt).to.be.closeTo(
@@ -440,7 +440,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(bob, "20000", "2000")
     await setupTroveAndSnapshot(carol, "20000", "210")
 
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
     await updatePendingSnapshots(contracts, users, "before")
 
     const withdrawnColl = to1e18(1)
@@ -456,7 +456,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       dennis,
       [alice, bob, carol, dennis],
     )
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshots(contracts, users, "after")
 
     // Check collateral values
@@ -501,7 +501,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(carol, "200,000", "4000")
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const withdrawnColl = to1e18(0.01)
@@ -516,7 +516,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       ...initialUsers,
       eric,
     ])
-    await dropPriceAndLiquidate(contracts, eric)
+    await dropPriceAndLiquidate(contracts, deployer, eric)
     await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note C withdrew so their rewards from the first liquidation were applied
@@ -562,7 +562,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await setupTroveAndSnapshot(carol, "200,000", "4000")
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
-    await dropPriceAndLiquidate(contracts, dennis)
+    await dropPriceAndLiquidate(contracts, deployer, dennis)
     await updatePendingSnapshots(contracts, initialUsers, "before")
 
     const withdrawnColl = to1e18(0.01)
@@ -583,7 +583,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       ...initialUsers,
       eric,
     ])
-    await dropPriceAndLiquidate(contracts, eric)
+    await dropPriceAndLiquidate(contracts, deployer, eric)
     await updatePendingSnapshots(contracts, [...initialUsers, eric], "after")
 
     // Check collateral values.  Note A, B, C withdrew so their rewards from the first liquidation were applied
@@ -636,7 +636,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       alice,
       users,
     )
-    await dropPriceAndLiquidate(contracts, alice)
+    await dropPriceAndLiquidate(contracts, deployer, alice)
 
     await setupTroveAndSnapshot(dennis, "20,000", "210")
 
@@ -656,7 +656,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       ...users,
       dennis,
     ])
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
 
     await setupTroveAndSnapshot(eric, "20,000", "210")
     await setupTroveAndSnapshot(frank, "20,000", "210")
@@ -672,7 +672,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
       eric,
       frank,
     ])
-    await dropPriceAndLiquidate(contracts, frank)
+    await dropPriceAndLiquidate(contracts, deployer, frank)
     await Promise.all(
       [...users, dennis, eric, frank].map((user) =>
         updatePendingSnapshot(contracts, user, "after"),
@@ -747,7 +747,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Fast-forward 1 year
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
     await updatePendingSnapshot(contracts, alice, "before")
 
     await fastForwardTime(365 * 24 * 60 * 60)
@@ -775,7 +775,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
     await updatePendingSnapshot(contracts, alice, "before")
 
     await setInterestRate(contracts, council, 1000)
@@ -805,7 +805,7 @@ describe("TroveManager - Redistribution reward calculations", () => {
     // Fast-forward 1 year
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
     await updatePendingSnapshot(contracts, alice, "before")
 
     await fastForwardTime(365 * 24 * 60 * 60)
@@ -844,11 +844,11 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
 
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
 
     const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
@@ -872,11 +872,11 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
 
-    await dropPriceAndLiquidate(contracts, bob)
+    await dropPriceAndLiquidate(contracts, deployer, bob)
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
 
     const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")

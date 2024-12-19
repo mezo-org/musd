@@ -580,6 +580,7 @@ export function openTroves(
 
 export async function createLiquidationEvent(
   contracts: Contracts,
+  deployer: User,
   amount: string | bigint = "2,000",
 ): Promise<ContractTransactionResponse> {
   const bigintAmount = typeof amount === "string" ? to1e18(amount) : amount
@@ -594,13 +595,15 @@ export async function createLiquidationEvent(
 
   // Drop price to 90% of prior. This makes the defaulter's ICR equal to 108%
   // which is below the MCR of 110%
-  await contracts.mockAggregator.setPrice((priceBefore * 9n) / 10n)
+  await contracts.mockAggregator
+    .connect(deployer.wallet)
+    .setPrice((priceBefore * 9n) / 10n)
 
   // Liquidate defaulter
   const tx = await contracts.troveManager.liquidate(defaulter)
 
   // Reset the price
-  await contracts.mockAggregator.setPrice(priceBefore)
+  await contracts.mockAggregator.connect(deployer.wallet).setPrice(priceBefore)
 
   return tx
 }
@@ -677,6 +680,7 @@ export function withdrawCollateralGainToTroves(
  */
 export async function dropPrice(
   contracts: Contracts,
+  deployer: User,
   user: User,
   targetICR?: bigint,
 ) {
@@ -692,7 +696,7 @@ export async function dropPrice(
     : (await contracts.troveManager.MCR()) - 1n
 
   const newPrice = (target * currentPrice) / icr
-  await contracts.mockAggregator.setPrice(newPrice)
+  await contracts.mockAggregator.connect(deployer.wallet).setPrice(newPrice)
 
   return newPrice
 }
@@ -703,10 +707,11 @@ export async function dropPrice(
  */
 export async function dropPriceAndLiquidate(
   contracts: Contracts,
+  deployer: User,
   user: User,
   performLiquidation: boolean = true,
 ) {
-  const newPrice = await dropPrice(contracts, user)
+  const newPrice = await dropPrice(contracts, deployer, user)
   const liquidationTx = performLiquidation
     ? await contracts.troveManager.liquidate(user.address)
     : null

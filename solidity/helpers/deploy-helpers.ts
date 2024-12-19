@@ -169,7 +169,10 @@ export async function setupDeploymentBoilerplate(
         args: [],
         ...options,
       })
-      await helpers.etherscan.verify(contract)
+
+      if (network.name !== "hardhat") {
+        await helpers.etherscan.verify(contract)
+      }
     }
   }
 
