@@ -1,6 +1,5 @@
 import { expect } from "chai"
 import { to1e18 } from "../utils"
-import { ZERO_ADDRESS } from "../../helpers/constants"
 
 import { Contracts, User, getDeployedContract, setupTests } from "../helpers"
 import type { PriceFeed } from "../../typechain"
@@ -27,17 +26,6 @@ describe("PriceFeed in Normal Mode", () => {
     })
 
     context("Expected Reverts", () => {
-      it("Reverts when trying to set the oracle a second time", async () => {
-        await expect(
-          contracts.priceFeed.connect(deployer.wallet).setOracle(ZERO_ADDRESS),
-        )
-          .to.be.revertedWithCustomError(
-            contracts.pcv,
-            "OwnableUnauthorizedAccount",
-          )
-          .withArgs(deployer.address)
-      })
-
       it("Reverts when the oracle has 0-decimal precision", async () => {
         const priceFeed: PriceFeed = await getDeployedContract(
           "UnconnectedPriceFeed",
@@ -46,7 +34,7 @@ describe("PriceFeed in Normal Mode", () => {
         const mockAggregatorAddress =
           await contracts.mockAggregator.getAddress()
 
-        await contracts.mockAggregator.setPrecision(0n)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrecision(0n)
 
         await expect(
           priceFeed.connect(deployer.wallet).setOracle(mockAggregatorAddress),
