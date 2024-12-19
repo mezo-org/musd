@@ -925,7 +925,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const amount = to1e18("10,000")
       // transfer
       await contracts.musd.connect(bob.wallet).transfer(carol.wallet, amount)
-      await contracts.mockAggregator.setPrice(price)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
       expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
         false,
@@ -1117,7 +1117,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const amount = to1e18("10,000")
       await contracts.musd.connect(bob.wallet).transfer(alice.wallet, amount)
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       // do a transaction that will update Alice's reward snapshot values
       await contracts.borrowerOperations.withdrawMUSD(
@@ -1278,7 +1278,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.musd.connect(bob.wallet).transfer(carol.wallet, amount)
 
         const price = to1e18("33,500")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
           false,
@@ -1590,7 +1590,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // Make Alice subject to liquidation
       const price = to1e18("25,000")
-      await contracts.mockAggregator.setPrice(price)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
       // liquidate Alice
       await contracts.troveManager
@@ -2074,7 +2074,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Price drops 50,000 --> 30,000
         const price = to1e18("30,000")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
           false,
@@ -2449,7 +2449,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupCarolsTrove()
 
         const price = to1e18("30,000")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         expect(
           await contracts.troveManager.getCurrentICR(alice.wallet, price),
@@ -2496,7 +2496,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await removeMintlist(contracts, deployer.wallet)
 
         const price = to1e18("30,000")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         await expect(
           contracts.borrowerOperations
@@ -3723,7 +3723,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Price drops
         const price = to1e18("30,000")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
           false,
@@ -3790,7 +3790,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Price drops
         const price = to1e18("30,000")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         expect(await contracts.troveManager.checkRecoveryMode(price)).to.equal(
           false,
@@ -3956,7 +3956,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Price drops
         const price = to1e18("40,000")
-        await contracts.mockAggregator.setPrice(price)
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
         const debtChange = to1e18("10,000")
         await expect(
@@ -4345,7 +4345,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
-      const price = await dropPrice(contracts, carol, to1e18("110"))
+      const price = await dropPrice(contracts, deployer, carol, to1e18("110"))
 
       await contracts.borrowerOperations
         .connect(carol.wallet)

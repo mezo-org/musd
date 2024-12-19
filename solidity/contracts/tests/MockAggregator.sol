@@ -16,18 +16,20 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
     }
 
     // Manual external price setter.
-    function setPrice(uint256 price) external returns (bool) {
+    function setPrice(uint256 price) external onlyOwner returns (bool) {
         // slither-disable-next-line events-maths
         _price = price;
         return true;
     }
 
-    function setPrecision(uint8 _precision) external returns (bool) {
+    function setPrecision(uint8 _precision) external onlyOwner returns (bool) {
         uint256 oldMultiplier = 10 ** uint8(precision);
         uint256 basePrice = uint256(_price / oldMultiplier);
         uint256 multiplier = 10 ** uint8(_precision);
+        // slither-disable-start events-maths
         _price = basePrice * multiplier;
         precision = _precision;
+        // slither-disable-end events-maths
         return true;
     }
 
