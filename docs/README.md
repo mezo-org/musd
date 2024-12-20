@@ -23,7 +23,13 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 `BorrowerOperations.sol` - contains the basic operations by which borrowers interact with their Trove: Trove creation, collateral top-up / withdrawal, stablecoin issuance and repayment. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move collateral/Tokens between Pools or between Pool <> user, where necessary.
 
+`InterestRateManager.sol` - handles operations for setting interest rates as well as interest related calculations.
+
+`PriceFeed.sol` - provides price data for collateralization calculations.
+
 `TroveManager.sol` - contains functionality for liquidations and redemptions. Also contains the state of each Trove - i.e. a record of the Trove’s collateral and debt. TroveManager does not hold value (i.e. collateral / other tokens). TroveManager functions call in to the various Pools to tell them to move collateral/tokens between Pools, where necessary.
+
+`SortedTroves.sol` - Maintains a sorted list of Vaults by Individual Collateral Ratio (ICR).
 
 `StabilityPool.sol` - contains functionality for Stability Pool operations: making deposits, and withdrawing compounded deposits and accumulated collateral gains. Holds the mUSD Stability Pool deposits, and the collateral gains for depositors, from liquidations.
 
@@ -83,10 +89,38 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 _**Trove:**_ a collateralized debt position, bound to a single Ethereum address. Also referred to as a “CDP” in similar protocols.
 
+_**Active collateral:**_ the amount of collateral recorded on a Trove’s struct
+
+_**Active principal:**_ the amount of mUSD debt recorded on a Trove’s struct, not including any interest
+
+_**Active interest:**_: the amount of mUSD interest recorded on a Trove's struct
+
+_**Active debt:**_ the amount of mUSD debt recorded on a Trove’s struct (active principal plus active interest)
+
+_**Entire collateral:**_ the sum of a Trove’s active collateral plus its pending collateral rewards accumulated from distributions
+
+_**Entire debt:**_ the sum of a Trove’s active debt plus its pending debt rewards accumulated from distributions
+
 _**Individual collateralization ratio (ICR):**_ a Trove's ICR is the ratio of the dollar value of its entire collateral at the current collateral:USD price, to its entire debt
+
+_**Nominal collateralization ratio (nominal ICR, NICR):**_ a Trove's nominal ICR is its entire collateral (in collateral) multiplied by 100e18 and divided by its entire debt.
+
+_**Entire system collateral:**_ the sum of the collateral in the ActivePool and DefaultPool
+
+_**Entire system debt:**_ the sum of the debt in the ActivePool and DefaultPool
 
 _**Total collateralization ratio (TCR):**_ the ratio of the dollar value of the entire system collateral at the current collateral:USD price, to the entire system debt
 
 _**Critical collateralization ratio (CCR):**_ 150%. When the TCR is below the CCR, the system enters Recovery Mode.
+
+_**Redemption:**_ the act of swapping mUSD tokens with the system, in return for an equivalent value of collateral. Any account with an mUSD token balance may redeem them, regardless of whether they are a borrower. 
+
+_**Liquidation:**_ the act of force-closing an undercollateralized Trove and redistributing its collateral and debt. When the Stability Pool is sufficiently large, the liquidated debt is offset with the Stability Pool, and the collateral distributed to depositors. If the liquidated debt can not be offset with the Pool, the system redistributes the liquidated collateral and debt directly to the active Troves with >110% collateralization ratio.
+
+Liquidation functionality is permissionless and publically available - anyone may liquidate an undercollateralized Trove, or batch liquidate Troves in ascending order of collateralization ratio.
+
+_**Collateral Surplus:**_ The difference between the dollar value of a Troves's collateral, and the dollar value of its mUSD debt. In a full liquidation, this is the net gain earned by the recipients of the liquidation.
+
+_**Offset:**_ cancellation of liquidated debt with mUSD in the Stability Pool, and assignment of liquidated collateral to Stability Pool depositors, in proportion to their deposit.
 
 _**Gas compensation:**_ A refund, in mUSD and collateral, automatically paid to the caller of a liquidation function, intended to at least cover the gas cost of the transaction. Designed to ensure that liquidators are not dissuaded by potentially high gas costs.
