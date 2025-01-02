@@ -37,6 +37,8 @@ describe("Gas cost tests", () => {
 
   describe("redeemCollateral()", () => {
     it("many troves, many interest rates", async () => {
+      // set to true to test without interest to compare performance with out of order troves
+      const testWithoutInterest = false
       await openTrove(contracts, {
         musdAmount: "5000",
         ICR: "400",
@@ -52,9 +54,10 @@ describe("Gas cost tests", () => {
 
       // Open a trove for each account with a different interest rate
       await Promise.all(
+        // skip the first 5 accounts so we don't use named signers
         accounts.slice(5).map(async (account, i) => {
-          // skip the first 5 accounts so we don't use named signers
-          await setInterestRate(contracts, council, i)
+          // set interest rate to 0 if we are testing without interest to keep everything the same
+          await setInterestRate(contracts, council, testWithoutInterest ? 0 : i)
           await openTrove(contracts, {
             musdAmount: "5000",
             ICR: "400",
@@ -72,7 +75,13 @@ describe("Gas cost tests", () => {
 
       await updateTroveSnapshot(contracts, alice, "after")
 
-      const MAX_GAS_COST = 2000000
+      /*
+       * In testing, gas usage came out to the same for both cases:
+       * with 0% interest (so troves stay in order) Gas used:  410526n
+       * with varying interest rates (so troves become out of order) Gas used:  410526n
+       * MAX_GAS_COST is set to roughly double this amount, but this is an arbitrary limit and can be adjusted
+       */
+      const MAX_GAS_COST = 850000
       expect(receipt?.gasUsed).to.be.lessThan(MAX_GAS_COST)
     })
   })
