@@ -25,37 +25,35 @@ Much of mUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), b
 
 ### Fixed-Interest Borrowing
 
-1. **Global Interest Rate**: A single global interest rate, referred to as the "current rate," applies to all newly opened troves.
+- **Global Interest Rate**: A single global interest rate applies to all newly opened troves.
 
-2. **Maintaining Interest Rates**: Once a trove is opened, it retains the interest rate at which it was created, even if the global rate changes. The interest rate on a trove can only be updated by the user through the `refinance` function.
+- **Maintaining Interest Rates**: Once a trove is opened, it retains the interest rate at which it was created, even if the global rate changes. The interest rate on a trove can only be updated by the user through the `refinance` function.
 
-3. **Refinance Function**: The `refinance` function allows users to adjust their trove's debt to the new global interest rate. This process incurs a refinancing fee, which is a configurable percentage of the issuance fee. Refinancing offers users the advantage of avoiding collateral movement while incurring lower fees compared to closing and reopening a trove at the updated rate.
+- **Refinance Function**: The `refinance` function allows users to adjust their trove's debt to the new global interest rate. This process incurs a refinancing fee, which is a configurable percentage of the issuance fee. Refinancing offers users the advantage of avoiding collateral movement while incurring lower fees compared to closing and reopening a trove at the updated rate.
 
-4. **Simple Interest**: Interest is calculated using a simple interest model rather than a compounding one.
+- **Simple Interest**: Interest is calculated using a simple interest model rather than a compounding one.
 
-5. **Interest Payments**: Interest payments are directed to the PCV (Protocol Controlled Value). The allocation of these payments is governed and can be split between an arbitrary recipient and repayment of the bootstrap loan.
+- **Interest Payments**: Interest payments are directed to the PCV (Protocol Controlled Value). The allocation of these payments is governed and can be split between an arbitrary recipient and repayment of the bootstrap loan.
 
-6. **Additional Details**: For further information, refer to [simpleInterest.md](simpleInterest.md).
+For further information, refer to [simpleInterest.md](simpleInterest.md).
 
 ### Additional Governance
 
-1. **Governance Control**: The interest rate and other critical parameters are controlled by governance. Changes to these parameters require a governance proposal and a minimum delay before they can be enacted.
+- **Governance Control**: The interest rate and other critical parameters are controlled by governance. Changes to these parameters require a governance proposal and a minimum delay before they can be enacted.
 
-2. **Interest Rate Proposals**: New interest rates can be proposed by governance. These proposals must be approved after a minimum delay to ensure stability and predictability.
+- **Interest Rate Proposals**: New interest rates can be proposed by governance. These proposals must be approved after a minimum delay to ensure stability and predictability.
 
 ### Protocol Controlled Value (PCV)
 
 The **Protocol Controlled Value (PCV)** contract is a key component of the system, responsible for managing fees collected from borrowing and refinancing. Below is an overview of how the PCV operates:
 
-1. **Fee Collection**: Borrowing fees and refinancing fees are directed to the PCV contract.
+- **Fee Collection**: Borrowing fees and refinancing fees are directed to the PCV contract.
 
-2. **Fee Allocation**: Fees collected by the PCV are allocated to two purposes:
-   - Paying down the bootstrap loan.
-   - Sending funds to the gauge system.
+- **Fee Allocation**: Fees collected by the PCV are allocated to two purposes: paying down the bootstrap loan and sending funds to the gauge system.
 
-3. **Governable Split**: The allocation of fees between paying down the debt and the gauge system is governable. However, until the bootstrap loan is fully repaid, no more than **50% of the fees** can be sent to the gauge system.
+- **Governable Split**: The allocation of fees between paying down the debt and the gauge system is governable. However, until the bootstrap loan is fully repaid, no more than **50% of the fees** can be sent to the gauge system.
 
-4. **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
+- **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
 
 ### Core Smart Contracts
 
