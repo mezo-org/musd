@@ -19,6 +19,10 @@ The tradeoffs between immutability and upgradability are explored [here](https:/
 
 The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. Together they control Trove state updates and movements of collateral and mUSD tokens around the system.
 
+## Key Changes from THUSD
+
+Much of mUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), but there are a few key differences to highlight:
+
 ### Fixed-Interest Borrowing
 
 1. **Global Interest Rate**: A single global interest rate, referred to as the "current rate," applies to all newly opened troves.
@@ -33,11 +37,25 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 6. **Additional Details**: For further information, refer to [simpleInterest.md](simpleInterest.md).
 
-### Governance and Upgradability
+### Additional Governance
 
 1. **Governance Control**: The interest rate and other critical parameters are controlled by governance. Changes to these parameters require a governance proposal and a minimum delay before they can be enacted.
 
 2. **Interest Rate Proposals**: New interest rates can be proposed by governance. These proposals must be approved after a minimum delay to ensure stability and predictability.
+
+### Protocol Controlled Value (PCV)
+
+The **Protocol Controlled Value (PCV)** contract is a key component of the system, responsible for managing fees collected from borrowing and refinancing. Below is an overview of how the PCV operates:
+
+1. **Fee Collection**: Borrowing fees and refinancing fees are directed to the PCV contract.
+
+2. **Fee Allocation**: Fees collected by the PCV are allocated to two purposes:
+   - Paying down the bootstrap loan.
+   - Sending funds to the gauge system.
+
+3. **Governable Split**: The allocation of fees between paying down the debt and the gauge system is governable. However, until the bootstrap loan is fully repaid, no more than **50% of the fees** can be sent to the gauge system.
+
+4. **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
 
 ### Core Smart Contracts
 
