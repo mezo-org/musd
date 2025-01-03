@@ -6,6 +6,8 @@ mUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is 
 
 ## Core Ideas
 
+### Immutability
+
 To give borrowers certainty the deployed contracts are immutable. However at some point in the future if the price feeds no longer work the price feed logic will fail.
 
 - Sets of immutable contracts are deployed together for different versions or collaterals.
@@ -16,6 +18,26 @@ To give borrowers certainty the deployed contracts are immutable. However at som
 The tradeoffs between immutability and upgradability are explored [here](https://medium.com/@ben_longstaff/threshold-usd-token-design-trade-offs-2926087d31c4).
 
 The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. Together they control Trove state updates and movements of collateral and mUSD tokens around the system.
+
+### Fixed-Interest Borrowing
+
+1. **Global Interest Rate**: A single global interest rate, referred to as the "current rate," applies to all newly opened troves.
+
+2. **Maintaining Interest Rates**: Once a trove is opened, it retains the interest rate at which it was created, even if the global rate changes. The interest rate on a trove can only be updated by the user through the `refinance` function.
+
+3. **Refinance Function**: The `refinance` function allows users to adjust their trove's debt to the new global interest rate. This process incurs a refinancing fee, which is a configurable percentage of the issuance fee. Refinancing offers users the advantage of avoiding collateral movement while incurring lower fees compared to closing and reopening a trove at the updated rate.
+
+4. **Simple Interest**: Interest is calculated using a simple interest model rather than a compounding one.
+
+5. **Interest Payments**: Interest payments are directed to the PCV (Protocol Controlled Value). The allocation of these payments is governed and can be split between an arbitrary recipient and repayment of the bootstrap loan.
+
+6. **Additional Details**: For further information, refer to [simpleInterest.md](simpleInterest.md).
+
+### Governance and Upgradability
+
+1. **Governance Control**: The interest rate and other critical parameters are controlled by governance. Changes to these parameters require a governance proposal and a minimum delay before they can be enacted.
+
+2. **Interest Rate Proposals**: New interest rates can be proposed by governance. These proposals must be approved after a minimum delay to ensure stability and predictability.
 
 ### Core Smart Contracts
 
