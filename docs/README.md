@@ -16,7 +16,12 @@ The primary components are how the...
 
 ### Custody
 
-A user opens up a position by calling `BorrowerOperations.openTrove`, providing BTC, and requesting mUSD. The BTC is routed to the `ActivePool`, where it stays until a user withdraws (via `BorrowerOperations.withdrawColl`), pays off their debt (via `BorrowerOperations.closeTrove`), or their position is liquidated (via `TroveManager.liquidate`).
+A user opens up a position by calling `BorrowerOperations.openTrove`, providing BTC, and requesting mUSD. The BTC is routed to the `ActivePool`, where it stays until a user either...
+
+- withdraws (via `BorrowerOperations.withdrawColl`)
+- pays off their debt (via `BorrowerOperations.closeTrove`)
+- is redeemed against (via `TroveManager.redeemCollateral`)
+- gets liquidated (via `TroveManager.liquidate`)
 
 Liquidated positions are either paid for by the `StabilityPool`, in which case the BTC is transferred there, or the debt and collateral are absorbed and redistributed by other users, in which case the BTC is transferred to the `DefaultPool`.
 
