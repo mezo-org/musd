@@ -4,6 +4,57 @@ mUSD is a stablecoin that is minted by creating a loan against the borrowers cry
 
 mUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
 
+## Architectural Overview
+
+The protocol allows Bitcoin holders to mint mUSD (mezo USD stablecoins) by using their BTC as collateral. This means users can access USD-denominated liquidity while keeping their Bitcoin investment intact.
+
+The primary components are how the...
+
+- BTC is **custodied**.
+- mUSD token maintains its **1 mUSD = $1 price peg**.
+- system earns **fees**.
+
+### Custody
+
+A user opens up a position by calling `BorrowerOperations.openTrove`, providing BTC, and requesting mUSD. The BTC is routed to the `ActivePool`, where it stays until a user either...
+
+- withdraws (via `BorrowerOperations.withdrawColl`)
+- pays off their debt (via `BorrowerOperations.closeTrove`)
+- is redeemed against (via `TroveManager.redeemCollateral`)
+- gets liquidated (via `TroveManager.liquidate`)
+
+Liquidated positions are either paid for by the `StabilityPool`, in which case the BTC is transferred there, or the debt and collateral are absorbed and redistributed to other users, in which case the BTC is transferred to the `DefaultPool`.
+
+### Maintaining the Peg
+
+We maintain the **price floor of $1** through arbitrage, an external USD <-> BTC price oracle, and the ability to redeem mUSD for BTC $1 for $1 (via `TroveManager.redeemCollateral`). Imagine that mUSD was trading for $0.80 on an exchange and that bitcoin is selling for 1 BTC = $100k. A arbitrageur with $800 could:
+
+1. Trade $800 for 1000 mUSD
+1. Redeem 1000 mUSD for 0.01 BTC ($1000 worth of BTC)
+1. Sell 0.01 BTC for $1000
+
+The arbitrageur started with $800 and ended with $1000 (ignoring fees). This trade _buys_ mUSD and _burns_ it (for the backing BTC), causing upwards price pressure. This trade continues to be effective until the price resets to $1.
+
+We maintain a **price ceiling of $1.10** via the minimum 110% collateralization ratio. Imagine that mUSD for trading for $1.20 on an exchange, and that bitcoin is selling for 1 BTC = $100k. An arbitrageur with $100k could:
+
+1. Buy 1 BTC (worth $100k)
+1. Open up a trove with 1 BTC as collateral, and the maximum 90,909 mUSD as debt.
+1. Sell 90,909 mUSD for $109,091.
+
+The arbitrageur started with $100k and ended with $109k (ignoring fees). This trade _sells_ and _mints_ mUSD, causing downward price pressure. This trade continues to be effective until the price reaches $1.10.
+
+### Fees
+
+The protocol collects fees in three places:
+
+- An origination fee of 0.5% (governable), which is added as debt to a trove but minted to governance.
+- A refinancing fee, which operates like the origination fee.
+- [Simple](https://www.investopedia.com/terms/s/simple_interest.asp), [fixed](https://www.creditkarma.com/credit/i/fixed-interest-rate) interest on the principal of the loan.
+
+There is a global, governable interest rate that all new troves use when they are opened but after that, changes to the global interest rate do not impact any existing troves. At any time, a user is allowed to refinance to the global rate.
+
+Simple interest is non-compounding. For example, if a user owes a principal of $10,000 at a 3% annual interest rate, then after a year, they will owe $300 in interest, and after another year (without paying), $600 in interest, and so on.
+
 ## Core Ideas
 
 ### Immutability
@@ -125,15 +176,15 @@ graph TD
 
 `finalizeAddMintList()`: This function adds the minting capability to the borrower operations contract, previously designated in the `pendingAddedMintAddress`. It executes only after the governance delay has elapsed following the `addMintListInitiated` timestamp. By finalizing the revoke mint process it resets the `pendingAddedMintAddress` and `addMintListInitiated`.
 
-`startAddContracts(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress, address _interestRateManagerAddress)`: This function initiates the process of integrating borrower operations, trove manager, stability pool, and interest rate manager contracts, enabling them to mint and burn mUSD tokens. 
+`startAddContracts(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress, address _interestRateManagerAddress)`: This function initiates the process of integrating borrower operations, trove manager, stability pool, and interest rate manager contracts, enabling them to mint and burn mUSD tokens.
 
-`cancelAddContracts()`: This function terminates the current process of adding contracts. 
+`cancelAddContracts()`: This function terminates the current process of adding contracts.
 
-`finalizeAddContracts()`: This function adds the minting and burning capabilities to the borrower operations, trove manager, interest rate manager, and stability pool contracts previously designated in the `pendingBorrowerOperations`, `pendingStabilityPool`, `pendingInterestRateManager`, and `pendingTroveManager`. It executes only after the governance delay has elapsed following the `addContractsInitiated` timestamp. 
+`finalizeAddContracts()`: This function adds the minting and burning capabilities to the borrower operations, trove manager, interest rate manager, and stability pool contracts previously designated in the `pendingBorrowerOperations`, `pendingStabilityPool`, `pendingInterestRateManager`, and `pendingTroveManager`. It executes only after the governance delay has elapsed following the `addContractsInitiated` timestamp.
 
-`startRevokeBurnList(address _account)`: This function initiates the process of revoking a contract's capability to burn mUSD tokens. 
+`startRevokeBurnList(address _account)`: This function initiates the process of revoking a contract's capability to burn mUSD tokens.
 
-`cancelRevokeBurnList()`: Cancels the existing revoking mint process. 
+`cancelRevokeBurnList()`: Cancels the existing revoking mint process.
 
 `finalizeRevokeBurnList()`: This function revokes the minting capability from a contract, previously designated in the `pendingRevokedBurnAddress`. It executes only after the governance delay has elapsed following the `revokeBurnListInitiated` timestamp. By finalizing the revoke mint process it resets the `pendingRevokedBurnAddress` and `revokeBurnListInitiated`.
 
@@ -155,7 +206,7 @@ graph TD
 
 `claimCollateral(address _user)`: when a borrower’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 110%, this function allows the borrower to claim their collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 110% of the debt upon liquidation).
 
-`refinance(uint _maxFeePercentage)`: allows a borrower to move their debt to a new (presumably lower) interest rate.  In addition to the original debt, extra debt is issued to pay the refinancing fee.  The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the refinancing fee.
+`refinance(uint _maxFeePercentage)`: allows a borrower to move their debt to a new (presumably lower) interest rate. In addition to the original debt, extra debt is issued to pay the refinancing fee. The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the refinancing fee.
 
 ### TroveManager Functions - `TroveManager.sol`
 
@@ -211,7 +262,7 @@ _**Total collateralization ratio (TCR):**_ the ratio of the dollar value of the 
 
 _**Critical collateralization ratio (CCR):**_ 150%. When the TCR is below the CCR, the system enters Recovery Mode.
 
-_**Redemption:**_ the act of swapping mUSD tokens with the system, in return for an equivalent value of collateral. Any account with an mUSD token balance may redeem them, regardless of whether they are a borrower. 
+_**Redemption:**_ the act of swapping mUSD tokens with the system, in return for an equivalent value of collateral. Any account with an mUSD token balance may redeem them, regardless of whether they are a borrower.
 
 _**Liquidation:**_ the act of force-closing an undercollateralized Trove and redistributing its collateral and debt. When the Stability Pool is sufficiently large, the liquidated debt is offset with the Stability Pool, and the collateral distributed to depositors. If the liquidated debt can not be offset with the Pool, the system redistributes the liquidated collateral and debt directly to the active Troves with >110% collateralization ratio.
 
