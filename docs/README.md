@@ -6,7 +6,7 @@ mUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is 
 
 ## Architectural Overview
 
-At it's simplest, the protocol mints mUSD (mezo usd stablecoins) tokens that are over-collateralized by BTC. This allows a user that _owns_ BTC to participate in the economy without _spending_ that BTC.
+The protocol allows Bitcoin holders to mint mUSD (mezo USD stablecoins) by using their BTC as collateral. This means users can access USD-denominated liquidity while keeping their Bitcoin investment intact.
 
 The primary components are how the...
 
