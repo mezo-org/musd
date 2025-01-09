@@ -55,6 +55,46 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 - **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
 
+### System Overview
+
+The MUSD system consists of four main contract groups:
+
+```mermaid
+graph TD
+    subgraph TokenSystem["Token"]
+        MUSD
+    end
+    subgraph Core["Core Protocol"]
+        BorrowerOperations
+        TroveManager
+        StabilityPool
+    end
+    subgraph Pools["Asset Pools"]
+        ActivePool
+        DefaultPool
+        CollSurplusPool
+        GasPool
+    end
+    subgraph Support["Supporting Contracts"]
+        PriceFeed
+        SortedTroves
+        HintHelpers
+        InterestRateManager
+        PCV
+    end
+    TokenSystem-->Core
+    Core-->Pools
+    Pools-->Support
+    linkStyle 0 stroke-opacity:1  
+    linkStyle 1 stroke-opacity:1  
+    linkStyle 2 stroke-opacity:1   
+```
+
+- **Token (MUSD)**: The stablecoin at the heart of the system, designed to maintain a peg to USD.
+- **Core Protocol**: Handles the main operations like opening/closing positions, managing collateral, and maintaining system stability
+- **Asset Pools**: Manages the system's various collateral and liquidity pools
+- **Supporting Contracts**: Provides essential services like price feeds, position sorting, and protocol-controlled value management
+
 ### Core Smart Contracts
 
 `MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers mUSD tokens.
