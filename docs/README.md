@@ -23,7 +23,7 @@ A user opens up a position by calling `BorrowerOperations.openTrove`, providing 
 - is redeemed against (via `TroveManager.redeemCollateral`)
 - gets liquidated (via `TroveManager.liquidate`)
 
-Liquidated positions are either paid for by the `StabilityPool`, in which case the BTC is transferred there, or the debt and collateral are absorbed and redistributed by other users, in which case the BTC is transferred to the `DefaultPool`.
+Liquidated positions are either paid for by the `StabilityPool`, in which case the BTC is transferred there, or the debt and collateral are absorbed and redistributed to other users, in which case the BTC is transferred to the `DefaultPool`.
 
 ### Maintaining the Peg
 
