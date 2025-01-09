@@ -45,12 +45,15 @@ The arbitrageur started with $100k and ended with $109k (ignoring fees). This tr
 
 ### Fees
 
-We take fees in two places:
+The protocol collects fees in three places:
 
 - An origination fee of 0.5% (governable), which is added as debt to a trove but minted to governance.
+- A refinancing fee, which operates like the origination fee.
 - [Simple](https://www.investopedia.com/terms/s/simple_interest.asp), [fixed](https://www.creditkarma.com/credit/i/fixed-interest-rate) interest on the principal of the loan.
 
-There is a global, governable rate that all new troves use when they are opened but after that, changes to the global rate do not impact any existing troves. At any time, a user is allowed to refinance to the global rate. Simple interest is non-compounding. For example, if a user owes a principal of $10,000 at a 3% annual interest rate, then after a year, they will owe $300 in interest, and after another year (without paying), $600 in interest, and so on.
+There is a global, governable interest rate that all new troves use when they are opened but after that, changes to the global interest rate do not impact any existing troves. At any time, a user is allowed to refinance to the global rate.
+
+Simple interest is non-compounding. For example, if a user owes a principal of $10,000 at a 3% annual interest rate, then after a year, they will owe $300 in interest, and after another year (without paying), $600 in interest, and so on.
 
 ## Core Ideas
 
