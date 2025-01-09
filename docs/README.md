@@ -10,8 +10,8 @@ The protocol allows Bitcoin holders to mint mUSD (mezo USD stablecoins) by using
 
 The primary components are how the...
 
-- BTC is **custodied**
-- mUSD token maintains it's **1 mUSD = $1 price peg**.
+- BTC is **custodied**.
+- mUSD token maintains its **1 mUSD = $1 price peg**.
 - system earns **fees**.
 
 ### Custody
