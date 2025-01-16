@@ -232,8 +232,6 @@ contract BorrowerOperations is
         vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
             msg.sender
         );
-        // slither-disable-next-line reentrancy-events
-        emit TroveCreated(msg.sender, vars.arrayIndex);
 
         /*
          * Move the collateral to the Active Pool, and mint the amount to the borrower
@@ -256,6 +254,9 @@ contract BorrowerOperations is
             MUSD_GAS_COMPENSATION
         );
 
+        // slither-disable-start reentrancy-events
+        emit TroveCreated(msg.sender, vars.arrayIndex);
+
         emit TroveUpdated(
             msg.sender,
             vars.compositeDebt,
@@ -265,6 +266,7 @@ contract BorrowerOperations is
             uint8(BorrowerOperation.openTrove)
         );
         emit BorrowingFeePaid(msg.sender, vars.fee);
+        // slither-disable-end reentrancy-events
     }
 
     // Send collateral to a trove

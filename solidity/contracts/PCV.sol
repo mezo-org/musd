@@ -183,9 +183,8 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        _sendCollateral(_recipient, _collateralAmount);
-
         emit CollateralWithdraw(_recipient, _collateralAmount);
+        _sendCollateral(_recipient, _collateralAmount);
     }
 
     function addRecipientsToWhitelist(
