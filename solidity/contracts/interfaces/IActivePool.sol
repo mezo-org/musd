@@ -10,7 +10,6 @@ interface IActivePool is IPool {
         address _newBorrowerOperationsAddress
     );
     event CollSurplusPoolAddressChanged(address _newCollSurplusPoolAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
     event InterestRateManagerAddressChanged(
         address _interestRateManagerAddress
     );
