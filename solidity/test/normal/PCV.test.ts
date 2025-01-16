@@ -490,4 +490,14 @@ describe("PCV", () => {
       })
     })
   })
+
+  describe("setFeeRecipient()", () => {
+    context("Expected Reverts", () => {
+      it("reverts if the fee recipient is the zero address", async () => {
+        await expect(
+          PCVDeployer.setFeeRecipient(ZERO_ADDRESS),
+        ).to.be.revertedWith("PCV: Fee recipient cannot be the zero address.")
+      })
+    })
+  })
 })
