@@ -3393,6 +3393,25 @@ describe("TroveManager in Normal Mode", () => {
           "InterestRateManager: Only governance can call this function",
         )
       })
+
+      it("reverts if the proposed interest rate is greater than the maximum interest rate", async () => {
+        await contracts.interestRateManager
+          .connect(council.wallet)
+          .proposeInterestRate(9000)
+
+        // Change max interest rate after proposal
+        await contracts.interestRateManager
+          .connect(council.wallet)
+          .setMaxInterestRate(8000)
+
+        await fastForwardTime(7 * 24 * 60 * 60) // 7 days in seconds
+
+        await expect(
+          contracts.interestRateManager
+            .connect(council.wallet)
+            .approveInterestRate(),
+        ).to.be.revertedWith("Interest rate exceeds the maximum interest rate")
+      })
     })
 
     it("updates the default pool's accrued interest", async () => {
