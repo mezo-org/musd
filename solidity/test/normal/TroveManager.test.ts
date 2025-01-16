@@ -3214,11 +3214,6 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(0)
     })
 
-    it.skip("Returns 2^256-1 for collateral:USD = 100, coll = 1 BTC/token, debt = 100 mUSD", async () => {
-      // This seems designed to test an edge case where we would overflow but that edge case should no longer be possible
-      // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L4043
-    })
-
     it("returns correct ICR for a given collateral, debt, and price", async () => {
       const price = to1e18("100")
       const coll = to1e18("200")
