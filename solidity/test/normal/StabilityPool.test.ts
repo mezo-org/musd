@@ -104,7 +104,7 @@ describe("StabilityPool in Normal Mode", () => {
         sender: dennis.wallet,
       })
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
     }
 
     it("increases the Stability Pool mUSD balance", async () => {
@@ -130,7 +130,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("Correctly updates user snapshots of accumulated rewards per unit staked", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
@@ -161,7 +161,7 @@ describe("StabilityPool in Normal Mode", () => {
       // Alice makes deposit #1: $1,000
       await provideToSP(contracts, alice, to1e18("1,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
@@ -198,7 +198,7 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(contracts, bob, to1e18(427))
 
       // Trigger another liquidation
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -249,7 +249,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("new deposit; depositor does not receive collateral gains", async () => {
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       // Alice deposits to the Pool
 
@@ -268,7 +268,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await contracts.stabilityPool.connect(alice.wallet).withdrawFromSP(amount)
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       // Alice deposits to the Pool
       await provideToSP(contracts, alice, amount)
@@ -307,7 +307,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await provideToSP(contracts, bob, to1e18("2,000"))
 
-      await dropPrice(contracts, bob)
+      await dropPrice(contracts, deployer, bob)
 
       // Liquidate bob
       await contracts.troveManager.liquidate(bob.wallet)
@@ -401,7 +401,7 @@ describe("StabilityPool in Normal Mode", () => {
       )
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
-      liquidationTx = await createLiquidationEvent(contracts)
+      liquidationTx = await createLiquidationEvent(contracts, deployer)
 
       await updateWalletSnapshot(contracts, alice, "before")
 
@@ -438,7 +438,7 @@ describe("StabilityPool in Normal Mode", () => {
       )
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
-      const tx = await createLiquidationEvent(contracts)
+      const tx = await createLiquidationEvent(contracts, deployer)
 
       const { liquidatedPrincipal } = await getEmittedLiquidationValues(tx)
 
@@ -468,7 +468,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("it correctly updates the user's mUSD and collateral snapshots of entitled reward per unit staked", async () => {
       await provideToSP(contracts, alice, to1e18("4,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
       await contracts.stabilityPool
         .connect(alice.wallet)
         .withdrawFromSP(to1e18(900))
@@ -483,7 +483,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("decreases StabilityPool collateral", async () => {
       await provideToSP(contracts, alice, to1e18("4,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
       await updateStabilityPoolUserSnapshot(contracts, alice, "before")
@@ -504,7 +504,7 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
       await provideToSP(contracts, alice, to1e18("4,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       const users = [alice, whale]
       await Promise.all(
@@ -533,7 +533,7 @@ describe("StabilityPool in Normal Mode", () => {
         "200",
       )
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolUserSnapshots(contracts, [bob, carol], "before")
 
@@ -557,7 +557,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("succeeds when amount is 0 and system has an undercollateralized trove", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await openTrove(contracts, {
         musdAmount: "2,000", // slightly over the minimum of $1800
@@ -565,7 +565,7 @@ describe("StabilityPool in Normal Mode", () => {
         sender: bob.wallet,
       })
 
-      await dropPrice(contracts, bob)
+      await dropPrice(contracts, deployer, bob)
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
       await updateWalletSnapshot(contracts, whale, "before")
@@ -589,7 +589,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("withdrawing 0 mUSD doesn't alter the caller's deposit or the total mUSD in the Stability Pool", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
@@ -612,7 +612,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await openTroves(contracts, [bob, carol], "5,000", "200")
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       const users = [alice, bob, carol, whale]
       await updateTroveSnapshots(contracts, users, "before")
@@ -662,7 +662,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("Subsequent deposit and withdrawal attempt from same account, with no intermediate liquidations, withdraws zero collateral", async () => {
       await provideToSP(contracts, alice, to1e18("5,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await contracts.stabilityPool
         .connect(alice.wallet)
@@ -682,7 +682,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("increases depositor's mUSD token balance by the expected amount", async () => {
       await provideToSP(contracts, alice, to1e18("4,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateWalletSnapshot(contracts, alice, "before")
       await updateStabilityPoolUserSnapshot(contracts, alice, "before")
@@ -699,7 +699,7 @@ describe("StabilityPool in Normal Mode", () => {
     })
 
     it("withdrawing 0 collateral Gain does not alter the caller's collateral balance, their trove collateral, or the collateral in the Stability Pool", async () => {
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       const amount = to1e18("3,000")
       await provideToSP(contracts, alice, amount)
@@ -833,60 +833,60 @@ describe("StabilityPool in Normal Mode", () => {
 
       it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after one liquidation", async () => {
         await setupIdenticalDeposits()
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
         await verify()
       })
 
       it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after two identical liquidations", async () => {
         await setupIdenticalDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer)
         await verify()
       })
 
       it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after three identical liquidations", async () => {
         await setupIdenticalDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer)
         await verify()
       })
 
       it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after two liquidations of increasing mUSD", async () => {
         await setupIdenticalDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts, "3,000")
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer, "3,000")
         await verify()
       })
 
       it("Depositors with equal initial deposit withdraw correct compounded deposit and collateral Gain after three liquidations of increasing mUSD", async () => {
         await setupIdenticalDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts, "3,000")
-        await createLiquidationEvent(contracts, "5,000")
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer, "3,000")
+        await createLiquidationEvent(contracts, deployer, "5,000")
         await verify()
       })
 
       it("Depositors with varying deposits withdraw correct compounded deposit and collateral Gain after two identical liquidations", async () => {
         await setupVaryingDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer)
         await verify()
       })
 
       it("Depositors with varying deposits withdraw correct compounded deposit and collateral Gain after three identical liquidations", async () => {
         await setupVaryingDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer)
         await verify()
       })
 
       it("Depositors with varying deposits withdraw correct compounded deposit and collateral Gain after three varying liquidations", async () => {
         await setupVaryingDeposits()
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts, "3,000")
-        await createLiquidationEvent(contracts, "6,000")
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer, "3,000")
+        await createLiquidationEvent(contracts, deployer, "6,000")
         await verify()
       })
 
@@ -905,8 +905,8 @@ describe("StabilityPool in Normal Mode", () => {
         })
         await provideToSP(contracts, carol, to1e18("20,000"))
 
-        await createLiquidationEvent(contracts)
-        await createLiquidationEvent(contracts, "4,000")
+        await createLiquidationEvent(contracts, deployer)
+        await createLiquidationEvent(contracts, deployer, "4,000")
 
         await openTrove(contracts, {
           musdAmount: "30,000",
@@ -915,8 +915,8 @@ describe("StabilityPool in Normal Mode", () => {
         })
         await provideToSP(contracts, dennis, to1e18("30,000"))
 
-        await createLiquidationEvent(contracts, "7,000")
-        await createLiquidationEvent(contracts, "9,000")
+        await createLiquidationEvent(contracts, deployer, "7,000")
+        await createLiquidationEvent(contracts, deployer, "9,000")
 
         await verify()
       })
@@ -943,8 +943,8 @@ describe("StabilityPool in Normal Mode", () => {
         })
         await provideToSP(contracts, dennis, to1e18("10,000"))
 
-        await createLiquidationEvent(contracts, "10,000")
-        await createLiquidationEvent(contracts, "10,000")
+        await createLiquidationEvent(contracts, deployer, "10,000")
+        await createLiquidationEvent(contracts, deployer, "10,000")
 
         await openTrove(contracts, {
           musdAmount: "10,000",
@@ -953,8 +953,8 @@ describe("StabilityPool in Normal Mode", () => {
         })
         await provideToSP(contracts, eric, to1e18("10,000"))
 
-        await createLiquidationEvent(contracts, "10,000")
-        await createLiquidationEvent(contracts, "10,000")
+        await createLiquidationEvent(contracts, deployer, "10,000")
+        await createLiquidationEvent(contracts, deployer, "10,000")
 
         await verify()
       })
@@ -965,15 +965,15 @@ describe("StabilityPool in Normal Mode", () => {
 
         await openTrovesAndProvideStability(contracts, users, amount, "200")
 
-        await createLiquidationEvent(contracts, amount)
-        await createLiquidationEvent(contracts, amount)
+        await createLiquidationEvent(contracts, deployer, amount)
+        await createLiquidationEvent(contracts, deployer, amount)
 
         await contracts.stabilityPool
           .connect(dennis.wallet)
           .withdrawFromSP(to1e18(amount))
 
-        await createLiquidationEvent(contracts, amount)
-        await createLiquidationEvent(contracts, amount)
+        await createLiquidationEvent(contracts, deployer, amount)
+        await createLiquidationEvent(contracts, deployer, amount)
 
         await updateStabilityPoolUserSnapshots(contracts, users, "before")
         await Promise.all(
@@ -1008,7 +1008,7 @@ describe("StabilityPool in Normal Mode", () => {
       it("Depositor withdraws correct compounded deposit after liquidation empties the pool", async () => {
         const amount = "20,000"
         await provideToSP(contracts, whale, to1e18(amount))
-        await createLiquidationEvent(contracts, amount)
+        await createLiquidationEvent(contracts, deployer, amount)
 
         await updateWalletSnapshot(contracts, whale, "before")
         await updateStabilityPoolUserSnapshot(contracts, whale, "before")
@@ -1034,13 +1034,13 @@ describe("StabilityPool in Normal Mode", () => {
       const amount = "20,000"
       await provideToSP(contracts, whale, to1e18(amount))
       // Fully offset the whale's $20k deposit
-      await createLiquidationEvent(contracts, amount)
+      await createLiquidationEvent(contracts, deployer, amount)
 
       await updateWalletSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
 
       // Subsequent liquidation
-      await createLiquidationEvent(contracts, "10,000")
+      await createLiquidationEvent(contracts, deployer, "10,000")
 
       // The whale withdraws everything
       await contracts.stabilityPool
@@ -1062,7 +1062,7 @@ describe("StabilityPool in Normal Mode", () => {
       // Add just enough mUSD to increase the scale
       await provideToSP(contracts, whale, to1e18("10250") + 500000n)
 
-      await createLiquidationEvent(contracts, "10,000")
+      await createLiquidationEvent(contracts, deployer, "10,000")
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
       await updateWalletSnapshot(contracts, whale, "before")
@@ -1108,7 +1108,7 @@ describe("StabilityPool in Normal Mode", () => {
       })
       await provideToSP(contracts, dennis, dennisAmount)
 
-      await createLiquidationEvent(contracts, "60,000")
+      await createLiquidationEvent(contracts, deployer, "60,000")
 
       const users = [bob, carol, dennis]
       await updateStabilityPoolSnapshot(contracts, state, "before")
@@ -1149,7 +1149,7 @@ describe("StabilityPool in Normal Mode", () => {
       const amount = "10,000"
       await provideToSP(contracts, whale, to1e18(amount) + 10n)
 
-      await createLiquidationEvent(contracts, amount)
+      await createLiquidationEvent(contracts, deployer, amount)
 
       await updateWalletSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
@@ -1169,7 +1169,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await openTrovesAndProvideStability(contracts, users, "10,000", "200")
 
-      await createLiquidationEvent(contracts, "30,000")
+      await createLiquidationEvent(contracts, deployer, "30,000")
 
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
       await updateWalletSnapshot(contracts, bob, "before")
@@ -1203,13 +1203,15 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("Large liquidated coll/debt, deposits and BTC price", async () => {
       // collateral:USD price is $2 billion per BTC
-      await contracts.mockAggregator.setPrice(2n * 10n ** 27n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(2n * 10n ** 27n)
 
       const users = [bob, carol]
       const amount = 1n * 10n ** 27n // $ 1 billion
       await openTrovesAndProvideStability(contracts, users, amount, "200")
 
-      await createLiquidationEvent(contracts, amount)
+      await createLiquidationEvent(contracts, deployer, amount)
 
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
       await Promise.all(
@@ -1248,7 +1250,7 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("doesn't impact system debt, collateral or TCR ", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveManagerSnapshot(contracts, state, "before")
       await Promise.all(
@@ -1298,7 +1300,7 @@ describe("StabilityPool in Normal Mode", () => {
           sender: bob.wallet,
         })
 
-        await dropPrice(contracts, bob)
+        await dropPrice(contracts, deployer, bob)
 
         await expect(
           contracts.stabilityPool.connect(whale.wallet).withdrawFromSP(1n),
@@ -1318,7 +1320,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("updates the Trove's interest owed", async () => {
       await testUpdatesInterestOwed(contracts, carol, council, async () => {
         await provideToSP(contracts, carol, to1e18("20,000"))
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
         return withdrawCollateralGainToTrove(contracts, carol)
       })
     })
@@ -1332,7 +1334,7 @@ describe("StabilityPool in Normal Mode", () => {
         council,
         async () => {
           await provideToSP(contracts, carol, to1e18("20,000"))
-          await dropPriceAndLiquidate(contracts, alice)
+          await dropPriceAndLiquidate(contracts, deployer, alice)
           return withdrawCollateralGainToTrove(contracts, carol)
         },
       )
@@ -1341,7 +1343,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("decreases StabilityPool collateral and increases activePool collateral", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
@@ -1387,7 +1389,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("Applies MUSDLoss to user's deposit, and redirects collateral reward to user's Trove", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
@@ -1403,7 +1405,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("All depositors are able to withdraw their collateral gain from the SP to their Trove", async () => {
       await openTrovesAndProvideStability(contracts, users, "5,000", "200")
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1429,7 +1431,7 @@ describe("StabilityPool in Normal Mode", () => {
     it("Depositors with equal initial deposit withdraw correct collateral Gain after one liquidation", async () => {
       await openTrovesAndProvideStability(contracts, users, "10,000", "200")
 
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1445,9 +1447,9 @@ describe("StabilityPool in Normal Mode", () => {
     it("Depositors with equal initial deposit withdraw correct collateral Gain after three identical liquidations", async () => {
       await openTrovesAndProvideStability(contracts, users, "10,000", "200")
 
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1463,9 +1465,9 @@ describe("StabilityPool in Normal Mode", () => {
     it("Depositors with equal initial deposit withdraw correct collateral Gain after two liquidations of increasing mUSD", async () => {
       await openTrovesAndProvideStability(contracts, users, "10,000", "200")
 
-      await createLiquidationEvent(contracts, "5,000")
-      await createLiquidationEvent(contracts, "8,000")
-      await createLiquidationEvent(contracts, "11,000")
+      await createLiquidationEvent(contracts, deployer, "5,000")
+      await createLiquidationEvent(contracts, deployer, "8,000")
+      await createLiquidationEvent(contracts, deployer, "11,000")
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1495,8 +1497,8 @@ describe("StabilityPool in Normal Mode", () => {
       await openTroveAndProvideStability(contracts, carol, "20,000", "200")
       await openTroveAndProvideStability(contracts, dennis, "30,000", "200")
 
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1514,9 +1516,9 @@ describe("StabilityPool in Normal Mode", () => {
       await openTroveAndProvideStability(contracts, carol, "20,000", "200")
       await openTroveAndProvideStability(contracts, dennis, "30,000", "200")
 
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1534,9 +1536,9 @@ describe("StabilityPool in Normal Mode", () => {
       await openTroveAndProvideStability(contracts, carol, "20,000", "200")
       await openTroveAndProvideStability(contracts, dennis, "30,000", "200")
 
-      await createLiquidationEvent(contracts, "4,500")
-      await createLiquidationEvent(contracts, "7,000")
-      await createLiquidationEvent(contracts, "12,345")
+      await createLiquidationEvent(contracts, deployer, "4,500")
+      await createLiquidationEvent(contracts, deployer, "7,000")
+      await createLiquidationEvent(contracts, deployer, "12,345")
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1552,12 +1554,12 @@ describe("StabilityPool in Normal Mode", () => {
     it("B, C, D Deposit -> 2 liquidations -> E deposits -> 1 liquidation. All deposits and liquidations = $2000.  B, C, D, E withdraw correct collateral Gain", async () => {
       await openTrovesAndProvideStability(contracts, users, "2000", "200")
 
-      await createLiquidationEvent(contracts, "2000")
-      await createLiquidationEvent(contracts, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
 
       await openTroveAndProvideStability(contracts, eric, "2000", "200")
 
-      await createLiquidationEvent(contracts, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
 
       const allUsers = [...users, eric]
       await updateTroveSnapshots(contracts, allUsers, "before")
@@ -1580,13 +1582,13 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(contracts, whale, "20,000")
       await openTrovesAndProvideStability(contracts, users, "2000", "200")
 
-      await createLiquidationEvent(contracts, "2000")
-      await createLiquidationEvent(contracts, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
 
       await openTroveAndProvideStability(contracts, eric, "2000", "200")
 
-      await createLiquidationEvent(contracts, "2000")
-      await createLiquidationEvent(contracts, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
+      await createLiquidationEvent(contracts, deployer, "2000")
 
       const allUsers = [...users, eric]
       await updateTroveSnapshots(contracts, allUsers, "before")
@@ -1616,13 +1618,13 @@ describe("StabilityPool in Normal Mode", () => {
         ),
       )
 
-      await createLiquidationEvent(contracts, "2000")
-      await createLiquidationEvent(contracts, "3456")
+      await createLiquidationEvent(contracts, deployer, "2000")
+      await createLiquidationEvent(contracts, deployer, "3456")
 
       await openTroveAndProvideStability(contracts, eric, "2000", "200")
 
-      await createLiquidationEvent(contracts, "8899")
-      await createLiquidationEvent(contracts, "11234")
+      await createLiquidationEvent(contracts, deployer, "8899")
+      await createLiquidationEvent(contracts, deployer, "11234")
 
       const allUsers = [...users, eric]
       await updateTroveSnapshots(contracts, allUsers, "before")
@@ -1647,8 +1649,8 @@ describe("StabilityPool in Normal Mode", () => {
       const allUsers = [...users, eric]
       await openTrovesAndProvideStability(contracts, allUsers, "2000", "200")
 
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshot(contracts, eric, "before")
       await updateStabilityPoolUserSnapshot(contracts, eric, "before")
@@ -1658,8 +1660,8 @@ describe("StabilityPool in Normal Mode", () => {
       await updateTroveSnapshot(contracts, eric, "after")
       await updateStabilityPoolUserSnapshot(contracts, eric, "after")
 
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1691,8 +1693,8 @@ describe("StabilityPool in Normal Mode", () => {
         ),
       )
 
-      await createLiquidationEvent(contracts, "2000")
-      await createLiquidationEvent(contracts, "3456")
+      await createLiquidationEvent(contracts, deployer, "2000")
+      await createLiquidationEvent(contracts, deployer, "3456")
 
       await updateTroveSnapshot(contracts, eric, "before")
       await updateStabilityPoolUserSnapshot(contracts, eric, "before")
@@ -1702,8 +1704,8 @@ describe("StabilityPool in Normal Mode", () => {
       await updateTroveSnapshot(contracts, eric, "after")
       await updateStabilityPoolUserSnapshot(contracts, eric, "after")
 
-      await createLiquidationEvent(contracts, "5678")
-      await createLiquidationEvent(contracts, "7890")
+      await createLiquidationEvent(contracts, deployer, "5678")
+      await createLiquidationEvent(contracts, deployer, "7890")
 
       await updateTroveSnapshots(contracts, users, "before")
       await updateStabilityPoolUserSnapshots(contracts, users, "before")
@@ -1721,7 +1723,7 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(contracts, whale, "5,000")
 
       // Empty the pool
-      await createLiquidationEvent(contracts, "6,000")
+      await createLiquidationEvent(contracts, deployer, "6,000")
 
       await updateTroveSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
@@ -1748,13 +1750,13 @@ describe("StabilityPool in Normal Mode", () => {
       await provideToSP(contracts, whale, "5,000")
 
       // Empty the pool
-      await createLiquidationEvent(contracts, "6,000")
+      await createLiquidationEvent(contracts, deployer, "6,000")
 
       const collateralGain =
         await contracts.stabilityPool.getDepositorCollateralGain(whale.wallet)
 
-      await createLiquidationEvent(contracts)
-      await createLiquidationEvent(contracts)
+      await createLiquidationEvent(contracts, deployer)
+      await createLiquidationEvent(contracts, deployer)
 
       await updateTroveSnapshot(contracts, whale, "before")
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
@@ -1782,7 +1784,7 @@ describe("StabilityPool in Normal Mode", () => {
       // Add just enough mUSD to increase the scale
       await provideToSP(contracts, whale, to1e18("10250") + 500000n)
 
-      await createLiquidationEvent(contracts, "10,000")
+      await createLiquidationEvent(contracts, deployer, "10,000")
 
       await updateStabilityPoolUserSnapshot(contracts, whale, "before")
       await updateTroveSnapshot(contracts, whale, "before")
@@ -1811,7 +1813,7 @@ describe("StabilityPool in Normal Mode", () => {
       await openTroveAndProvideStability(contracts, bob, "3,000", "200")
       await openTroveAndProvideStability(contracts, carol, "2,000", "200")
 
-      await createLiquidationEvent(contracts, "10,000")
+      await createLiquidationEvent(contracts, deployer, "10,000")
 
       const allUsers = [bob, carol, whale]
       await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
@@ -1841,7 +1843,7 @@ describe("StabilityPool in Normal Mode", () => {
 
       await openTrovesAndProvideStability(contracts, allUsers, "10,000", "200")
 
-      await createLiquidationEvent(contracts, "30,000")
+      await createLiquidationEvent(contracts, deployer, "30,000")
 
       await updatePendingSnapshots(contracts, allUsers, "before")
       await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
@@ -1872,13 +1874,15 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("Large liquidated coll/debt, deposits and BTC price", async () => {
       // collateral:USD price is $2 billion per BTC
-      await contracts.mockAggregator.setPrice(2n * 10n ** 27n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(2n * 10n ** 27n)
 
       const allUsers = [bob, carol]
       const amount = 1n * 10n ** 27n // $ 1 billion
       await openTrovesAndProvideStability(contracts, allUsers, amount, "200")
 
-      await createLiquidationEvent(contracts, amount)
+      await createLiquidationEvent(contracts, deployer, amount)
 
       await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
       await updateTroveSnapshots(contracts, allUsers, "before")
@@ -1902,13 +1906,15 @@ describe("StabilityPool in Normal Mode", () => {
 
     it("Small liquidated coll/debt, large deposits and collateral price", async () => {
       // collateral:USD price is $2 billion per BTC
-      await contracts.mockAggregator.setPrice(2n * 10n ** 27n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(2n * 10n ** 27n)
 
       const allUsers = [bob, carol]
       const amount = 1n * 10n ** 27n // $ 1 billion
       await openTrovesAndProvideStability(contracts, allUsers, amount, "200")
 
-      await createLiquidationEvent(contracts, "2,000")
+      await createLiquidationEvent(contracts, deployer, "2,000")
 
       await updateStabilityPoolUserSnapshots(contracts, allUsers, "before")
       await updateTroveSnapshots(contracts, allUsers, "before")
@@ -1945,10 +1951,10 @@ describe("StabilityPool in Normal Mode", () => {
         })
         await provideToSP(contracts, bob, to1e18(200))
 
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
 
         // drop ICR to 102%
-        await dropPrice(contracts, bob, to1e18(102))
+        await dropPrice(contracts, deployer, bob, to1e18(102))
 
         await expect(
           withdrawCollateralGainToTrove(contracts, bob),
@@ -1960,7 +1966,7 @@ describe("StabilityPool in Normal Mode", () => {
       it("reverts with subsequent deposit and withdrawal attempt from same account with no intermediate liquidations", async () => {
         await provideToSP(contracts, whale, to1e18("20,000"))
 
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
 
         await withdrawCollateralGainToTrove(contracts, whale)
 
@@ -1976,7 +1982,7 @@ describe("StabilityPool in Normal Mode", () => {
         await transferMUSD(contracts, whale, bob, amount)
         await provideToSP(contracts, bob, amount)
 
-        await createLiquidationEvent(contracts)
+        await createLiquidationEvent(contracts, deployer)
 
         await expect(
           withdrawCollateralGainToTrove(contracts, bob),
@@ -2008,12 +2014,12 @@ describe("StabilityPool in Normal Mode", () => {
   describe("Liquidation State Management", () => {
     it("Pool-emptying liquidation increases epoch by one, resets scaleFactor to 0, and resets P to 1e18", async () => {
       await provideToSP(contracts, whale, to1e18("20,000"))
-      await createLiquidationEvent(contracts, "2,000")
+      await createLiquidationEvent(contracts, deployer, "2,000")
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
       // The amount the whale originally provided.
-      await createLiquidationEvent(contracts, "20,000")
+      await createLiquidationEvent(contracts, deployer, "20,000")
 
       await updateStabilityPoolSnapshot(contracts, state, "after")
 

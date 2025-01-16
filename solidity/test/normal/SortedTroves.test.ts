@@ -8,12 +8,13 @@ describe("SortedTroves", () => {
   let bob: User
   let carol: User
   let dennis: User
+  let deployer: User
   let eric: User
   let whale: User
   let contracts: Contracts
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, dennis, eric, whale, contracts } =
+    ;({ alice, bob, carol, dennis, deployer, eric, whale, contracts } =
       await setupTests())
   })
 
@@ -98,7 +99,9 @@ describe("SortedTroves", () => {
   describe("findInsertPosition()", () => {
     it("Finds the correct insert position given two addresses that loosely bound the correct position", async () => {
       // Use 1 BTC = $100 to make the math easy.
-      await contracts.mockAggregator.setPrice(to1e18(100))
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(to1e18(100))
 
       const troveData: { user: User; icr: string }[] = [
         {

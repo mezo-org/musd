@@ -104,7 +104,7 @@ describe("TroveManager in Normal Mode", () => {
     await provideToSP(contracts, bob, to1e18("50,000"))
 
     // Drop the price such that everyone with an ICR less than Alice (inclusive) can be liquidated
-    await dropPrice(contracts, alice)
+    await dropPrice(contracts, deployer, alice)
 
     // Confirm we have the correct ICR expectations
     const eligibleUsers = [alice, carol, dennis]
@@ -156,10 +156,10 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     // Liquidate Carol, creating pending rewards for everyone
-    await dropPriceAndLiquidate(contracts, carol)
+    await dropPriceAndLiquidate(contracts, deployer, carol)
 
     // Drop price
-    await dropPrice(contracts, alice)
+    await dropPrice(contracts, deployer, alice)
   }
 
   /**
@@ -190,7 +190,7 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     // Drop price so that all 3 troves are eligible for liquidation
-    await dropPrice(contracts, eric)
+    await dropPrice(contracts, deployer, eric)
 
     // Attempt to liquidate troves
     await liquidateFunction()
@@ -251,7 +251,7 @@ describe("TroveManager in Normal Mode", () => {
       await fastForwardTime(365 * 24 * 60 * 60)
       await updateTroveSnapshots(contracts, [alice, bob], "before")
       await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
       const after = BigInt(await getLatestBlockTimestamp())
       await updateTroveSnapshots(contracts, [alice, bob], "after")
       await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
@@ -280,10 +280,10 @@ describe("TroveManager in Normal Mode", () => {
       })
       await fastForwardTime(365 * 24 * 60 * 60)
       // liquidate Carol to create pending rewards for everyone
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
       await updateTroveSnapshots(contracts, [alice, bob], "before")
       await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
       const after = BigInt(await getLatestBlockTimestamp())
       await updateTroveSnapshots(contracts, [alice, bob], "after")
       await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
@@ -313,7 +313,7 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       // price drops reducing Alice's ICR below MCR
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       await updateTroveManagerSnapshot(contracts, state, "after")
       expect(state.troveManager.stakes.after).to.equal(bob.trove.stake.before)
@@ -346,7 +346,7 @@ describe("TroveManager in Normal Mode", () => {
       expect(state.troveManager.troves.before).to.equal(5)
 
       // Drop the price to lower ICRs below MCR and close Carol's trove
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       // Check that carol no longer has an active trove
       expect(await contracts.sortedTroves.contains(carol.wallet)).to.equal(
@@ -400,7 +400,9 @@ describe("TroveManager in Normal Mode", () => {
 
       // price drops reducing ICRs below MCR
       const price = await contracts.priceFeed.fetchPrice()
-      await contracts.mockAggregator.setPrice((price * 80n) / 100n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice((price * 80n) / 100n)
 
       // liquidate defaulters
       await contracts.troveManager.liquidate(carol.wallet.address)
@@ -415,7 +417,7 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       // Price bounces back
-      await contracts.mockAggregator.setPrice(price)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
       // Check TCR is restored
       await updateTroveManagerSnapshot(contracts, state, "after")
@@ -447,7 +449,9 @@ describe("TroveManager in Normal Mode", () => {
 
       // price drops reducing ICRs below MCR
       const price = await contracts.priceFeed.fetchPrice()
-      await contracts.mockAggregator.setPrice((price * 80n) / 100n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice((price * 80n) / 100n)
 
       // Check TCR improves with each liquidation that is offset with Pool
       const tcrBefore = await getTCR(contracts)
@@ -475,7 +479,7 @@ describe("TroveManager in Normal Mode", () => {
       // price drops reducing ICR below MCR
       const price = await contracts.priceFeed.fetchPrice()
       const newPrice = (price * 80n) / 100n
-      await contracts.mockAggregator.setPrice(newPrice)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(newPrice)
 
       const tcrBefore = await getTCR(contracts)
       const entireSystemCollBefore =
@@ -535,6 +539,7 @@ describe("TroveManager in Normal Mode", () => {
       // Liquidate trove
       const { newPrice, liquidationTx } = await dropPriceAndLiquidate(
         contracts,
+        deployer,
         carol,
       )
       await updateTroveSnapshot(contracts, carol, "after")
@@ -584,7 +589,7 @@ describe("TroveManager in Normal Mode", () => {
       await provideToSP(contracts, dennis, spDeposit)
 
       // Alice gets liquidated
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       // Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated collateral
       await updateStabilityPoolUserSnapshot(contracts, dennis, "before")
@@ -610,7 +615,11 @@ describe("TroveManager in Normal Mode", () => {
       await provideToSP(contracts, bob, spDeposit)
 
       // liquidate Alice
-      const { newPrice } = await dropPriceAndLiquidate(contracts, alice)
+      const { newPrice } = await dropPriceAndLiquidate(
+        contracts,
+        deployer,
+        alice,
+      )
 
       // check Bob's ICR > MCR
       expect(
@@ -664,7 +673,7 @@ describe("TroveManager in Normal Mode", () => {
       await updateStabilityPoolUserSnapshot(contracts, alice, "before")
 
       // Price drops, carol gets liquidated
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       // Alice's deposit should decrease by Carol's debt
       await updateStabilityPoolUserSnapshot(contracts, alice, "after")
@@ -685,7 +694,7 @@ describe("TroveManager in Normal Mode", () => {
 
       // Price drops, Alice gets liquidated
       await updateTroveSnapshot(contracts, alice, "after")
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       // Alice's new deposit should decrease by her share of her own debt
       const totalDeposits =
@@ -754,7 +763,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await fastForwardTime(365 * 24 * 60 * 60)
 
-      await dropPriceAndLiquidate(contracts, bob)
+      await dropPriceAndLiquidate(contracts, deployer, bob)
 
       const expectedInterest = calculateInterestOwed(
         bob.trove.debt.before,
@@ -782,7 +791,7 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       // Drop the price to lower ICRs below MCR and close Alice's trove
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       // Total stakes should be equal to Bob's stake
       await updateTroveSnapshot(contracts, bob, "after")
@@ -811,7 +820,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       // Carol's collateral less the liquidation fee should be added to the default pool
       const liquidatedColl = to1e18(
@@ -833,7 +842,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       expect(await contracts.troveManager.L_Principal()).to.equal(
         to1e18(carol.trove.debt.before) /
@@ -854,7 +863,7 @@ describe("TroveManager in Normal Mode", () => {
       await fastForwardTime(365 * 24 * 60 * 60) // fast forward 1 year.
 
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
       const carolLiquidationTime = BigInt(await getLatestBlockTimestamp())
 
       const expectedLInterestAfterCarolLiquidated =
@@ -882,7 +891,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       // Carol's collateral less the liquidation fee should be added to the default pool
       const liquidatedColl = to1e18(
@@ -895,7 +904,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await updatePendingSnapshot(contracts, alice, "before")
 
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       /*
        * Alice's pending reward was applied to her trove before liquidation.  We account for that here using the previous
@@ -928,7 +937,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       const lPrincipalAfterCarolLiquidated =
         to1e18(carol.trove.debt.before) /
@@ -936,7 +945,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await updatePendingSnapshot(contracts, alice, "before")
 
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       // Apply Alice's pending debt rewards and calculate the new LMUSDDebt
       const expectedLPrincipalAfterAliceLiquidated =
@@ -963,7 +972,7 @@ describe("TroveManager in Normal Mode", () => {
       await fastForwardTime(365 * 24 * 60 * 60) // fast forward 1 year.
 
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
       const carolLiquidationTime = BigInt(await getLatestBlockTimestamp())
 
       const lInterestAfterCarolLiquidated =
@@ -979,7 +988,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await updatePendingSnapshot(contracts, alice, "before")
 
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       const aliceLiquidateTime = BigInt(await getLatestBlockTimestamp())
 
@@ -1033,7 +1042,7 @@ describe("TroveManager in Normal Mode", () => {
 
       // price drops reducing Alice's ICR below MCR
       const newPrice = to1e18(1000)
-      await contracts.mockAggregator.setPrice(newPrice)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(newPrice)
 
       alice.trove.icr.after = await contracts.troveManager.getCurrentICR(
         addresses.alice,
@@ -1061,7 +1070,9 @@ describe("TroveManager in Normal Mode", () => {
       await updateTroveSnapshot(contracts, bob, "before")
 
       // price drops reducing Alice's ICR below MCR
-      await contracts.mockAggregator.setPrice(to1e18(1000))
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(to1e18(1000))
 
       await updateTroveSnapshot(contracts, alice, "after")
       await updateTroveSnapshot(contracts, bob, "after")
@@ -1133,7 +1144,9 @@ describe("TroveManager in Normal Mode", () => {
 
       // Drop the price
       const currentPrice = await contracts.priceFeed.fetchPrice()
-      await contracts.mockAggregator.setPrice(currentPrice / 2n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(currentPrice / 2n)
 
       // Before liquidation, Alice and Bob are above MCR, Carol is below
       await updateTroveSnapshot(contracts, alice, "before")
@@ -1207,7 +1220,7 @@ describe("TroveManager in Normal Mode", () => {
 
     it("does not alter the liquidated user's token balance", async () => {
       await setupTroves()
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
       expect(await contracts.musd.balanceOf(alice.wallet)).to.equal(
         to1e18("5200"),
       )
@@ -1240,7 +1253,7 @@ describe("TroveManager in Normal Mode", () => {
 
       /* Close Alice's Trove. Should liquidate her collateral and mUSD,
        * leaving Bob’s collateral and mUSD debt in the ActivePool. */
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       await updateContractsSnapshot(
         contracts,
@@ -1276,7 +1289,7 @@ describe("TroveManager in Normal Mode", () => {
       )
 
       // Close Alice's Trove
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       await updateContractsSnapshot(
         contracts,
@@ -1326,7 +1339,7 @@ describe("TroveManager in Normal Mode", () => {
       // check mUSD Debt
       expect(state.defaultPool.debt.before).to.equal(0n)
 
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       // DefaultPool collateral should increase by Alice's collateral less the liquidation fee
       await updateContractsSnapshot(
@@ -1366,7 +1379,7 @@ describe("TroveManager in Normal Mode", () => {
         addresses,
       )
 
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
       await updateTroveSnapshot(contracts, alice, "after")
 
       // DefaultPool collateral should increase by Alice's collateral less the liquidation fee
@@ -1409,7 +1422,7 @@ describe("TroveManager in Normal Mode", () => {
         await updateTroveSnapshot(contracts, alice, "before")
 
         // price drops reducing Alice's ICR below MCR
-        await dropPriceAndLiquidate(contracts, alice)
+        await dropPriceAndLiquidate(contracts, deployer, alice)
 
         // Check Alice's trove is removed
         expect(
@@ -1435,7 +1448,7 @@ describe("TroveManager in Normal Mode", () => {
       ])
 
       // Drop the price so that Dennis is at risk for liquidation
-      await dropPrice(contracts, dennis)
+      await dropPrice(contracts, deployer, dennis)
       await updateTroveSnapshots(contracts, [bob, dennis], "after")
 
       // Liquidate 2 troves, Dennis should get liquidated and Bob should remain
@@ -1483,7 +1496,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // Drop price to make only Carol eligible for liquidation
-      await dropPrice(contracts, carol)
+      await dropPrice(contracts, deployer, carol)
 
       // Attempt to liquidate everyone
       await contracts.troveManager.batchLiquidateTroves([
@@ -1503,7 +1516,7 @@ describe("TroveManager in Normal Mode", () => {
       await setupTroves()
 
       // Drop price so we can liquidate everyone as Bob has the highest ICR
-      await dropPrice(contracts, bob)
+      await dropPrice(contracts, deployer, bob)
 
       // Attempt to liquidate Alice, Bob, and Carol (who has no trove)
       await contracts.troveManager.batchLiquidateTroves([
@@ -1532,7 +1545,7 @@ describe("TroveManager in Normal Mode", () => {
       await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
 
       // Drop the price so Alice and Carol would be eligible for liquidation but not bob
-      await dropPrice(contracts, alice)
+      await dropPrice(contracts, deployer, alice)
       await contracts.troveManager.batchLiquidateTroves([
         alice.wallet,
         bob.wallet,
@@ -1568,7 +1581,7 @@ describe("TroveManager in Normal Mode", () => {
       await provideToSP(contracts, bob, to1e18("10,000"))
 
       // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
-      await dropPrice(contracts, alice)
+      await dropPrice(contracts, deployer, alice)
       await updateTroveManagerSnapshot(contracts, state, "before")
 
       // Perform liquidation and check that TCR has improved
@@ -1598,7 +1611,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // Drop the price to make everyone but Bob eligible for liquidation and snapshot the TCR
-      await dropPrice(contracts, alice)
+      await dropPrice(contracts, deployer, alice)
       await updateTroveManagerSnapshot(contracts, state, "before")
 
       // Perform liquidation and check that TCR has decreased
@@ -1636,7 +1649,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await fastForwardTime(365 * 24 * 60 * 60)
 
-      const newPrice = await dropPrice(contracts, carol)
+      const newPrice = await dropPrice(contracts, deployer, carol)
 
       const liquidationTx = await contracts.troveManager.batchLiquidateTroves([
         carol.wallet,
@@ -1695,7 +1708,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // Drop the price so that Carol and Dennis are at risk for liquidation, but do not liquidate anyone yet
-      const newPrice = await dropPrice(contracts, dennis)
+      const newPrice = await dropPrice(contracts, deployer, dennis)
 
       // Check that Bob's ICR is above the MCR after the price drop and before liquidation
       await updateTroveSnapshot(contracts, bob, "before")
@@ -1741,7 +1754,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // Drop the price so Bob is just above MCR
-      await dropPrice(contracts, bob, to1e18("111"))
+      await dropPrice(contracts, deployer, bob, to1e18("111"))
 
       await fastForwardTime(365 * 24 * 60 * 60)
 
@@ -1755,7 +1768,7 @@ describe("TroveManager in Normal Mode", () => {
       await updateWalletSnapshot(contracts, bob, "before")
 
       // Attempt to liquidate both troves, only Alice gets liquidated
-      await dropPrice(contracts, alice)
+      await dropPrice(contracts, deployer, alice)
 
       await contracts.troveManager.batchLiquidateTroves([
         alice.wallet,
@@ -1799,7 +1812,7 @@ describe("TroveManager in Normal Mode", () => {
       await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
 
       // Price drops so we can liquidate Alice and Bob
-      await dropPriceAndLiquidate(contracts, alice, false)
+      await dropPriceAndLiquidate(contracts, deployer, alice, false)
 
       await updateStabilityPoolUserSnapshots(
         contracts,
@@ -1852,7 +1865,7 @@ describe("TroveManager in Normal Mode", () => {
     context("Expected Reverts", () => {
       it("reverts if array is empty", async () => {
         await setupTroves()
-        await dropPrice(contracts, alice)
+        await dropPrice(contracts, deployer, alice)
         await expect(
           contracts.troveManager.batchLiquidateTroves([]),
         ).to.be.revertedWith(
@@ -1920,7 +1933,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // Drop the price so that Dennis has an ICR below MCR, she should be untouched by redemptions
-      const price = await dropPrice(contracts, dennis)
+      const price = await dropPrice(contracts, deployer, dennis)
 
       await updateTroveSnapshots(
         contracts,
@@ -2279,7 +2292,7 @@ describe("TroveManager in Normal Mode", () => {
       await setupRedemptionTroves()
 
       // Drop the price so that Alice's trove is below MCR
-      await dropPrice(contracts, alice)
+      await dropPrice(contracts, deployer, alice)
       const redemptionAmount = to1e18("100")
 
       await performRedemption(contracts, dennis, dennis, redemptionAmount)
@@ -2324,7 +2337,7 @@ describe("TroveManager in Normal Mode", () => {
       await updateTroveSnapshot(contracts, dennis, "before")
 
       // Drop price to put the first 3 troves at 110 ICR
-      await dropPrice(contracts, alice, to1e18("110"))
+      await dropPrice(contracts, deployer, alice, to1e18("110"))
 
       // Try to trick redeemCollateral with hint that doesn't point to the last Trove with ICR == 110
       await contracts.troveManager.connect(dennis.wallet).redeemCollateral(
@@ -2581,7 +2594,9 @@ describe("TroveManager in Normal Mode", () => {
 
       // Increase the price to start Eric
       const price = await contracts.priceFeed.fetchPrice()
-      await contracts.mockAggregator.setPrice(price * 2n)
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(price * 2n)
       await openTrove(contracts, {
         musdAmount: "5000",
         ICR: "200",
@@ -2589,7 +2604,7 @@ describe("TroveManager in Normal Mode", () => {
       })
 
       // Drop the price back to the initial price to put Eric below MCR
-      await contracts.mockAggregator.setPrice(price)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
       const redemptionAmount = to1e18("200")
 
@@ -2826,7 +2841,7 @@ describe("TroveManager in Normal Mode", () => {
       await provideToSP(contracts, bob, to1e18("1000"))
 
       // Liquidate Alice
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
       await updateStabilityPoolUserSnapshot(contracts, bob, "before")
 
       // Redeem collateral from Bob's trove
@@ -2898,7 +2913,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, alice, "before")
 
-      await dropPriceAndLiquidate(contracts, alice)
+      await dropPriceAndLiquidate(contracts, deployer, alice)
 
       const interestRate = 1000
       await setInterestRate(contracts, council, interestRate)
@@ -2978,7 +2993,7 @@ describe("TroveManager in Normal Mode", () => {
         })
 
         // Drop price to put Alice, Bob, and Carol at 110% ICR and Dennis just below
-        await dropPrice(contracts, carol, to1e18("110"))
+        await dropPrice(contracts, deployer, carol, to1e18("110"))
         expect(await getTCR(contracts)).to.be.lessThan(
           await contracts.troveManager.MCR(),
         )
@@ -3208,7 +3223,7 @@ describe("TroveManager in Normal Mode", () => {
       })
       await provideToSP(contracts, bob, to1e18("10000"))
 
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
       await updatePendingSnapshot(contracts, alice, "after")
       expect(alice.pending.principal.after).to.equal(0n)
     })
@@ -3224,7 +3239,7 @@ describe("TroveManager in Normal Mode", () => {
       })
       await provideToSP(contracts, bob, to1e18("10000"))
 
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
       await updatePendingSnapshot(contracts, alice, "after")
       expect(alice.pending.collateral.after).to.equal(0n)
     })
@@ -3273,7 +3288,7 @@ describe("TroveManager in Normal Mode", () => {
         ICR: "200",
         sender: alice.wallet,
       })
-      await dropPrice(contracts, alice)
+      await dropPrice(contracts, deployer, alice)
 
       expect(
         await contracts.troveManager.checkRecoveryMode(
@@ -3319,7 +3334,7 @@ describe("TroveManager in Normal Mode", () => {
         sender: alice.wallet,
       })
 
-      await contracts.mockAggregator.setPrice(0)
+      await contracts.mockAggregator.connect(deployer.wallet).setPrice(0)
 
       expect(
         await contracts.troveManager.checkRecoveryMode(
@@ -3443,7 +3458,7 @@ describe("TroveManager in Normal Mode", () => {
 
       await updateTroveSnapshots(contracts, [alice, bob], "before")
 
-      await dropPriceAndLiquidate(contracts, bob)
+      await dropPriceAndLiquidate(contracts, deployer, bob)
 
       // Fast-forward 1 year
       await fastForwardTime(365 * 24 * 60 * 60)
@@ -3777,7 +3792,7 @@ describe("TroveManager in Normal Mode", () => {
       await transferMUSD(contracts, bob, alice, totalDebt)
       await contracts.borrowerOperations.connect(alice.wallet).closeTrove()
 
-      await dropPriceAndLiquidate(contracts, carol)
+      await dropPriceAndLiquidate(contracts, deployer, carol)
 
       // Alice's trove should be status 2 -- closed by user
       expect(await checkTroveStatus(contracts, alice, 2n, false)).to.equal(true)

@@ -164,11 +164,15 @@ export async function setupDeploymentBoilerplate(
     if (deployment) {
       log(`Using ${contractName} at ${deployment.address}`)
     } else {
-      await deploy(contractName, {
+      const contract = await deploy(contractName, {
         contract: contractName,
         args: [],
         ...options,
       })
+
+      if (network.name !== "hardhat") {
+        await helpers.etherscan.verify(contract)
+      }
     }
   }
 

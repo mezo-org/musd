@@ -29,10 +29,6 @@ const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY
   ? [process.env.SEPOLIA_PRIVATE_KEY]
   : []
 
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
-  ? process.env.ETHERSCAN_API_KEY
-  : ""
-
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
@@ -131,7 +127,19 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: {
+      matsnet: "empty",
+    },
+    customChains: [
+      {
+        network: "matsnet",
+        chainId: 31611,
+        urls: {
+          apiURL: "https://api.explorer.test.mezo.org/api",
+          browserURL: "https://explorer.test.mezo.org",
+        },
+      },
+    ],
   },
   namedAccounts: {
     deployer: 0,
