@@ -392,7 +392,7 @@ contract StabilityPool is
         emit StabilityPoolCollateralBalanceUpdated(newCollateral);
         emit CollateralSent(msg.sender, _amount);
 
-        sendCollateral(IERC20(address(0)), msg.sender, _amount);
+        _sendCollateral(msg.sender, _amount);
     }
 
     function _computeRewardsPerUnitStaked(

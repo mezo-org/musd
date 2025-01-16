@@ -99,16 +99,13 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         emit ActivePoolDebtUpdated(principal, interest);
     }
 
-    function sendCollateral(
-        address _account,
-        uint256 _amount
-    ) external override {
+    function sendCollateral(address _account, uint256 _amount) external {
         _requireCallerIsBOorTroveMorSP();
         collateral -= _amount;
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
 
-        sendCollateral(IERC20(address(0)), _account, _amount);
+        _sendCollateral(_account, _amount);
     }
 
     /*

@@ -90,7 +90,7 @@ contract CollSurplusPool is
         collateral -= claimableColl;
         emit CollateralSent(_account, claimableColl);
 
-        sendCollateral(IERC20(address(0)), _account, claimableColl);
+        _sendCollateral(_account, claimableColl);
     }
 
     function getCollateral(

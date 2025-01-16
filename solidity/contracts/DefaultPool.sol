@@ -85,7 +85,7 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
         emit DefaultPoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(activePool, _amount);
 
-        sendCollateral(IERC20(address(0)), activePool, _amount);
+        _sendCollateral(activePool, _amount);
     }
 
     function getCollateralBalance() external view override returns (uint) {

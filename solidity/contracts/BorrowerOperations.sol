@@ -822,12 +822,7 @@ contract BorrowerOperations is
         IActivePool _activePool,
         uint256 _amount
     ) internal {
-        sendCollateralFrom(
-            IERC20(address(0)),
-            msg.sender,
-            address(_activePool),
-            _amount
-        );
+        _sendCollateral(address(_activePool), _amount);
     }
 
     // Update trove's coll and debt based on whether they increase or decrease
