@@ -141,12 +141,4 @@ interface IStabilityPool {
     function getCompoundedMUSDDeposit(
         address _depositor
     ) external view returns (uint);
-
-    /*
-     * Fallback function
-     * Only callable by Active Pool, it just accounts for BTC received
-     * receive() external payable;
-     */
-
-    function collateralAddress() external view returns (address);
 }

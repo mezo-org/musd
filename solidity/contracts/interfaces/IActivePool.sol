@@ -10,7 +10,6 @@ interface IActivePool is IPool {
         address _newBorrowerOperationsAddress
     );
     event CollSurplusPoolAddressChanged(address _newCollSurplusPoolAddress);
-    event CollateralAddressChanged(address _newCollateralAddress);
     event InterestRateManagerAddressChanged(
         address _interestRateManagerAddress
     );
@@ -21,6 +20,4 @@ interface IActivePool is IPool {
 
     // --- Functions ---
     function sendCollateral(address _account, uint256 _amount) external;
-
-    function collateralAddress() external view returns (address);
 }

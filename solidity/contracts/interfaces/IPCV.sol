@@ -58,8 +58,6 @@ interface IPCV {
 
     function finalizeChangingRoles() external;
 
-    function collateralERC20() external view returns (IERC20);
-
     function musd() external view returns (IMUSD);
 
     function council() external view returns (address);

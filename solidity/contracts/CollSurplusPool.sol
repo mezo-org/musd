@@ -19,7 +19,6 @@ contract CollSurplusPool is
 
     address public activePoolAddress;
     address public borrowerOperationsAddress;
-    address public collateralAddress;
     address public troveManagerAddress;
 
     // deposited collateral tracker
@@ -34,10 +33,6 @@ contract CollSurplusPool is
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsActivePool();
-        require(
-            collateralAddress == address(0),
-            "CollSurplusPool: ERC20 collateral needed, not BTC"
-        );
         // slither-disable-next-line events-maths
         collateral += msg.value;
     }
@@ -58,7 +53,6 @@ contract CollSurplusPool is
         borrowerOperationsAddress = _borrowerOperationsAddress;
         troveManagerAddress = _troveManagerAddress;
         activePoolAddress = _activePoolAddress;
-        collateralAddress = address(0);
         // slither-disable-end missing-zero-check
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
@@ -96,7 +90,7 @@ contract CollSurplusPool is
         collateral -= claimableColl;
         emit CollateralSent(_account, claimableColl);
 
-        sendCollateral(IERC20(collateralAddress), _account, claimableColl);
+        _sendCollateral(_account, claimableColl);
     }
 
     function getCollateral(

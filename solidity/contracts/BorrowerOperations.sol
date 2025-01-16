@@ -80,7 +80,6 @@ contract BorrowerOperations is
 
     ITroveManager public troveManager;
 
-    address public collateralAddress;
     address public gasPoolAddress;
     address public pcvAddress;
     address public stabilityPoolAddress;
@@ -164,7 +163,7 @@ contract BorrowerOperations is
         assert(vars.compositeDebt > 0);
 
         // if BTC overwrite the asset value
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         vars.ICR = LiquityMath._computeCR(
             _assetAmount,
             vars.compositeDebt,
@@ -233,8 +232,6 @@ contract BorrowerOperations is
         vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
             msg.sender
         );
-        // slither-disable-next-line reentrancy-events
-        emit TroveCreated(msg.sender, vars.arrayIndex);
 
         /*
          * Move the collateral to the Active Pool, and mint the amount to the borrower
@@ -257,6 +254,9 @@ contract BorrowerOperations is
             MUSD_GAS_COMPENSATION
         );
 
+        // slither-disable-start reentrancy-events
+        emit TroveCreated(msg.sender, vars.arrayIndex);
+
         emit TroveUpdated(
             msg.sender,
             vars.compositeDebt,
@@ -266,6 +266,7 @@ contract BorrowerOperations is
             uint8(BorrowerOperation.openTrove)
         );
         emit BorrowingFeePaid(msg.sender, vars.fee);
+        // slither-disable-end reentrancy-events
     }
 
     // Send collateral to a trove
@@ -274,7 +275,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         _adjustTrove(
             msg.sender,
             0,
@@ -295,7 +296,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external payable override {
         _requireCallerIsStabilityPool();
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         _adjustTrove(
             _borrower,
             0,
@@ -495,7 +496,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = getAssetAmount(_assetAmount);
+        _assetAmount = msg.value;
         _adjustTrove(
             msg.sender,
             _collWithdrawal,
@@ -544,7 +545,6 @@ contract BorrowerOperations is
 
         // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
-        collateralAddress = address(0);
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         gasPoolAddress = _gasPoolAddress;
@@ -824,12 +824,7 @@ contract BorrowerOperations is
         IActivePool _activePool,
         uint256 _amount
     ) internal {
-        sendCollateralFrom(
-            IERC20(collateralAddress),
-            msg.sender,
-            address(_activePool),
-            _amount
-        );
+        _sendCollateral(address(_activePool), _amount);
     }
 
     // Update trove's coll and debt based on whether they increase or decrease
@@ -877,20 +872,6 @@ contract BorrowerOperations is
         // Send fee to PCV contract
         _musd.mint(pcvAddress, fee);
         return fee;
-    }
-
-    function getAssetAmount(
-        uint256 _assetAmount
-    ) internal view returns (uint256) {
-        if (collateralAddress == address(0)) {
-            return msg.value;
-        }
-
-        require(
-            msg.value == 0,
-            "BorrowerOperations: ERC20 collateral needed, not BTC"
-        );
-        return _assetAmount;
     }
 
     function _requireNotInRecoveryMode(uint256 _price) internal view {

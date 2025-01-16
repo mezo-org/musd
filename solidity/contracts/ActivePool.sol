@@ -22,7 +22,6 @@ import "./interfaces/IStabilityPool.sol";
 contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     address public borrowerOperationsAddress;
     address public collSurplusPoolAddress;
-    address public collateralAddress;
     address public defaultPoolAddress;
     address public interestRateManagerAddress;
     address public stabilityPoolAddress;
@@ -40,10 +39,6 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsBorrowerOperationsOrDefaultPool();
-        require(
-            collateralAddress == address(0),
-            "ActivePool: ERC20 collateral needed, not BTC"
-        );
         collateral += msg.value;
         emit ActivePoolCollateralBalanceUpdated(collateral);
     }
@@ -67,7 +62,6 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
 
         // slither-disable-start missing-zero-check
         borrowerOperationsAddress = _borrowerOperationsAddress;
-        collateralAddress = address(0);
         collSurplusPoolAddress = _collSurplusPoolAddress;
         defaultPoolAddress = _defaultPoolAddress;
         interestRateManagerAddress = _interestRateManagerAddress;
@@ -105,16 +99,13 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
         emit ActivePoolDebtUpdated(principal, interest);
     }
 
-    function sendCollateral(
-        address _account,
-        uint256 _amount
-    ) external override {
+    function sendCollateral(address _account, uint256 _amount) external {
         _requireCallerIsBOorTroveMorSP();
         collateral -= _amount;
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
 
-        sendCollateral(IERC20(collateralAddress), _account, _amount);
+        _sendCollateral(_account, _amount);
     }
 
     /*

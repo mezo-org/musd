@@ -16,7 +16,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     uint256 public immutable governanceTimeDelay;
 
     BorrowerOperations public borrowerOperations;
-    IERC20 public collateralERC20;
     IMUSD public musd;
 
     // TODO ideal initialization in constructor/setAddresses
@@ -64,12 +63,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
     }
 
-    receive() external payable {
-        require(
-            address(collateralERC20) == address(0),
-            "PCV: ERC20 collateral needed, not BTC"
-        );
-    }
+    receive() external payable {}
 
     function payDebt(
         uint256 _musdToBurn
@@ -122,7 +116,6 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
 
         // slither-disable-start missing-zero-check
         borrowerOperations = BorrowerOperations(_borrowerOperations);
-        collateralERC20 = IERC20(address(0));
         musd = IMUSD(_musdTokenAddress);
         // slither-disable-end missing-zero-check
 
@@ -190,9 +183,8 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        sendCollateral(collateralERC20, _recipient, _collateralAmount);
-
         emit CollateralWithdraw(_recipient, _collateralAmount);
+        _sendCollateral(_recipient, _collateralAmount);
     }
 
     function addRecipientsToWhitelist(
