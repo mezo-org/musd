@@ -135,7 +135,10 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     function setFeeRecipient(
         address _feeRecipient
     ) external onlyOwnerOrCouncilOrTreasury {
-        require(_feeRecipient != address(0), "PCV: Fee recipient cannot be the zero address.");
+        require(
+            _feeRecipient != address(0),
+            "PCV: Fee recipient cannot be the zero address."
+        );
         feeRecipient = _feeRecipient;
     }
 
