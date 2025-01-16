@@ -464,6 +464,14 @@ describe("PCV", () => {
             .withdrawCollateral(alice.address, 1n),
         ).to.be.revertedWith("Sending BTC failed")
       })
+
+      it("reverts when debt is not paid", async () => {
+        await expect(
+          contracts.pcv
+            .connect(treasury.wallet)
+            .withdrawCollateral(alice.address, 1n),
+        ).to.be.revertedWith("PCV: debt must be paid")
+      })
     })
   })
 
