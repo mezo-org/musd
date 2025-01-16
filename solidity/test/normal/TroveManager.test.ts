@@ -3076,57 +3076,16 @@ describe("TroveManager in Normal Mode", () => {
         )
       })
 
-      it.skip("reverts if caller tries to redeem more than the outstanding system debt", async () => {
-        /*
-         This test reverts but not for the reason expected.  Instead, it says there is only one trove left.
-         It also seems like this could be simplified by just grabbing the total debt of the system
-         and trying to redeem more than that.  Checking that the system debt matches the return of openTrove seems redundant.
-         See: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/TroveManagerTest.js#L3345
-        */
-        await contracts.musd.unprotectedMint(
-          bob.address,
-          "101000000000000000000",
-        )
-        const { totalDebt: carolTotalDebt } = await openTrove(contracts, {
-          musdAmount: "1840",
-          ICR: "1000",
-          sender: carol.wallet,
-        })
-        const { totalDebt: dennisTotalDebt } = await openTrove(contracts, {
-          musdAmount: "1840",
-          ICR: "1000",
-          sender: dennis.wallet,
-        })
-        const totalDebt = carolTotalDebt + dennisTotalDebt
-        expect(await contracts.activePool.getDebt()).to.equal(totalDebt)
+      it("reverts if caller tries to redeem more than the outstanding system debt", async () => {
+        await setupRedemptionTroves()
 
-        const price = await contracts.priceFeed.fetchPrice()
-        const { firstRedemptionHint, partialRedemptionHintNICR } =
-          await getRedemptionHints(contracts, dennis, to1e18("101"), price)
-        const { 0: upperPartialRedemptionHint, 1: lowerPartialRedemptionHint } =
-          await contracts.sortedTroves.findInsertPosition(
-            partialRedemptionHintNICR,
-            bob.wallet,
-            bob.wallet,
-          )
+        const totalDebt = await contracts.troveManager.getEntireSystemDebt()
+        const redemptionAmount = totalDebt + to1e18("100")
+        await contracts.musd.unprotectedMint(bob.address, redemptionAmount)
 
-        try {
-          await contracts.troveManager.redeemCollateral(
-            totalDebt + to1e18("100"),
-            firstRedemptionHint,
-            upperPartialRedemptionHint,
-            lowerPartialRedemptionHint,
-            partialRedemptionHintNICR,
-            0,
-            to1e18("1"),
-            { from: bob.address },
-          )
-        } catch (error) {
-          // @ts-expect-error next line is checking the error message, should probably be revertedWith
-          expect(error.message).contains(
-            "VM Exception while processing transaction",
-          )
-        }
+        await expect(
+          performRedemption(contracts, bob, alice, redemptionAmount),
+        ).to.be.revertedWith("TroveManager: Only one trove in the system")
       })
 
       it("reverts if fee eats up all returned collateral", async () => {
