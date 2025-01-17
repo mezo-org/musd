@@ -36,10 +36,7 @@ describe("HintHelpers", () => {
   }
 
   describe("getApproxHint()", () => {
-    it.skip("returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
-      // Tried a simplified version of the test in the THUSD repo, but it is not working, skipping for now.
-      // THUSD Test: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/HintHelpers_getApproxHintTest.js#L117
-
+    it("returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
       await setupTroves()
 
       // CR = 202% (Carol's Trove)

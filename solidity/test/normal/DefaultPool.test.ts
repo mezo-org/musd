@@ -34,20 +34,6 @@ describe("DefaultPool", () => {
     troveManagerSigner = await ethers.getSigner(addresses.troveManager)
   })
 
-  describe("sendCollateralToActivePool()", () => {
-    context("Expected Reverts", () => {
-      it.skip("reverts if receiver cannot receive collateral", async () => {
-        // TODO This requires the active pool to be a nonpayable address.  Skipping for now because the extra setup doesn't seem worth it.
-        // THUSD Test link: https://github.com/Threshold-USD/dev/blob/develop/packages/contracts/test/DefaultPoolTest.js#L64
-        await expect(
-          contracts.defaultPool
-            .connect(troveManagerSigner)
-            .sendCollateralToActivePool(to1e18("0"), NO_GAS),
-        ).to.be.revertedWith("Sending BTC failed")
-      })
-    })
-  })
-
   describe("getCollateralBalance()", () => {
     it("gets the recorded collateral balance", async () => {
       expect(await contracts.defaultPool.getCollateralBalance()).to.equal(0)

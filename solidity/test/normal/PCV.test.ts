@@ -464,6 +464,14 @@ describe("PCV", () => {
             .withdrawCollateral(alice.address, 1n),
         ).to.be.revertedWith("Sending BTC failed")
       })
+
+      it("reverts when debt is not paid", async () => {
+        await expect(
+          contracts.pcv
+            .connect(treasury.wallet)
+            .withdrawCollateral(alice.address, 1n),
+        ).to.be.revertedWith("PCV: debt must be paid")
+      })
     })
   })
 
@@ -479,6 +487,16 @@ describe("PCV", () => {
         await expect(PCVDeployer.setFeeSplit(1n)).to.be.revertedWith(
           "PCV: Must have debt in order to set a fee split.",
         )
+      })
+    })
+  })
+
+  describe("setFeeRecipient()", () => {
+    context("Expected Reverts", () => {
+      it("reverts if the fee recipient is the zero address", async () => {
+        await expect(
+          PCVDeployer.setFeeRecipient(ZERO_ADDRESS),
+        ).to.be.revertedWith("PCV: Fee recipient cannot be the zero address.")
       })
     })
   })
