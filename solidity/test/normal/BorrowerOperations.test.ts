@@ -1,5 +1,6 @@
 import { assert, expect } from "chai"
 import { ethers } from "hardhat"
+import { AbiCoder } from "ethers"
 import {
   addColl,
   BORROWING_FEE_PAID,
@@ -9,6 +10,7 @@ import {
   fastForwardTime,
   getEventArgByName,
   getLatestBlockTimestamp,
+  getOpenTroveTotalDebt,
   getTCR,
   getTroveEntireColl,
   getTroveEntireDebt,
@@ -40,6 +42,7 @@ import {
   ContractsState,
   OpenTroveParams,
 } from "../helpers/interfaces"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 
 describe("BorrowerOperations in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -908,6 +911,65 @@ describe("BorrowerOperations in Normal Mode", () => {
         ]
         await checkOpenTroveEvents(transactions, TROVE_UPDATED_ABI)
       })
+    })
+  })
+
+  describe("openTroveWithSignature()", () => {
+    it("should open a trove with a valid signature", async () => {
+      const borrower = carol.address
+      const maxFeePercentage = to1e18(100) / 100n
+      const debtAmount = to1e18(2000)
+      const assetAmount = to1e18(10)
+      const upperHint = ZERO_ADDRESS
+      const lowerHint = ZERO_ADDRESS
+      const contractAddress = addresses.borrowerOperations
+
+      const abiCoder = new AbiCoder()
+      const encodedData = abiCoder.encode(
+        [
+          "address",
+          "uint256",
+          "uint256",
+          "uint256",
+          "address",
+          "address",
+          "address",
+        ],
+        [
+          borrower,
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          contractAddress,
+        ],
+      )
+
+      const messageHash = ethers.keccak256(encodedData)
+
+      const signature = await carol.wallet.signMessage(
+        ethers.getBytes(messageHash),
+      )
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .openTroveWithSignature(
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          carol.address,
+          signature,
+          { value: assetAmount },
+        )
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      // Account for borrowing fee and gas compensation
+      const expectedDebt = await getOpenTroveTotalDebt(contracts, debtAmount)
+      expect(carol.trove.debt.after).to.be.equal(expectedDebt)
     })
   })
 

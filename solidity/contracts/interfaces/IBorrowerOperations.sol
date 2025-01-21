@@ -57,6 +57,16 @@ interface IBorrowerOperations {
         address _lowerHint
     ) external payable;
 
+    function openTroveWithSignature(
+        uint256 _maxFeePercentage,
+        uint256 _debtAmount,
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature
+    ) external payable;
+
     function addColl(
         uint256 _assetAmount,
         address _upperHint,
