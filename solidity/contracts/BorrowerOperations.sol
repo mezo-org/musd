@@ -14,13 +14,15 @@ import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 contract BorrowerOperations is
     LiquityBase,
     Ownable,
     CheckContract,
     SendCollateral,
-    IBorrowerOperations
+    IBorrowerOperations,
+    EIP712
 {
     using ECDSA for bytes32;
 
@@ -76,6 +78,25 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
 
+    string private constant SIGNING_DOMAIN = "BorrowerOperations";
+    string private constant SIGNATURE_VERSION = "1";
+
+    mapping(address => uint256) private _nonces;
+
+    struct OpenTrove {
+        address borrower;
+        uint256 maxFeePercentage;
+        uint256 debtAmount;
+        uint256 assetAmount;
+        address upperHint;
+        address lowerHint;
+        uint256 nonce;
+    }
+
+    bytes32 private constant OPEN_TROVE_TYPEHASH = keccak256(
+        "OpenTrove(address borrower,uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,uint256 nonce)"
+    );
+
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage = 20;
 
@@ -104,7 +125,7 @@ contract BorrowerOperations is
         _;
     }
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {}
 
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
@@ -151,24 +172,36 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature
     ) external payable override {
-        // Construct the message hash and recover the signer's address
-        bytes32 messageHash = keccak256(
-            abi.encode(
-                _borrower,
-                _maxFeePercentage,
-                _debtAmount,
-                _assetAmount,
-                _upperHint,
-                _lowerHint,
-                address(this)
+        uint256 nonce = _nonces[_borrower];
+        OpenTrove memory openTroveData = OpenTrove({
+            borrower: _borrower,
+            maxFeePercentage: _maxFeePercentage,
+            debtAmount: _debtAmount,
+            assetAmount: _assetAmount,
+            upperHint: _upperHint,
+            lowerHint: _lowerHint,
+            nonce: nonce
+        });
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    OPEN_TROVE_TYPEHASH,
+                    openTroveData.borrower,
+                    openTroveData.maxFeePercentage,
+                    openTroveData.debtAmount,
+                    openTroveData.assetAmount,
+                    openTroveData.upperHint,
+                    openTroveData.lowerHint,
+                    openTroveData.nonce
+                )
             )
         );
-        bytes32 ethSignedMessageHash = _signMessageHash(messageHash);
-        address recoveredAddress = ECDSA.recover(
-            ethSignedMessageHash,
-            _signature
-        );
+
+        address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
+
+        _nonces[_borrower]++;
 
         _openTrove(
             _borrower,
@@ -497,6 +530,10 @@ contract BorrowerOperations is
         uint256 _debt
     ) external pure override returns (uint) {
         return _getCompositeDebt(_debt);
+    }
+
+    function getNonce(address user) public view returns (uint256) {
+        return _nonces[user];
     }
 
     function _openTrove(

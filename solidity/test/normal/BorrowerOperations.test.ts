@@ -924,33 +924,38 @@ describe("BorrowerOperations in Normal Mode", () => {
       const lowerHint = ZERO_ADDRESS
       const contractAddress = addresses.borrowerOperations
 
-      const abiCoder = new AbiCoder()
-      const encodedData = abiCoder.encode(
-        [
-          "address",
-          "uint256",
-          "uint256",
-          "uint256",
-          "address",
-          "address",
-          "address",
-        ],
-        [
-          borrower,
-          maxFeePercentage,
-          debtAmount,
-          assetAmount,
-          upperHint,
-          lowerHint,
-          contractAddress,
-        ],
-      )
+      const nonce = await contracts.borrowerOperations.getNonce(borrower)
 
-      const messageHash = ethers.keccak256(encodedData)
+      const domain = {
+        name: "BorrowerOperations",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: contractAddress,
+      }
 
-      const signature = await carol.wallet.signMessage(
-        ethers.getBytes(messageHash),
-      )
+      const types = {
+        OpenTrove: [
+          { name: "borrower", type: "address" },
+          { name: "maxFeePercentage", type: "uint256" },
+          { name: "debtAmount", type: "uint256" },
+          { name: "assetAmount", type: "uint256" },
+          { name: "upperHint", type: "address" },
+          { name: "lowerHint", type: "address" },
+          { name: "nonce", type: "uint256" },
+        ],
+      }
+
+      const value = {
+        borrower,
+        maxFeePercentage,
+        debtAmount,
+        assetAmount,
+        upperHint,
+        lowerHint,
+        nonce,
+      }
+
+      const signature = await carol.wallet.signTypedData(domain, types, value)
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
