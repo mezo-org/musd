@@ -70,6 +70,17 @@ contract BorrowerOperations is
         IInterestRateManager interestRateManager;
     }
 
+    struct OpenTrove {
+        address borrower;
+        uint256 maxFeePercentage;
+        uint256 debtAmount;
+        uint256 assetAmount;
+        address upperHint;
+        address lowerHint;
+        uint256 nonce;
+        uint256 deadline;
+    }
+
     enum BorrowerOperation {
         openTrove,
         closeTrove,
@@ -83,20 +94,10 @@ contract BorrowerOperations is
 
     mapping(address => uint256) private _nonces;
 
-    struct OpenTrove {
-        address borrower;
-        uint256 maxFeePercentage;
-        uint256 debtAmount;
-        uint256 assetAmount;
-        address upperHint;
-        address lowerHint;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    bytes32 private constant OPEN_TROVE_TYPEHASH = keccak256(
-        "OpenTrove(address borrower,uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,uint256 nonce,uint256 deadline)"
-    );
+    bytes32 private constant OPEN_TROVE_TYPEHASH =
+        keccak256(
+            "OpenTrove(address borrower,uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,uint256 nonce,uint256 deadline)"
+        );
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage = 20;
@@ -126,7 +127,10 @@ contract BorrowerOperations is
         _;
     }
 
-    constructor() Ownable(msg.sender) EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {}
+    constructor()
+        Ownable(msg.sender)
+        EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION)
+    {}
 
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
@@ -174,6 +178,7 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external payable override {
+        // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
         OpenTrove memory openTroveData = OpenTrove({
@@ -1101,13 +1106,6 @@ contract BorrowerOperations is
             _requireICRisAboveCCR(_vars.newICR);
             _requireNewICRisAboveOldICR(_vars.newICR, _vars.oldICR);
         }
-    }
-
-    function _signMessageHash(bytes32 msgHash) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", msgHash)
-            );
     }
 
     function _getCollChange(

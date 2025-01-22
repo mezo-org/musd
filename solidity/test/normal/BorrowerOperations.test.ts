@@ -1,6 +1,5 @@
 import { assert, expect } from "chai"
 import { ethers } from "hardhat"
-import { AbiCoder } from "ethers"
 import {
   addColl,
   BORROWING_FEE_PAID,
