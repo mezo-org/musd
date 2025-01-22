@@ -64,7 +64,8 @@ interface IBorrowerOperations {
         address _upperHint,
         address _lowerHint,
         address _borrower,
-        bytes memory _signature
+        bytes memory _signature,
+        uint256 _deadline
     ) external payable;
 
     function addColl(

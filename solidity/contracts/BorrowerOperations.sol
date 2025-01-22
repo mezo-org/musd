@@ -91,10 +91,11 @@ contract BorrowerOperations is
         address upperHint;
         address lowerHint;
         uint256 nonce;
+        uint256 deadline;
     }
 
     bytes32 private constant OPEN_TROVE_TYPEHASH = keccak256(
-        "OpenTrove(address borrower,uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,uint256 nonce)"
+        "OpenTrove(address borrower,uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,uint256 nonce,uint256 deadline)"
     );
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
@@ -170,8 +171,10 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint,
         address _borrower,
-        bytes memory _signature
+        bytes memory _signature,
+        uint256 _deadline
     ) external payable override {
+        require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
         OpenTrove memory openTroveData = OpenTrove({
             borrower: _borrower,
@@ -180,7 +183,8 @@ contract BorrowerOperations is
             assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
-            nonce: nonce
+            nonce: nonce,
+            deadline: _deadline
         });
 
         bytes32 digest = _hashTypedDataV4(
@@ -193,7 +197,8 @@ contract BorrowerOperations is
                     openTroveData.assetAmount,
                     openTroveData.upperHint,
                     openTroveData.lowerHint,
-                    openTroveData.nonce
+                    openTroveData.nonce,
+                    openTroveData.deadline
                 )
             )
         );

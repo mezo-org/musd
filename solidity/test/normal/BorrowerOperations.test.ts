@@ -915,7 +915,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("openTroveWithSignature()", () => {
-    it("should open a trove with a valid signature", async () => {
+    it("should open a trove with a valid signature and deadline", async () => {
       const borrower = carol.address
       const maxFeePercentage = to1e18(100) / 100n
       const debtAmount = to1e18(2000)
@@ -942,8 +942,11 @@ describe("BorrowerOperations in Normal Mode", () => {
           { name: "upperHint", type: "address" },
           { name: "lowerHint", type: "address" },
           { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
         ],
       }
+
+      const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
       const value = {
         borrower,
@@ -953,6 +956,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         nonce,
+        deadline,
       }
 
       const signature = await carol.wallet.signTypedData(domain, types, value)
@@ -967,6 +971,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           lowerHint,
           carol.address,
           signature,
+          deadline,
           { value: assetAmount },
         )
 
