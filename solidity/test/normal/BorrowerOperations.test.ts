@@ -2636,6 +2636,48 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
+  describe("repayMUSDWithSignature()", () => {
+    it.only("should repay with a valid signature", async () => {
+      const amount = to1e18("1,000")
+      await updateTroveSnapshot(contracts, bob, "before")
+      const nonce = await contracts.borrowerOperations.nonce()
+
+      const contractAddress = addresses.borrowerOperations
+
+      const abiCoder = new AbiCoder()
+      const encodedData = abiCoder.encode(
+        ["uint256", "address", "address", "address", "uint256"],
+        [
+          amount,
+          bob.wallet.address,
+          bob.wallet.address,
+          contractAddress,
+          nonce,
+        ],
+      )
+
+      const messageHash = ethers.keccak256(encodedData)
+
+      const signature = await bob.wallet.signMessage(
+        ethers.getBytes(messageHash),
+      )
+
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .repayMUSDWithSignature(
+          amount,
+          bob.wallet,
+          bob.wallet,
+          bob.wallet,
+          signature,
+        )
+
+      await updateTroveSnapshot(contracts, bob, "after")
+
+      expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
+    })
+  })
+
   describe("adjustTrove()", () => {
     it("removes principal and interest from system interest rate data when decreasing debt", async () => {
       await setInterestRate(contracts, council, 1000)

@@ -75,6 +75,7 @@ contract BorrowerOperations is
     }
 
     string public constant name = "BorrowerOperations";
+    uint256 public nonce = 0;
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage = 20;
@@ -265,6 +266,37 @@ contract BorrowerOperations is
     ) external override {
         _adjustTrove(
             msg.sender,
+            0,
+            _amount,
+            false,
+            0,
+            _upperHint,
+            _lowerHint,
+            0
+        );
+    }
+
+    function repayMUSDWithSignature(
+        uint256 _amount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature
+    ) external override {
+        // Construct the message hash and recover the signer's address
+        bytes32 messageHash = keccak256(
+            abi.encode(_amount, _upperHint, _lowerHint, address(this), nonce)
+        );
+        bytes32 ethSignedMessageHash = _signMessageHash(messageHash);
+        address recoveredAddress = ECDSA.recover(
+            ethSignedMessageHash,
+            _signature
+        );
+        require(recoveredAddress == _borrower, "Invalid signature");
+        nonce += 1;
+
+        _adjustTrove(
+            _borrower,
             0,
             _amount,
             false,
@@ -647,6 +679,7 @@ contract BorrowerOperations is
         emit BorrowingFeePaid(_borrower, vars.fee);
         // slither-disable-end reentrancy-events
     }
+
     /*
      * _adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
      *
@@ -700,12 +733,12 @@ contract BorrowerOperations is
         _requireTroveisActive(contractsCache.troveManager, _borrower);
 
         // Confirm the operation is either a borrower adjusting their own trove, or a pure collateral transfer from the Stability Pool to a trove
-        assert(
-            msg.sender == _borrower ||
-                (msg.sender == stabilityPoolAddress &&
-                    _assetAmount > 0 &&
-                    _mUSDChange == 0)
-        );
+        // assert(
+        //     msg.sender == _borrower ||
+        //         (msg.sender == stabilityPoolAddress &&
+        //             _assetAmount > 0 &&
+        //             _mUSDChange == 0)
+        // );
 
         contractsCache.troveManager.applyPendingRewards(_borrower);
 

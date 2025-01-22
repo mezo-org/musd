@@ -99,6 +99,14 @@ interface IBorrowerOperations {
         address _lowerHint
     ) external;
 
+    function repayMUSDWithSignature(
+        uint256 _amount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature
+    ) external;
+
     function closeTrove() external;
 
     function refinance(uint256 _maxFeePercentage) external;
@@ -116,4 +124,6 @@ interface IBorrowerOperations {
     function claimCollateral() external;
 
     function getCompositeDebt(uint256 _debt) external pure returns (uint);
+
+    function nonce() external returns (uint256);
 }
