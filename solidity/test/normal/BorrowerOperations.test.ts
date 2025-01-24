@@ -1028,6 +1028,51 @@ describe("BorrowerOperations in Normal Mode", () => {
             ),
         ).to.be.revertedWith("Invalid signature")
       })
+
+      it("reverts when the deadline has passed", async () => {
+        const borrower = carol.address
+        const contractAddress = addresses.borrowerOperations
+
+        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperations",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+
+        const value = {
+          borrower,
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          nonce,
+          deadline,
+        }
+
+        const signature = await carol.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .openTroveWithSignature(
+              maxFeePercentage,
+              debtAmount,
+              assetAmount,
+              upperHint,
+              lowerHint,
+              carol.address,
+              signature,
+              deadline,
+              { value: assetAmount },
+            ),
+        ).to.be.revertedWith("Signature expired")
+      })
     })
   })
 
