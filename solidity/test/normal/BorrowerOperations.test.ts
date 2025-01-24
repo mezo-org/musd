@@ -914,13 +914,27 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("openTroveWithSignature()", () => {
+    const maxFeePercentage = to1e18(100) / 100n
+    const debtAmount = to1e18(2000)
+    const assetAmount = to1e18(10)
+    const upperHint = ZERO_ADDRESS
+    const lowerHint = ZERO_ADDRESS
+
+    const types = {
+      OpenTrove: [
+        { name: "borrower", type: "address" },
+        { name: "maxFeePercentage", type: "uint256" },
+        { name: "debtAmount", type: "uint256" },
+        { name: "assetAmount", type: "uint256" },
+        { name: "upperHint", type: "address" },
+        { name: "lowerHint", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    }
+
     it("should open a trove with a valid signature and deadline", async () => {
       const borrower = carol.address
-      const maxFeePercentage = to1e18(100) / 100n
-      const debtAmount = to1e18(2000)
-      const assetAmount = to1e18(10)
-      const upperHint = ZERO_ADDRESS
-      const lowerHint = ZERO_ADDRESS
       const contractAddress = addresses.borrowerOperations
 
       const nonce = await contracts.borrowerOperations.getNonce(borrower)
@@ -930,19 +944,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         version: "1",
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: contractAddress,
-      }
-
-      const types = {
-        OpenTrove: [
-          { name: "borrower", type: "address" },
-          { name: "maxFeePercentage", type: "uint256" },
-          { name: "debtAmount", type: "uint256" },
-          { name: "assetAmount", type: "uint256" },
-          { name: "upperHint", type: "address" },
-          { name: "lowerHint", type: "address" },
-          { name: "nonce", type: "uint256" },
-          { name: "deadline", type: "uint256" },
-        ],
       }
 
       const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
@@ -979,6 +980,54 @@ describe("BorrowerOperations in Normal Mode", () => {
       // Account for borrowing fee and gas compensation
       const expectedDebt = await getOpenTroveTotalDebt(contracts, debtAmount)
       expect(carol.trove.debt.after).to.be.equal(expectedDebt)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when the recovered address does not match the borrower's", async () => {
+        const borrower = carol.address
+        const contractAddress = addresses.borrowerOperations
+
+        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperations",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          nonce,
+          deadline,
+        }
+
+        // Sign with Alice's wallet instead of Carol's
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .openTroveWithSignature(
+              maxFeePercentage,
+              debtAmount,
+              assetAmount,
+              upperHint,
+              lowerHint,
+              carol.address,
+              signature,
+              deadline,
+              { value: assetAmount },
+            ),
+        ).to.be.revertedWith("Invalid signature")
+      })
     })
   })
 
