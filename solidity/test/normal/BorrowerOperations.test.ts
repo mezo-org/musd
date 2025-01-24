@@ -1227,9 +1227,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith("Invalid signature")
       })
 
-      it.only("reverts when the chain id is not correctly specified", async () => {
+      it("reverts when the chain id is not correctly specified", async () => {
         const borrower = carol.address
-        const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
+        const contractAddress = addresses.borrowerOperations // PCV contract address instead of BorrowerOperations
 
         const nonce = await contracts.borrowerOperations.getNonce(borrower)
 
@@ -1237,6 +1237,96 @@ describe("BorrowerOperations in Normal Mode", () => {
           name: "BorrowerOperations",
           version: "1",
           chainId: 0n, // Incorrect chain id
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          nonce,
+          deadline,
+        }
+
+        const signature = await carol.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .openTroveWithSignature(
+              maxFeePercentage,
+              debtAmount,
+              assetAmount,
+              upperHint,
+              lowerHint,
+              carol.address,
+              signature,
+              deadline,
+              { value: assetAmount },
+            ),
+        ).to.be.revertedWith("Invalid signature")
+      })
+
+      it("reverts when the contract version is not correctly specified", async () => {
+        const borrower = carol.address
+        const contractAddress = addresses.borrowerOperations
+
+        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperations",
+          version: "1", // Incorrect version
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          nonce,
+          deadline,
+        }
+
+        const signature = await carol.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .openTroveWithSignature(
+              maxFeePercentage,
+              debtAmount,
+              assetAmount,
+              upperHint,
+              lowerHint,
+              carol.address,
+              signature,
+              deadline,
+              { value: assetAmount },
+            ),
+        ).to.be.revertedWith("Invalid signature")
+      })
+
+      it("reverts when the contract name is not correctly specified", async () => {
+        const borrower = carol.address
+        const contractAddress = addresses.borrowerOperations
+
+        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+
+        const domain = {
+          name: "TroveManager", // Incorrect name
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
         }
 
