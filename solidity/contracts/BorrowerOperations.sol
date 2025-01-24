@@ -150,7 +150,6 @@ contract BorrowerOperations is
     }
 
     // --- Borrower Trove Operations ---
-
     function openTrove(
         uint256 _maxFeePercentage,
         uint256 _debtAmount,

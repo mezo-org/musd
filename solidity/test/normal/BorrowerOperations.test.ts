@@ -1229,7 +1229,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = carol.address
-        const contractAddress = addresses.borrowerOperations // PCV contract address instead of BorrowerOperations
+        const contractAddress = addresses.borrowerOperations
 
         const nonce = await contracts.borrowerOperations.getNonce(borrower)
 
@@ -1280,7 +1280,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const domain = {
           name: "BorrowerOperations",
-          version: "1", // Incorrect version
+          version: "0", // Incorrect version
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
         }
@@ -1324,7 +1324,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const nonce = await contracts.borrowerOperations.getNonce(borrower)
 
         const domain = {
-          name: "TroveManager", // Incorrect name
+          name: "TroveManager", // Incorrect contract name
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
