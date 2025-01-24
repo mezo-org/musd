@@ -1073,6 +1073,67 @@ describe("BorrowerOperations in Normal Mode", () => {
             ),
         ).to.be.revertedWith("Signature expired")
       })
+
+      it("reverts when the nonce is invalid", async () => {
+        const borrower = carol.address
+        const contractAddress = addresses.borrowerOperations
+
+        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperations",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          nonce,
+          deadline,
+        }
+
+        const signature = await carol.wallet.signTypedData(domain, types, value)
+
+        // Submit a valid transaction to increment the nonce
+        await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .openTroveWithSignature(
+            maxFeePercentage,
+            debtAmount,
+            assetAmount,
+            upperHint,
+            lowerHint,
+            carol.address,
+            signature,
+            deadline,
+            { value: assetAmount },
+          )
+
+        // Attempt to resend the same transaction which should now be invalid due to the nonce
+        await expect(
+          contracts.borrowerOperations
+            .connect(carol.wallet)
+            .openTroveWithSignature(
+              maxFeePercentage,
+              debtAmount,
+              assetAmount,
+              upperHint,
+              lowerHint,
+              carol.address,
+              signature,
+              deadline,
+              { value: assetAmount },
+            ),
+        ).to.be.revertedWith("Invalid signature")
+      })
     })
   })
 
