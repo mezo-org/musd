@@ -933,7 +933,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       ],
     }
 
-    it("should open a trove with a valid signature and deadline", async () => {
+    it("opens a trove with a valid signature and deadline", async () => {
       const borrower = carol.address
       const contractAddress = addresses.borrowerOperations
 
@@ -980,6 +980,53 @@ describe("BorrowerOperations in Normal Mode", () => {
       // Account for borrowing fee and gas compensation
       const expectedDebt = await getOpenTroveTotalDebt(contracts, debtAmount)
       expect(carol.trove.debt.after).to.be.equal(expectedDebt)
+    })
+
+    it("correctly increments the nonce after a successful transaction", async () => {
+      const borrower = carol.address
+      const contractAddress = addresses.borrowerOperations
+
+      const nonce = await contracts.borrowerOperations.getNonce(borrower)
+
+      const domain = {
+        name: "BorrowerOperations",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: contractAddress,
+      }
+
+      const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+      const value = {
+        borrower,
+        maxFeePercentage,
+        debtAmount,
+        assetAmount,
+        upperHint,
+        lowerHint,
+        nonce,
+        deadline,
+      }
+
+      const signature = await carol.wallet.signTypedData(domain, types, value)
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .openTroveWithSignature(
+          maxFeePercentage,
+          debtAmount,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          carol.address,
+          signature,
+          deadline,
+          { value: assetAmount },
+        )
+
+      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+
+      expect(newNonce - nonce).to.equal(1)
     })
 
     context("Expected Reverts", () => {
