@@ -13,14 +13,19 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 contract BorrowerOperations is
     LiquityBase,
     Ownable,
     CheckContract,
     SendCollateral,
-    IBorrowerOperations
+    IBorrowerOperations,
+    EIP712
 {
+    using ECDSA for bytes32;
+
     /* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -65,6 +70,17 @@ contract BorrowerOperations is
         IInterestRateManager interestRateManager;
     }
 
+    struct OpenTrove {
+        address borrower;
+        uint256 maxFeePercentage;
+        uint256 debtAmount;
+        uint256 assetAmount;
+        address upperHint;
+        address lowerHint;
+        uint256 nonce;
+        uint256 deadline;
+    }
+
     enum BorrowerOperation {
         openTrove,
         closeTrove,
@@ -72,6 +88,16 @@ contract BorrowerOperations is
     }
 
     string public constant name = "BorrowerOperations";
+
+    string private constant SIGNING_DOMAIN = "BorrowerOperations";
+    string private constant SIGNATURE_VERSION = "1";
+
+    mapping(address => uint256) private _nonces;
+
+    bytes32 private constant OPEN_TROVE_TYPEHASH =
+        keccak256(
+            "OpenTrove(address borrower,uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,uint256 nonce,uint256 deadline)"
+        );
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage = 20;
@@ -101,7 +127,10 @@ contract BorrowerOperations is
         _;
     }
 
-    constructor() Ownable(msg.sender) {}
+    constructor()
+        Ownable(msg.sender)
+        EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION)
+    {}
 
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
@@ -128,145 +157,69 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        ContractsCache memory contractsCache = ContractsCache(
-            troveManager,
-            activePool,
-            musd,
-            interestRateManager
-        );
-        // slither-disable-next-line uninitialized-local
-        LocalVariables_openTrove memory vars;
-
-        vars.price = priceFeed.fetchPrice();
-        bool isRecoveryMode = _checkRecoveryMode(vars.price);
-
-        _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
-        _requireTroveisNotActive(contractsCache.troveManager, msg.sender);
-
-        vars.fee;
-        vars.netDebt = _debtAmount;
-
-        if (!isRecoveryMode) {
-            vars.fee = _triggerBorrowingFee(
-                contractsCache.troveManager,
-                contractsCache.musd,
-                _debtAmount,
-                _maxFeePercentage
-            );
-            vars.netDebt += vars.fee;
-        }
-
-        _requireAtLeastMinNetDebt(vars.netDebt);
-
-        // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
-        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
-        assert(vars.compositeDebt > 0);
-
-        // if BTC overwrite the asset value
-        _assetAmount = msg.value;
-        vars.ICR = LiquityMath._computeCR(
-            _assetAmount,
-            vars.compositeDebt,
-            vars.price
-        );
-        vars.NICR = LiquityMath._computeNominalCR(
-            _assetAmount,
-            vars.compositeDebt
-        );
-
-        if (isRecoveryMode) {
-            _requireICRisAboveCCR(vars.ICR);
-        } else {
-            _requireICRisAboveMCR(vars.ICR);
-            uint256 newTCR = _getNewTCRFromTroveChange(
-                _assetAmount,
-                true,
-                vars.compositeDebt,
-                true,
-                vars.price
-            ); // bools: coll increase, debt increase
-            _requireNewTCRisAboveCCR(newTCR);
-        }
-
-        contractsCache.troveManager.setTroveInterestRate(
+        _openTrove(
             msg.sender,
-            contractsCache.interestRateManager.interestRate()
-        );
-
-        // Set the trove struct's properties
-        contractsCache.troveManager.setTroveStatus(
-            msg.sender,
-            ITroveManager.Status.active
-        );
-        // slither-disable-next-line unused-return
-        contractsCache.troveManager.increaseTroveColl(msg.sender, _assetAmount);
-        // slither-disable-next-line unused-return
-        contractsCache.troveManager.increaseTroveDebt(
-            msg.sender,
-            vars.compositeDebt
-        );
-
-        // solhint-disable not-rely-on-time
-        contractsCache.troveManager.setTroveLastInterestUpdateTime(
-            msg.sender,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
-
-        // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
-        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
-            _assetAmount,
-            vars.price
-        );
-        contractsCache.troveManager.setTroveMaxBorrowingCapacity(
-            msg.sender,
-            maxBorrowingCapacity
-        );
-
-        contractsCache.troveManager.updateTroveRewardSnapshots(msg.sender);
-        vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
-            msg.sender
-        );
-
-        sortedTroves.insert(msg.sender, vars.NICR, _upperHint, _lowerHint);
-        vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
-            msg.sender
-        );
-
-        /*
-         * Move the collateral to the Active Pool, and mint the amount to the borrower
-         * If the user has insuffient tokens to do the transfer to the Active Pool an error will cause the transaction to revert.
-         */
-        _activePoolAddColl(contractsCache.activePool, _assetAmount);
-        _withdrawMUSD(
-            contractsCache.activePool,
-            contractsCache.musd,
-            msg.sender,
+            _maxFeePercentage,
             _debtAmount,
-            vars.netDebt
-        );
-        // Move the mUSD gas compensation to the Gas Pool
-        _withdrawMUSD(
-            contractsCache.activePool,
-            contractsCache.musd,
-            gasPoolAddress,
-            MUSD_GAS_COMPENSATION,
-            MUSD_GAS_COMPENSATION
-        );
-
-        // slither-disable-start reentrancy-events
-        emit TroveCreated(msg.sender, vars.arrayIndex);
-
-        emit TroveUpdated(
-            msg.sender,
-            vars.compositeDebt,
-            0,
             _assetAmount,
-            vars.stake,
-            uint8(BorrowerOperation.openTrove)
+            _upperHint,
+            _lowerHint
         );
-        emit BorrowingFeePaid(msg.sender, vars.fee);
-        // slither-disable-end reentrancy-events
+    }
+
+    function openTroveWithSignature(
+        uint256 _maxFeePercentage,
+        uint256 _debtAmount,
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external payable override {
+        // solhint-disable not-rely-on-time
+        require(block.timestamp <= _deadline, "Signature expired");
+        uint256 nonce = _nonces[_borrower];
+        OpenTrove memory openTroveData = OpenTrove({
+            borrower: _borrower,
+            maxFeePercentage: _maxFeePercentage,
+            debtAmount: _debtAmount,
+            assetAmount: _assetAmount,
+            upperHint: _upperHint,
+            lowerHint: _lowerHint,
+            nonce: nonce,
+            deadline: _deadline
+        });
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    OPEN_TROVE_TYPEHASH,
+                    openTroveData.borrower,
+                    openTroveData.maxFeePercentage,
+                    openTroveData.debtAmount,
+                    openTroveData.assetAmount,
+                    openTroveData.upperHint,
+                    openTroveData.lowerHint,
+                    openTroveData.nonce,
+                    openTroveData.deadline
+                )
+            )
+        );
+
+        address recoveredAddress = ECDSA.recover(digest, _signature);
+        require(recoveredAddress == _borrower, "Invalid signature");
+
+        _nonces[_borrower]++;
+
+        _openTrove(
+            _borrower,
+            _maxFeePercentage,
+            _debtAmount,
+            _assetAmount,
+            _upperHint,
+            _lowerHint
+        );
     }
 
     // Send collateral to a trove
@@ -588,6 +541,158 @@ contract BorrowerOperations is
         return _getCompositeDebt(_debt);
     }
 
+    function getNonce(address user) public view returns (uint256) {
+        return _nonces[user];
+    }
+
+    function _openTrove(
+        address _borrower,
+        uint256 _maxFeePercentage,
+        uint256 _debtAmount,
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint
+    ) internal {
+        ContractsCache memory contractsCache = ContractsCache(
+            troveManager,
+            activePool,
+            musd,
+            interestRateManager
+        );
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_openTrove memory vars;
+
+        vars.price = priceFeed.fetchPrice();
+        bool isRecoveryMode = _checkRecoveryMode(vars.price);
+
+        _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
+        _requireTroveisNotActive(contractsCache.troveManager, _borrower);
+
+        vars.fee;
+        vars.netDebt = _debtAmount;
+
+        if (!isRecoveryMode) {
+            vars.fee = _triggerBorrowingFee(
+                contractsCache.troveManager,
+                contractsCache.musd,
+                _debtAmount,
+                _maxFeePercentage
+            );
+            vars.netDebt += vars.fee;
+        }
+
+        _requireAtLeastMinNetDebt(vars.netDebt);
+
+        // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
+        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
+        assert(vars.compositeDebt > 0);
+
+        // if BTC overwrite the asset value
+        _assetAmount = msg.value;
+        vars.ICR = LiquityMath._computeCR(
+            _assetAmount,
+            vars.compositeDebt,
+            vars.price
+        );
+        vars.NICR = LiquityMath._computeNominalCR(
+            _assetAmount,
+            vars.compositeDebt
+        );
+
+        if (isRecoveryMode) {
+            _requireICRisAboveCCR(vars.ICR);
+        } else {
+            _requireICRisAboveMCR(vars.ICR);
+            uint256 newTCR = _getNewTCRFromTroveChange(
+                _assetAmount,
+                true,
+                vars.compositeDebt,
+                true,
+                vars.price
+            ); // bools: coll increase, debt increase
+            _requireNewTCRisAboveCCR(newTCR);
+        }
+
+        contractsCache.troveManager.setTroveInterestRate(
+            _borrower,
+            contractsCache.interestRateManager.interestRate()
+        );
+
+        // Set the trove struct's properties
+        contractsCache.troveManager.setTroveStatus(
+            _borrower,
+            ITroveManager.Status.active
+        );
+        // slither-disable-next-line unused-return
+        contractsCache.troveManager.increaseTroveColl(_borrower, _assetAmount);
+        // slither-disable-next-line unused-return
+        contractsCache.troveManager.increaseTroveDebt(
+            _borrower,
+            vars.compositeDebt
+        );
+
+        // solhint-disable not-rely-on-time
+        contractsCache.troveManager.setTroveLastInterestUpdateTime(
+            _borrower,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
+        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            _assetAmount,
+            vars.price
+        );
+        contractsCache.troveManager.setTroveMaxBorrowingCapacity(
+            _borrower,
+            maxBorrowingCapacity
+        );
+
+        contractsCache.troveManager.updateTroveRewardSnapshots(_borrower);
+        vars.stake = contractsCache.troveManager.updateStakeAndTotalStakes(
+            _borrower
+        );
+
+        sortedTroves.insert(_borrower, vars.NICR, _upperHint, _lowerHint);
+        vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
+            _borrower
+        );
+
+        /*
+         * Move the collateral to the Active Pool, and mint the amount to the borrower
+         * If the user has insuffient tokens to do the transfer to the Active Pool an error will cause the transaction to revert.
+         */
+        _activePoolAddColl(contractsCache.activePool, _assetAmount);
+        _withdrawMUSD(
+            contractsCache.activePool,
+            contractsCache.musd,
+            _borrower,
+            _debtAmount,
+            vars.netDebt
+        );
+        // Move the mUSD gas compensation to the Gas Pool
+        _withdrawMUSD(
+            contractsCache.activePool,
+            contractsCache.musd,
+            gasPoolAddress,
+            MUSD_GAS_COMPENSATION,
+            MUSD_GAS_COMPENSATION
+        );
+
+        // slither-disable-start reentrancy-events
+        emit TroveCreated(_borrower, vars.arrayIndex);
+
+        emit TroveUpdated(
+            _borrower,
+            vars.compositeDebt,
+            0,
+            _assetAmount,
+            vars.stake,
+            uint8(BorrowerOperation.openTrove)
+        );
+        emit BorrowingFeePaid(_borrower, vars.fee);
+        // slither-disable-end reentrancy-events
+    }
     /*
      * _adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
      *
