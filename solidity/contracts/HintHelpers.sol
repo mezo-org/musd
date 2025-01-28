@@ -6,20 +6,30 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract HintHelpers is LiquityBase, Ownable, CheckContract {
+contract HintHelpers is
+    CheckContract,
+    Initializable,
+    LiquityBase,
+    OwnableUpgradeable
+{
     string public constant NAME = "HintHelpers";
 
     ISortedTroves public sortedTroves;
     ITroveManager public troveManager;
+
+    uint256[50] private __gap;
 
     // --- Events ---
 
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+    }
 
     // --- Dependency setters ---
 
