@@ -12,14 +12,16 @@ import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract BorrowerOperations is
-    LiquityBase,
-    Ownable,
     CheckContract,
-    SendCollateral,
-    IBorrowerOperations
+    IBorrowerOperations,
+    Initializable,
+    LiquityBase,
+    OwnableUpgradeable,
+    SendCollateral
 {
     /* --- Variable container structs  ---
 
@@ -74,7 +76,8 @@ contract BorrowerOperations is
     string public constant name = "BorrowerOperations";
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
-    uint8 public refinancingFeePercentage = 20;
+    uint8 public refinancingFeePercentage;
+    uint256[50] private __gap;
 
     // --- Connected contract declarations ---
 
@@ -101,7 +104,10 @@ contract BorrowerOperations is
         _;
     }
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+        refinancingFeePercentage = 20;
+    }
 
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
@@ -112,7 +118,7 @@ contract BorrowerOperations is
         musd.mint(pcvAddress, _musdToMint);
     }
 
-    function burnDebtFromPCV(uint256 _musdToBurn) external {
+    function burnDebtFromPCV(uint256 _musdToBurn) external virtual {
         require(
             msg.sender == pcvAddress,
             "BorrowerOperations: caller must be PCV"

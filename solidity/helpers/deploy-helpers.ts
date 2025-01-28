@@ -156,6 +156,19 @@ export async function setupDeploymentBoilerplate(
     return deployments.deploy(name, { ...defaultDeployOptions, ...options })
   }
 
+  const deployProxy = (name: string) => {
+    log(`Deploying ${name} contract...`)
+    return helpers.upgrades.deployProxy(name, {
+      contractName: name,
+      initializerArgs: [deployer.address],
+      factoryOpts: { signer: deployer },
+      proxyOpts: {
+        kind: "transparent",
+        initialOwner: deployer.address,
+      },
+    })
+  }
+
   const getOrDeploy = async (
     contractName: string,
     options: PartialDeployOptions = {},
@@ -174,6 +187,21 @@ export async function setupDeploymentBoilerplate(
         await helpers.etherscan.verify(contract)
       }
     }
+  }
+
+  const getOrDeployProxy = async (contractName: string) => {
+    const deployment = await getValidDeployment(contractName)
+    if (deployment) {
+      log(`Using ${contractName} at ${deployment.address}`)
+      return deployment
+    }
+
+    const [_, contract] = await deployProxy(contractName)
+
+    if (network.name !== "hardhat") {
+      await helpers.etherscan.verify(contract)
+    }
+    return contract
   }
 
   const execute = (
@@ -200,6 +228,7 @@ export async function setupDeploymentBoilerplate(
     deployments,
     execute,
     getOrDeploy,
+    getOrDeployProxy,
     getValidDeployment,
     isHardhatNetwork: network.name === "hardhat",
     log,
