@@ -3,8 +3,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getOrDeploy } = await setupDeploymentBoilerplate(hre)
-  await getOrDeploy("SortedTroves")
+  const { deployer, getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
+
+  await getOrDeployProxy("SortedTroves", {
+    initializerArgs: [deployer.address],
+  })
 }
 
 export default func

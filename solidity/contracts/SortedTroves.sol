@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./dependencies/CheckContract.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
@@ -40,7 +41,12 @@ import "./interfaces/ITroveManager.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedTroves is Ownable, CheckContract, ISortedTroves {
+contract SortedTroves is
+    CheckContract,
+    ISortedTroves,
+    Initializable,
+    OwnableUpgradeable
+{
     // Information for a node in the list
     struct Node {
         bool exists;
@@ -61,9 +67,13 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
     ITroveManager public troveManager;
     Data public data;
 
+    uint256[50] private __gap;
+
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+    }
 
     // --- Dependency setters ---
 
