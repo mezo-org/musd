@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { Deployment, DeployOptions } from "hardhat-deploy/types"
+import { UpgradesDeployOptions } from "@keep-network/hardhat-helpers/src/upgrades"
 import { deployments, ethers, helpers } from "hardhat"
 import type { BaseContract } from "ethers"
 import {
@@ -156,16 +157,19 @@ export async function setupDeploymentBoilerplate(
     return deployments.deploy(name, { ...defaultDeployOptions, ...options })
   }
 
-  const deployProxy = (name: string) => {
+  const defaultProxyDeployOptions: UpgradesDeployOptions = {
+    factoryOpts: { signer: deployer },
+    proxyOpts: {
+      kind: "transparent",
+      initialOwner: deployer.address,
+    },
+  }
+
+  const deployProxy = (name: string, options: UpgradesDeployOptions = {}) => {
     log(`Deploying ${name} contract...`)
     return helpers.upgrades.deployProxy(name, {
-      contractName: name,
-      initializerArgs: [deployer.address],
-      factoryOpts: { signer: deployer },
-      proxyOpts: {
-        kind: "transparent",
-        initialOwner: deployer.address,
-      },
+      ...defaultProxyDeployOptions,
+      ...options,
     })
   }
 
@@ -189,14 +193,17 @@ export async function setupDeploymentBoilerplate(
     }
   }
 
-  const getOrDeployProxy = async (contractName: string) => {
+  const getOrDeployProxy = async (
+    contractName: string,
+    options: UpgradesDeployOptions = {},
+  ) => {
     const deployment = await getValidDeployment(contractName)
     if (deployment) {
       log(`Using ${contractName} at ${deployment.address}`)
       return deployment
     }
 
-    const [_, contract] = await deployProxy(contractName)
+    const [_, contract] = await deployProxy(contractName, options)
 
     if (network.name !== "hardhat") {
       await helpers.etherscan.verify(contract)
@@ -224,6 +231,7 @@ export async function setupDeploymentBoilerplate(
 
   return {
     deploy,
+    deployProxy,
     deployer,
     deployments,
     execute,
