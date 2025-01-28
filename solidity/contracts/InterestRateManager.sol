@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./token/IMUSD.sol";
 import {CheckContract} from "./dependencies/CheckContract.sol";
 import {IActivePool} from "./interfaces/IActivePool.sol";
@@ -10,12 +12,17 @@ import {IInterestRateManager} from "./interfaces/IInterestRateManager.sol";
 import {IPCV} from "./interfaces/IPCV.sol";
 import {ITroveManager} from "./interfaces/ITroveManager.sol";
 
-contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
+contract InterestRateManager is
+    CheckContract,
+    IInterestRateManager,
+    Initializable,
+    OwnableUpgradeable
+{
     // Current interest rate per year in basis points
     uint16 public interestRate;
 
     // Maximum interest rate that can be set, defaults to 100% (10000 bps)
-    uint16 public maxInterestRate = 10000;
+    uint16 public maxInterestRate;
 
     // Proposed interest rate -- must be approved by governance after a minimum delay
     uint16 public proposedInterestRate;
@@ -33,6 +40,8 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
     IMUSD public musdToken;
     IPCV internal pcv;
     ITroveManager internal troveManager;
+
+    uint256[50] private __gap;
 
     modifier onlyGovernance() {
         require(
@@ -59,7 +68,11 @@ contract InterestRateManager is Ownable, CheckContract, IInterestRateManager {
         _;
     }
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+
+        maxInterestRate = 10000;
+    }
 
     function setAddresses(
         address _activePoolAddress,
