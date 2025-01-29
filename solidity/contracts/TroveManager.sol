@@ -220,6 +220,7 @@ contract TroveManager is
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 
     function initialize(address _owner) external virtual initializer {

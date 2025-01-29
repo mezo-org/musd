@@ -41,6 +41,7 @@ contract InterestRateManager is
     IPCV internal pcv;
     ITroveManager internal troveManager;
 
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 
     modifier onlyGovernance() {

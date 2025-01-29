@@ -104,6 +104,7 @@ contract BorrowerOperations is
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage;
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 
     // --- Connected contract declarations ---
