@@ -16,9 +16,17 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+contract TroveManager is
+    CheckContract,
+    ITroveManager,
+    Initializable,
+    LiquityBase,
+    OwnableUpgradeable
+{
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidateInNormalMode,
@@ -212,7 +220,11 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
-    constructor() Ownable(msg.sender) {}
+    uint256[50] private __gap;
+
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+    }
 
     function setAddresses(
         address _activePoolAddress,
