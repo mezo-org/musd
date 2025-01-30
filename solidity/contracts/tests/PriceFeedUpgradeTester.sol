@@ -13,6 +13,7 @@ contract PriceFeedUpgradeTester is
     Initializable,
     OwnableUpgradeable
 {
+    // slither-disable-next-line constable-states
     ChainlinkAggregatorV3Interface public oracle;
 
     // slither-disable-next-line unused-state
@@ -25,7 +26,6 @@ contract PriceFeedUpgradeTester is
     function setOracle(address _oracle) external onlyOwner {}
 
     function fetchPrice() public view virtual returns (uint256) {
-        // $45k
-        return 45000000000000000000000;
+        return 45000e18;
     }
 }
