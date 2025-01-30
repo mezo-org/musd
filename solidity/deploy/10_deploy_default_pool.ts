@@ -3,8 +3,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getOrDeploy } = await setupDeploymentBoilerplate(hre)
-  await getOrDeploy("DefaultPool")
+  const { getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
+  await getOrDeployProxy("DefaultPool")
 }
 
 export default func
