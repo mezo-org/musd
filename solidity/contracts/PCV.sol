@@ -2,18 +2,26 @@
 
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./BorrowerOperations.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IPCV.sol";
 import "./token/IMUSD.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
+contract PCV is
+    CheckContract,
+    IPCV,
+    Initializable,
+    OwnableUpgradeable,
+    SendCollateral
+{
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
 
-    uint256 public immutable governanceTimeDelay;
+    uint256 public governanceTimeDelay;
 
     BorrowerOperations public borrowerOperations;
     IMUSD public musd;
@@ -34,6 +42,9 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
     address public feeRecipient;
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
     uint8 public constant FEE_SPLIT_MAX = 50; // no more than 50% of fees can be sent until the debt is paid
+
+    // slither-disable-next-line unused-state
+    uint256[50] private __gap;
 
     modifier onlyAfterDebtPaid() {
         require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
@@ -58,9 +69,17 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         _;
     }
 
-    constructor(uint256 _governanceTimeDelay) Ownable(msg.sender) {
+    function initialize(
+        address _owner,
+        uint256 _governanceTimeDelay
+    ) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+
+        require(
+            _governanceTimeDelay <= 30 weeks,
+            "Governance delay is too big"
+        );
         governanceTimeDelay = _governanceTimeDelay;
-        require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
     }
 
     receive() external payable {}
