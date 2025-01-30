@@ -58,4 +58,15 @@ describe("Proxy Upgrades", () => {
 
     expect(carol.trove.debt.after).to.equal(0n)
   })
+
+  it("preserves prior state", async () => {
+    const oldOracle = await contracts.priceFeed.oracle()
+
+    await updatePriceFeed()
+
+    const newOracle = await contracts.priceFeed.oracle()
+
+    expect(newOracle).to.equal(oldOracle)
+    expect(newOracle).to.equal(await contracts.mockAggregator.getAddress())
+  })
 })
