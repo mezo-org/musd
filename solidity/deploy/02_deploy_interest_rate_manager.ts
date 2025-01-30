@@ -3,11 +3,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
+  const { getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
 
-  await getOrDeployProxy("InterestRateManager", {
-    initializerArgs: [deployer.address],
-  })
+  await getOrDeployProxy("InterestRateManager")
 }
 
 export default func

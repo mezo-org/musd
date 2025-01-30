@@ -3,14 +3,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, getOrDeployProxy, isHardhatNetwork } =
+  const { getOrDeployProxy, isHardhatNetwork } =
     await setupDeploymentBoilerplate(hre)
 
   await getOrDeployProxy(
     isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
-    {
-      initializerArgs: [deployer.address],
-    },
   )
 }
 

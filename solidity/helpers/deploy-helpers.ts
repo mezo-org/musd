@@ -159,6 +159,7 @@ export async function setupDeploymentBoilerplate(
 
   const defaultProxyDeployOptions: UpgradesDeployOptions = {
     factoryOpts: { signer: deployer },
+    initializerArgs: [deployer.address],
     proxyOpts: {
       kind: "transparent",
       initialOwner: deployer.address,

@@ -3,17 +3,14 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, deployProxy, getOrDeployProxy, isHardhatNetwork } =
+  const { deployProxy, getOrDeployProxy, isHardhatNetwork } =
     await setupDeploymentBoilerplate(hre)
 
-  await getOrDeployProxy("PriceFeed", {
-    initializerArgs: [deployer.address],
-  })
+  await getOrDeployProxy("PriceFeed")
 
   if (isHardhatNetwork) {
     await deployProxy("UnconnectedPriceFeed", {
       contractName: "PriceFeed",
-      initializerArgs: [deployer.address],
     })
   }
 }
