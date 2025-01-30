@@ -123,7 +123,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         emit MUSDTokenAddressSet(_musdTokenAddress);
     }
 
-    function initialize() external override onlyOwnerOrCouncilOrTreasury {
+    function initializeDebt() external override onlyOwnerOrCouncilOrTreasury {
         require(!isInitialized, "PCV: already initialized");
 
         debtToPay = BOOTSTRAP_LOAN;

@@ -29,7 +29,7 @@ interface IPCV {
         address _musdTokenAddress
     ) external;
 
-    function initialize() external;
+    function initializeDebt() external;
 
     function setFeeRecipient(address _feeRecipient) external;
 
