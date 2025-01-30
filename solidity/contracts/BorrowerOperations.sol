@@ -482,7 +482,7 @@ contract BorrowerOperations is
         address _troveManagerAddress
     ) external override onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
-        assert(MIN_NET_DEBT > 0);
+        assert(minNetDebt > 0);
 
         checkContract(_activePoolAddress);
         checkContract(_collSurplusPoolAddress);
@@ -693,6 +693,7 @@ contract BorrowerOperations is
         emit BorrowingFeePaid(_borrower, vars.fee);
         // slither-disable-end reentrancy-events
     }
+
     /*
      * _adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
      *
@@ -1086,6 +1087,13 @@ contract BorrowerOperations is
         );
     }
 
+    function _requireAtLeastMinNetDebt(uint256 _netDebt) internal view {
+        require(
+            _netDebt >= minNetDebt,
+            "BorrowerOps: Trove's net debt must be greater than minimum"
+        );
+    }
+
     /*
      * In Recovery Mode, only allow:
      *
@@ -1197,13 +1205,6 @@ contract BorrowerOperations is
                 "Max fee percentage must be between 0.5% and 100%"
             );
         }
-    }
-
-    function _requireAtLeastMinNetDebt(uint256 _netDebt) internal pure {
-        require(
-            _netDebt >= MIN_NET_DEBT,
-            "BorrowerOps: Trove's net debt must be greater than minimum"
-        );
     }
 
     function _requireICRisAboveMCR(uint256 _newICR) internal pure {

@@ -1644,7 +1644,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                _getNetDebt(vars.newDebt) < MIN_NET_DEBT
+                _getNetDebt(vars.newDebt) < minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
@@ -1701,7 +1701,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _borrower
     ) internal returns (uint128 index) {
         /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum mUSD
-        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 mUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
+        debt of liquidation reserve plus minNetDebt. 3e30 mUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
 
         // Push the Troveowner to the array
         TroveOwners.push(_borrower);

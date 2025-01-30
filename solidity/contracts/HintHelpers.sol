@@ -52,7 +52,7 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
      *     or zero in case of no partial redemption.
      *  - `truncatedAmount` is the maximum amount that can be redeemed out of the the provided `_amount`. This can be lower than
      *    `_amount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
-     *    minimum allowed value (i.e. MIN_NET_DEBT).
+     *    minimum allowed value (i.e. minNetDebt).
      *
      * The number of Troves to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
      * will leave it uncapped.
@@ -107,10 +107,10 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
                 pendingInterest;
 
             if (netDebt > remainingMUSD) {
-                if (netDebt > MIN_NET_DEBT) {
+                if (netDebt > minNetDebt) {
                     uint256 maxRedeemableMUSD = LiquityMath._min(
                         remainingMUSD,
-                        netDebt - MIN_NET_DEBT
+                        netDebt - minNetDebt
                     );
 
                     uint256 collateral = troveManager.getTroveColl(
