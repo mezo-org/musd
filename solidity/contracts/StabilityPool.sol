@@ -6,7 +6,9 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
@@ -17,11 +19,12 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";
 
 contract StabilityPool is
-    LiquityBase,
-    Ownable,
     CheckContract,
-    SendCollateral,
-    IStabilityPool
+    IStabilityPool,
+    Initializable,
+    LiquityBase,
+    OwnableUpgradeable,
+    SendCollateral
 {
     // --- Type Declarations ---
     struct Snapshots {
@@ -55,7 +58,7 @@ contract StabilityPool is
      * During its lifetime, a deposit's value evolves from d_t to d_t * P / P_t , where P_t
      * is the snapshot of P taken at the instant the deposit was made. 18-digit decimal.
      */
-    uint256 public P = DECIMAL_PRECISION;
+    uint256 public P;
 
     // Each time the scale of P shifts by SCALE_FACTOR, the scale is incremented by 1
     uint128 public currentScale;
@@ -77,9 +80,16 @@ contract StabilityPool is
     uint256 public lastCollateralError_Offset;
     uint256 public lastMUSDLossError_Offset;
 
+    // slither-disable-next-line unused-state
+    uint256[50] private __gap;
+
     // --- Functions --
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+
+        P = DECIMAL_PRECISION;
+    }
 
     // solhint-disable no-complex-fallback
     receive() external payable {
