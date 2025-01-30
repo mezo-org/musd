@@ -2,8 +2,10 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePool.sol";
@@ -19,7 +21,13 @@ import "./interfaces/IStabilityPool.sol";
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
-contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
+contract ActivePool is
+    CheckContract,
+    IActivePool,
+    Initializable,
+    OwnableUpgradeable,
+    SendCollateral
+{
     address public borrowerOperationsAddress;
     address public collSurplusPoolAddress;
     address public defaultPoolAddress;
@@ -31,7 +39,12 @@ contract ActivePool is Ownable, CheckContract, SendCollateral, IActivePool {
     uint256 internal principal;
     uint256 internal interest;
 
-    constructor() Ownable(msg.sender) {}
+    // slither-disable-next-line unused-state
+    uint256[50] private __gap;
+
+    function initialize(address _owner) external virtual initializer {
+        __Ownable_init_unchained(_owner);
+    }
 
     // --- Fallback function ---
 

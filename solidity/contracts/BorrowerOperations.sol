@@ -104,8 +104,6 @@ contract BorrowerOperations is
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage;
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
 
     // --- Connected contract declarations ---
 
@@ -123,6 +121,9 @@ contract BorrowerOperations is
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
+
+    // slither-disable-next-line unused-state
+    uint256[50] private __gap;
 
     modifier onlyGovernance() {
         require(
