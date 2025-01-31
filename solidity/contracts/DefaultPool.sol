@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -21,7 +20,6 @@ import "./interfaces/IDefaultPool.sol";
 contract DefaultPool is
     CheckContract,
     IDefaultPool,
-    Initializable,
     OwnableUpgradeable,
     SendCollateral
 {

@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
@@ -42,12 +41,7 @@ import "./interfaces/ITroveManager.sol";
  *
  * - Public functions with parameters have been made internal to save gas, and given an external wrapper function for external access
  */
-contract SortedTroves is
-    CheckContract,
-    ISortedTroves,
-    Initializable,
-    OwnableUpgradeable
-{
+contract SortedTroves is CheckContract, ISortedTroves, OwnableUpgradeable {
     // Information for a node in the list
     struct Node {
         bool exists;

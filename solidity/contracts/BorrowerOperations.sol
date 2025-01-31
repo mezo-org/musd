@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
@@ -21,7 +20,6 @@ import "./token/IMUSD.sol";
 contract BorrowerOperations is
     CheckContract,
     IBorrowerOperations,
-    Initializable,
     LiquityBase,
     EIP712Upgradeable,
     OwnableUpgradeable,

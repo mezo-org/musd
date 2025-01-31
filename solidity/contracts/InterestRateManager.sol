@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./token/IMUSD.sol";
@@ -15,7 +14,6 @@ import {ITroveManager} from "./interfaces/ITroveManager.sol";
 contract InterestRateManager is
     CheckContract,
     IInterestRateManager,
-    Initializable,
     OwnableUpgradeable
 {
     // Current interest rate per year in basis points

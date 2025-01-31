@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
@@ -10,12 +9,7 @@ import "./dependencies/LiquityBase.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 
-contract HintHelpers is
-    CheckContract,
-    Initializable,
-    LiquityBase,
-    OwnableUpgradeable
-{
+contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
     string public constant NAME = "HintHelpers";
 
     ISortedTroves public sortedTroves;
