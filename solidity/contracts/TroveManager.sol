@@ -1583,7 +1583,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 minNetDebt
+        uint256 _minNetDebt
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
@@ -1650,7 +1650,7 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                _getNetDebt(vars.newDebt) < minNetDebt
+                _getNetDebt(vars.newDebt) < _minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
