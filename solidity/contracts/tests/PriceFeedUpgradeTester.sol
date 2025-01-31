@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import "../interfaces/ChainlinkAggregatorV3Interface.sol";
 import "../interfaces/IPriceFeed.sol";
@@ -11,7 +11,7 @@ import "../interfaces/IPriceFeed.sol";
 contract PriceFeedUpgradeTester is
     IPriceFeed,
     Initializable,
-    OwnableUpgradeable
+    Ownable2StepUpgradeable
 {
     // slither-disable-next-line constable-states
     ChainlinkAggregatorV3Interface public oracle;

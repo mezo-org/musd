@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./BorrowerOperations.sol";
@@ -16,7 +16,7 @@ contract PCV is
     CheckContract,
     IPCV,
     Initializable,
-    OwnableUpgradeable,
+    Ownable2StepUpgradeable,
     SendCollateral
 {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
