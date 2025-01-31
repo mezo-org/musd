@@ -1409,6 +1409,16 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("changes the minimum net debt for users to open troves", async () => {
+      await expect(
+        openTrove(contracts, {
+          musdAmount: "300",
+          ICR: "200",
+          sender: carol.wallet,
+        }),
+      ).to.be.revertedWith(
+        "BorrowerOps: Trove's net debt must be greater than minimum",
+      )
+
       const newMinNetDebt = to1e18(300)
       await contracts.borrowerOperations
         .connect(council.wallet)
@@ -1422,8 +1432,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(council.wallet)
         .approveMinNetDebt()
 
-      // The previous minimum was $1800, so if we're allowed to open a trove
-      // with just $300 then the minimum has been adjusted.
       await openTrove(contracts, {
         musdAmount: "300",
         ICR: "200",
