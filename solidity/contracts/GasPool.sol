@@ -23,9 +23,6 @@ contract GasPool is CheckContract, IGasPool, Initializable, OwnableUpgradeable {
     address public troveManagerAddress;
     IMUSD public musdToken;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     function initialize(address _owner) external virtual initializer {
         __Ownable_init_unchained(_owner);
     }

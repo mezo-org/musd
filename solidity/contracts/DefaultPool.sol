@@ -33,9 +33,6 @@ contract DefaultPool is
     uint256 internal interest;
     uint256 internal lastInterestUpdatedTime;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     function initialize(address _owner) external virtual initializer {
         __Ownable_init_unchained(_owner);
     }

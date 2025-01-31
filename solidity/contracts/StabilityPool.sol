@@ -80,9 +80,6 @@ contract StabilityPool is
     uint256 public lastCollateralError_Offset;
     uint256 public lastMUSDLossError_Offset;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     // --- Functions --
 
     function initialize(address _owner) external virtual initializer {

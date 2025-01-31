@@ -29,9 +29,6 @@ contract CollSurplusPool is
     // Collateral surplus claimable by trove owners
     mapping(address => uint) internal balances;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     function initialize(address _owner) external virtual initializer {
         __Ownable_init_unchained(_owner);
     }

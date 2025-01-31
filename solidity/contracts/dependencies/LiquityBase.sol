@@ -43,6 +43,9 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     // slither-disable-next-line all
     IPriceFeed public override priceFeed;
 
+    // slither-disable-next-line unused-state
+    uint256[50] private __gap;
+
     // --- Gas compensation functions ---
 
     function getEntireSystemColl()

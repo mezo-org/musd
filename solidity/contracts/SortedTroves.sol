@@ -68,9 +68,6 @@ contract SortedTroves is
     ITroveManager public troveManager;
     Data public data;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
     function initialize(address _owner) external virtual initializer {

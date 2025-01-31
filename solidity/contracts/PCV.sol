@@ -43,9 +43,6 @@ contract PCV is
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
     uint8 public constant FEE_SPLIT_MAX = 50; // no more than 50% of fees can be sent until the debt is paid
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     modifier onlyAfterDebtPaid() {
         require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
         _;

@@ -122,9 +122,6 @@ contract BorrowerOperations is
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     modifier onlyGovernance() {
         require(
             msg.sender == pcv.council() || msg.sender == pcv.treasury(),

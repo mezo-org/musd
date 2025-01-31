@@ -15,9 +15,6 @@ contract PriceFeed is IPriceFeed, Initializable, Ownable2StepUpgradeable {
     // State ------------------------------------------------------------------------------------------------------------
     ChainlinkAggregatorV3Interface public oracle;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     function initialize(address _owner) external virtual initializer {
         __Ownable_init_unchained(_owner);
     }

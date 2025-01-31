@@ -21,9 +21,6 @@ contract HintHelpers is
     ISortedTroves public sortedTroves;
     ITroveManager public troveManager;
 
-    // slither-disable-next-line unused-state
-    uint256[50] private __gap;
-
     // --- Events ---
 
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
