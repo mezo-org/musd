@@ -1468,7 +1468,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           .proposeMinNetDebt(to1e18(300))
 
         // Simulate 8 days passing
-        const timeToIncrease = 8 * 24 * 60 * 60 // 6 days in seconds
+        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
         await fastForwardTime(timeToIncrease)
 
         await expect(
