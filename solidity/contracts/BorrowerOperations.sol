@@ -271,7 +271,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external payable override {
+    ) external payable {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
@@ -333,7 +333,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external payable override {
+    ) external payable {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
@@ -411,7 +411,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external override {
+    ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
@@ -479,7 +479,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external override {
+    ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
@@ -552,7 +552,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external override {
+    ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
@@ -605,7 +605,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external override {
+    ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
@@ -718,7 +718,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) external payable override {
+    ) external payable {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = _nonces[_borrower];
