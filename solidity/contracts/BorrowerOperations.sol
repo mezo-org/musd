@@ -26,6 +26,8 @@ contract BorrowerOperations is
 {
     using ECDSA for bytes32;
 
+    uint256 constant MIN_TOTAL_DEBT = 250e18;
+
     /* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -118,6 +120,12 @@ contract BorrowerOperations is
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
+
+    // Minimum amount of net mUSD debt a trove must have
+    uint256 public minNetDebt = 1800e18;
+
+    uint256 public proposedMinNetDebt;
+    uint256 public proposedMinNetDebtTime;
 
     modifier onlyGovernance() {
         require(
@@ -482,7 +490,7 @@ contract BorrowerOperations is
         address _troveManagerAddress
     ) external override onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
-        assert(MIN_NET_DEBT > 0);
+        assert(minNetDebt > 0);
 
         checkContract(_activePoolAddress);
         checkContract(_collSurplusPoolAddress);
@@ -539,6 +547,32 @@ contract BorrowerOperations is
         uint256 _debt
     ) external pure override returns (uint) {
         return _getCompositeDebt(_debt);
+    }
+
+    function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
+        // Making users lock up at least $250 reduces potential dust attacks
+        require(
+            _minNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
+            "Minimum Net Debt plus Gas Compensation must be at least $250."
+        );
+        proposedMinNetDebt = _minNetDebt;
+        // solhint-disable-next-line not-rely-on-time
+        proposedMinNetDebtTime = block.timestamp;
+        emit MinNetDebtProposed(proposedMinNetDebt, proposedMinNetDebtTime);
+    }
+
+    function approveMinNetDebt() external onlyGovernance {
+        // solhint-disable not-rely-on-time
+        require(
+            block.timestamp >= proposedMinNetDebtTime + 7 days,
+            "Must wait at least 7 days before approving a change to Minimum Net Debt"
+        );
+        require(
+            proposedMinNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
+            "Minimum Net Debt plus Gas Compensation must be at least $250."
+        );
+        minNetDebt = proposedMinNetDebt;
+        emit MinNetDebtChanged(minNetDebt);
     }
 
     function getNonce(address user) public view returns (uint256) {
@@ -693,6 +727,7 @@ contract BorrowerOperations is
         emit BorrowingFeePaid(_borrower, vars.fee);
         // slither-disable-end reentrancy-events
     }
+
     /*
      * _adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
      *
@@ -1086,6 +1121,13 @@ contract BorrowerOperations is
         );
     }
 
+    function _requireAtLeastMinNetDebt(uint256 _netDebt) internal view {
+        require(
+            _netDebt >= minNetDebt,
+            "BorrowerOps: Trove's net debt must be greater than minimum"
+        );
+    }
+
     /*
      * In Recovery Mode, only allow:
      *
@@ -1197,13 +1239,6 @@ contract BorrowerOperations is
                 "Max fee percentage must be between 0.5% and 100%"
             );
         }
-    }
-
-    function _requireAtLeastMinNetDebt(uint256 _netDebt) internal pure {
-        require(
-            _netDebt >= MIN_NET_DEBT,
-            "BorrowerOps: Trove's net debt must be greater than minimum"
-        );
     }
 
     function _requireICRisAboveMCR(uint256 _newICR) internal pure {

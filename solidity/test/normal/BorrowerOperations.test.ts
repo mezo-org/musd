@@ -56,7 +56,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   let treasury: User
   let contracts: Contracts
   let state: ContractsState
-  let MIN_NET_DEBT: bigint
+  let minNetDebt: bigint
   let MUSD_GAS_COMPENSATION: bigint
 
   async function checkOpenTroveEvents(
@@ -144,7 +144,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       addresses,
     } = await setupTests())
 
-    MIN_NET_DEBT = await contracts.borrowerOperations.MIN_NET_DEBT()
+    minNetDebt = await contracts.borrowerOperations.minNetDebt()
     MUSD_GAS_COMPENSATION =
       await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
 
@@ -308,7 +308,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("Opens a trove with net debt >= minimum net debt", async () => {
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -383,14 +383,14 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.status.before).is.equal(0)
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
       // Get the expected debt based on the mUSD request (adding fee and liq. reserve on top)
       const expectedDebt =
-        MIN_NET_DEBT +
-        (await contracts.troveManager.getBorrowingFee(MIN_NET_DEBT)) +
+        minNetDebt +
+        (await contracts.troveManager.getBorrowingFee(minNetDebt)) +
         MUSD_GAS_COMPENSATION
 
       await updateTroveSnapshot(contracts, carol, "after")
@@ -498,7 +498,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(dennis.trove.debt.before).to.equal(0n)
 
       const { tx } = await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: dennis.wallet,
       })
 
@@ -510,7 +510,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
       await updateTroveSnapshot(contracts, dennis, "after")
       expect(dennis.trove.debt.after).to.equal(
-        MIN_NET_DEBT + MUSD_GAS_COMPENSATION + emittedFee,
+        minNetDebt + MUSD_GAS_COMPENSATION + emittedFee,
       )
     })
 
@@ -518,7 +518,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const debtBefore = await contracts.activePool.getDebt()
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -528,7 +528,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: dennis.wallet,
       })
 
@@ -663,7 +663,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("Borrowing at zero base rate charges minimum fee", async () => {
       const { tx } = await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -677,7 +677,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const BORROWING_FEE_FLOOR =
         await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
       const expectedFee =
-        (BORROWING_FEE_FLOOR * MIN_NET_DEBT) / 1000000000000000000n
+        (BORROWING_FEE_FLOOR * minNetDebt) / 1000000000000000000n
       expect(expectedFee).to.equal(emittedFee)
     })
 
@@ -687,7 +687,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(state.troveManager.troves.before).to.equal(2n)
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -701,7 +701,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.troveManager.totalStakes()
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -720,7 +720,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -741,7 +741,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
 
       await openTrove(contracts, {
-        musdAmount: MIN_NET_DEBT,
+        musdAmount: minNetDebt,
         sender: carol.wallet,
       })
 
@@ -782,7 +782,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("Reverts if net debt < minimum net debt", async () => {
         const amount =
-          (await contracts.borrowerOperations.MIN_NET_DEBT()) -
+          (await contracts.borrowerOperations.minNetDebt()) -
           (await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()) -
           1n
         await expect(
@@ -1360,6 +1360,124 @@ describe("BorrowerOperations in Normal Mode", () => {
               { value: assetAmount },
             ),
         ).to.be.revertedWith("Invalid signature")
+      })
+    })
+  })
+
+  describe("proposeMinNetDebt()", () => {
+    it("sets the proposed min debt debt", async () => {
+      const newMinNetDebt = to1e18(500)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMinNetDebt(newMinNetDebt)
+
+      expect(await contracts.borrowerOperations.proposedMinNetDebt()).to.equal(
+        newMinNetDebt,
+      )
+    })
+    context("Expected Reverts", () => {
+      it("reverts if the proposed min net debt is not high enough", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .proposeMinNetDebt(10001n),
+        ).to.be.revertedWith(
+          "Minimum Net Debt plus Gas Compensation must be at least $250.",
+        )
+      })
+    })
+  })
+
+  describe("approveMinNetDebt()", () => {
+    it("requires two transactions to change the min net debt and a 7 day time delay", async () => {
+      const newMinNetDebt = to1e18(300)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMinNetDebt(newMinNetDebt)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveMinNetDebt()
+
+      expect(await contracts.borrowerOperations.minNetDebt()).to.equal(
+        newMinNetDebt,
+      )
+    })
+
+    it("changes the minimum net debt for users to open troves", async () => {
+      await expect(
+        openTrove(contracts, {
+          musdAmount: "300",
+          ICR: "200",
+          sender: carol.wallet,
+        }),
+      ).to.be.revertedWith(
+        "BorrowerOps: Trove's net debt must be greater than minimum",
+      )
+
+      const newMinNetDebt = to1e18(300)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMinNetDebt(newMinNetDebt)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveMinNetDebt()
+
+      await openTrove(contracts, {
+        musdAmount: "300",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      expect(carol.trove.debt.after).to.be.greaterThan(0n)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the time delay has not finished", async () => {
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMinNetDebt(to1e18(300))
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .approveMinNetDebt(),
+        ).to.be.revertedWith(
+          "Must wait at least 7 days before approving a change to Minimum Net Debt",
+        )
+      })
+
+      it("reverts if called by a non-governance address", async () => {
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMinNetDebt(to1e18(300))
+
+        // Simulate 8 days passing
+        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .approveMinNetDebt(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Only governance can call this function",
+        )
       })
     })
   })
@@ -2773,7 +2891,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         .repayMUSD(amount, bob.wallet, bob.wallet)
       await updateTroveSnapshot(contracts, bob, "after")
 
-      expect(bob.trove.debt.after).is.greaterThan(MIN_NET_DEBT)
+      expect(bob.trove.debt.after).is.greaterThan(minNetDebt)
     })
 
     it("succeeds when it would leave trove with net debt >= minimum net debt including interest", async () => {
@@ -2794,13 +2912,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperations
         .connect(dennis.wallet)
         .repayMUSD(
-          dennis.trove.debt.before - MIN_NET_DEBT,
+          dennis.trove.debt.before - minNetDebt,
           dennis.wallet,
           dennis.wallet,
         )
 
       await updateTroveSnapshot(contracts, dennis, "after")
-      expect(dennis.trove.debt.after).to.be.greaterThan(MIN_NET_DEBT)
+      expect(dennis.trove.debt.after).to.be.greaterThan(minNetDebt)
     })
 
     it("reduces the Trove's mUSD debt by the correct amount", async () => {
