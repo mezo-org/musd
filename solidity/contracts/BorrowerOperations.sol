@@ -26,7 +26,7 @@ contract BorrowerOperations is
 {
     using ECDSA for bytes32;
 
-    uint256 MIN_TOTAL_DEBT = 250e18;
+    uint256 constant MIN_TOTAL_DEBT = 250e18;
 
     /* --- Variable container structs  ---
 
