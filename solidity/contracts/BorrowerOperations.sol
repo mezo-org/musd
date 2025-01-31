@@ -119,6 +119,9 @@ contract BorrowerOperations is
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
+    // Minimum amount of net mUSD debt a trove must have
+    uint256 public minNetDebt = 1800e18;
+
     uint256 public proposedMinNetDebt;
     uint256 public proposedMinNetDebtTime;
 

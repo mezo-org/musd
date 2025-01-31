@@ -2,20 +2,24 @@
 
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract HintHelpers is LiquityBase, Ownable, CheckContract {
     string public constant NAME = "HintHelpers";
 
+    IBorrowerOperations public borrowerOperations;
     ISortedTroves public sortedTroves;
     ITroveManager public troveManager;
 
     // --- Events ---
 
+    event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
@@ -24,15 +28,19 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
     // --- Dependency setters ---
 
     function setAddresses(
+        address _borrowerOperationsAddress,
         address _sortedTrovesAddress,
         address _troveManagerAddress
     ) external onlyOwner {
+        checkContract(_borrowerOperationsAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_troveManagerAddress);
 
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         troveManager = ITroveManager(_troveManagerAddress);
 
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
 
@@ -89,6 +97,8 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
         if (_maxIterations == 0) {
             _maxIterations = type(uint256).max;
         }
+
+        uint256 minNetDebt = borrowerOperations.minNetDebt();
 
         while (
             currentTroveuser != address(0) &&

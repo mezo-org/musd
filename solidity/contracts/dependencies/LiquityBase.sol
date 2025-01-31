@@ -30,9 +30,6 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /
         1000); // 0.5%
 
-    // Minimum amount of net mUSD debt a trove must have
-    uint256 public minNetDebt = 1800e18;
-
     // slither-disable-next-line all
     IActivePool public activePool;
 
