@@ -2270,7 +2270,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("addCollWithSignature()", () => {
+  describe.only("addCollWithSignature()", () => {
     const assetAmount = to1e18(1)
     const upperHint = ZERO_ADDRESS
     const lowerHint = ZERO_ADDRESS
