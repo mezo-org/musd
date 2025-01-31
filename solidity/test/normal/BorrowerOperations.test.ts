@@ -1389,7 +1389,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("approveMinNetDebt()", () => {
-    it("requires two transactions to change the min net debt a 7 day time delay", async () => {
+    it("requires two transactions to change the min net debt and a 7 day time delay", async () => {
       const newMinNetDebt = to1e18(300)
       await contracts.borrowerOperations
         .connect(council.wallet)
