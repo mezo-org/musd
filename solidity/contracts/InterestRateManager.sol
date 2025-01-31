@@ -67,7 +67,7 @@ contract InterestRateManager is
     }
 
     function initialize(address _owner) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
 
         maxInterestRate = 10000;
     }

@@ -16,7 +16,7 @@ contract PriceFeed is IPriceFeed, Initializable, Ownable2StepUpgradeable {
     ChainlinkAggregatorV3Interface public oracle;
 
     function initialize(address _owner) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
     }
 
     // Admin routines ---------------------------------------------------------------------------------------------------

@@ -70,7 +70,7 @@ contract PCV is
         address _owner,
         uint256 _governanceTimeDelay
     ) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
 
         require(
             _governanceTimeDelay <= 30 weeks,

@@ -131,7 +131,7 @@ contract BorrowerOperations is
     }
 
     function initialize(address _owner) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
         __EIP712_init_unchained(SIGNING_DOMAIN, SIGNATURE_VERSION);
         refinancingFeePercentage = 20;
     }

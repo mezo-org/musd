@@ -34,7 +34,7 @@ contract DefaultPool is
     uint256 internal lastInterestUpdatedTime;
 
     function initialize(address _owner) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
     }
 
     // solhint-disable no-complex-fallback

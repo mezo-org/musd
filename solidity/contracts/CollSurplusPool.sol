@@ -30,7 +30,7 @@ contract CollSurplusPool is
     mapping(address => uint) internal balances;
 
     function initialize(address _owner) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
     }
 
     // --- Fallback function ---

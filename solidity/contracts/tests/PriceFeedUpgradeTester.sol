@@ -20,7 +20,7 @@ contract PriceFeedUpgradeTester is
     uint256[50] private __gap;
 
     function initialize(address _owner) external virtual initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
     }
 
     function setOracle(address _oracle) external onlyOwner {}

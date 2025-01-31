@@ -40,7 +40,7 @@ contract ActivePool is
     uint256 internal interest;
 
     function initialize(address _owner) external initializer {
-        __Ownable_init_unchained(_owner);
+        __Ownable_init(_owner);
     }
 
     // --- Fallback function ---
