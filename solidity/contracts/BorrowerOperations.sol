@@ -26,6 +26,8 @@ contract BorrowerOperations is
 {
     using ECDSA for bytes32;
 
+    uint256 MIN_TOTAL_DEBT = 250e18;
+
     /* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -550,7 +552,7 @@ contract BorrowerOperations is
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
         // Making users lock up at least $250 reduces potential dust attacks
         require(
-            _minNetDebt + MUSD_GAS_COMPENSATION > 250e18,
+            _minNetDebt + MUSD_GAS_COMPENSATION > MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
         proposedMinNetDebt = _minNetDebt;
@@ -566,7 +568,7 @@ contract BorrowerOperations is
             "Must wait at least 7 days before approving a change to Minimum Net Debt"
         );
         require(
-            proposedMinNetDebt + MUSD_GAS_COMPENSATION > 250e18,
+            proposedMinNetDebt + MUSD_GAS_COMPENSATION > MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
         minNetDebt = proposedMinNetDebt;
