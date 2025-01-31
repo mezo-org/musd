@@ -31,8 +31,8 @@ contract DefaultPool is
     uint256 internal interest;
     uint256 internal lastInterestUpdatedTime;
 
-    function initialize(address _owner) external virtual initializer {
-        __Ownable_init(_owner);
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor

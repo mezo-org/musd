@@ -80,8 +80,8 @@ contract StabilityPool is
 
     // --- Functions --
 
-    function initialize(address _owner) external virtual initializer {
-        __Ownable_init(_owner);
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
 
         P = DECIMAL_PRECISION;
     }

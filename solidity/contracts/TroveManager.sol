@@ -218,8 +218,8 @@ contract TroveManager is
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
-    function initialize(address _owner) external virtual initializer {
-        __Ownable_init(_owner);
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor

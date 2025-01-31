@@ -59,11 +59,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         _;
     }
 
-    function initialize(
-        address _owner,
-        uint256 _governanceTimeDelay
-    ) external virtual initializer {
-        __Ownable_init(_owner);
+    function initialize(uint256 _governanceTimeDelay) external initializer {
+        __Ownable_init(msg.sender);
 
         require(
             _governanceTimeDelay <= 30 weeks,

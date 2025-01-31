@@ -22,8 +22,8 @@ contract GasPool is CheckContract, IGasPool, OwnableUpgradeable {
     address public troveManagerAddress;
     IMUSD public musdToken;
 
-    function initialize(address _owner) external virtual initializer {
-        __Ownable_init(_owner);
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor

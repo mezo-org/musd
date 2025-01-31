@@ -64,8 +64,8 @@ contract SortedTroves is CheckContract, ISortedTroves, OwnableUpgradeable {
 
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
-    function initialize(address _owner) external virtual initializer {
-        __Ownable_init(_owner);
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor

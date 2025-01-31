@@ -37,8 +37,8 @@ contract ActivePool is
     uint256 internal principal;
     uint256 internal interest;
 
-    function initialize(address _owner) external initializer {
-        __Ownable_init(_owner);
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor

@@ -3,9 +3,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployer, getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
+  const { getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
   await getOrDeployProxy("PCV", {
-    initializerArgs: [deployer.address, 7200],
+    initializerArgs: [7200],
   })
 }
 
