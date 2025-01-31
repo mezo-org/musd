@@ -11,6 +11,8 @@ interface IBorrowerOperations {
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event GasPoolAddressChanged(address _gasPoolAddress);
     event MUSDTokenAddressChanged(address _musdTokenAddress);
+    event MinNetDebtChanged(uint256 _minNetDebt);
+    event MinNetDebtProposed(uint256 _minNetDebt, uint256 _proposalTime);
     event PCVAddressChanged(address _pcvAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
@@ -67,6 +69,10 @@ interface IBorrowerOperations {
         bytes memory _signature,
         uint256 _deadline
     ) external payable;
+
+    function proposeMinNetDebt(uint256 _minNetDebt) external;
+
+    function approveMinNetDebt() external;
 
     function addColl(
         uint256 _assetAmount,

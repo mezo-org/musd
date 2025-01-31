@@ -1364,6 +1364,89 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
+  describe("proposeMinNetDebt()", () => {
+    it("sets the proposed min debt debt", async () => {
+      const newMinNetDebt = to1e18(500)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMinNetDebt(newMinNetDebt)
+
+      expect(await contracts.borrowerOperations.proposedMinNetDebt()).to.equal(
+        newMinNetDebt,
+      )
+    })
+    context("Expected Reverts", () => {
+      it("reverts if the proposed min net debt is not high enough", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .proposeMinNetDebt(10001n),
+        ).to.be.revertedWith(
+          "Minimum Net Debt plus Gas Compensation must be at least $250.",
+        )
+      })
+    })
+  })
+
+  describe("approveMinNetDebt()", () => {
+    it("requires two transactions to change the min net debt a 7 day time delay", async () => {
+      const newMinNetDebt = to1e18(300)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMinNetDebt(newMinNetDebt)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveMinNetDebt()
+
+      expect(await contracts.borrowerOperations.minNetDebt()).to.equal(
+        newMinNetDebt,
+      )
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the time delay has not finished", async () => {
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMinNetDebt(to1e18(300))
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .approveMinNetDebt(),
+        ).to.be.revertedWith(
+          "Must wait at least 7 days before approving a change to Minimum Net Debt",
+        )
+      })
+
+      it("reverts if called by a non-governance address", async () => {
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMinNetDebt(to1e18(300))
+
+        // Simulate 8 days passing
+        const timeToIncrease = 8 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .approveMinNetDebt(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Only governance can call this function",
+        )
+      })
+    })
+  })
+
   describe("closeTrove", () => {
     it("no mintlist, succeeds when it would lower the TCR below CCR", async () => {
       await openTrove(contracts, {

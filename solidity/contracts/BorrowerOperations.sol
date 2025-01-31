@@ -119,6 +119,9 @@ contract BorrowerOperations is
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
+    uint256 public proposedMinNetDebt;
+    uint256 public proposedMinNetDebtTime;
+
     modifier onlyGovernance() {
         require(
             msg.sender == pcv.council() || msg.sender == pcv.treasury(),
@@ -539,6 +542,32 @@ contract BorrowerOperations is
         uint256 _debt
     ) external pure override returns (uint) {
         return _getCompositeDebt(_debt);
+    }
+
+    function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
+        // Making users lock up at least $250 reduces potential dust attacks
+        require(
+            _minNetDebt + MUSD_GAS_COMPENSATION > 250e18,
+            "Minimum Net Debt plus Gas Compensation must be at least $250."
+        );
+        proposedMinNetDebt = _minNetDebt;
+        // solhint-disable-next-line not-rely-on-time
+        proposedMinNetDebtTime = block.timestamp;
+        emit MinNetDebtProposed(proposedMinNetDebt, proposedMinNetDebtTime);
+    }
+
+    function approveMinNetDebt() external onlyGovernance {
+        // solhint-disable not-rely-on-time
+        require(
+            block.timestamp >= proposedMinNetDebtTime + 7 days,
+            "Must wait at least 7 days before approving a change to Minimum Net Debt"
+        );
+        require(
+            proposedMinNetDebt + MUSD_GAS_COMPENSATION > 250e18,
+            "Minimum Net Debt plus Gas Compensation must be at least $250."
+        );
+        minNetDebt = proposedMinNetDebt;
+        emit MinNetDebtChanged(minNetDebt);
     }
 
     function getNonce(address user) public view returns (uint256) {
