@@ -27,6 +27,11 @@ contract GasPool is CheckContract, IGasPool, Initializable, OwnableUpgradeable {
         __Ownable_init(_owner);
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function setAddresses(
         address _musdTokenAddress,
         address _troveManagerAddress

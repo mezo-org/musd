@@ -43,6 +43,11 @@ contract ActivePool is
         __Ownable_init(_owner);
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // --- Fallback function ---
 
     // This executes when the contract receives BTC

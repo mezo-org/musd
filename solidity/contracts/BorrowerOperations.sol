@@ -136,6 +136,11 @@ contract BorrowerOperations is
         refinancingFeePercentage = 20;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
         require(

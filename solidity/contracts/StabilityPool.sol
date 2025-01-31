@@ -88,6 +88,11 @@ contract StabilityPool is
         P = DECIMAL_PRECISION;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // solhint-disable no-complex-fallback
     receive() external payable {
         _requireCallerIsActivePool();

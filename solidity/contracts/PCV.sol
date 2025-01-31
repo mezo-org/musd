@@ -79,6 +79,11 @@ contract PCV is
         governanceTimeDelay = _governanceTimeDelay;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     receive() external payable {}
 
     function payDebt(

@@ -19,6 +19,11 @@ contract PriceFeed is IPriceFeed, Initializable, Ownable2StepUpgradeable {
         __Ownable_init(_owner);
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // Admin routines ---------------------------------------------------------------------------------------------------
 
     function setOracle(address _oracle) external onlyOwner {

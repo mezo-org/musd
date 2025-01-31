@@ -224,6 +224,11 @@ contract TroveManager is
         __Ownable_init(_owner);
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function setAddresses(
         address _activePoolAddress,
         address _borrowerOperationsAddress,

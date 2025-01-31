@@ -72,6 +72,11 @@ contract InterestRateManager is
         maxInterestRate = 10000;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function setAddresses(
         address _activePoolAddress,
         address _borrowerOperationsAddress,
