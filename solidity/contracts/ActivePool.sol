@@ -39,7 +39,7 @@ contract ActivePool is
     uint256 internal principal;
     uint256 internal interest;
 
-    function initialize(address _owner) external virtual initializer {
+    function initialize(address _owner) external initializer {
         __Ownable_init_unchained(_owner);
     }
 
