@@ -552,7 +552,7 @@ contract BorrowerOperations is
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
         // Making users lock up at least $250 reduces potential dust attacks
         require(
-            _minNetDebt + MUSD_GAS_COMPENSATION > MIN_TOTAL_DEBT,
+            _minNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
         proposedMinNetDebt = _minNetDebt;
@@ -568,7 +568,7 @@ contract BorrowerOperations is
             "Must wait at least 7 days before approving a change to Minimum Net Debt"
         );
         require(
-            proposedMinNetDebt + MUSD_GAS_COMPENSATION > MIN_TOTAL_DEBT,
+            proposedMinNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
         minNetDebt = proposedMinNetDebt;
