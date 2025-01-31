@@ -1091,11 +1091,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        _requireSufficientMUSDBalance(
-            musdTokenCached,
-            _borrower,
-            debt - MUSD_GAS_COMPENSATION
-        );
+        _requireSufficientMUSDBalance(_borrower, debt - MUSD_GAS_COMPENSATION);
         if (canMint) {
             uint256 newTCR = _getNewTCRFromTroveChange(
                 coll,
@@ -1258,11 +1254,7 @@ contract BorrowerOperations is
                 _getNetDebt(vars.debt) - vars.netDebtChange
             );
             _requireValidMUSDRepayment(vars.debt, vars.netDebtChange);
-            _requireSufficientMUSDBalance(
-                contractsCache.musd,
-                _borrower,
-                vars.netDebtChange
-            );
+            _requireSufficientMUSDBalance(_borrower, vars.netDebtChange);
         }
 
         (
@@ -1530,12 +1522,11 @@ contract BorrowerOperations is
     }
 
     function _requireSufficientMUSDBalance(
-        IMUSD _musd,
         address _borrower,
         uint256 _debtRepayment
     ) internal view {
         require(
-            _musd.balanceOf(_borrower) >= _debtRepayment,
+            musd.balanceOf(_borrower) >= _debtRepayment,
             "BorrowerOps: Caller doesnt have enough mUSD to make repayment"
         );
     }
