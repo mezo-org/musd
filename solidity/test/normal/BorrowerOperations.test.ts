@@ -1408,6 +1408,33 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("changes the minimum net debt for users to open troves", async () => {
+      const newMinNetDebt = to1e18(300)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMinNetDebt(newMinNetDebt)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveMinNetDebt()
+
+      // The previous minimum was $1800, so if we're allowed to open a trove
+      // with just $300 then the minimum has been adjusted.
+      await openTrove(contracts, {
+        musdAmount: "300",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      expect(carol.trove.debt.after).to.be.greaterThan(0n)
+    })
+
     context("Expected Reverts", () => {
       it("reverts if the time delay has not finished", async () => {
         await contracts.borrowerOperations
