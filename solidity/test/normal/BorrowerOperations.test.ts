@@ -956,7 +956,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("openTroveWithSignature()", () => {
+  describe.only("openTroveWithSignature()", () => {
     const maxFeePercentage = to1e18(100) / 100n
     const debtAmount = to1e18(2000)
     const assetAmount = to1e18(10)
@@ -2270,7 +2270,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe.only("addCollWithSignature()", () => {
+  describe("addCollWithSignature()", () => {
     const assetAmount = to1e18(1)
     const upperHint = ZERO_ADDRESS
     const lowerHint = ZERO_ADDRESS
@@ -3728,7 +3728,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("withdrawMUSDWithSignature()", () => {
+  describe.only("withdrawMUSDWithSignature()", () => {
     const maxFeePercentage = to1e18(1)
     const amount = to1e18("1")
     const upperHint = ZERO_ADDRESS
@@ -6252,7 +6252,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("adjustTroveWithSignature()", () => {
+  describe.only("adjustTroveWithSignature()", () => {
     const maxFeePercentage = to1e18(1)
     const collWithdrawal = 0
     const debtChange = to1e18("50")
