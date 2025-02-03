@@ -76,10 +76,28 @@ interface IBorrowerOperations {
 
     function approveMinNetDebt() external;
 
+    function repayMUSDWithSignature(
+        uint256 _amount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
     function addColl(
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
+    ) external payable;
+
+    function addCollWithSignature(
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
     ) external payable;
 
     function moveCollateralGainToTrove(
@@ -95,11 +113,30 @@ interface IBorrowerOperations {
         address _lowerHint
     ) external;
 
+    function withdrawCollWithSignature(
+        uint256 _amount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
     function withdrawMUSD(
         uint256 _maxFeePercentage,
         uint256 _amount,
         address _upperHint,
         address _lowerHint
+    ) external;
+
+    function withdrawMUSDWithSignature(
+        uint256 _maxFeePercentage,
+        uint256 _amount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
     ) external;
 
     function repayMUSD(
@@ -109,6 +146,12 @@ interface IBorrowerOperations {
     ) external;
 
     function closeTrove() external;
+
+    function closeTroveWithSignature(
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
 
     function refinance(uint256 _maxFeePercentage) external;
 
@@ -120,6 +163,19 @@ interface IBorrowerOperations {
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
+    ) external payable;
+
+    function adjustTroveWithSignature(
+        uint256 _maxFeePercentage,
+        uint256 _collWithdrawal,
+        uint256 _debtChange,
+        bool _isDebtIncrease,
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
     ) external payable;
 
     function claimCollateral() external;
