@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
+import "./dependencies/TypeHashes.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IInterestRateManager.sol";
@@ -26,6 +27,7 @@ contract BorrowerOperations is
     SendCollateral
 {
     using ECDSA for bytes32;
+    using TypeHashes for bytes32;
 
     uint256 constant MIN_TOTAL_DEBT = 250e18;
 
@@ -99,41 +101,6 @@ contract BorrowerOperations is
     string private constant SIGNATURE_VERSION = "1";
 
     mapping(address => uint256) private _nonces;
-
-    bytes32 private constant OPEN_TROVE_TYPEHASH =
-        keccak256(
-            "OpenTrove(uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant REPAY_MUSD_TYPEHASH =
-        keccak256(
-            "RepayMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant ADD_COLL_TYPEHASH =
-        keccak256(
-            "AddColl(uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant WITHDRAW_COLL_TYPEHASH =
-        keccak256(
-            "WithdrawColl(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant WITHDRAW_MUSD_TYPEHASH =
-        keccak256(
-            "WithdrawMUSD(uint256 maxFeePercentage,uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant ADJUST_TROVE_TYPEHASH =
-        keccak256(
-            "AdjustTrove(uint256 maxFeePercentage,uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant CLOSE_TROVE_TYPEHASH =
-        keccak256(
-            "CloseTrove(address borrower,uint256 nonce,uint256 deadline)"
-        );
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage;
@@ -227,7 +194,7 @@ contract BorrowerOperations is
         uint256 _deadline
     ) external payable {
         bytes memory encodedData = abi.encode(
-            OPEN_TROVE_TYPEHASH,
+            TypeHashes.getOpenTroveTypeHash(),
             _maxFeePercentage,
             _debtAmount,
             _assetAmount,
@@ -267,7 +234,7 @@ contract BorrowerOperations is
         uint256 _deadline
     ) external payable {
         bytes memory encodedData = abi.encode(
-            ADD_COLL_TYPEHASH,
+            TypeHashes.getAddCollTypehash(),
             _assetAmount,
             _upperHint,
             _lowerHint,
@@ -320,7 +287,7 @@ contract BorrowerOperations is
         uint256 _deadline
     ) external {
         bytes memory encodedData = abi.encode(
-            WITHDRAW_COLL_TYPEHASH,
+            TypeHashes.getWithdrawCollTypehash(),
             _amount,
             _upperHint,
             _lowerHint,
@@ -363,7 +330,7 @@ contract BorrowerOperations is
         uint256 _deadline
     ) external {
         bytes memory encodedData = abi.encode(
-            WITHDRAW_MUSD_TYPEHASH,
+            TypeHashes.getWithdrawMUSDTypehash(),
             _maxFeePercentage,
             _amount,
             _upperHint,
@@ -415,7 +382,7 @@ contract BorrowerOperations is
         uint256 _deadline
     ) external {
         bytes memory encodedData = abi.encode(
-            REPAY_MUSD_TYPEHASH,
+            TypeHashes.getRepayMUSDTypehash(),
             _amount,
             _upperHint,
             _lowerHint,
@@ -448,7 +415,7 @@ contract BorrowerOperations is
         uint256 _deadline
     ) external {
         bytes memory encodedData = abi.encode(
-            CLOSE_TROVE_TYPEHASH,
+            TypeHashes.getCloseTroveTypehash(),
             _borrower,
             _nonces[_borrower],
             _deadline
@@ -557,7 +524,7 @@ contract BorrowerOperations is
         });
 
         bytes memory encodedData = abi.encode(
-            ADJUST_TROVE_TYPEHASH,
+            TypeHashes.getAdjustTroveTypehash(),
             adjustTroveData.maxFeePercentage,
             adjustTroveData.collWithdrawal,
             adjustTroveData.debtChange,
