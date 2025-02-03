@@ -25,10 +25,6 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     // Amount of mUSD to be locked in gas pool on opening troves
     uint256 public constant MUSD_GAS_COMPENSATION = 200e18;
 
-    // Minimum amount of net mUSD debt a trove must have
-    uint256 public constant MIN_NET_DEBT = 1800e18;
-    // uint256 constant public MIN_NET_DEBT = 0;
-
     uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
     uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /

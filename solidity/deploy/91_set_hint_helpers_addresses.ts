@@ -8,12 +8,13 @@ import {
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { sortedTroves, troveManager } =
+  const { borrowerOperations, sortedTroves, troveManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
   await execute(
     "HintHelpers",
     "setAddresses",
+    await borrowerOperations.getAddress(),
     await sortedTroves.getAddress(),
     await troveManager.getAddress(),
   )
@@ -22,4 +23,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["SetAddresses", "SetHintHelpersAddresses"]
-func.dependencies = ["HintHelpers", "SortedTroves", "TroveManager"]
+func.dependencies = [
+  "BorrowerOperations",
+  "HintHelpers",
+  "SortedTroves",
+  "TroveManager",
+]

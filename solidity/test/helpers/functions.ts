@@ -514,7 +514,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   if (params.upperHint === undefined) params.upperHint = ZERO_ADDRESS
 
   // open minimum debt amount unless extraMUSDAmount is specificed.
-  // if (!params.musdAmount) params.musdAmount = (await contracts.borrowerOperations.MIN_NET_DEBT()) + 1n // add 1 to avoid rounding issues
+  // if (!params.musdAmount) params.musdAmount = (await contracts.borrowerOperations.minNetDebt()) + 1n // add 1 to avoid rounding issues
 
   // max fee size cant exceed 100%
   if (params.maxFeePercentage === undefined) params.maxFeePercentage = "100"

@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
 import "./interfaces/IInterestRateManager.sol";
@@ -140,7 +141,7 @@ contract TroveManager is
 
     // --- Connected contract declarations ---
 
-    address public borrowerOperationsAddress;
+    IBorrowerOperations public borrowerOperations;
 
     IStabilityPool public override stabilityPool;
 
@@ -253,7 +254,7 @@ contract TroveManager is
         checkContract(_interestRateManagerAddress);
 
         // slither-disable-next-line missing-zero-check
-        borrowerOperationsAddress = _borrowerOperationsAddress;
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         activePool = IActivePool(_activePoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         stabilityPool = IStabilityPool(_stabilityPoolAddress);
@@ -373,6 +374,8 @@ contract TroveManager is
 
         updateDefaultPoolInterest();
 
+        uint256 minNetDebt = borrowerOperations.minNetDebt();
+
         while (
             currentBorrower != address(0) &&
             totals.remainingMUSD > 0 &&
@@ -399,7 +402,8 @@ contract TroveManager is
                     totals.price,
                     _upperPartialRedemptionHint,
                     _lowerPartialRedemptionHint,
-                    _partialRedemptionHintNICR
+                    _partialRedemptionHintNICR,
+                    minNetDebt
                 );
 
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
@@ -1590,7 +1594,8 @@ contract TroveManager is
         uint256 _price,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
-        uint256 _partialRedemptionHintNICR
+        uint256 _partialRedemptionHintNICR,
+        uint256 _minNetDebt
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
@@ -1657,7 +1662,7 @@ contract TroveManager is
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                _getNetDebt(vars.newDebt) < MIN_NET_DEBT
+                _getNetDebt(vars.newDebt) < _minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
@@ -1714,7 +1719,7 @@ contract TroveManager is
         address _borrower
     ) internal returns (uint128 index) {
         /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum mUSD
-        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 mUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
+        debt of liquidation reserve plus minNetDebt. 3e30 mUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
 
         // Push the Troveowner to the array
         TroveOwners.push(_borrower);
@@ -1761,7 +1766,7 @@ contract TroveManager is
 
         uint256 TroveOwnersArrayLength = TroveOwners.length;
         // slither-disable-next-line calls-loop
-        if (musdToken.mintList(borrowerOperationsAddress)) {
+        if (musdToken.mintList(address(borrowerOperations))) {
             _requireMoreThanOneTroveInSystem(TroveOwnersArrayLength);
         }
 
@@ -1938,7 +1943,7 @@ contract TroveManager is
 
     function _requireCallerIsBorrowerOperations() internal view {
         require(
-            msg.sender == borrowerOperationsAddress,
+            msg.sender == address(borrowerOperations),
             "TroveManager: Caller is not the BorrowerOperations contract"
         );
     }

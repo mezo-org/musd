@@ -6,17 +6,20 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
+import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 
 contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
     string public constant NAME = "HintHelpers";
 
+    IBorrowerOperations public borrowerOperations;
     ISortedTroves public sortedTroves;
     ITroveManager public troveManager;
 
     // --- Events ---
 
+    event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
@@ -32,15 +35,19 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
     // --- Dependency setters ---
 
     function setAddresses(
+        address _borrowerOperationsAddress,
         address _sortedTrovesAddress,
         address _troveManagerAddress
     ) external onlyOwner {
+        checkContract(_borrowerOperationsAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_troveManagerAddress);
 
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         troveManager = ITroveManager(_troveManagerAddress);
 
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
 
@@ -60,7 +67,7 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
      *     or zero in case of no partial redemption.
      *  - `truncatedAmount` is the maximum amount that can be redeemed out of the the provided `_amount`. This can be lower than
      *    `_amount` when redeeming the full amount would leave the last Trove of the redemption sequence with less net debt than the
-     *    minimum allowed value (i.e. MIN_NET_DEBT).
+     *    minimum allowed value (i.e. minNetDebt).
      *
      * The number of Troves to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero
      * will leave it uncapped.
@@ -98,6 +105,8 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
             _maxIterations = type(uint256).max;
         }
 
+        uint256 minNetDebt = borrowerOperations.minNetDebt();
+
         while (
             currentTroveuser != address(0) &&
             remainingMUSD > 0 &&
@@ -115,10 +124,10 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
                 pendingInterest;
 
             if (netDebt > remainingMUSD) {
-                if (netDebt > MIN_NET_DEBT) {
+                if (netDebt > minNetDebt) {
                     uint256 maxRedeemableMUSD = LiquityMath._min(
                         remainingMUSD,
-                        netDebt - MIN_NET_DEBT
+                        netDebt - minNetDebt
                     );
 
                     uint256 collateral = troveManager.getTroveColl(
