@@ -74,54 +74,6 @@ contract BorrowerOperations is
         IInterestRateManager interestRateManager;
     }
 
-    struct OpenTrove {
-        uint256 maxFeePercentage;
-        uint256 debtAmount;
-        uint256 assetAmount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct RepayMUSD {
-        uint256 amount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct AddColl {
-        uint256 assetAmount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct WithdrawColl {
-        uint256 amount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct WithdrawMUSD {
-        uint256 maxFeePercentage;
-        uint256 amount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
     struct AdjustTrove {
         uint256 maxFeePercentage;
         uint256 collWithdrawal;
@@ -130,12 +82,6 @@ contract BorrowerOperations is
         uint256 assetAmount;
         address upperHint;
         address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct CloseTrove {
         address borrower;
         uint256 nonce;
         uint256 deadline;
@@ -280,42 +226,26 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        // solhint-disable not-rely-on-time
-        uint256 nonce = _nonces[_borrower];
-        OpenTrove memory openTroveData = OpenTrove({
-            maxFeePercentage: _maxFeePercentage,
-            debtAmount: _debtAmount,
-            assetAmount: _assetAmount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
         bytes memory encodedData = abi.encode(
             OPEN_TROVE_TYPEHASH,
-            openTroveData.maxFeePercentage,
-            openTroveData.debtAmount,
-            openTroveData.assetAmount,
-            openTroveData.upperHint,
-            openTroveData.lowerHint,
-            openTroveData.borrower,
-            openTroveData.nonce,
-            openTroveData.deadline
+            _maxFeePercentage,
+            _debtAmount,
+            _assetAmount,
+            _upperHint,
+            _lowerHint,
+            _borrower,
+            _nonces[_borrower],
+            _deadline
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
         _openTrove(
-            openTroveData.borrower,
-            openTroveData.maxFeePercentage,
-            openTroveData.debtAmount,
-            openTroveData.assetAmount,
-            openTroveData.upperHint,
-            openTroveData.lowerHint
+            _borrower,
+            _maxFeePercentage,
+            _debtAmount,
+            _assetAmount,
+            _upperHint,
+            _lowerHint
         );
     }
 
@@ -336,37 +266,18 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        // solhint-disable not-rely-on-time
-        uint256 nonce = _nonces[_borrower];
-        AddColl memory addCollData = AddColl({
-            assetAmount: _assetAmount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
         bytes memory encodedData = abi.encode(
             ADD_COLL_TYPEHASH,
-            addCollData.assetAmount,
-            addCollData.upperHint,
-            addCollData.lowerHint,
-            addCollData.borrower,
-            addCollData.nonce,
-            addCollData.deadline
+            _assetAmount,
+            _upperHint,
+            _lowerHint,
+            _borrower,
+            _nonces[_borrower],
+            _deadline
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
-        _addColl(
-            addCollData.borrower,
-            addCollData.assetAmount,
-            addCollData.upperHint,
-            addCollData.lowerHint
-        );
+        _addColl(_borrower, _assetAmount, _upperHint, _lowerHint);
     }
 
     // Send collateral to a trove. Called by only the Stability Pool.
@@ -408,37 +319,18 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        uint256 nonce = _nonces[_borrower];
-        WithdrawColl memory withdrawCollData = WithdrawColl({
-            amount: _amount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
         bytes memory encodedData = abi.encode(
             WITHDRAW_COLL_TYPEHASH,
-            withdrawCollData.amount,
-            withdrawCollData.upperHint,
-            withdrawCollData.lowerHint,
-            withdrawCollData.borrower,
-            withdrawCollData.nonce,
-            withdrawCollData.deadline
+            _amount,
+            _upperHint,
+            _lowerHint,
+            _borrower,
+            _nonces[_borrower],
+            _deadline
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
-        _withdrawColl(
-            withdrawCollData.borrower,
-            withdrawCollData.amount,
-            withdrawCollData.upperHint,
-            withdrawCollData.lowerHint
-        );
+        _withdrawColl(_borrower, _amount, _upperHint, _lowerHint);
     }
 
     // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's principal accordingly
@@ -470,42 +362,27 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        uint256 nonce = _nonces[_borrower];
-        WithdrawMUSD memory withdrawMUSDData = WithdrawMUSD({
-            maxFeePercentage: _maxFeePercentage,
-            amount: _amount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
         bytes memory encodedData = abi.encode(
             WITHDRAW_MUSD_TYPEHASH,
-            withdrawMUSDData.maxFeePercentage,
-            withdrawMUSDData.amount,
-            withdrawMUSDData.upperHint,
-            withdrawMUSDData.lowerHint,
-            withdrawMUSDData.borrower,
-            withdrawMUSDData.nonce,
-            withdrawMUSDData.deadline
+            _maxFeePercentage,
+            _amount,
+            _upperHint,
+            _lowerHint,
+            _borrower,
+            _nonces[_borrower],
+            _deadline
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
         _adjustTrove(
-            withdrawMUSDData.borrower,
+            _borrower,
             0,
-            withdrawMUSDData.amount,
+            _amount,
             true,
             0,
-            withdrawMUSDData.upperHint,
-            withdrawMUSDData.lowerHint,
-            withdrawMUSDData.maxFeePercentage,
+            _upperHint,
+            _lowerHint,
+            _maxFeePercentage,
             true
         );
     }
@@ -537,40 +414,25 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
-        RepayMUSD memory repayMUSDData = RepayMUSD({
-            amount: _amount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
         bytes memory encodedData = abi.encode(
             REPAY_MUSD_TYPEHASH,
-            repayMUSDData.amount,
-            repayMUSDData.upperHint,
-            repayMUSDData.lowerHint,
-            repayMUSDData.borrower,
-            repayMUSDData.nonce,
-            repayMUSDData.deadline
+            _amount,
+            _upperHint,
+            _lowerHint,
+            _borrower,
+            _nonces[_borrower],
+            _deadline
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
         _adjustTrove(
-            repayMUSDData.borrower,
+            _borrower,
             0,
-            repayMUSDData.amount,
+            _amount,
             false,
             0,
-            repayMUSDData.upperHint,
-            repayMUSDData.lowerHint,
+            _upperHint,
+            _lowerHint,
             0,
             true
         );
@@ -585,26 +447,14 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
-        CloseTrove memory closeTroveData = CloseTrove({
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
         bytes memory encodedData = abi.encode(
             CLOSE_TROVE_TYPEHASH,
-            closeTroveData.borrower,
-            closeTroveData.nonce,
-            closeTroveData.deadline
+            _borrower,
+            _nonces[_borrower],
+            _deadline
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
         _closeTrove(_borrower);
     }
 
@@ -693,8 +543,6 @@ contract BorrowerOperations is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        // solhint-disable not-rely-on-time
-        uint256 nonce = _nonces[_borrower];
         AdjustTrove memory adjustTroveData = AdjustTrove({
             maxFeePercentage: _maxFeePercentage,
             collWithdrawal: _collWithdrawal,
@@ -704,7 +552,7 @@ contract BorrowerOperations is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonce,
+            nonce: _nonces[_borrower],
             deadline: _deadline
         });
 
@@ -723,9 +571,6 @@ contract BorrowerOperations is
         );
 
         _verifySignature(encodedData, _borrower, _signature, _deadline);
-
-        _nonces[_borrower]++;
-
         _assetAmount = msg.value;
         _adjustTrove(
             adjustTroveData.borrower,
@@ -854,7 +699,7 @@ contract BorrowerOperations is
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
-    ) internal view {
+    ) internal {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
         bytes32 digest = _hashTypedDataV4(keccak256(_encodedData));
@@ -862,6 +707,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
 
         require(recoveredAddress == _borrower, "Invalid signature");
+        _nonces[_borrower]++;
     }
 
     function _addColl(
