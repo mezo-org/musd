@@ -3,6 +3,7 @@ import {
   applyLiquidationFee,
   Contracts,
   dropPrice,
+  getEmittedLiquidationValues,
   getEmittedRedemptionValues,
   NO_GAS,
   openTrove,
@@ -53,11 +54,11 @@ describe.only("Demo", () => {
     await setupDefaultTroves()
   })
 
-  it.only("openTrove() without hints", async () => {
+  it("openTrove() without hints", async () => {
     await updateTroveSnapshot(contracts, carol, "before")
 
     // Max fee percentage user is willing to accept in the case of fee slippage
-    const maxFeePercentage = to1e18(100) / 100n
+    const maxFeePercentage = to1e18(1)
 
     // Amount of MUSD to borrow
     const debtAmount = to1e18(2000)
@@ -120,7 +121,7 @@ describe.only("Demo", () => {
     // Get an approximate address hint from HintHelpers contract
     // This will on average return a trove that is (length / numTrials) away
     // from the correct insert position.
-    // Note you can probably get away with 15 * sqrt(n) trials
+    // Note you can probably get away with 15 * sqrt(length) trials
     const numTroves = await contracts.sortedTroves.getSize()
     const numTrials = numTroves * 15n
     const randomSeed = 42
@@ -276,7 +277,11 @@ describe.only("Demo", () => {
     await dropPrice(contracts, deployer, alice, to1e18("100"))
 
     // Liquidate Alice
-    await contracts.troveManager.connect(bob.wallet).liquidate(alice.address)
+    const liquidationTx = await contracts.troveManager
+      .connect(bob.wallet)
+      .liquidate(alice.address, NO_GAS)
+    const { collGasCompensation } =
+      await getEmittedLiquidationValues(liquidationTx)
 
     await updatePendingSnapshot(contracts, bob, "after")
 
@@ -307,6 +312,9 @@ describe.only("Demo", () => {
     expect(bob.musd.after - bob.musd.before).to.be.equal(
       await contracts.troveManager.MUSD_GAS_COMPENSATION(),
     )
+
+    // Bob receives 0.5% of Alice's collateral as a additional compensation
+    expect(bob.btc.after - bob.btc.before).to.be.equal(collGasCompensation)
   })
 
   it("redeemCollateral()", async () => {
