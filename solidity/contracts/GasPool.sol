@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./interfaces/IGasPool.sol";
 import "./token/MUSD.sol";
@@ -17,11 +18,18 @@ import "./token/MUSD.sol";
  * 50 mUSD principal on the trove is cancelled.
  * See this issue for more context: https://github.com/liquity/dev/issues/186
  */
-contract GasPool is Ownable, CheckContract, IGasPool {
+contract GasPool is CheckContract, IGasPool, OwnableUpgradeable {
     address public troveManagerAddress;
     IMUSD public musdToken;
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     function setAddresses(
         address _musdTokenAddress,

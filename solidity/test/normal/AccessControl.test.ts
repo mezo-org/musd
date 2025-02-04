@@ -432,7 +432,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
   describe("PCV", () => {
     async function payDebt() {
-      await contracts.pcv.connect(deployer.wallet).initialize()
+      await contracts.pcv.connect(deployer.wallet).initializeDebt()
       const debtToPay = await contracts.pcv.debtToPay()
       await contracts.musd.unprotectedMint(addresses.pcv, debtToPay)
       await contracts.pcv.connect(deployer.wallet).payDebt(debtToPay)
@@ -474,7 +474,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
 
     it("initialize(): reverts when caller is not owner, council or treasury", async () => {
       await expect(
-        contracts.pcv.connect(alice.wallet).initialize(),
+        contracts.pcv.connect(alice.wallet).initializeDebt(),
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 

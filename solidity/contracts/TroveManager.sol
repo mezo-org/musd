@@ -6,7 +6,7 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
@@ -20,7 +20,12 @@ import "./interfaces/IStabilityPool.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 
-contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
+contract TroveManager is
+    CheckContract,
+    ITroveManager,
+    LiquityBase,
+    OwnableUpgradeable
+{
     enum TroveManagerOperation {
         applyPendingRewards,
         liquidateInNormalMode,
@@ -214,7 +219,14 @@ contract TroveManager is LiquityBase, Ownable, CheckContract, ITroveManager {
     // Map addresses with active troves to their RewardSnapshot
     mapping(address => RewardSnapshot) public rewardSnapshots;
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     function setAddresses(
         address _activePoolAddress,

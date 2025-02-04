@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/ICollSurplusPool.sol";
@@ -10,10 +11,10 @@ import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IActivePool.sol";
 
 contract CollSurplusPool is
-    Ownable,
     CheckContract,
-    SendCollateral,
-    ICollSurplusPool
+    ICollSurplusPool,
+    OwnableUpgradeable,
+    SendCollateral
 {
     string public constant NAME = "CollSurplusPool";
 
@@ -26,7 +27,14 @@ contract CollSurplusPool is
     // Collateral surplus claimable by trove owners
     mapping(address => uint) internal balances;
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // --- Fallback function ---
 

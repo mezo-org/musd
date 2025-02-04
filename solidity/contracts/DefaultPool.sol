@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePool.sol";
@@ -16,7 +17,12 @@ import "./interfaces/IDefaultPool.sol";
  * When a trove makes an operation that applies its pending collateral and debt, its pending collateral and debt is moved
  * from the Default Pool to the Active Pool.
  */
-contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
+contract DefaultPool is
+    CheckContract,
+    IDefaultPool,
+    OwnableUpgradeable,
+    SendCollateral
+{
     address public activePoolAddress;
     address public troveManagerAddress;
 
@@ -25,7 +31,14 @@ contract DefaultPool is Ownable, CheckContract, SendCollateral, IDefaultPool {
     uint256 internal interest;
     uint256 internal lastInterestUpdatedTime;
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // solhint-disable no-complex-fallback
     receive() external payable {

@@ -41,7 +41,7 @@ describe("PCV", () => {
     PCVDeployer = contracts.pcv.connect(deployer.wallet)
 
     bootstrapLoan = await contracts.pcv.BOOTSTRAP_LOAN()
-    await PCVDeployer.initialize()
+    await PCVDeployer.initializeDebt()
     await contracts.pcv
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
@@ -57,7 +57,7 @@ describe("PCV", () => {
     delay = await contracts.pcv.governanceTimeDelay()
   })
 
-  describe("initialize()", () => {
+  describe("initializeDebt()", () => {
     it("bootstrap loan deposited to SP and tracked in PCV", async () => {
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan)
@@ -73,7 +73,7 @@ describe("PCV", () => {
 
     context("Expected Reverts", () => {
       it("reverts when trying to initialize second time", async () => {
-        await expect(PCVDeployer.initialize()).to.be.revertedWith(
+        await expect(PCVDeployer.initializeDebt()).to.be.revertedWith(
           "PCV: already initialized",
         )
       })

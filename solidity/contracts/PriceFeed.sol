@@ -2,19 +2,26 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import "./interfaces/ChainlinkAggregatorV3Interface.sol";
 import "./interfaces/IPriceFeed.sol";
 
-contract PriceFeed is IPriceFeed, Ownable {
+contract PriceFeed is IPriceFeed, Ownable2StepUpgradeable {
     /// @dev Used to convert an oracle price answer to an 18-digit precision uint
     uint8 public constant TARGET_DIGITS = 18;
 
     // State ------------------------------------------------------------------------------------------------------------
     ChainlinkAggregatorV3Interface public oracle;
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // Admin routines ---------------------------------------------------------------------------------------------------
 

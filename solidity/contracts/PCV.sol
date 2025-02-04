@@ -2,18 +2,19 @@
 
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./BorrowerOperations.sol";
 import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IPCV.sol";
 import "./token/IMUSD.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
+contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
 
-    uint256 public immutable governanceTimeDelay;
+    uint256 public governanceTimeDelay;
 
     BorrowerOperations public borrowerOperations;
     IMUSD public musd;
@@ -58,9 +59,19 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         _;
     }
 
-    constructor(uint256 _governanceTimeDelay) Ownable(msg.sender) {
+    function initialize(uint256 _governanceTimeDelay) external initializer {
+        __Ownable_init(msg.sender);
+
+        require(
+            _governanceTimeDelay <= 30 weeks,
+            "Governance delay is too big"
+        );
         governanceTimeDelay = _governanceTimeDelay;
-        require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
     receive() external payable {}
@@ -123,7 +134,7 @@ contract PCV is IPCV, Ownable, CheckContract, SendCollateral {
         emit MUSDTokenAddressSet(_musdTokenAddress);
     }
 
-    function initialize() external override onlyOwnerOrCouncilOrTreasury {
+    function initializeDebt() external override onlyOwnerOrCouncilOrTreasury {
         require(!isInitialized, "PCV: already initialized");
 
         debtToPay = BOOTSTRAP_LOAN;

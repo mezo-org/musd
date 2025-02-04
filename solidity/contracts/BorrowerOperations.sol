@@ -2,6 +2,10 @@
 
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
@@ -12,17 +16,14 @@ import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 contract BorrowerOperations is
-    LiquityBase,
-    Ownable,
     CheckContract,
-    SendCollateral,
     IBorrowerOperations,
-    EIP712
+    LiquityBase,
+    EIP712Upgradeable,
+    OwnableUpgradeable,
+    SendCollateral
 {
     using ECDSA for bytes32;
 
@@ -189,7 +190,7 @@ contract BorrowerOperations is
         );
 
     // refinancing fee is always a percentage of the borrowing (issuance) fee
-    uint8 public refinancingFeePercentage = 20;
+    uint8 public refinancingFeePercentage;
 
     // --- Connected contract declarations ---
 
@@ -209,7 +210,7 @@ contract BorrowerOperations is
     ISortedTroves public sortedTroves;
 
     // Minimum amount of net mUSD debt a trove must have
-    uint256 public minNetDebt = 1800e18;
+    uint256 public minNetDebt;
 
     uint256 public proposedMinNetDebt;
     uint256 public proposedMinNetDebtTime;
@@ -222,10 +223,17 @@ contract BorrowerOperations is
         _;
     }
 
-    constructor()
-        Ownable(msg.sender)
-        EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION)
-    {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+        __EIP712_init_unchained(SIGNING_DOMAIN, SIGNATURE_VERSION);
+        refinancingFeePercentage = 20;
+        minNetDebt = 1800e18;
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
@@ -236,7 +244,7 @@ contract BorrowerOperations is
         musd.mint(pcvAddress, _musdToMint);
     }
 
-    function burnDebtFromPCV(uint256 _musdToBurn) external {
+    function burnDebtFromPCV(uint256 _musdToBurn) external virtual {
         require(
             msg.sender == pcvAddress,
             "BorrowerOperations: caller must be PCV"

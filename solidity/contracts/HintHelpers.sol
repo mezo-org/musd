@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
@@ -10,7 +10,7 @@ import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 
-contract HintHelpers is LiquityBase, Ownable, CheckContract {
+contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
     string public constant NAME = "HintHelpers";
 
     IBorrowerOperations public borrowerOperations;
@@ -23,7 +23,14 @@ contract HintHelpers is LiquityBase, Ownable, CheckContract {
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() external initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // --- Dependency setters ---
 
