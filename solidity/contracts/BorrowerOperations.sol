@@ -1677,6 +1677,10 @@ contract BorrowerOperations is
         );
     }
 
+    function proposedMinNetDebt() external view returns (uint256) {
+        return self.proposedMinNetDebt;
+    }
+
     function minNetDebt() external view returns (uint256) {
         return self.minNetDebt;
     }
