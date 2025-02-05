@@ -14,6 +14,25 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       },
     },
   })
+
+  if (isHardhatNetwork) {
+    const newBorrowerOperationsTroves = await getOrDeploy(
+      "NewBorrowerOperationsTroves",
+      {
+        contract: "BorrowerOperationsTroves",
+      },
+    )
+
+    await getOrDeployProxy("NewBorrowerOperations", {
+      contractName: "BorrowerOperations",
+      factoryOpts: {
+        signer: deployer,
+        libraries: {
+          BorrowerOperationsTroves: newBorrowerOperationsTroves.address,
+        },
+      },
+    })
+  }
 }
 
 export default func
