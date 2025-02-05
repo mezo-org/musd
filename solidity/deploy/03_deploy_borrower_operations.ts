@@ -15,6 +15,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     },
   })
 
+  // The MUSD tests want another BorrowerOperations contract for testing
+  // upgrades. So, we deploy one named "NewBorrowerOperationsTroves" to use in
+  // those tests, but only in hardhat.
   if (isHardhatNetwork) {
     const newBorrowerOperationsTroves = await getOrDeploy(
       "NewBorrowerOperationsTroves",
