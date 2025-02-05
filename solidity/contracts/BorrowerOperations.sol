@@ -17,6 +17,7 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 import "./BorrowerOperationsState.sol";
+import "./BorrowerOperationsTroves.sol";
 
 contract BorrowerOperations is
     CheckContract,
@@ -28,6 +29,7 @@ contract BorrowerOperations is
 {
     using ECDSA for bytes32;
 
+    using BorrowerOperationsTroves for BorrowerOperationsState.Storage;
     BorrowerOperationsState.Storage internal self;
 
     uint256 constant MIN_TOTAL_DEBT = 250e18;
@@ -192,7 +194,8 @@ contract BorrowerOperations is
 
     modifier onlyGovernance() {
         require(
-            msg.sender == self.pcv.council() || msg.sender == self.pcv.treasury(),
+            msg.sender == self.pcv.council() ||
+                msg.sender == self.pcv.treasury(),
             "BorrowerOps: Only governance can call this function"
         );
         _;
@@ -618,53 +621,7 @@ contract BorrowerOperations is
     }
 
     function refinance(uint256 _maxFeePercentage) external override {
-        ITroveManager troveManagerCached = self.troveManager;
-        IInterestRateManager interestRateManagerCached = self.interestRateManager;
-        _requireTroveisActive(troveManagerCached, msg.sender);
-        troveManagerCached.updateSystemAndTroveInterest(msg.sender);
-
-        uint16 oldRate = troveManagerCached.getTroveInterestRate(msg.sender);
-        uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
-            msg.sender
-        );
-        uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 amount = (self.refinancingFeePercentage * oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(
-            troveManagerCached,
-            self.musd,
-            amount,
-            _maxFeePercentage
-        );
-        // slither-disable-next-line unused-return
-        troveManagerCached.increaseTroveDebt(msg.sender, fee);
-
-        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
-
-        interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
-        interestRateManagerCached.removePrincipalFromRate(
-            oldRate,
-            oldPrincipal
-        );
-        uint16 newRate = interestRateManagerCached.interestRate();
-        interestRateManagerCached.addInterestToRate(newRate, oldInterest);
-        interestRateManagerCached.addPrincipalToRate(newRate, oldPrincipal);
-
-        troveManagerCached.setTroveInterestRate(
-            msg.sender,
-            interestRateManagerCached.interestRate()
-        );
-
-        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
-            troveManagerCached.getTroveColl(msg.sender),
-            priceFeed.fetchPrice()
-        );
-        troveManagerCached.setTroveMaxBorrowingCapacity(
-            msg.sender,
-            maxBorrowingCapacity
-        );
-
-        // slither-disable-next-line reentrancy-events
-        emit RefinancingFeePaid(msg.sender, fee);
+        self.refinance(priceFeed, _maxFeePercentage);
     }
 
     function adjustTrove(
@@ -794,7 +751,9 @@ contract BorrowerOperations is
         self.collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         self.gasPoolAddress = _gasPoolAddress;
-        self.interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        self.interestRateManager = IInterestRateManager(
+            _interestRateManagerAddress
+        );
         self.musd = IMUSD(_musdTokenAddress);
         self.pcv = IPCV(_pcvAddress);
         self.pcvAddress = _pcvAddress;
@@ -843,7 +802,10 @@ contract BorrowerOperations is
         self.proposedMinNetDebt = _minNetDebt;
         // solhint-disable-next-line not-rely-on-time
         self.proposedMinNetDebtTime = block.timestamp;
-        emit MinNetDebtProposed(self.proposedMinNetDebt, self.proposedMinNetDebtTime);
+        emit MinNetDebtProposed(
+            self.proposedMinNetDebt,
+            self.proposedMinNetDebtTime
+        );
     }
 
     function approveMinNetDebt() external onlyGovernance {
@@ -1265,7 +1227,12 @@ contract BorrowerOperations is
             vars.netDebtChange,
             _isDebtIncrease
         );
-        self.sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
+        self.sortedTroves.reInsert(
+            _borrower,
+            vars.newNICR,
+            _upperHint,
+            _lowerHint
+        );
 
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
