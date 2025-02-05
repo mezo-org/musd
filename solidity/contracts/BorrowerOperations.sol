@@ -16,6 +16,7 @@ import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
+import "./BorrowerOperationsState.sol";
 
 contract BorrowerOperations is
     CheckContract,
@@ -26,6 +27,8 @@ contract BorrowerOperations is
     SendCollateral
 {
     using ECDSA for bytes32;
+
+    BorrowerOperationsState.Storage internal self;
 
     uint256 constant MIN_TOTAL_DEBT = 250e18;
 
@@ -152,8 +155,6 @@ contract BorrowerOperations is
     string private constant SIGNING_DOMAIN = "BorrowerOperations";
     string private constant SIGNATURE_VERSION = "1";
 
-    mapping(address => uint256) private _nonces;
-
     bytes32 private constant OPEN_TROVE_TYPEHASH =
         keccak256(
             "OpenTrove(uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
@@ -189,35 +190,9 @@ contract BorrowerOperations is
             "CloseTrove(address borrower,uint256 nonce,uint256 deadline)"
         );
 
-    // refinancing fee is always a percentage of the borrowing (issuance) fee
-    uint8 public refinancingFeePercentage;
-
-    // --- Connected contract declarations ---
-
-    ITroveManager public troveManager;
-
-    address public gasPoolAddress;
-    address public pcvAddress;
-    address public stabilityPoolAddress;
-
-    ICollSurplusPool public collSurplusPool;
-
-    IMUSD public musd;
-    IPCV public pcv;
-    IInterestRateManager public interestRateManager;
-
-    // A doubly linked list of Troves, sorted by their collateral ratios
-    ISortedTroves public sortedTroves;
-
-    // Minimum amount of net mUSD debt a trove must have
-    uint256 public minNetDebt;
-
-    uint256 public proposedMinNetDebt;
-    uint256 public proposedMinNetDebtTime;
-
     modifier onlyGovernance() {
         require(
-            msg.sender == pcv.council() || msg.sender == pcv.treasury(),
+            msg.sender == self.pcv.council() || msg.sender == self.pcv.treasury(),
             "BorrowerOps: Only governance can call this function"
         );
         _;
@@ -226,8 +201,8 @@ contract BorrowerOperations is
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         __EIP712_init_unchained(SIGNING_DOMAIN, SIGNATURE_VERSION);
-        refinancingFeePercentage = 20;
-        minNetDebt = 1800e18;
+        self.refinancingFeePercentage = 20;
+        self.minNetDebt = 1800e18;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -238,18 +213,18 @@ contract BorrowerOperations is
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
         require(
-            msg.sender == pcvAddress,
+            msg.sender == self.pcvAddress,
             "BorrowerOperations: caller must be PCV"
         );
-        musd.mint(pcvAddress, _musdToMint);
+        self.musd.mint(self.pcvAddress, _musdToMint);
     }
 
     function burnDebtFromPCV(uint256 _musdToBurn) external virtual {
         require(
-            msg.sender == pcvAddress,
+            msg.sender == self.pcvAddress,
             "BorrowerOperations: caller must be PCV"
         );
-        musd.burn(pcvAddress, _musdToBurn);
+        self.musd.burn(self.pcvAddress, _musdToBurn);
     }
 
     // --- Borrower Trove Operations ---
@@ -282,7 +257,7 @@ contract BorrowerOperations is
     ) external payable {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         OpenTrove memory openTroveData = OpenTrove({
             maxFeePercentage: _maxFeePercentage,
             debtAmount: _debtAmount,
@@ -313,7 +288,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _openTrove(
             openTroveData.borrower,
@@ -344,7 +319,7 @@ contract BorrowerOperations is
     ) external payable {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         AddColl memory addCollData = AddColl({
             assetAmount: _assetAmount,
             upperHint: _upperHint,
@@ -371,7 +346,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _addColl(
             addCollData.borrower,
@@ -422,7 +397,7 @@ contract BorrowerOperations is
     ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         WithdrawColl memory withdrawCollData = WithdrawColl({
             amount: _amount,
             upperHint: _upperHint,
@@ -449,7 +424,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _withdrawColl(
             withdrawCollData.borrower,
@@ -490,7 +465,7 @@ contract BorrowerOperations is
     ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         WithdrawMUSD memory withdrawMUSDData = WithdrawMUSD({
             maxFeePercentage: _maxFeePercentage,
             amount: _amount,
@@ -519,7 +494,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _adjustTrove(
             withdrawMUSDData.borrower,
@@ -563,7 +538,7 @@ contract BorrowerOperations is
     ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         RepayMUSD memory repayMUSDData = RepayMUSD({
             amount: _amount,
             upperHint: _upperHint,
@@ -590,7 +565,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _adjustTrove(
             repayMUSDData.borrower,
@@ -616,7 +591,7 @@ contract BorrowerOperations is
     ) external {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         CloseTrove memory closeTroveData = CloseTrove({
             borrower: _borrower,
             nonce: nonce,
@@ -637,14 +612,14 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _closeTrove(_borrower);
     }
 
     function refinance(uint256 _maxFeePercentage) external override {
-        ITroveManager troveManagerCached = troveManager;
-        IInterestRateManager interestRateManagerCached = interestRateManager;
+        ITroveManager troveManagerCached = self.troveManager;
+        IInterestRateManager interestRateManagerCached = self.interestRateManager;
         _requireTroveisActive(troveManagerCached, msg.sender);
         troveManagerCached.updateSystemAndTroveInterest(msg.sender);
 
@@ -653,10 +628,10 @@ contract BorrowerOperations is
             msg.sender
         );
         uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
+        uint256 amount = (self.refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(
             troveManagerCached,
-            musd,
+            self.musd,
             amount,
             _maxFeePercentage
         );
@@ -729,7 +704,7 @@ contract BorrowerOperations is
     ) external payable {
         // solhint-disable not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = _nonces[_borrower];
+        uint256 nonce = self.nonces[_borrower];
         AdjustTrove memory adjustTroveData = AdjustTrove({
             maxFeePercentage: _maxFeePercentage,
             collWithdrawal: _collWithdrawal,
@@ -764,7 +739,7 @@ contract BorrowerOperations is
         address recoveredAddress = ECDSA.recover(digest, _signature);
         require(recoveredAddress == _borrower, "Invalid signature");
 
-        _nonces[_borrower]++;
+        self.nonces[_borrower]++;
 
         _assetAmount = msg.value;
         _adjustTrove(
@@ -783,7 +758,7 @@ contract BorrowerOperations is
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(msg.sender);
+        self.collSurplusPool.claimColl(msg.sender);
     }
 
     function setAddresses(
@@ -800,7 +775,7 @@ contract BorrowerOperations is
         address _troveManagerAddress
     ) external override onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
-        assert(minNetDebt > 0);
+        assert(self.minNetDebt > 0);
 
         checkContract(_activePoolAddress);
         checkContract(_collSurplusPoolAddress);
@@ -816,17 +791,17 @@ contract BorrowerOperations is
 
         // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
+        self.collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        gasPoolAddress = _gasPoolAddress;
-        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
-        musd = IMUSD(_musdTokenAddress);
-        pcv = IPCV(_pcvAddress);
-        pcvAddress = _pcvAddress;
+        self.gasPoolAddress = _gasPoolAddress;
+        self.interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        self.musd = IMUSD(_musdTokenAddress);
+        self.pcv = IPCV(_pcvAddress);
+        self.pcvAddress = _pcvAddress;
         priceFeed = IPriceFeed(_priceFeedAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        stabilityPoolAddress = _stabilityPoolAddress;
-        troveManager = ITroveManager(_troveManagerAddress);
+        self.sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        self.stabilityPoolAddress = _stabilityPoolAddress;
+        self.troveManager = ITroveManager(_troveManagerAddress);
         // slither-disable-end missing-zero-check
 
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -850,7 +825,7 @@ contract BorrowerOperations is
             _refinanceFeePercentage <= 100,
             "BorrowerOps: Refinancing fee percentage must be <= 100"
         );
-        refinancingFeePercentage = _refinanceFeePercentage;
+        self.refinancingFeePercentage = _refinanceFeePercentage;
     }
 
     function getCompositeDebt(
@@ -865,28 +840,28 @@ contract BorrowerOperations is
             _minNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
-        proposedMinNetDebt = _minNetDebt;
+        self.proposedMinNetDebt = _minNetDebt;
         // solhint-disable-next-line not-rely-on-time
-        proposedMinNetDebtTime = block.timestamp;
-        emit MinNetDebtProposed(proposedMinNetDebt, proposedMinNetDebtTime);
+        self.proposedMinNetDebtTime = block.timestamp;
+        emit MinNetDebtProposed(self.proposedMinNetDebt, self.proposedMinNetDebtTime);
     }
 
     function approveMinNetDebt() external onlyGovernance {
         // solhint-disable not-rely-on-time
         require(
-            block.timestamp >= proposedMinNetDebtTime + 7 days,
+            block.timestamp >= self.proposedMinNetDebtTime + 7 days,
             "Must wait at least 7 days before approving a change to Minimum Net Debt"
         );
         require(
-            proposedMinNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
+            self.proposedMinNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
-        minNetDebt = proposedMinNetDebt;
-        emit MinNetDebtChanged(minNetDebt);
+        self.minNetDebt = self.proposedMinNetDebt;
+        emit MinNetDebtChanged(self.minNetDebt);
     }
 
     function getNonce(address user) public view returns (uint256) {
-        return _nonces[user];
+        return self.nonces[user];
     }
 
     function _addColl(
@@ -937,10 +912,10 @@ contract BorrowerOperations is
         address _lowerHint
     ) internal {
         ContractsCache memory contractsCache = ContractsCache(
-            troveManager,
+            self.troveManager,
             activePool,
-            musd,
-            interestRateManager
+            self.musd,
+            self.interestRateManager
         );
         // slither-disable-next-line uninitialized-local
         LocalVariables_openTrove memory vars;
@@ -1036,7 +1011,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        sortedTroves.insert(_borrower, vars.NICR, _upperHint, _lowerHint);
+        self.sortedTroves.insert(_borrower, vars.NICR, _upperHint, _lowerHint);
         vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
             _borrower
         );
@@ -1057,7 +1032,7 @@ contract BorrowerOperations is
         _withdrawMUSD(
             contractsCache.activePool,
             contractsCache.musd,
-            gasPoolAddress,
+            self.gasPoolAddress,
             MUSD_GAS_COMPENSATION,
             MUSD_GAS_COMPENSATION
         );
@@ -1078,9 +1053,9 @@ contract BorrowerOperations is
     }
 
     function _closeTrove(address _borrower) internal {
-        ITroveManager troveManagerCached = troveManager;
+        ITroveManager troveManagerCached = self.troveManager;
         IActivePool activePoolCached = activePool;
-        IMUSD musdTokenCached = musd;
+        IMUSD musdTokenCached = self.musd;
         bool canMint = musdTokenCached.mintList(address(this));
 
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
@@ -1137,7 +1112,7 @@ contract BorrowerOperations is
         _repayMUSD(
             activePoolCached,
             musdTokenCached,
-            gasPoolAddress,
+            self.gasPoolAddress,
             MUSD_GAS_COMPENSATION,
             0
         );
@@ -1165,10 +1140,10 @@ contract BorrowerOperations is
         bool _isSignatureCall
     ) internal {
         ContractsCache memory contractsCache = ContractsCache(
-            troveManager,
+            self.troveManager,
             activePool,
-            musd,
-            interestRateManager
+            self.musd,
+            self.interestRateManager
         );
 
         contractsCache.troveManager.updateSystemAndTroveInterest(_borrower);
@@ -1205,7 +1180,7 @@ contract BorrowerOperations is
          */
         assert(
             msg.sender == _borrower ||
-                (msg.sender == stabilityPoolAddress &&
+                (msg.sender == self.stabilityPoolAddress &&
                     _assetAmount > 0 &&
                     _mUSDChange == 0) ||
                 _isSignatureCall
@@ -1290,7 +1265,7 @@ contract BorrowerOperations is
             vars.netDebtChange,
             _isDebtIncrease
         );
-        sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
+        self.sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
@@ -1429,7 +1404,7 @@ contract BorrowerOperations is
         _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
 
         // Send fee to PCV contract
-        _musd.mint(pcvAddress, fee);
+        _musd.mint(self.pcvAddress, fee);
         return fee;
     }
 
@@ -1474,7 +1449,7 @@ contract BorrowerOperations is
 
     function _requireCallerIsStabilityPool() internal view {
         require(
-            msg.sender == stabilityPoolAddress,
+            msg.sender == self.stabilityPoolAddress,
             "BorrowerOps: Caller is not Stability Pool"
         );
     }
@@ -1534,14 +1509,14 @@ contract BorrowerOperations is
         uint256 _debtRepayment
     ) internal view {
         require(
-            musd.balanceOf(_borrower) >= _debtRepayment,
+            self.musd.balanceOf(_borrower) >= _debtRepayment,
             "BorrowerOps: Caller doesnt have enough mUSD to make repayment"
         );
     }
 
     function _requireAtLeastMinNetDebt(uint256 _netDebt) internal view {
         require(
-            _netDebt >= minNetDebt,
+            _netDebt >= self.minNetDebt,
             "BorrowerOps: Trove's net debt must be greater than minimum"
         );
     }
@@ -1733,5 +1708,13 @@ contract BorrowerOperations is
             _debtRepayment <= _currentDebt - MUSD_GAS_COMPENSATION,
             "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
         );
+    }
+
+    function minNetDebt() external view returns (uint256) {
+        return self.minNetDebt;
+    }
+
+    function stabilityPoolAddress() external view returns (address) {
+        return self.stabilityPoolAddress;
     }
 }
