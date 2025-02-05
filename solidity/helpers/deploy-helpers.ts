@@ -177,21 +177,23 @@ export async function setupDeploymentBoilerplate(
   const getOrDeploy = async (
     contractName: string,
     options: PartialDeployOptions = {},
-  ) => {
+  ): Promise<Deployment> => {
     const deployment = await getValidDeployment(contractName)
     if (deployment) {
       log(`Using ${contractName} at ${deployment.address}`)
-    } else {
-      const contract = await deploy(contractName, {
-        contract: contractName,
-        args: [],
-        ...options,
-      })
-
-      if (network.name !== "hardhat") {
-        await helpers.etherscan.verify(contract)
-      }
+      return deployment
     }
+
+    const contract = await deploy(contractName, {
+      contract: contractName,
+      args: [],
+      ...options,
+    })
+
+    if (network.name !== "hardhat") {
+      await helpers.etherscan.verify(contract)
+    }
+    return contract
   }
 
   const getOrDeployProxy = async (
