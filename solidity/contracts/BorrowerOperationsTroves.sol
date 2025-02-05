@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import "./interfaces/ITroveManager.sol";
 import "./BorrowerOperationsState.sol";
 import "./interfaces/IPriceFeed.sol";
+import "./interfaces/ITroveManager.sol";
 
 library BorrowerOperationsTroves {
     event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
