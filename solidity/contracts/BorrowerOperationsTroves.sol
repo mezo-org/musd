@@ -92,7 +92,6 @@ library BorrowerOperationsTroves {
         uint256 _amount,
         uint256 _maxFeePercentage
     ) internal returns (uint) {
-        _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
         uint256 fee = _troveManager.getBorrowingFee(_amount);
 
         _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);

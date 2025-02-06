@@ -61,7 +61,6 @@ export interface ContractsState {
   troveManager: {
     baseRate: BeforeAndAfter
     collateralSnapshot: BeforeAndAfter
-    lastFeeOperationTime: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
       principal: BeforeAndAfter

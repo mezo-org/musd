@@ -66,7 +66,6 @@ interface ITroveManager {
         uint8 operation
     );
     event BaseRateUpdated(uint256 _baseRate);
-    event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
     event TotalStakesUpdated(uint256 _newTotalStakes);
     event SystemSnapshotsUpdated(
         uint256 _totalStakesSnapshot,
@@ -129,8 +128,6 @@ interface ITroveManager {
     function closeTrove(address _borrower) external;
 
     function removeStake(address _borrower) external;
-
-    function decayBaseRateFromBorrowing() external;
 
     function setTroveStatus(address _borrower, Status _status) external;
 
@@ -219,21 +216,9 @@ interface ITroveManager {
 
     function getRedemptionRate() external view returns (uint);
 
-    function getRedemptionRateWithDecay() external view returns (uint);
-
-    function getRedemptionFeeWithDecay(
-        uint256 _collateralDrawn
-    ) external view returns (uint);
-
     function getBorrowingRate() external view returns (uint);
 
-    function getBorrowingRateWithDecay() external view returns (uint);
-
     function getBorrowingFee(uint256 _debt) external view returns (uint);
-
-    function getBorrowingFeeWithDecay(
-        uint256 _debt
-    ) external view returns (uint);
 
     function getTroveStatus(address _borrower) external view returns (Status);
 

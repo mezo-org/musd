@@ -2697,86 +2697,6 @@ describe("TroveManager in Normal Mode", () => {
       expect(alice.btc.after).to.equal(alice.btc.before + collateralSurplus)
     })
 
-    it("succeeds if fee is less than max fee percentage", async () => {
-      // Open identical troves for everyone but Dennis
-      const users = [alice, bob, carol, dennis]
-      await Promise.all(
-        users.slice(0, -1).map((user) =>
-          openTrove(contracts, {
-            musdAmount: "20000",
-            ICR: "200",
-            sender: user.wallet,
-          }),
-        ),
-      )
-
-      // Open a trove for Dennis with slightly lower ICR
-      await openTrove(contracts, {
-        musdAmount: "40000",
-        ICR: "195",
-        sender: dennis.wallet,
-      })
-
-      // Calculate the fee for redeeming 1/10 of the total supply
-      const totalSupply = await contracts.musd.totalSupply()
-      const attemptedRedemptionAmount = totalSupply / 10n
-      const price = await contracts.priceFeed.fetchPrice()
-      const collNeeded = to1e18(attemptedRedemptionAmount) / price
-      const fee =
-        await contracts.troveManager.getRedemptionFeeWithDecay(collNeeded)
-      const baseRate = await contracts.troveManager.baseRate()
-      const feePercentage = (to1e18(fee) / collNeeded) * 1000n + baseRate
-      const feePercentageNumber = Number(feePercentage) / Number(1e18)
-
-      // Attempt to redeem with a fee 1% more than the calculated fee
-      const redemptionTx = await redeemWithFee(
-        feePercentageNumber + 1,
-        attemptedRedemptionAmount,
-      )
-      const receipt = await redemptionTx.wait()
-
-      // Check that the redemption succeeded
-      expect(receipt?.status).to.equal(1)
-    })
-
-    it("a redemption made when base rate is zero increases the base rate", async () => {
-      await setupRedemptionTroves()
-
-      await setBaseRate(contracts, to1e18("0"))
-
-      await performRedemption(contracts, dennis, dennis, to1e18("100"))
-
-      expect(await contracts.troveManager.baseRate()).to.be.gt(0)
-    })
-
-    it("a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
-      await setupRedemptionTroves()
-
-      const initialBaseRate = to1e18("0.1")
-      await setBaseRate(contracts, initialBaseRate)
-
-      await performRedemption(contracts, dennis, dennis, to1e18("100"))
-
-      expect(await contracts.troveManager.baseRate()).to.be.gt(initialBaseRate)
-    })
-
-    it("lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
-      await setupRedemptionTroves()
-
-      const initialBaseRate = to1e18("0.1")
-      await setBaseRate(contracts, initialBaseRate)
-
-      await performRedemption(contracts, dennis, dennis, to1e18("100"))
-
-      const lastFeeOpTime = await contracts.troveManager.lastFeeOperationTime()
-      await fastForwardTime(45)
-      await performRedemption(contracts, dennis, dennis, to1e18("100"))
-
-      expect(await contracts.troveManager.lastFeeOperationTime()).to.equal(
-        lastFeeOpTime,
-      )
-    })
-
     it("a redemption made at zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
       await setBaseRate(contracts, to1e18("0"))
 
@@ -3025,44 +2945,6 @@ describe("TroveManager in Normal Mode", () => {
         await expect(redeemWithFee(0.49)).to.be.revertedWith(
           "Max fee percentage must be between 0.5% and 100%",
         )
-      })
-
-      it("reverts if fee exceeds max fee percentage", async () => {
-        // Open identical troves for everyone but Dennis
-        const users = [alice, bob, carol, dennis]
-        await Promise.all(
-          users.slice(0, -1).map((user) =>
-            openTrove(contracts, {
-              musdAmount: "20000",
-              ICR: "200",
-              sender: user.wallet,
-            }),
-          ),
-        )
-
-        // Open a trove for Dennis with slightly lower ICR
-        await openTrove(contracts, {
-          musdAmount: "40000",
-          ICR: "195",
-          sender: dennis.wallet,
-        })
-
-        // Calculate the fee for redeeming 1/10 of the total supply
-        const totalSupply = await contracts.musd.totalSupply()
-        const attemptedRedemptionAmount = totalSupply / 10n
-        const price = await contracts.priceFeed.fetchPrice()
-        const collNeeded = to1e18(attemptedRedemptionAmount) / price
-        const fee =
-          await contracts.troveManager.getRedemptionFeeWithDecay(collNeeded)
-        const feePercentage = (to1e18(fee) / collNeeded) * 1000n
-
-        // Convert the fee to a number to make it easier to work with
-        const feePercentageNumber = Number(feePercentage) / Number(1e18)
-
-        // Attempt to redeem with a maximum fee just slightly less than the calculated fee
-        await expect(
-          redeemWithFee(feePercentageNumber - 0.01, attemptedRedemptionAmount),
-        ).to.be.revertedWith("Fee exceeded provided maximum")
       })
 
       it("reverts when requested redemption amount exceeds caller's mUSD token balance", async () => {
