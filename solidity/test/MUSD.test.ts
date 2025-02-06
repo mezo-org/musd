@@ -5,6 +5,7 @@ import {
   TestingAddresses,
   User,
   fastForwardTime,
+  getDeployedContract,
   getLatestBlockTimestamp,
   setupTests,
 } from "./helpers"
@@ -34,10 +35,8 @@ describe("MUSD", () => {
     ;({ alice, bob, carol, dennis, deployer, contracts, addresses } =
       await setupTests())
 
-    // new contracts to add.
-    newBorrowerOperations = await (
-      await ethers.getContractFactory("BorrowerOperations")
-    ).deploy()
+    newBorrowerOperations = await getDeployedContract("NewBorrowerOperations")
+
     newInterestRateManager = await (
       await ethers.getContractFactory("InterestRateManager")
     ).deploy()
