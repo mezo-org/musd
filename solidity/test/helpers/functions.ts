@@ -289,8 +289,6 @@ export async function updateTroveManagerSnapshot(
     await contracts.troveManager.getTroveOwnersCount()
   state.troveManager.baseRate[checkPoint] =
     await contracts.troveManager.baseRate()
-  state.troveManager.lastFeeOperationTime[checkPoint] =
-    await contracts.troveManager.lastFeeOperationTime()
   state.troveManager.liquidation.collateral[checkPoint] =
     await contracts.troveManager.L_Collateral()
   state.troveManager.liquidation.principal[checkPoint] =
@@ -766,7 +764,6 @@ export function transferMUSD(
 export async function setBaseRate(contracts: Contracts, rate: bigint) {
   if ("setBaseRate" in contracts.troveManager) {
     await contracts.troveManager.setBaseRate(rate)
-    await contracts.troveManager.setLastFeeOpTimeToNow()
   } else {
     assert.fail("TroveManagerTester not loaded")
   }

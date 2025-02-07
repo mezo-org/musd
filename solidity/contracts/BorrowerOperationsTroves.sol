@@ -7,6 +7,8 @@ import "./interfaces/IPriceFeed.sol";
 import "./interfaces/ITroveManager.sol";
 
 library BorrowerOperationsTroves {
+    uint256 public constant DECIMAL_PRECISION = 1e18;
+
     event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
 
     function refinance(
@@ -71,7 +73,21 @@ library BorrowerOperationsTroves {
     //       LIBRARIES AND THE MAIN CONTRACT.
     //
 
-    uint256 public constant DECIMAL_PRECISION = 1e18;
+    function _triggerBorrowingFee(
+        BorrowerOperationsState.Storage storage self,
+        ITroveManager _troveManager,
+        IMUSD _musd,
+        uint256 _amount,
+        uint256 _maxFeePercentage
+    ) internal returns (uint) {
+        uint256 fee = _troveManager.getBorrowingFee(_amount);
+
+        _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
+
+        // Send fee to PCV contract
+        _musd.mint(self.pcvAddress, fee);
+        return fee;
+    }
 
     function _requireTroveisActive(
         ITroveManager _troveManager,
@@ -83,23 +99,6 @@ library BorrowerOperationsTroves {
             status == ITroveManager.Status.active,
             "BorrowerOps: Trove does not exist or is closed"
         );
-    }
-
-    function _triggerBorrowingFee(
-        BorrowerOperationsState.Storage storage self,
-        ITroveManager _troveManager,
-        IMUSD _musd,
-        uint256 _amount,
-        uint256 _maxFeePercentage
-    ) internal returns (uint) {
-        _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint256 fee = _troveManager.getBorrowingFee(_amount);
-
-        _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
-
-        // Send fee to PCV contract
-        _musd.mint(self.pcvAddress, fee);
-        return fee;
     }
 
     function _requireUserAcceptsFee(

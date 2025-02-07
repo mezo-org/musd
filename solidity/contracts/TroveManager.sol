@@ -134,7 +134,6 @@ contract TroveManager is
         uint256 totalCollateralDrawn;
         uint256 collateralFee;
         uint256 collateralToSendToRedeemer;
-        uint256 decayedBaseRate;
         uint256 price;
         uint256 totalDebtAtStart;
     }
@@ -160,25 +159,11 @@ contract TroveManager is
 
     // --- Data structures ---
 
-    /*
-     * Half-life of 12h. 12h = 720 min
-     * (1/2) = d^720 => d = (1/2)^(1/720)
-     */
-    uint256 public constant MINUTE_DECAY_FACTOR = 999037758833783000;
     uint256 public constant REDEMPTION_FEE_FLOOR =
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
-    /*
-     * BETA: 18 digit decimal. Parameter by which to divide the redeemed fraction, in order to calc the new base rate from a redemption.
-     * Corresponds to (1 / ALPHA) in the white paper.
-     */
-    uint256 public constant BETA = 2;
-
     uint256 public baseRate;
-
-    // The timestamp of the latest fee operation (redemption or new mUSD issuance)
-    uint256 public lastFeeOperationTime;
 
     mapping(address => Trove) public Troves;
 
@@ -419,14 +404,6 @@ contract TroveManager is
             "TroveManager: Unable to redeem any amount"
         );
 
-        // Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
-        // Use the saved total mUSD supply value, from before it was reduced by the redemption.
-        _updateBaseRateFromRedemption(
-            totals.totalCollateralDrawn,
-            totals.price,
-            totals.totalDebtAtStart
-        );
-
         // Calculate the collateral fee
         totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
 
@@ -500,19 +477,6 @@ contract TroveManager is
     function removeStake(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
         return _removeStake(_borrower);
-    }
-
-    // Updates the baseRate state variable based on time elapsed since the last redemption or borrowing operation.
-    function decayBaseRateFromBorrowing() external override {
-        _requireCallerIsBorrowerOperations();
-
-        uint256 decayedBaseRate = _calcDecayedBaseRate();
-        assert(decayedBaseRate <= DECIMAL_PRECISION); // The baseRate can decay to 0
-
-        baseRate = decayedBaseRate;
-        emit BaseRateUpdated(decayedBaseRate);
-
-        _updateLastFeeOpTime();
     }
 
     // --- Trove property setters, called by BorrowerOperations ---
@@ -615,25 +579,12 @@ contract TroveManager is
         return NICR;
     }
 
-    function getRedemptionFeeWithDecay(
-        uint256 _collateralDrawn
-    ) external view override returns (uint) {
-        return
-            _calcRedemptionFee(getRedemptionRateWithDecay(), _collateralDrawn);
-    }
-
     // --- Borrowing fee functions ---
 
     function getBorrowingFee(
         uint256 _debt
     ) external view override returns (uint) {
-        return _calcBorrowingFee(getBorrowingRate(), _debt);
-    }
-
-    function getBorrowingFeeWithDecay(
-        uint256 _debt
-    ) external view override returns (uint) {
-        return _calcBorrowingFee(getBorrowingRateWithDecay(), _debt);
+        return (_debt * getBorrowingRate()) / DECIMAL_PRECISION;
     }
 
     function getTroveStatus(
@@ -847,10 +798,6 @@ contract TroveManager is
         );
     }
 
-    function getRedemptionRateWithDecay() public view override returns (uint) {
-        return _calcRedemptionRate(_calcDecayedBaseRate());
-    }
-
     function getCurrentICR(
         address _borrower,
         uint256 _price
@@ -910,11 +857,8 @@ contract TroveManager is
     }
 
     function getBorrowingRate() public view override returns (uint) {
-        return _calcBorrowingRate(baseRate);
-    }
-
-    function getBorrowingRateWithDecay() public view override returns (uint) {
-        return _calcBorrowingRate(_calcDecayedBaseRate());
+        return
+            LiquityMath._min(BORROWING_FEE_FLOOR + baseRate, MAX_BORROWING_FEE);
     }
 
     function getPendingCollateral(
@@ -963,7 +907,11 @@ contract TroveManager is
     }
 
     function getRedemptionRate() public view override returns (uint) {
-        return _calcRedemptionRate(baseRate);
+        return
+            LiquityMath._min(
+                REDEMPTION_FEE_FLOOR + baseRate,
+                DECIMAL_PRECISION
+            );
     }
 
     /**
@@ -988,37 +936,6 @@ contract TroveManager is
         // slither-disable-end calls-loop
         trove.principal -= principalAdjustment;
         trove.interestOwed -= interestAdjustment;
-    }
-
-    /*
-     * This function has two impacts on the baseRate state variable:
-     * 1) decays the baseRate based on time passed since last redemption or borrowing operation.
-     * then,
-     * 2) increases the baseRate based on the amount redeemed, as a proportion of total debt
-     */
-    function _updateBaseRateFromRedemption(
-        uint256 _collateralDrawn,
-        uint256 _price,
-        uint256 _totalDebt
-    ) internal returns (uint) {
-        uint256 decayedBaseRate = _calcDecayedBaseRate();
-
-        /* Convert the drawn collateral back to mUSD at face value rate (1 mUSD:1 USD), in order to get
-         * the fraction of total supply that was redeemed at face value. */
-        uint256 redeemedMUSDFraction = (_collateralDrawn * _price) / _totalDebt;
-
-        uint256 newBaseRate = decayedBaseRate + (redeemedMUSDFraction / BETA);
-        newBaseRate = LiquityMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
-        //assert(newBaseRate <= DECIMAL_PRECISION); // This is already enforced in the line above
-        assert(newBaseRate > 0); // Base rate is always non-zero after redemption
-
-        // Update the baseRate state variable
-        baseRate = newBaseRate;
-        emit BaseRateUpdated(newBaseRate);
-
-        _updateLastFeeOpTime();
-
-        return newBaseRate;
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
@@ -1731,18 +1648,6 @@ contract TroveManager is
         return index;
     }
 
-    function _updateLastFeeOpTime() internal {
-        // solhint-disable-next-line not-rely-on-time
-        uint256 timePassed = block.timestamp - lastFeeOperationTime;
-
-        if (timePassed >= 1 minutes) {
-            // solhint-disable-next-line not-rely-on-time
-            lastFeeOperationTime = block.timestamp;
-            // solhint-disable-next-line not-rely-on-time
-            emit LastFeeOpTimeUpdated(block.timestamp);
-        }
-    }
-
     // Move a Trove's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
     function _movePendingTroveRewardsToActivePool(
         IActivePool _activePool,
@@ -1923,22 +1828,13 @@ contract TroveManager is
     function _getRedemptionFee(
         uint256 _collateralDrawn
     ) internal view returns (uint) {
-        return _calcRedemptionFee(getRedemptionRate(), _collateralDrawn);
-    }
-
-    function _calcDecayedBaseRate() internal view returns (uint) {
-        uint256 minutesPassed = _minutesPassedSinceLastFeeOp();
-        uint256 decayFactor = LiquityMath._decPow(
-            MINUTE_DECAY_FACTOR,
-            minutesPassed
+        uint256 redemptionFee = (getRedemptionRate() * _collateralDrawn) /
+            DECIMAL_PRECISION;
+        require(
+            redemptionFee < _collateralDrawn,
+            "TroveManager: Fee would eat up all returned collateral"
         );
-
-        return (baseRate * decayFactor) / DECIMAL_PRECISION;
-    }
-
-    function _minutesPassedSinceLastFeeOp() internal view returns (uint) {
-        // solhint-disable-next-line not-rely-on-time
-        return (block.timestamp - lastFeeOperationTime) / 1 minutes;
+        return redemptionFee;
     }
 
     function _requireCallerIsBorrowerOperations() internal view {
@@ -2112,46 +2008,6 @@ contract TroveManager is
             singleLiquidation.collSurplus;
 
         return newTotals;
-    }
-
-    function _calcBorrowingFee(
-        uint256 _borrowingRate,
-        uint256 _debt
-    ) internal pure returns (uint) {
-        return (_borrowingRate * _debt) / DECIMAL_PRECISION;
-    }
-
-    function _calcBorrowingRate(
-        uint256 _baseRate
-    ) internal pure returns (uint) {
-        return
-            LiquityMath._min(
-                BORROWING_FEE_FLOOR + _baseRate,
-                MAX_BORROWING_FEE
-            );
-    }
-
-    function _calcRedemptionFee(
-        uint256 _redemptionRate,
-        uint256 _collateralDrawn
-    ) internal pure returns (uint) {
-        uint256 redemptionFee = (_redemptionRate * _collateralDrawn) /
-            DECIMAL_PRECISION;
-        require(
-            redemptionFee < _collateralDrawn,
-            "TroveManager: Fee would eat up all returned collateral"
-        );
-        return redemptionFee;
-    }
-
-    function _calcRedemptionRate(
-        uint256 _baseRate
-    ) internal pure returns (uint) {
-        return
-            LiquityMath._min(
-                REDEMPTION_FEE_FLOOR + _baseRate,
-                DECIMAL_PRECISION // cap at a maximum of 100%
-            );
     }
 }
 // slither-disable-end reentrancy-benign

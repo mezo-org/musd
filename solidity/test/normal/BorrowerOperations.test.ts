@@ -199,134 +199,6 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("openTrove()", () => {
-    it("Decays a non-zero base rate", async () => {
-      // setup
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-
-      // Check baseRate is now non-zero
-      const baseRate1 = await contracts.troveManager.baseRate()
-      expect(baseRate1).is.equal(newRate)
-
-      // 2 hours pass
-      await fastForwardTime(7200)
-
-      // Dennis opens trove
-      await openTrove(contracts, {
-        musdAmount: "2,037",
-        sender: dennis.wallet,
-      })
-
-      // Check baseRate has decreased
-      const baseRate2 = await contracts.troveManager.baseRate()
-      expect(baseRate2).is.lessThan(baseRate1)
-
-      // 1 hour passes
-      await fastForwardTime(3600)
-
-      // Eric opens trove
-      await openTrove(contracts, {
-        musdAmount: "2,012",
-        sender: eric.wallet,
-      })
-
-      const baseRate3 = await contracts.troveManager.baseRate()
-      expect(baseRate3).is.lessThan(baseRate2)
-    })
-
-    it("Doesn't change base rate if it is already zero", async () => {
-      // Check baseRate is zero
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
-
-      // 2 hours pass
-      await fastForwardTime(7200)
-
-      // Dennis opens trove
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        sender: dennis.wallet,
-      })
-
-      // Check baseRate is still 0
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
-
-      // 1 hour passes
-      await fastForwardTime(3600)
-
-      // Eric opens trove
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        sender: eric.wallet,
-      })
-
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
-    })
-
-    it("Doesn't update lastFeeOpTime if less time than decay interval has passed since the last fee operation", async () => {
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-      const lastFeeOpTime1 = await contracts.troveManager.lastFeeOperationTime()
-
-      // Dennis triggers a fee
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        sender: dennis.wallet,
-      })
-      const lastFeeOpTime2 = await contracts.troveManager.lastFeeOperationTime()
-
-      // Check that the last fee operation time did not update, as borrower D's debt issuance occured
-      // since before minimum interval had passed
-      expect(lastFeeOpTime2).to.equal(lastFeeOpTime1)
-
-      // 1 minute passes
-      await fastForwardTime(60)
-
-      // Check that now, at least one minute has passed since lastFeeOpTime_1
-      const timeNow = await getLatestBlockTimestamp()
-      expect(BigInt(timeNow)).to.be.oneOf([
-        lastFeeOpTime1 + 60n,
-        lastFeeOpTime1 + 61n,
-        lastFeeOpTime1 + 62n,
-      ])
-
-      // Eric triggers a fee
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        sender: eric.wallet,
-      })
-      const lastFeeOpTime3 = await contracts.troveManager.lastFeeOperationTime()
-
-      // Check that the last fee operation time DID update, as borrower's debt issuance occured
-      // after minimum interval had passed
-      expect(lastFeeOpTime3).to.greaterThan(lastFeeOpTime1)
-    })
-
-    it("Borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-
-      // 59 minutes pass
-      fastForwardTime(3540)
-
-      // Borrower triggers a fee, before 60 minute decay interval has passed
-      await openTrove(contracts, {
-        musdAmount: "20,000",
-        sender: dennis.wallet,
-      })
-
-      // 1 minute pass
-      fastForwardTime(60)
-
-      // Borrower triggers another fee
-      await openTrove(contracts, {
-        musdAmount: "20,000",
-        sender: eric.wallet,
-      })
-
-      // Check base rate has decreased even though Borrower tried to stop it decaying
-      expect(await contracts.troveManager.baseRate()).is.lessThan(newRate)
-    })
-
     it("Opens a trove with net debt >= minimum net debt", async () => {
       await openTrove(contracts, {
         musdAmount: minNetDebt,
@@ -3303,31 +3175,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("decays a non-zero base rate", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(1)
-      const newRate = to1e18(5) / 100n
-      await setupCarolsTroveAndAdjustRate()
-
-      await fastForwardTime(7200)
-      // first withdrawal
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
-
-      const baseRate2 = await contracts.troveManager.baseRate()
-      expect(newRate).is.greaterThan(baseRate2)
-
-      await fastForwardTime(3600)
-      // second withdrawal
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
-
-      const baseRate3 = await contracts.troveManager.baseRate()
-      expect(baseRate2).is.greaterThan(baseRate3)
-    })
-
     it("doesn't change base rate if it is already zero", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
@@ -3348,38 +3195,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
 
       expect(await contracts.troveManager.baseRate()).is.equal(0n)
-    })
-
-    it("lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(1)
-      await setupCarolsTrove()
-
-      // Artificially make baseRate 5%
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-
-      const lastFeeOpTime1 = await contracts.troveManager.lastFeeOperationTime()
-      await fastForwardTime(10)
-
-      // trigger a fee
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
-
-      await expect(lastFeeOpTime1).to.equal(
-        await contracts.troveManager.lastFeeOperationTime(),
-      )
-      await fastForwardTime(60)
-
-      // trigger second fee
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
-
-      expect(lastFeeOpTime1).to.be.lessThan(
-        await contracts.troveManager.lastFeeOperationTime(),
-      )
     })
 
     it("borrowing at zero base rate changes mUSD fees", async () => {
@@ -3445,39 +3260,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       carol.musd.after = await contracts.musd.balanceOf(carol.wallet)
 
       expect(carol.musd.after).to.equal(carol.musd.before + amount)
-    })
-
-    it("withdrawMUSD(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(1)
-
-      await openTrove(contracts, {
-        musdAmount: "20,000",
-        ICR: "500",
-        sender: carol.wallet,
-      })
-
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-
-      // 30 seconds
-      fastForwardTime(30)
-
-      // Borrower triggers a fee, before 60 minute decay interval has passed
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
-
-      // 1 minute pass
-      fastForwardTime(60)
-
-      // Borrower triggers another fee
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
-
-      // Check base rate has decreased even though Borrower tried to stop it decaying
-      expect(await contracts.troveManager.baseRate()).is.lessThan(newRate)
     })
 
     it("borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
@@ -4939,68 +4721,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("decays a non-zero base rate", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(1)
-      const newRate = to1e18(5) / 100n
-      await setupCarolsTroveAndAdjustRate()
-      await fastForwardTime(7200)
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          0,
-          bob.wallet,
-          bob.wallet,
-        )
-
-      const baseRate2 = await contracts.troveManager.baseRate()
-      expect(newRate).is.greaterThan(baseRate2)
-
-      await fastForwardTime(3600)
-      // second withdrawal
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(to1e18(1), 0, to1e18(37), true, 0, bob.wallet, bob.wallet)
-
-      const baseRate3 = await contracts.troveManager.baseRate()
-      expect(baseRate2).is.greaterThan(baseRate3)
-    })
-
-    it("doesn't decay a non-zero base rate when user issues 0 debt", async () => {
-      const maxFeePercentage = to1e18(1)
-      const assetAmount = to1e18(1)
-
-      await setupCarolsTroveAndAdjustRate()
-      await fastForwardTime(7200)
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          0,
-          false,
-          assetAmount,
-          bob.wallet,
-          bob.wallet,
-          {
-            value: assetAmount,
-          },
-        )
-
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      // Check baseRate has not decreased
-      expect(state.troveManager.baseRate.after).is.equal(
-        state.troveManager.baseRate.before,
-      )
-    })
-
     it("doesn't change base rate if it is already zero", async () => {
       const maxFeePercentage = to1e18(1)
 
@@ -5026,72 +4746,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         state.troveManager.baseRate.before,
       )
       expect(state.troveManager.baseRate.after).is.equal(0)
-    })
-
-    it("lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
-      const maxFeePercentage = to1e18(1)
-
-      await setupCarolsTroveAndAdjustRate()
-      await contracts.troveManager.setLastFeeOpTimeToNow()
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      await fastForwardTime(10)
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          to1e18(37),
-          true,
-          0,
-          bob.wallet,
-          bob.wallet,
-        )
-
-      await updateTroveManagerSnapshot(contracts, state, "after")
-
-      expect(state.troveManager.lastFeeOperationTime.before).is.equal(
-        state.troveManager.lastFeeOperationTime.after,
-      )
-      expect(state.troveManager.lastFeeOperationTime.before).is.greaterThan(0)
-    })
-
-    it("borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
-      const maxFeePercentage = to1e18(1)
-
-      await setupCarolsTroveAndAdjustRate()
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          to1e18(37),
-          true,
-          0,
-          bob.wallet,
-          bob.wallet,
-        )
-
-      await fastForwardTime(60)
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          to1e18(37),
-          true,
-          0,
-          bob.wallet,
-          bob.wallet,
-        )
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      expect(state.troveManager.baseRate.before).to.be.greaterThan(
-        state.troveManager.baseRate.after,
-      )
     })
 
     it("borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {

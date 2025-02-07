@@ -30,9 +30,6 @@ contract BorrowerOperations is
     using ECDSA for bytes32;
 
     using BorrowerOperationsTroves for BorrowerOperationsState.Storage;
-    BorrowerOperationsState.Storage internal self;
-
-    uint256 constant MIN_TOTAL_DEBT = 250e18;
 
     /* --- Variable container structs  ---
 
@@ -153,6 +150,10 @@ contract BorrowerOperations is
     }
 
     string public constant name = "BorrowerOperations";
+
+    BorrowerOperationsState.Storage internal self;
+
+    uint256 public constant MIN_TOTAL_DEBT = 250e18;
 
     string private constant SIGNING_DOMAIN = "BorrowerOperations";
     string private constant SIGNATURE_VERSION = "1";
@@ -787,12 +788,6 @@ contract BorrowerOperations is
         self.refinancingFeePercentage = _refinanceFeePercentage;
     }
 
-    function getCompositeDebt(
-        uint256 _debt
-    ) external pure override returns (uint) {
-        return _getCompositeDebt(_debt);
-    }
-
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
         // Making users lock up at least $250 reduces potential dust attacks
         require(
@@ -820,6 +815,24 @@ contract BorrowerOperations is
         );
         self.minNetDebt = self.proposedMinNetDebt;
         emit MinNetDebtChanged(self.minNetDebt);
+    }
+
+    function proposedMinNetDebt() external view returns (uint256) {
+        return self.proposedMinNetDebt;
+    }
+
+    function minNetDebt() external view returns (uint256) {
+        return self.minNetDebt;
+    }
+
+    function stabilityPoolAddress() external view returns (address) {
+        return self.stabilityPoolAddress;
+    }
+
+    function getCompositeDebt(
+        uint256 _debt
+    ) external pure override returns (uint) {
+        return _getCompositeDebt(_debt);
     }
 
     function getNonce(address user) public view returns (uint256) {
@@ -1365,9 +1378,7 @@ contract BorrowerOperations is
         uint256 _amount,
         uint256 _maxFeePercentage
     ) internal returns (uint) {
-        _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
         uint256 fee = _troveManager.getBorrowingFee(_amount);
-
         _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
 
         // Send fee to PCV contract
@@ -1675,17 +1686,5 @@ contract BorrowerOperations is
             _debtRepayment <= _currentDebt - MUSD_GAS_COMPENSATION,
             "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
         );
-    }
-
-    function proposedMinNetDebt() external view returns (uint256) {
-        return self.proposedMinNetDebt;
-    }
-
-    function minNetDebt() external view returns (uint256) {
-        return self.minNetDebt;
-    }
-
-    function stabilityPoolAddress() external view returns (address) {
-        return self.stabilityPoolAddress;
     }
 }
