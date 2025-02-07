@@ -150,6 +150,12 @@ contract BorrowerOperations is
         uint256 deadline;
     }
 
+    struct ClaimCollateral {
+        address borrower;
+        uint256 nonce;
+        uint256 deadline;
+    }
+
     enum BorrowerOperation {
         openTrove,
         closeTrove,
@@ -203,6 +209,11 @@ contract BorrowerOperations is
     bytes32 private constant REFINANCE_TYPEHASH =
         keccak256(
             "Refinance(uint256 maxFeePercentage,address borrower,uint256 nonce,uint256 deadline)"
+        );
+
+    bytes32 private constant CLAIM_COLLATERAL_TYPEHASH =
+        keccak256(
+            "ClaimCollateral(address borrower,uint256 nonce,uint256 deadline)"
         );
 
     modifier onlyGovernance() {
@@ -768,6 +779,40 @@ contract BorrowerOperations is
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
         self.collSurplusPool.claimColl(msg.sender);
+    }
+
+    function claimCollateralWithSignature(
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external {
+        // solhint-disable not-rely-on-time
+        require(block.timestamp <= _deadline, "Signature expired");
+        uint256 nonce = self.nonces[_borrower];
+        ClaimCollateral memory claimCollateralData = ClaimCollateral({
+            borrower: _borrower,
+            nonce: nonce,
+            deadline: _deadline
+        });
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    CLAIM_COLLATERAL_TYPEHASH,
+                    claimCollateralData.borrower,
+                    claimCollateralData.nonce,
+                    claimCollateralData.deadline
+                )
+            )
+        );
+
+        address recoveredAddress = ECDSA.recover(digest, _signature);
+        require(recoveredAddress == _borrower, "Invalid signature");
+
+        self.nonces[_borrower]++;
+
+        // send collateral from CollSurplus Pool to owner
+        self.collSurplusPool.claimColl(_borrower);
     }
 
     function setAddresses(
