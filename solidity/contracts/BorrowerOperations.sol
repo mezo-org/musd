@@ -143,6 +143,13 @@ contract BorrowerOperations is
         uint256 deadline;
     }
 
+    struct Refinance {
+        uint256 maxFeePercentage;
+        address borrower;
+        uint256 nonce;
+        uint256 deadline;
+    }
+
     enum BorrowerOperation {
         openTrove,
         closeTrove,
@@ -191,6 +198,11 @@ contract BorrowerOperations is
     bytes32 private constant CLOSE_TROVE_TYPEHASH =
         keccak256(
             "CloseTrove(address borrower,uint256 nonce,uint256 deadline)"
+        );
+
+    bytes32 private constant REFINANCE_TYPEHASH =
+        keccak256(
+            "Refinance(uint256 maxFeePercentage,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     modifier onlyGovernance() {
@@ -622,7 +634,46 @@ contract BorrowerOperations is
     }
 
     function refinance(uint256 _maxFeePercentage) external override {
-        self.refinance(priceFeed, _maxFeePercentage);
+        self.refinance(priceFeed, _maxFeePercentage, msg.sender);
+    }
+
+    function refinanceWithSignature(
+        uint256 _maxFeePercentage,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external {
+        // solhint-disable not-rely-on-time
+        require(block.timestamp <= _deadline, "Signature expired");
+        uint256 nonce = self.nonces[_borrower];
+        Refinance memory refinanceData = Refinance({
+            maxFeePercentage: _maxFeePercentage,
+            borrower: _borrower,
+            nonce: nonce,
+            deadline: _deadline
+        });
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    REFINANCE_TYPEHASH,
+                    refinanceData.maxFeePercentage,
+                    refinanceData.borrower,
+                    refinanceData.nonce,
+                    refinanceData.deadline
+                )
+            )
+        );
+
+        address recoveredAddress = ECDSA.recover(digest, _signature);
+        require(recoveredAddress == _borrower, "Invalid signature");
+
+        self.nonces[_borrower]++;
+        self.refinance(
+            priceFeed,
+            refinanceData.maxFeePercentage,
+            refinanceData.borrower
+        );
     }
 
     function adjustTrove(

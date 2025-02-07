@@ -153,6 +153,13 @@ interface IBorrowerOperations {
 
     function refinance(uint256 _maxFeePercentage) external;
 
+    function refinanceWithSignature(
+        uint256 _maxFeePercentage,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
     function adjustTrove(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
