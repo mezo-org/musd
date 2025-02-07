@@ -70,8 +70,6 @@ interface IBorrowerOperations {
         uint256 _deadline
     ) external payable;
 
-    function minNetDebt() external view returns (uint256);
-
     function proposeMinNetDebt(uint256 _minNetDebt) external;
 
     function approveMinNetDebt() external;
@@ -179,6 +177,8 @@ interface IBorrowerOperations {
     ) external payable;
 
     function claimCollateral() external;
+
+    function minNetDebt() external view returns (uint256);
 
     function getCompositeDebt(uint256 _debt) external pure returns (uint);
 }

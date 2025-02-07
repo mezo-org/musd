@@ -856,12 +856,9 @@ contract TroveManager is
     }
 
     function getBorrowingRate() public view override returns (uint) {
-        return LiquityMath._min(
-            BORROWING_FEE_FLOOR + baseRate,
-            MAX_BORROWING_FEE
-        );
+        return
+            LiquityMath._min(BORROWING_FEE_FLOOR + baseRate, MAX_BORROWING_FEE);
     }
-
 
     function getPendingCollateral(
         address _borrower
@@ -909,10 +906,11 @@ contract TroveManager is
     }
 
     function getRedemptionRate() public view override returns (uint) {
-        return LiquityMath._min(
-            REDEMPTION_FEE_FLOOR + baseRate,
-            DECIMAL_PRECISION
-        );
+        return
+            LiquityMath._min(
+                REDEMPTION_FEE_FLOOR + baseRate,
+                DECIMAL_PRECISION
+            );
     }
 
     /**
@@ -1830,7 +1828,7 @@ contract TroveManager is
         uint256 _collateralDrawn
     ) internal view returns (uint) {
         uint256 redemptionFee = (getRedemptionRate() * _collateralDrawn) /
-                    DECIMAL_PRECISION;
+            DECIMAL_PRECISION;
         require(
             redemptionFee < _collateralDrawn,
             "TroveManager: Fee would eat up all returned collateral"

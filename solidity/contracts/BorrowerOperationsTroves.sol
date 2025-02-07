@@ -7,6 +7,8 @@ import "./interfaces/IPriceFeed.sol";
 import "./interfaces/ITroveManager.sol";
 
 library BorrowerOperationsTroves {
+    uint256 public constant DECIMAL_PRECISION = 1e18;
+
     event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
 
     function refinance(
@@ -71,20 +73,6 @@ library BorrowerOperationsTroves {
     //       LIBRARIES AND THE MAIN CONTRACT.
     //
 
-    uint256 public constant DECIMAL_PRECISION = 1e18;
-
-    function _requireTroveisActive(
-        ITroveManager _troveManager,
-        address _borrower
-    ) internal view {
-        ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
-
-        require(
-            status == ITroveManager.Status.active,
-            "BorrowerOps: Trove does not exist or is closed"
-        );
-    }
-
     function _triggerBorrowingFee(
         BorrowerOperationsState.Storage storage self,
         ITroveManager _troveManager,
@@ -99,6 +87,18 @@ library BorrowerOperationsTroves {
         // Send fee to PCV contract
         _musd.mint(self.pcvAddress, fee);
         return fee;
+    }
+
+    function _requireTroveisActive(
+        ITroveManager _troveManager,
+        address _borrower
+    ) internal view {
+        ITroveManager.Status status = _troveManager.getTroveStatus(_borrower);
+
+        require(
+            status == ITroveManager.Status.active,
+            "BorrowerOps: Trove does not exist or is closed"
+        );
     }
 
     function _requireUserAcceptsFee(

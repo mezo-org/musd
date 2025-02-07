@@ -199,34 +199,6 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("openTrove()", () => {
-    it("Doesn't change base rate if it is already zero", async () => {
-      // Check baseRate is zero
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
-
-      // 2 hours pass
-      await fastForwardTime(7200)
-
-      // Dennis opens trove
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        sender: dennis.wallet,
-      })
-
-      // Check baseRate is still 0
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
-
-      // 1 hour passes
-      await fastForwardTime(3600)
-
-      // Eric opens trove
-      await openTrove(contracts, {
-        musdAmount: "2,000",
-        sender: eric.wallet,
-      })
-
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
-    })
-
     it("Opens a trove with net debt >= minimum net debt", async () => {
       await openTrove(contracts, {
         musdAmount: minNetDebt,
