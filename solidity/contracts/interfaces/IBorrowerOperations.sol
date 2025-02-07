@@ -185,6 +185,12 @@ interface IBorrowerOperations {
 
     function claimCollateral() external;
 
+    function claimCollateralWithSignature(
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
     function minNetDebt() external view returns (uint256);
 
     function getCompositeDebt(uint256 _debt) external pure returns (uint);
