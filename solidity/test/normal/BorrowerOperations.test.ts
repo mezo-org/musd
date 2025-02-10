@@ -131,10 +131,11 @@ describe("BorrowerOperations in Normal Mode", () => {
 
   async function setupSignatureTests(borrowerUser: User = carol) {
     const borrower = borrowerUser.address
-    const contractAddress = addresses.borrowerOperations
-    const nonce = await contracts.borrowerOperations.getNonce(borrower)
+    const contractAddress = addresses.borrowerOperationsSignatures
+    const nonce =
+      await contracts.borrowerOperationsSignatures.getNonce(borrower)
     const domain = {
-      name: "BorrowerOperations",
+      name: "BorrowerOperationsSignatures",
       version: "1",
       chainId: (await ethers.provider.getNetwork()).chainId,
       verifyingContract: contractAddress,
@@ -864,7 +865,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const signature = await carol.wallet.signTypedData(domain, types, value)
 
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .openTroveWithSignature(
           maxFeePercentage,
@@ -901,7 +902,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const signature = await carol.wallet.signTypedData(domain, types, value)
 
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .openTroveWithSignature(
           maxFeePercentage,
@@ -915,7 +916,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           { value: assetAmount },
         )
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
       expect(newNonce - nonce).to.equal(1)
     })
@@ -940,7 +942,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await alice.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -953,7 +955,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -975,7 +977,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await carol.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -994,7 +996,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the nonce is invalid", async () => {
         const { borrower, domain, deadline } = await setupSignatureTests()
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const value = {
           borrower,
@@ -1010,7 +1013,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await carol.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(carol.wallet)
           .openTroveWithSignature(
             maxFeePercentage,
@@ -1026,7 +1029,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Attempt to resend the same transaction which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -1039,17 +1042,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = carol.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -1071,7 +1075,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await carol.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -1084,17 +1088,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = carol.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // Incorrect chain id
           verifyingContract: contractAddress,
@@ -1116,7 +1121,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await carol.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -1129,17 +1134,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = carol.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0", // Incorrect version
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -1161,7 +1167,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await carol.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -1174,14 +1180,15 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = carol.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager", // Incorrect contract name
@@ -1206,7 +1213,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await carol.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
               maxFeePercentage,
@@ -1219,7 +1226,24 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .restrictedOpenTrove(
+              bob.address,
+              maxFeePercentage,
+              debtAmount,
+              assetAmount,
+              upperHint,
+              lowerHint,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+        )
       })
     })
   })
@@ -1918,7 +1942,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .closeTroveWithSignature(borrower, signature, deadline)
 
@@ -1936,11 +1960,12 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .closeTroveWithSignature(borrower, signature, deadline)
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
       expect(newNonce - nonce).to.equal(1)
     })
 
@@ -1959,10 +1984,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await alice.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -1976,7 +2001,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signature = await bob.wallet.signTypedData(domain, types, value)
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("Signature expired")
@@ -1994,26 +2019,27 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
           .closeTroveWithSignature(borrower, signature, deadline)
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -2030,20 +2056,21 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
-        const contractAddress = addresses.borrowerOperations
+        const contractAddress = addresses.borrowerOperationsSignatures
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // incorrect chain id
           verifyingContract: contractAddress,
@@ -2060,20 +2087,21 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
-        const contractAddress = addresses.borrowerOperations
+        const contractAddress = addresses.borrowerOperationsSignatures
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -2090,17 +2118,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
-        const contractAddress = addresses.borrowerOperations
+        const contractAddress = addresses.borrowerOperationsSignatures
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager",
@@ -2120,10 +2149,20 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .closeTroveWithSignature(borrower, signature, deadline),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .restrictedCloseTrove(bob.address),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+        )
       })
     })
   })
@@ -2296,7 +2335,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
 
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .addCollWithSignature(
           assetAmount,
@@ -2330,7 +2369,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
 
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .addCollWithSignature(
           assetAmount,
@@ -2342,7 +2381,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           { value: assetAmount },
         )
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
       expect(newNonce - nonce).to.equal(1)
     })
@@ -2365,7 +2405,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await alice.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2376,7 +2416,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -2396,7 +2436,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2426,7 +2466,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(carol.wallet)
           .addCollWithSignature(
             assetAmount,
@@ -2440,7 +2480,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Attempt to resend the same transaction which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2451,17 +2491,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -2481,7 +2522,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2492,17 +2533,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // Incorrect chain id
           verifyingContract: contractAddress,
@@ -2522,7 +2564,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2533,17 +2575,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0", // Incorrect version
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -2563,7 +2606,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2574,14 +2617,15 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager", // Incorrect contract name
@@ -2604,7 +2648,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .addCollWithSignature(
               assetAmount,
@@ -2615,7 +2659,19 @@ describe("BorrowerOperations in Normal Mode", () => {
               deadline,
               { value: assetAmount },
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .restrictedAddColl(bob.wallet, assetAmount, upperHint, lowerHint, {
+              value: assetAmount,
+            }),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+        )
       })
     })
   })
@@ -2955,7 +3011,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
 
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .withdrawCollWithSignature(
           amount,
@@ -2989,7 +3045,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
 
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .withdrawCollWithSignature(
           amount,
@@ -3000,7 +3056,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           deadline,
         )
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
       expect(newNonce - nonce).to.equal(1)
     })
@@ -3024,7 +3081,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await alice.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .withdrawCollWithSignature(
               amount,
@@ -3034,7 +3091,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -3055,7 +3112,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .withdrawCollWithSignature(
               amount,
@@ -3085,7 +3142,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(carol.wallet)
           .withdrawCollWithSignature(
             amount,
@@ -3098,7 +3155,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Attempt to resend the same transaction which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .withdrawCollWithSignature(
               amount,
@@ -3108,7 +3165,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
@@ -3116,10 +3173,11 @@ describe("BorrowerOperations in Normal Mode", () => {
         const borrower = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -3139,7 +3197,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .withdrawCollWithSignature(
               amount,
@@ -3149,17 +3207,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // Incorrect chain id
           verifyingContract: contractAddress,
@@ -3179,7 +3238,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .withdrawCollWithSignature(
               amount,
@@ -3189,17 +3248,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0", // Incorrect version
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -3219,7 +3279,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .withdrawCollWithSignature(
               amount,
@@ -3229,14 +3289,15 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager", // Incorrect contract name
@@ -3259,9 +3320,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .addCollWithSignature(
+            .withdrawCollWithSignature(
               amount,
               upperHint,
               lowerHint,
@@ -3269,8 +3330,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
+    })
+
+    it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+      await expect(
+        contracts.borrowerOperations
+          .connect(alice.wallet)
+          .restrictedWithdrawColl(bob.address, amount, upperHint, lowerHint),
+      ).to.be.revertedWith(
+        "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+      )
     })
   })
 
@@ -3659,7 +3730,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, bob, "before")
       const { domain, deadline } = await setupSignatureTests()
       const borrower = bob.address
-      const nonce = await contracts.borrowerOperations.getNonce(borrower)
+      const nonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
       const value = {
         maxFeePercentage,
         amount,
@@ -3671,7 +3743,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .withdrawMUSDWithSignature(
           maxFeePercentage,
@@ -3705,7 +3777,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .withdrawMUSDWithSignature(
           maxFeePercentage,
@@ -3717,7 +3789,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           deadline,
         )
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
       expect(newNonce - nonce).to.equal(1)
     })
 
@@ -3738,7 +3811,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         // Sign with Alice's wallet instead of Bob's
         const signature = await alice.wallet.signTypedData(domain, types, value)
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3749,7 +3822,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -3767,7 +3840,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signature = await bob.wallet.signTypedData(domain, types, value)
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3798,7 +3871,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
           .withdrawMUSDWithSignature(
             maxFeePercentage,
@@ -3812,7 +3885,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3823,17 +3896,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -3854,7 +3928,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3865,17 +3939,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // incorrect chain id
           verifyingContract: contractAddress,
@@ -3896,7 +3971,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3907,17 +3982,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
-        const contractAddress = addresses.borrowerOperations
+        const contractAddress = addresses.borrowerOperationsSignatures
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -3938,7 +4014,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3949,14 +4025,15 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager",
@@ -3980,7 +4057,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
               maxFeePercentage,
@@ -3991,7 +4068,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
     })
   })
@@ -4375,7 +4452,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .repayMUSDWithSignature(
           amount,
@@ -4402,7 +4479,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .repayMUSDWithSignature(
           amount,
@@ -4413,7 +4490,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           deadline,
         )
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
       expect(newNonce - nonce).to.equal(1)
     })
 
@@ -4433,7 +4511,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         // Sign with Alice's wallet instead of Bob's
         const signature = await alice.wallet.signTypedData(domain, types, value)
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4443,7 +4521,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -4460,7 +4538,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signature = await bob.wallet.signTypedData(domain, types, value)
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4488,7 +4566,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
           .repayMUSDWithSignature(
             amount,
@@ -4501,7 +4579,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4511,17 +4589,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -4541,7 +4620,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4551,17 +4630,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // incorrect chain id
           verifyingContract: contractAddress,
@@ -4581,7 +4661,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4591,17 +4671,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -4621,7 +4702,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4631,14 +4712,15 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager",
@@ -4661,7 +4743,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .repayMUSDWithSignature(
               amount,
@@ -4671,7 +4753,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
     })
   })
@@ -4704,7 +4786,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -4768,7 +4849,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -4814,7 +4894,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             0,
             to1e18(1),
             true,
-            0,
             carol.wallet,
             carol.wallet,
           ),
@@ -4836,7 +4915,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               to1e18(1),
               true,
-              0,
               carol.wallet,
               carol.wallet,
             ),
@@ -4857,7 +4935,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           to1e18(37),
           true,
-          0,
           bob.wallet,
           bob.wallet,
         )
@@ -4881,15 +4958,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          0,
-          bob.wallet,
-          bob.wallet,
-        )
+        .adjustTrove(maxFeePercentage, 0, amount, true, bob.wallet, bob.wallet)
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -4920,7 +4989,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           amount,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -4944,7 +5012,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           amount,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -4970,7 +5037,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           amount,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -4995,7 +5061,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           amount,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5025,7 +5090,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           amount,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5068,7 +5132,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           0,
           false,
-          amount,
           carol.wallet,
           carol.wallet,
           {
@@ -5106,7 +5169,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5141,7 +5203,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5179,7 +5240,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           true,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5217,7 +5277,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collChange,
           debtChange,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5246,7 +5305,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5278,7 +5336,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collChange,
           debtChange,
           true,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5314,7 +5371,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           0,
           false,
-          amount,
           carol.wallet,
           carol.wallet,
           {
@@ -5348,7 +5404,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           amount,
           0,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5378,7 +5433,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collChange,
           debtChange,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5404,7 +5458,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collChange,
           debtChange,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5430,7 +5483,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           true,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5462,7 +5514,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collChange,
           debtChange,
           false,
-          0,
           carol.wallet,
           carol.wallet,
         )
@@ -5502,7 +5553,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5545,7 +5595,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5588,7 +5637,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           false,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5635,7 +5683,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           0,
           debtChange,
           true,
-          collChange,
           carol.wallet,
           carol.wallet,
           {
@@ -5676,7 +5723,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(to1e18(1), 0, amount, false, 0, carol.wallet, carol.wallet)
+        .adjustTrove(to1e18(1), 0, amount, false, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
       const expectedInterest = calculateInterestOwed(
@@ -5717,9 +5764,9 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               false,
-              collateralTopUp,
               alice.wallet,
               alice.wallet,
+              { value: collateralTopUp },
             ),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
@@ -5749,7 +5796,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               false,
-              0,
               carol.wallet,
               carol.wallet,
             ),
@@ -5784,9 +5830,9 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               false,
-              collateralTopUp,
               alice.wallet,
               alice.wallet,
+              { value: collateralTopUp },
             ),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
@@ -5800,28 +5846,16 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              0,
-              0,
-              debtChange,
-              true,
-              collateralTopUp,
-              alice.wallet,
-              alice.wallet,
-            ),
+            .adjustTrove(0, 0, debtChange, true, alice.wallet, alice.wallet, {
+              value: collateralTopUp,
+            }),
         ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              1n,
-              0,
-              debtChange,
-              true,
-              collateralTopUp,
-              alice.wallet,
-              alice.wallet,
-            ),
+            .adjustTrove(1n, 0, debtChange, true, alice.wallet, alice.wallet, {
+              value: collateralTopUp,
+            }),
         ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
         await expect(
           contracts.borrowerOperations
@@ -5831,7 +5865,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               true,
-              collateralTopUp,
               alice.wallet,
               alice.wallet,
             ),
@@ -5850,9 +5883,9 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               true,
-              collateralTopUp,
               carol.wallet,
               carol.wallet,
+              { value: collateralTopUp },
             ),
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
       })
@@ -5867,7 +5900,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               true,
-              0,
               alice.wallet,
               alice.wallet,
             ),
@@ -5893,7 +5925,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               remainingDebt + 1n,
               false,
-              assetAmount,
               alice.wallet,
               alice.wallet,
               {
@@ -5916,7 +5947,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               alice.trove.collateral.before + 1n,
               0,
               true,
-              0,
               alice.wallet,
               alice.wallet,
             ),
@@ -5941,7 +5971,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               debtChange,
               true,
-              0,
               alice.wallet,
               alice.wallet,
             ),
@@ -5960,7 +5989,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               alice.trove.collateral.before,
               alice.trove.debt.before,
               true,
-              0,
               alice.wallet,
               alice.wallet,
             ),
@@ -5973,7 +6001,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(to1e18(1), 0, 0, true, 0, alice.wallet, alice.wallet),
+            .adjustTrove(to1e18(1), 0, 0, true, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Debt increase requires non-zero debtChange",
         )
@@ -5989,7 +6017,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               to1e18(1),
               to1e18(1),
               true,
-              assetAmount,
               alice.wallet,
               alice.wallet,
               {
@@ -6003,7 +6030,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(to1e18(1), 0, 0, false, 0, alice.wallet, alice.wallet),
+            .adjustTrove(to1e18(1), 0, 0, false, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: There must be either a collateral change or a debt change",
         )
@@ -6019,7 +6046,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               0,
               alice.trove.debt.before,
               false,
-              0,
               alice.wallet,
               alice.wallet,
             ),
@@ -6076,7 +6102,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .adjustTroveWithSignature(
           maxFeePercentage,
@@ -6118,7 +6144,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
-      await contracts.borrowerOperations
+      await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .adjustTroveWithSignature(
           maxFeePercentage,
@@ -6133,7 +6159,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           deadline,
         )
 
-      const newNonce = await contracts.borrowerOperations.getNonce(borrower)
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
       expect(newNonce - nonce).to.equal(1)
     })
 
@@ -6159,7 +6186,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await alice.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6173,7 +6200,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -6194,7 +6221,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signature = await bob.wallet.signTypedData(domain, types, value)
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6230,7 +6257,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         // Submit a valid transaction to increment the nonce
-        await contracts.borrowerOperations
+        await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
           .adjustTroveWithSignature(
             maxFeePercentage,
@@ -6247,7 +6274,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6261,17 +6288,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -6295,7 +6323,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6309,17 +6337,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
-        const contractAddress = addresses.borrowerOperations
+        const contractAddress = addresses.borrowerOperationsSignatures
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "1",
           chainId: 0n, // incorrect chain id
           verifyingContract: contractAddress,
@@ -6343,7 +6372,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6357,17 +6386,18 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
-          name: "BorrowerOperations",
+          name: "BorrowerOperationsSignatures",
           version: "0",
           chainId: (await ethers.provider.getNetwork()).chainId,
           verifyingContract: contractAddress,
@@ -6391,7 +6421,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6405,14 +6435,15 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
         const contractAddress = addresses.borrowerOperations
 
-        const nonce = await contracts.borrowerOperations.getNonce(borrower)
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const domain = {
           name: "TroveManager",
@@ -6439,7 +6470,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const signature = await bob.wallet.signTypedData(domain, types, value)
 
         await expect(
-          contracts.borrowerOperations
+          contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
               maxFeePercentage,
@@ -6453,7 +6484,27 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
-        ).to.be.revertedWith("Invalid signature")
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .restrictedAdjustTrove(
+              bob.address,
+              collWithdrawal,
+              debtChange,
+              isDebtIncrease,
+              assetAmount,
+              upperHint,
+              lowerHint,
+              maxFeePercentage,
+              true,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+        )
       })
     })
   })

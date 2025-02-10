@@ -10,6 +10,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const {
     activePool,
+    borrowerOperationsSignatures,
     collSurplusPool,
     defaultPool,
     gasPool,
@@ -26,6 +27,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     "BorrowerOperations",
     "setAddresses",
     await activePool.getAddress(),
+    await borrowerOperationsSignatures.getAddress(),
     await collSurplusPool.getAddress(),
     await defaultPool.getAddress(),
     await gasPool.getAddress(),

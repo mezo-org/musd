@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
@@ -17,20 +15,14 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 import "./BorrowerOperationsState.sol";
-import "./BorrowerOperationsTroves.sol";
 
 contract BorrowerOperations is
     CheckContract,
     IBorrowerOperations,
     LiquityBase,
-    EIP712Upgradeable,
     OwnableUpgradeable,
     SendCollateral
 {
-    using ECDSA for bytes32;
-
-    using BorrowerOperationsTroves for BorrowerOperationsState.Storage;
-
     /* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -76,73 +68,6 @@ contract BorrowerOperations is
         IInterestRateManager interestRateManager;
     }
 
-    struct OpenTrove {
-        uint256 maxFeePercentage;
-        uint256 debtAmount;
-        uint256 assetAmount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct RepayMUSD {
-        uint256 amount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct AddColl {
-        uint256 assetAmount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct WithdrawColl {
-        uint256 amount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct WithdrawMUSD {
-        uint256 maxFeePercentage;
-        uint256 amount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct AdjustTrove {
-        uint256 maxFeePercentage;
-        uint256 collWithdrawal;
-        uint256 debtChange;
-        bool isDebtIncrease;
-        uint256 assetAmount;
-        address upperHint;
-        address lowerHint;
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
-    struct CloseTrove {
-        address borrower;
-        uint256 nonce;
-        uint256 deadline;
-    }
-
     enum BorrowerOperation {
         openTrove,
         closeTrove,
@@ -155,44 +80,6 @@ contract BorrowerOperations is
 
     uint256 public constant MIN_TOTAL_DEBT = 250e18;
 
-    string private constant SIGNING_DOMAIN = "BorrowerOperations";
-    string private constant SIGNATURE_VERSION = "1";
-
-    bytes32 private constant OPEN_TROVE_TYPEHASH =
-        keccak256(
-            "OpenTrove(uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant REPAY_MUSD_TYPEHASH =
-        keccak256(
-            "RepayMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant ADD_COLL_TYPEHASH =
-        keccak256(
-            "AddColl(uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant WITHDRAW_COLL_TYPEHASH =
-        keccak256(
-            "WithdrawColl(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant WITHDRAW_MUSD_TYPEHASH =
-        keccak256(
-            "WithdrawMUSD(uint256 maxFeePercentage,uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant ADJUST_TROVE_TYPEHASH =
-        keccak256(
-            "AdjustTrove(uint256 maxFeePercentage,uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
-        );
-
-    bytes32 private constant CLOSE_TROVE_TYPEHASH =
-        keccak256(
-            "CloseTrove(address borrower,uint256 nonce,uint256 deadline)"
-        );
-
     modifier onlyGovernance() {
         require(
             msg.sender == self.pcv.council() ||
@@ -204,7 +91,6 @@ contract BorrowerOperations is
 
     function initialize() external initializer {
         __Ownable_init(msg.sender);
-        __EIP712_init_unchained(SIGNING_DOMAIN, SIGNATURE_VERSION);
         self.refinancingFeePercentage = 20;
         self.minNetDebt = 1800e18;
         self.musdGasCompensation = 200e18;
@@ -240,7 +126,8 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _openTrove(
+        _assetAmount = msg.value;
+        this.restrictedOpenTrove(
             msg.sender,
             _maxFeePercentage,
             _debtAmount,
@@ -250,114 +137,17 @@ contract BorrowerOperations is
         );
     }
 
-    function openTroveWithSignature(
-        uint256 _maxFeePercentage,
-        uint256 _debtAmount,
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external payable {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        OpenTrove memory openTroveData = OpenTrove({
-            maxFeePercentage: _maxFeePercentage,
-            debtAmount: _debtAmount,
-            assetAmount: _assetAmount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    OPEN_TROVE_TYPEHASH,
-                    openTroveData.maxFeePercentage,
-                    openTroveData.debtAmount,
-                    openTroveData.assetAmount,
-                    openTroveData.upperHint,
-                    openTroveData.lowerHint,
-                    openTroveData.borrower,
-                    openTroveData.nonce,
-                    openTroveData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _openTrove(
-            openTroveData.borrower,
-            openTroveData.maxFeePercentage,
-            openTroveData.debtAmount,
-            openTroveData.assetAmount,
-            openTroveData.upperHint,
-            openTroveData.lowerHint
-        );
-    }
-
     // Send collateral to a trove
     function addColl(
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _addColl(msg.sender, _assetAmount, _upperHint, _lowerHint);
-    }
-
-    function addCollWithSignature(
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external payable {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        AddColl memory addCollData = AddColl({
-            assetAmount: _assetAmount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    ADD_COLL_TYPEHASH,
-                    addCollData.assetAmount,
-                    addCollData.upperHint,
-                    addCollData.lowerHint,
-                    addCollData.borrower,
-                    addCollData.nonce,
-                    addCollData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _addColl(
-            addCollData.borrower,
-            addCollData.assetAmount,
-            addCollData.upperHint,
-            addCollData.lowerHint
+        this.restrictedAddColl{value: msg.value}(
+            msg.sender,
+            _assetAmount,
+            _upperHint,
+            _lowerHint
         );
     }
 
@@ -370,7 +160,7 @@ contract BorrowerOperations is
     ) external payable override {
         _requireCallerIsStabilityPool();
         _assetAmount = msg.value;
-        _adjustTrove(
+        this.restrictedAdjustTrove{value: msg.value}(
             _borrower,
             0,
             0,
@@ -389,53 +179,11 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        _withdrawColl(msg.sender, _amount, _upperHint, _lowerHint);
-    }
-
-    function withdrawCollWithSignature(
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        WithdrawColl memory withdrawCollData = WithdrawColl({
-            amount: _amount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    WITHDRAW_COLL_TYPEHASH,
-                    withdrawCollData.amount,
-                    withdrawCollData.upperHint,
-                    withdrawCollData.lowerHint,
-                    withdrawCollData.borrower,
-                    withdrawCollData.nonce,
-                    withdrawCollData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _withdrawColl(
-            withdrawCollData.borrower,
-            withdrawCollData.amount,
-            withdrawCollData.upperHint,
-            withdrawCollData.lowerHint
+        this.restrictedWithdrawColl(
+            msg.sender,
+            _amount,
+            _upperHint,
+            _lowerHint
         );
     }
 
@@ -446,7 +194,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        _adjustTrove(
+        this.restrictedAdjustTrove(
             msg.sender,
             0,
             _amount,
@@ -456,61 +204,6 @@ contract BorrowerOperations is
             _lowerHint,
             _maxFeePercentage,
             false
-        );
-    }
-
-    function withdrawMUSDWithSignature(
-        uint256 _maxFeePercentage,
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        WithdrawMUSD memory withdrawMUSDData = WithdrawMUSD({
-            maxFeePercentage: _maxFeePercentage,
-            amount: _amount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    WITHDRAW_MUSD_TYPEHASH,
-                    withdrawMUSDData.maxFeePercentage,
-                    withdrawMUSDData.amount,
-                    withdrawMUSDData.upperHint,
-                    withdrawMUSDData.lowerHint,
-                    withdrawMUSDData.borrower,
-                    withdrawMUSDData.nonce,
-                    withdrawMUSDData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _adjustTrove(
-            withdrawMUSDData.borrower,
-            0,
-            withdrawMUSDData.amount,
-            true,
-            0,
-            withdrawMUSDData.upperHint,
-            withdrawMUSDData.lowerHint,
-            withdrawMUSDData.maxFeePercentage,
-            true
         );
     }
 
@@ -520,7 +213,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        _adjustTrove(
+        this.restrictedAdjustTrove(
             msg.sender,
             0,
             _amount,
@@ -533,187 +226,88 @@ contract BorrowerOperations is
         );
     }
 
-    function repayMUSDWithSignature(
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        RepayMUSD memory repayMUSDData = RepayMUSD({
-            amount: _amount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    REPAY_MUSD_TYPEHASH,
-                    repayMUSDData.amount,
-                    repayMUSDData.upperHint,
-                    repayMUSDData.lowerHint,
-                    repayMUSDData.borrower,
-                    repayMUSDData.nonce,
-                    repayMUSDData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _adjustTrove(
-            repayMUSDData.borrower,
-            0,
-            repayMUSDData.amount,
-            false,
-            0,
-            repayMUSDData.upperHint,
-            repayMUSDData.lowerHint,
-            0,
-            true
-        );
-    }
-
     function closeTrove() external override {
-        _closeTrove(msg.sender);
-    }
-
-    function closeTroveWithSignature(
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        CloseTrove memory closeTroveData = CloseTrove({
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    CLOSE_TROVE_TYPEHASH,
-                    closeTroveData.borrower,
-                    closeTroveData.nonce,
-                    closeTroveData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _closeTrove(_borrower);
+        this.restrictedCloseTrove(msg.sender);
     }
 
     function refinance(uint256 _maxFeePercentage) external override {
-        self.refinance(priceFeed, _maxFeePercentage);
+        ITroveManager troveManagerCached = self.troveManager;
+        IInterestRateManager interestRateManagerCached = self
+            .interestRateManager;
+        _requireTroveisActive(troveManagerCached, msg.sender);
+        troveManagerCached.updateSystemAndTroveInterest(msg.sender);
+
+        uint16 oldRate = troveManagerCached.getTroveInterestRate(msg.sender);
+        uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
+            msg.sender
+        );
+        uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
+        uint256 amount = (self.refinancingFeePercentage * oldDebt) / 100;
+        uint256 fee = _triggerBorrowingFee(
+            troveManagerCached,
+            self.musd,
+            amount,
+            _maxFeePercentage
+        );
+        // slither-disable-next-line unused-return
+        troveManagerCached.increaseTroveDebt(msg.sender, fee);
+
+        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
+
+        interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
+        interestRateManagerCached.removePrincipalFromRate(
+            oldRate,
+            oldPrincipal
+        );
+        uint16 newRate = interestRateManagerCached.interestRate();
+        interestRateManagerCached.addInterestToRate(newRate, oldInterest);
+        interestRateManagerCached.addPrincipalToRate(newRate, oldPrincipal);
+
+        troveManagerCached.setTroveInterestRate(
+            msg.sender,
+            interestRateManagerCached.interestRate()
+        );
+
+        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            troveManagerCached.getTroveColl(msg.sender),
+            priceFeed.fetchPrice()
+        );
+        troveManagerCached.setTroveMaxBorrowingCapacity(
+            msg.sender,
+            maxBorrowingCapacity
+        );
+
+        // slither-disable-next-line reentrancy-events
+        emit RefinancingFeePaid(msg.sender, fee);
     }
 
+    /*
+     * adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
+     *
+     * It therefore expects either a positive msg.value, or a positive _collWithdrawal argument.
+     *
+     * If both are positive, it will revert.
+     */
     function adjustTrove(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = msg.value;
-        _adjustTrove(
+        this.restrictedAdjustTrove(
             msg.sender,
             _collWithdrawal,
             _debtChange,
             _isDebtIncrease,
-            _assetAmount,
+            msg.value,
             _upperHint,
             _lowerHint,
             _maxFeePercentage,
             false
         );
     }
-
-    function adjustTroveWithSignature(
-        uint256 _maxFeePercentage,
-        uint256 _collWithdrawal,
-        uint256 _debtChange,
-        bool _isDebtIncrease,
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external payable {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = self.nonces[_borrower];
-        AdjustTrove memory adjustTroveData = AdjustTrove({
-            maxFeePercentage: _maxFeePercentage,
-            collWithdrawal: _collWithdrawal,
-            debtChange: _debtChange,
-            isDebtIncrease: _isDebtIncrease,
-            assetAmount: _assetAmount,
-            upperHint: _upperHint,
-            lowerHint: _lowerHint,
-            borrower: _borrower,
-            nonce: nonce,
-            deadline: _deadline
-        });
-
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    ADJUST_TROVE_TYPEHASH,
-                    adjustTroveData.maxFeePercentage,
-                    adjustTroveData.collWithdrawal,
-                    adjustTroveData.debtChange,
-                    adjustTroveData.isDebtIncrease,
-                    adjustTroveData.assetAmount,
-                    adjustTroveData.upperHint,
-                    adjustTroveData.lowerHint,
-                    adjustTroveData.borrower,
-                    adjustTroveData.nonce,
-                    adjustTroveData.deadline
-                )
-            )
-        );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(recoveredAddress == _borrower, "Invalid signature");
-
-        self.nonces[_borrower]++;
-
-        _assetAmount = msg.value;
-        _adjustTrove(
-            adjustTroveData.borrower,
-            adjustTroveData.collWithdrawal,
-            adjustTroveData.debtChange,
-            adjustTroveData.isDebtIncrease,
-            adjustTroveData.assetAmount,
-            adjustTroveData.upperHint,
-            adjustTroveData.lowerHint,
-            adjustTroveData.maxFeePercentage,
-            true
-        );
-    }
-
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
@@ -722,6 +316,7 @@ contract BorrowerOperations is
 
     function setAddresses(
         address _activePoolAddress,
+        address _borrowerOperationsSignaturesAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -737,6 +332,7 @@ contract BorrowerOperations is
         assert(self.minNetDebt > 0);
 
         checkContract(_activePoolAddress);
+        checkContract(_borrowerOperationsSignaturesAddress);
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_gasPoolAddress);
@@ -750,6 +346,8 @@ contract BorrowerOperations is
 
         // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
+        self
+            .borrowerOperationsSignaturesAddress = _borrowerOperationsSignaturesAddress;
         self.collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         self.gasPoolAddress = _gasPoolAddress;
@@ -766,6 +364,9 @@ contract BorrowerOperations is
         // slither-disable-end missing-zero-check
 
         emit ActivePoolAddressChanged(_activePoolAddress);
+        emit BorrowerOperationsSignaturesAddressChanged(
+            _borrowerOperationsSignaturesAddress
+        );
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit GasPoolAddressChanged(_gasPoolAddress);
@@ -871,6 +472,7 @@ contract BorrowerOperations is
         return self.stabilityPoolAddress;
     }
 
+
     function getNonce(address user) public view returns (uint256) {
         return self.nonces[user];
     }
@@ -885,14 +487,15 @@ contract BorrowerOperations is
         return _debt - self.musdGasCompensation;
     }
 
-    function _addColl(
+    function restrictedAddColl(
         address _borrower,
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) internal {
+    ) public payable {
+        _requireCallerIsBorrowerOperationsOrSignatures();
         _assetAmount = msg.value;
-        _adjustTrove(
+        this.restrictedAdjustTrove{value: msg.value}(
             _borrower,
             0,
             0,
@@ -905,13 +508,14 @@ contract BorrowerOperations is
         );
     }
 
-    function _withdrawColl(
+    function restrictedWithdrawColl(
         address _borrower,
         uint256 _amount,
         address _upperHint,
         address _lowerHint
-    ) internal {
-        _adjustTrove(
+    ) public {
+        _requireCallerIsBorrowerOperationsOrSignatures();
+        this.restrictedAdjustTrove(
             _borrower,
             _amount,
             0,
@@ -924,14 +528,15 @@ contract BorrowerOperations is
         );
     }
 
-    function _openTrove(
+    function restrictedOpenTrove(
         address _borrower,
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) internal {
+    ) public payable {
+        _requireCallerIsBorrowerOperationsOrSignatures();
         ContractsCache memory contractsCache = ContractsCache(
             self.troveManager,
             activePool,
@@ -967,7 +572,6 @@ contract BorrowerOperations is
         assert(vars.compositeDebt > 0);
 
         // if BTC overwrite the asset value
-        _assetAmount = msg.value;
         vars.ICR = LiquityMath._computeCR(
             _assetAmount,
             vars.compositeDebt,
@@ -1073,7 +677,8 @@ contract BorrowerOperations is
         // slither-disable-end reentrancy-events
     }
 
-    function _closeTrove(address _borrower) internal {
+    function restrictedCloseTrove(address _borrower) public {
+        _requireCallerIsBorrowerOperationsOrSignatures();
         ITroveManager troveManagerCached = self.troveManager;
         IActivePool activePoolCached = activePool;
         IMUSD musdTokenCached = self.musd;
@@ -1145,14 +750,7 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(_borrower, coll);
     }
 
-    /*
-     * _adjustTrove(): Alongside a debt change, this function can perform either a collateral top-up or a collateral withdrawal.
-     *
-     * It therefore expects either a positive msg.value, or a positive _collWithdrawal argument.
-     *
-     * If both are positive, it will revert.
-     */
-    function _adjustTrove(
+    function restrictedAdjustTrove(
         address _borrower,
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
@@ -1162,7 +760,8 @@ contract BorrowerOperations is
         address _lowerHint,
         uint256 _maxFeePercentage,
         bool _isSignatureCall
-    ) internal {
+    ) public payable {
+        _requireCallerIsBorrowerOperationsOrSignatures();
         ContractsCache memory contractsCache = ContractsCache(
             self.troveManager,
             activePool,
@@ -1207,6 +806,7 @@ contract BorrowerOperations is
                 (msg.sender == self.stabilityPoolAddress &&
                     _assetAmount > 0 &&
                     _mUSDChange == 0) ||
+                msg.sender == address(this) ||
                 _isSignatureCall
         );
 
@@ -1306,13 +906,13 @@ contract BorrowerOperations is
             uint8(BorrowerOperation.adjustTrove)
         );
         // slither-disable-next-line reentrancy-events
-        emit BorrowingFeePaid(msg.sender, vars.fee);
+        emit BorrowingFeePaid(_borrower, vars.fee);
 
         // Use the unmodified _mUSDChange here, as we don't send the fee to the user
         _moveTokensAndCollateralfromAdjustment(
             contractsCache.activePool,
             contractsCache.musd,
-            msg.sender,
+            _borrower,
             vars.collChange,
             vars.isCollIncrease,
             _isDebtIncrease ? _mUSDChange : vars.principalAdjustment,
@@ -1433,6 +1033,14 @@ contract BorrowerOperations is
         // Send fee to PCV contract
         _musd.mint(self.pcvAddress, fee);
         return fee;
+    }
+
+    function _requireCallerIsBorrowerOperationsOrSignatures() internal view {
+        require(
+            msg.sender == self.borrowerOperationsSignaturesAddress ||
+                msg.sender == address(this),
+            "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures"
+        );
     }
 
     function _requireNotInRecoveryMode(uint256 _price) internal view {

@@ -17,6 +17,7 @@ library BorrowerOperationsState {
         address gasPoolAddress;
         address pcvAddress;
         address stabilityPoolAddress;
+        address borrowerOperationsSignaturesAddress;
         ICollSurplusPool collSurplusPool;
         IMUSD musd;
         IPCV pcv;

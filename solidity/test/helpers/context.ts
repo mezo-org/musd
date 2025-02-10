@@ -13,6 +13,7 @@ import {
 import {
   ActivePool,
   BorrowerOperations,
+  BorrowerOperationsSignatures,
   CollSurplusPool,
   DefaultPool,
   GasPool,
@@ -34,6 +35,8 @@ export async function deployment() {
   const activePool: ActivePool = await getDeployedContract("ActivePool")
   const borrowerOperations: BorrowerOperations =
     await getDeployedContract("BorrowerOperations")
+  const borrowerOperationsSignatures: BorrowerOperationsSignatures =
+    await getDeployedContract("BorrowerOperationsSignatures")
   const collSurplusPool: CollSurplusPool =
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
@@ -57,6 +60,7 @@ export async function deployment() {
   const contracts: Contracts = {
     activePool,
     borrowerOperations,
+    borrowerOperationsSignatures,
     collSurplusPool,
     defaultPool,
     gasPool,
@@ -215,6 +219,8 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     // contracts
     activePool: await contracts.activePool.getAddress(),
     borrowerOperations: await contracts.borrowerOperations.getAddress(),
+    borrowerOperationsSignatures:
+      await contracts.borrowerOperationsSignatures.getAddress(),
     collSurplusPool: await contracts.collSurplusPool.getAddress(),
     defaultPool: await contracts.defaultPool.getAddress(),
     gasPool: await contracts.gasPool.getAddress(),

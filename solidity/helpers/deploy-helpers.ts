@@ -6,6 +6,7 @@ import type { BaseContract } from "ethers"
 import {
   ActivePool,
   BorrowerOperations,
+  BorrowerOperationsSignatures,
   CollSurplusPool,
   DefaultPool,
   GasPool,
@@ -80,6 +81,9 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
   const borrowerOperations: BorrowerOperations =
     await getDeployedContract("BorrowerOperations")
 
+  const borrowerOperationsSignatures: BorrowerOperationsSignatures =
+    await getDeployedContract("BorrowerOperationsSignatures")
+
   const collSurplusPool: CollSurplusPool =
     await getDeployedContract("CollSurplusPool")
 
@@ -114,6 +118,7 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
   return {
     activePool,
     borrowerOperations,
+    borrowerOperationsSignatures,
     collSurplusPool,
     defaultPool,
     gasPool,
