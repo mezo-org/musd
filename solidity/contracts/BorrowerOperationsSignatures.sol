@@ -578,6 +578,28 @@ contract BorrowerOperationsSignatures is
         );
     }
 
+    function claimCollateralWithSignature(
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external {
+        ClaimCollateral memory claimCollateralData = ClaimCollateral({
+            borrower: _borrower,
+            nonce: nonces[_borrower],
+            deadline: _deadline
+        });
+
+        _verifySignature(
+            CLAIM_COLLATERAL_TYPEHASH,
+            abi.encode(claimCollateralData.borrower),
+            _borrower,
+            _signature,
+            _deadline
+        );
+
+        borrowerOperations.restrictedClaimCollateral(_borrower);
+    }
+
     function getNonce(address user) public view returns (uint256) {
         return nonces[user];
     }

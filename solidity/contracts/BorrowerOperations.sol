@@ -288,8 +288,7 @@ contract BorrowerOperations is
     }
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
-        // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(msg.sender);
+        this.restrictedClaimCollateral(msg.sender);
     }
 
     function setAddresses(
@@ -420,6 +419,32 @@ contract BorrowerOperations is
         );
         musdGasCompensation = proposedMusdGasCompensation;
         emit MusdGasCompensationChanged(musdGasCompensation);
+    }
+
+    function restrictedClaimCollateral(address _borrower) public {
+        _requireCallerIsBorrowerOperationsOrSignatures();
+        // send collateral from CollSurplus Pool to owner
+        collSurplusPool.claimColl(_borrower);
+    }
+
+    function restrictedAddColl(
+        address _borrower,
+        uint256 _assetAmount,
+        address _upperHint,
+        address _lowerHint
+    ) public payable {
+        _requireCallerIsBorrowerOperationsOrSignatures();
+        _assetAmount = msg.value;
+        this.restrictedAdjustTrove{value: msg.value}(
+            _borrower,
+            0,
+            0,
+            false,
+            _assetAmount,
+            _upperHint,
+            _lowerHint,
+            0
+        );
     }
 
     function restrictedOpenTrove(
@@ -645,9 +670,8 @@ contract BorrowerOperations is
         uint256 _maxFeePercentage
     ) public {
         _requireCallerIsBorrowerOperationsOrSignatures();
-        ITroveManager troveManagerCached = self.troveManager;
-        IInterestRateManager interestRateManagerCached = self
-            .interestRateManager;
+        ITroveManager troveManagerCached = troveManager;
+        IInterestRateManager interestRateManagerCached = interestRateManager;
         _requireTroveisActive(troveManagerCached, _borrower);
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
 
@@ -656,10 +680,10 @@ contract BorrowerOperations is
             _borrower
         );
         uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
-        uint256 amount = (self.refinancingFeePercentage * oldDebt) / 100;
+        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(
             troveManagerCached,
-            self.musd,
+            musd,
             amount,
             _maxFeePercentage
         );

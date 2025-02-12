@@ -144,6 +144,8 @@ interface IBorrowerOperations {
 
     function claimCollateral() external;
 
+    function restrictedClaimCollateral(address _borrower) external;
+
     function minNetDebt() external view returns (uint256);
 
     function getCompositeDebt(uint256 _debt) external view returns (uint);

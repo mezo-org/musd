@@ -15,6 +15,7 @@ import {
   getTroveEntireDebt,
   NO_GAS,
   openTrove,
+  performRedemption,
   REFINANCING_FEE_PAID,
   removeMintlist,
   setBaseRate,
@@ -7070,6 +7071,250 @@ describe("BorrowerOperations in Normal Mode", () => {
               signature,
               deadline,
             ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+    })
+  })
+
+  describe("claimCollateralWithSignature()", () => {
+    const types = {
+      ClaimCollateral: [
+        { name: "borrower", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    }
+
+    beforeEach(async () => {
+      // Redeem against Alice's trove so she has a surplus to claim
+      await updateTroveSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, alice, "before")
+      await performRedemption(contracts, bob, alice, alice.trove.debt.before)
+    })
+
+    it("allows the user to claim their collateral surplus with a valid signature", async () => {
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(alice)
+
+      const value = {
+        borrower,
+        nonce,
+        deadline,
+      }
+
+      const signature = await alice.wallet.signTypedData(domain, types, value)
+      await contracts.borrowerOperationsSignatures
+        .connect(bob.wallet)
+        .claimCollateralWithSignature(borrower, signature, deadline, NO_GAS)
+
+      await updateWalletSnapshot(contracts, alice, "after")
+
+      expect(alice.btc.after).to.be.greaterThan(alice.btc.before)
+    })
+
+    it("correctly increments the nonce after a successful transaction", async () => {
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(alice)
+
+      const value = {
+        borrower,
+        nonce,
+        deadline,
+      }
+
+      const signature = await alice.wallet.signTypedData(domain, types, value)
+      await contracts.borrowerOperationsSignatures
+        .connect(bob.wallet)
+        .claimCollateralWithSignature(borrower, signature, deadline)
+
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
+      expect(newNonce - nonce).to.equal(1)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when the recovered address does not match the borrower's address", async () => {
+        const { borrower, domain, deadline, nonce } =
+          await setupSignatureTests(alice)
+
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        // Sign with Bob's wallet instead of Alice's
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the deadline has passed", async () => {
+        const { borrower, domain, nonce } = await setupSignatureTests(alice)
+        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
+        ).to.be.revertedWith("Signature expired")
+      })
+
+      it("reverts when the nonce is invalid", async () => {
+        const { borrower, domain, deadline, nonce } =
+          await setupSignatureTests(alice)
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        // Submit a valid transaction to increment the nonce
+        await contracts.borrowerOperationsSignatures
+          .connect(carol.wallet)
+          .claimCollateralWithSignature(borrower, signature, deadline)
+
+        // Attempt to submit the same transaction again which should now be invalid due to the nonce
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the contract address is not correctly specified", async () => {
+        const borrower = alice.address
+        const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperationsSignatures",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the chain id is not correctly specified", async () => {
+        const borrower = alice.address
+        const contractAddress = addresses.borrowerOperationsSignatures
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperationsSignatures",
+          version: "1",
+          chainId: 0n, // incorrect chain id
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the contract version is not correctly specified", async () => {
+        const borrower = alice.address
+        const contractAddress = addresses.borrowerOperationsSignatures
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperationsSignatures",
+          version: "0",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the contract name is not correctly specified", async () => {
+        const borrower = alice.address
+        const contractAddress = addresses.borrowerOperationsSignatures
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "TroveManager",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(carol.wallet)
+            .claimCollateralWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
     })
