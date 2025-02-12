@@ -465,21 +465,6 @@ contract BorrowerOperations is
         return self.stabilityPoolAddress;
     }
 
-
-    function getNonce(address user) public view returns (uint256) {
-        return self.nonces[user];
-    }
-
-    // Returns the composite debt (drawn debt + gas compensation) of a trove,
-    // for the purpose of ICR calculation
-    function getCompositeDebt(uint256 _debt) public view returns (uint) {
-        return _debt + self.musdGasCompensation;
-    }
-
-    function getNetDebt(uint256 _debt) public view returns (uint) {
-        return _debt - self.musdGasCompensation;
-    }
-
     function restrictedAddColl(
         address _borrower,
         uint256 _assetAmount,
@@ -909,6 +894,16 @@ contract BorrowerOperations is
             _isDebtIncrease,
             vars.netDebtChange
         );
+    }
+
+    // Returns the composite debt (drawn debt + gas compensation) of a trove,
+    // for the purpose of ICR calculation
+    function getCompositeDebt(uint256 _debt) public view returns (uint) {
+        return _debt + self.musdGasCompensation;
+    }
+
+    function getNetDebt(uint256 _debt) public view returns (uint) {
+        return _debt - self.musdGasCompensation;
     }
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)

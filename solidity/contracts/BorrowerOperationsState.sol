@@ -11,7 +11,6 @@ import "./interfaces/ICollSurplusPool.sol";
 
 library BorrowerOperationsState {
     struct Storage {
-        mapping(address => uint256) nonces;
         // Connected contract declarations
         ITroveManager troveManager;
         address gasPoolAddress;
