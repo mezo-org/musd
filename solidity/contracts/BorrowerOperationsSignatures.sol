@@ -299,8 +299,7 @@ contract BorrowerOperationsSignatures is
             adjustTroveData.assetAmount,
             adjustTroveData.upperHint,
             adjustTroveData.lowerHint,
-            adjustTroveData.maxFeePercentage,
-            true
+            adjustTroveData.maxFeePercentage
         );
     }
 
@@ -461,8 +460,7 @@ contract BorrowerOperationsSignatures is
             0,
             withdrawMUSDData.upperHint,
             withdrawMUSDData.lowerHint,
-            withdrawMUSDData.maxFeePercentage,
-            true
+            withdrawMUSDData.maxFeePercentage
         );
     }
 
@@ -516,8 +514,7 @@ contract BorrowerOperationsSignatures is
             0,
             repayMUSDData.upperHint,
             repayMUSDData.lowerHint,
-            0,
-            true
+            0
         );
     }
 

@@ -6462,7 +6462,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               maxFeePercentage,
-              true,
             ),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",

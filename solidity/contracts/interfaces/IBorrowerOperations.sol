@@ -148,8 +148,7 @@ interface IBorrowerOperations {
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
-        uint256 _maxFeePercentage,
-        bool _isSignatureCall
+        uint256 _maxFeePercentage
     ) external payable;
 
     function claimCollateral() external;

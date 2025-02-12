@@ -165,8 +165,7 @@ contract BorrowerOperations is
             _assetAmount,
             _upperHint,
             _lowerHint,
-            0,
-            false
+            0
         );
     }
 
@@ -199,8 +198,7 @@ contract BorrowerOperations is
             0,
             _upperHint,
             _lowerHint,
-            _maxFeePercentage,
-            false
+            _maxFeePercentage
         );
     }
 
@@ -218,8 +216,7 @@ contract BorrowerOperations is
             0,
             _upperHint,
             _lowerHint,
-            0,
-            false
+            0
         );
     }
 
@@ -301,8 +298,7 @@ contract BorrowerOperations is
             msg.value,
             _upperHint,
             _lowerHint,
-            _maxFeePercentage,
-            false
+            _maxFeePercentage
         );
     }
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
@@ -500,8 +496,7 @@ contract BorrowerOperations is
             _assetAmount,
             _upperHint,
             _lowerHint,
-            0,
-            _borrower != msg.sender
+            0
         );
     }
 
@@ -520,8 +515,7 @@ contract BorrowerOperations is
             0,
             _upperHint,
             _lowerHint,
-            0,
-            _borrower != msg.sender
+            0
         );
     }
 
@@ -754,8 +748,7 @@ contract BorrowerOperations is
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
-        uint256 _maxFeePercentage,
-        bool _isSignatureCall
+        uint256 _maxFeePercentage
     ) public payable {
         _requireCallerIsBorrowerOperationsOrSignatures();
         ContractsCache memory contractsCache = ContractsCache(
@@ -794,8 +787,8 @@ contract BorrowerOperations is
         _requireTroveisActive(contractsCache.troveManager, _borrower);
 
         /*
-         * If this is not a signature call, confirm the operation is either a borrower adjusting their own trove,
-         * or a pure collateral transfer from the Stability Pool to a trove
+         * Confirm the operation is either a borrower adjusting their own trove (either directly or through
+         * a signature), or a pure collateral transfer from the Stability Pool to a trove
          */
         assert(
             msg.sender == _borrower ||
@@ -803,7 +796,7 @@ contract BorrowerOperations is
                     _assetAmount > 0 &&
                     _mUSDChange == 0) ||
                 msg.sender == address(this) ||
-                _isSignatureCall
+                msg.sender == self.borrowerOperationsSignaturesAddress
         );
 
         contractsCache.troveManager.applyPendingRewards(_borrower);
