@@ -122,16 +122,13 @@ contract BorrowerOperations is
     function openTrove(
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = msg.value;
-        this.restrictedOpenTrove(
+        this.restrictedOpenTrove{value: msg.value}(
             msg.sender,
             _maxFeePercentage,
             _debtAmount,
-            _assetAmount,
             _upperHint,
             _lowerHint
         );
@@ -532,7 +529,6 @@ contract BorrowerOperations is
         address _borrower,
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) public payable {
@@ -573,12 +569,12 @@ contract BorrowerOperations is
 
         // if BTC overwrite the asset value
         vars.ICR = LiquityMath._computeCR(
-            _assetAmount,
+            msg.value,
             vars.compositeDebt,
             vars.price
         );
         vars.NICR = LiquityMath._computeNominalCR(
-            _assetAmount,
+            msg.value,
             vars.compositeDebt
         );
 
@@ -587,7 +583,7 @@ contract BorrowerOperations is
         } else {
             _requireICRisAboveMCR(vars.ICR);
             uint256 newTCR = _getNewTCRFromTroveChange(
-                _assetAmount,
+                msg.value,
                 true,
                 vars.compositeDebt,
                 true,
@@ -607,7 +603,7 @@ contract BorrowerOperations is
             ITroveManager.Status.active
         );
         // slither-disable-next-line unused-return
-        contractsCache.troveManager.increaseTroveColl(_borrower, _assetAmount);
+        contractsCache.troveManager.increaseTroveColl(_borrower, msg.value);
         // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveDebt(
             _borrower,
@@ -623,7 +619,7 @@ contract BorrowerOperations is
 
         // Set trove's max borrowing capacity to the amount that would put it at 110% ICR
         uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
-            _assetAmount,
+            msg.value,
             vars.price
         );
         contractsCache.troveManager.setTroveMaxBorrowingCapacity(
@@ -645,7 +641,7 @@ contract BorrowerOperations is
          * Move the collateral to the Active Pool, and mint the amount to the borrower
          * If the user has insuffient tokens to do the transfer to the Active Pool an error will cause the transaction to revert.
          */
-        _activePoolAddColl(contractsCache.activePool, _assetAmount);
+        _activePoolAddColl(contractsCache.activePool, msg.value);
         _withdrawMUSD(
             contractsCache.activePool,
             contractsCache.musd,
@@ -669,7 +665,7 @@ contract BorrowerOperations is
             _borrower,
             vars.compositeDebt,
             0,
-            _assetAmount,
+            msg.value,
             vars.stake,
             uint8(BorrowerOperation.openTrove)
         );

@@ -63,7 +63,6 @@ interface IBorrowerOperations {
     function openTrove(
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable;
@@ -72,7 +71,6 @@ interface IBorrowerOperations {
         address _borrower,
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable;

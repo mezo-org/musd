@@ -27,7 +27,6 @@ contract BorrowerOperationsSignatures is
     struct OpenTrove {
         uint256 maxFeePercentage;
         uint256 debtAmount;
-        uint256 assetAmount;
         address upperHint;
         address lowerHint;
         address borrower;
@@ -87,7 +86,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant OPEN_TROVE_TYPEHASH =
         keccak256(
-            "OpenTrove(uint256 maxFeePercentage,uint256 debtAmount,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "OpenTrove(uint256 maxFeePercentage,uint256 debtAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADD_COLL_TYPEHASH =
@@ -358,7 +357,6 @@ contract BorrowerOperationsSignatures is
     function openTroveWithSignature(
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
@@ -371,7 +369,6 @@ contract BorrowerOperationsSignatures is
         OpenTrove memory openTroveData = OpenTrove({
             maxFeePercentage: _maxFeePercentage,
             debtAmount: _debtAmount,
-            assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
@@ -385,7 +382,6 @@ contract BorrowerOperationsSignatures is
                     OPEN_TROVE_TYPEHASH,
                     openTroveData.maxFeePercentage,
                     openTroveData.debtAmount,
-                    openTroveData.assetAmount,
                     openTroveData.upperHint,
                     openTroveData.lowerHint,
                     openTroveData.borrower,
@@ -407,7 +403,6 @@ contract BorrowerOperationsSignatures is
             openTroveData.borrower,
             openTroveData.maxFeePercentage,
             openTroveData.debtAmount,
-            openTroveData.assetAmount,
             openTroveData.upperHint,
             openTroveData.lowerHint
         );

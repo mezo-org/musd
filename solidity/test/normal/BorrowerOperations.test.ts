@@ -653,28 +653,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(state.activePool.btc.after).to.equal(expectedCollateral)
     })
 
-    it("uses msg.value for the collateral amount even if the _assetAmount parameter does not match", async () => {
-      const maxFeePercentage = to1e18(100) / 100n
-      const debtAmount = to1e18(2000)
-      const assetAmount = to1e18(10)
-      const upperHint = ZERO_ADDRESS
-      const lowerHint = ZERO_ADDRESS
-      await updateTroveSnapshot(contracts, carol, "before")
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .openTrove(
-          maxFeePercentage,
-          debtAmount,
-          assetAmount,
-          upperHint,
-          lowerHint,
-          { value: assetAmount - to1e18(1) },
-        )
-
-      await updateTroveSnapshot(contracts, carol, "after")
-      expect(carol.trove.collateral.after).to.equal(assetAmount - to1e18(1))
-    })
-
     context("Expected Reverts", () => {
       it("Reverts when BorrowerOperations address is not in mintlist", async () => {
         // remove mintlist
@@ -840,7 +818,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       OpenTrove: [
         { name: "maxFeePercentage", type: "uint256" },
         { name: "debtAmount", type: "uint256" },
-        { name: "assetAmount", type: "uint256" },
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
@@ -855,7 +832,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const value = {
         maxFeePercentage,
         debtAmount,
-        assetAmount,
         upperHint,
         lowerHint,
         borrower,
@@ -870,7 +846,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         .openTroveWithSignature(
           maxFeePercentage,
           debtAmount,
-          assetAmount,
           upperHint,
           lowerHint,
           carol.address,
@@ -892,7 +867,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const value = {
         maxFeePercentage,
         debtAmount,
-        assetAmount,
         upperHint,
         lowerHint,
         borrower,
@@ -907,7 +881,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         .openTroveWithSignature(
           maxFeePercentage,
           debtAmount,
-          assetAmount,
           upperHint,
           lowerHint,
           carol.address,
@@ -931,7 +904,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           borrower,
           maxFeePercentage,
           debtAmount,
-          assetAmount,
           upperHint,
           lowerHint,
           nonce,
@@ -947,7 +919,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -967,7 +938,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           borrower,
           maxFeePercentage,
           debtAmount,
-          assetAmount,
           upperHint,
           lowerHint,
           nonce,
@@ -982,7 +952,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -1018,7 +987,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           .openTroveWithSignature(
             maxFeePercentage,
             debtAmount,
-            assetAmount,
             upperHint,
             lowerHint,
             carol.address,
@@ -1034,7 +1002,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -1080,7 +1047,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -1126,7 +1092,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -1172,7 +1137,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -1218,7 +1182,6 @@ describe("BorrowerOperations in Normal Mode", () => {
             .openTroveWithSignature(
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
               carol.address,
@@ -1237,7 +1200,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               bob.address,
               maxFeePercentage,
               debtAmount,
-              assetAmount,
               upperHint,
               lowerHint,
             ),
