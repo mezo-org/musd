@@ -7,8 +7,10 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./dependencies/CheckContract.sol";
 import "./interfaces/IBorrowerOperations.sol";
+import "./interfaces/IBorrowerOperationsSignatures.sol";
 
 contract BorrowerOperationsSignatures is
+    IBorrowerOperationsSignatures,
     CheckContract,
     EIP712Upgradeable,
     OwnableUpgradeable
