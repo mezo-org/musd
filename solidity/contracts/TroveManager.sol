@@ -98,6 +98,11 @@ contract TroveManager is
         uint256 entireSystemColl;
     }
 
+    struct LocalVariables_redeemCollateral {
+        uint256 minNetDebt;
+        uint256 gasCompensation;
+    }
+
     struct LiquidationValues {
         uint256 entireTrovePrincipal;
         uint256 entireTroveInterest;
@@ -313,8 +318,10 @@ contract TroveManager is
             collSurplusPool,
             gasPoolAddress
         );
-        // slither-disable-next-line uninitialized-local
+        // slither-disable-start uninitialized-local
         RedemptionTotals memory totals;
+        LocalVariables_redeemCollateral memory vars;
+        // slither-disable-end uninitialized-local
 
         _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
@@ -359,7 +366,8 @@ contract TroveManager is
 
         updateDefaultPoolInterest();
 
-        uint256 minNetDebt = borrowerOperations.minNetDebt();
+        vars.minNetDebt = borrowerOperations.minNetDebt();
+        vars.gasCompensation = borrowerOperations.getMusdGasCompensation();
 
         while (
             currentBorrower != address(0) &&
@@ -388,7 +396,7 @@ contract TroveManager is
                     _upperPartialRedemptionHint,
                     _lowerPartialRedemptionHint,
                     _partialRedemptionHintNICR,
-                    minNetDebt
+                    vars
                 );
 
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
@@ -1138,7 +1146,8 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
+        singleLiquidation.mUSDGasCompensation = borrowerOperations
+            .getMusdGasCompensation();
         uint256 collToLiquidate = singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
 
@@ -1332,7 +1341,8 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
+        singleLiquidation.mUSDGasCompensation = borrowerOperations
+            .getMusdGasCompensation();
         vars.collToLiquidate =
             singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
@@ -1512,14 +1522,14 @@ contract TroveManager is
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 _minNetDebt
+        LocalVariables_redeemCollateral memory redeemCollateralVars
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
+            _getTotalDebt(_borrower) - redeemCollateralVars.gasCompensation
         );
 
         // Get the collateralLot of equivalent value in USD
@@ -1531,13 +1541,13 @@ contract TroveManager is
         vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.mUSDLot;
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
 
-        if (vars.newDebt == MUSD_GAS_COMPENSATION) {
+        if (vars.newDebt == redeemCollateralVars.gasCompensation) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _redeemCloseTrove(
                 _contractsCache,
                 _borrower,
-                MUSD_GAS_COMPENSATION,
+                redeemCollateralVars.gasCompensation,
                 vars.newColl
             );
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1576,14 +1586,17 @@ contract TroveManager is
              *
              * If the resultant net debt of the partial is less than the minimum, net debt we bail.
              */
+            // slither-disable-start calls-loop
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                _getNetDebt(vars.newDebt) < _minNetDebt
+                borrowerOperations.getNetDebt(vars.newDebt) <
+                redeemCollateralVars.minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
             }
+            // slither-disable-end calls-loop
 
             // slither-disable-next-line calls-loop
             _contractsCache.sortedTroves.reInsert(
@@ -1851,6 +1864,33 @@ contract TroveManager is
         );
     }
 
+    /*
+     *  Get its offset coll/debt and collateral gas comp, and close the trove.
+     */
+    function _getCappedOffsetVals(
+        uint256 _entireTroveDebt,
+        uint256 _entireTroveColl,
+        uint256 _price
+    ) internal view returns (LiquidationValues memory singleLiquidation) {
+        singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
+        singleLiquidation.entireTroveColl = _entireTroveColl;
+        uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
+
+        singleLiquidation.collGasCompensation = _getCollGasCompensation(
+            cappedCollPortion
+        );
+        singleLiquidation.mUSDGasCompensation = borrowerOperations
+            .getMusdGasCompensation();
+
+        singleLiquidation.debtToOffset = _entireTroveDebt;
+        singleLiquidation.collToSendToSP =
+            cappedCollPortion -
+            singleLiquidation.collGasCompensation;
+        singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
+        singleLiquidation.principalToRedistribute = 0;
+        singleLiquidation.collToRedistribute = 0;
+    }
+
     /* In a full liquidation, returns the values for a trove's coll and debt to be offset, and coll and debt to be
      * redistributed to active troves.
      */
@@ -1930,32 +1970,6 @@ contract TroveManager is
         );
 
         return TCR < CCR;
-    }
-
-    /*
-     *  Get its offset coll/debt and collateral gas comp, and close the trove.
-     */
-    function _getCappedOffsetVals(
-        uint256 _entireTroveDebt,
-        uint256 _entireTroveColl,
-        uint256 _price
-    ) internal pure returns (LiquidationValues memory singleLiquidation) {
-        singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
-        singleLiquidation.entireTroveColl = _entireTroveColl;
-        uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
-
-        singleLiquidation.collGasCompensation = _getCollGasCompensation(
-            cappedCollPortion
-        );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
-
-        singleLiquidation.debtToOffset = _entireTroveDebt;
-        singleLiquidation.collToSendToSP =
-            cappedCollPortion -
-            singleLiquidation.collGasCompensation;
-        singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
-        singleLiquidation.principalToRedistribute = 0;
-        singleLiquidation.collToRedistribute = 0;
     }
 
     function _addLiquidationValuesToTotals(

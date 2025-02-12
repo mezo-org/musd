@@ -29,6 +29,10 @@ library BorrowerOperationsState {
         uint256 minNetDebt;
         uint256 proposedMinNetDebt;
         uint256 proposedMinNetDebtTime;
+        // Amount of mUSD to be locked in gas pool on opening troves
+        uint256 musdGasCompensation;
+        uint256 proposedMusdGasCompensation;
+        uint256 proposedMusdGasCompensationTime;
         uint256[50] __gap;
     }
 }

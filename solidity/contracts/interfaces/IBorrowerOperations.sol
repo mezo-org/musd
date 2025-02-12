@@ -13,6 +13,11 @@ interface IBorrowerOperations {
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event MinNetDebtChanged(uint256 _minNetDebt);
     event MinNetDebtProposed(uint256 _minNetDebt, uint256 _proposalTime);
+    event MusdGasCompensationChanged(uint256 _musdGasCompensation);
+    event MusdGasCompensationProposed(
+        uint256 _musdGasCompensation,
+        uint256 _proposalTime
+    );
     event PCVAddressChanged(address _pcvAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
@@ -180,5 +185,9 @@ interface IBorrowerOperations {
 
     function minNetDebt() external view returns (uint256);
 
-    function getCompositeDebt(uint256 _debt) external pure returns (uint);
+    function getCompositeDebt(uint256 _debt) external view returns (uint);
+
+    function getNetDebt(uint256 _debt) external view returns (uint);
+
+    function getMusdGasCompensation() external view returns (uint256);
 }

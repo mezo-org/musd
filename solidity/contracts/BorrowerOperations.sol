@@ -207,6 +207,7 @@ contract BorrowerOperations is
         __EIP712_init_unchained(SIGNING_DOMAIN, SIGNATURE_VERSION);
         self.refinancingFeePercentage = 20;
         self.minNetDebt = 1800e18;
+        self.musdGasCompensation = 200e18;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -791,7 +792,7 @@ contract BorrowerOperations is
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
         // Making users lock up at least $250 reduces potential dust attacks
         require(
-            _minNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
+            _minNetDebt + self.musdGasCompensation >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
         self.proposedMinNetDebt = _minNetDebt;
@@ -810,33 +811,78 @@ contract BorrowerOperations is
             "Must wait at least 7 days before approving a change to Minimum Net Debt"
         );
         require(
-            self.proposedMinNetDebt + MUSD_GAS_COMPENSATION >= MIN_TOTAL_DEBT,
+            self.proposedMinNetDebt + self.musdGasCompensation >=
+                MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
         self.minNetDebt = self.proposedMinNetDebt;
         emit MinNetDebtChanged(self.minNetDebt);
     }
 
-    function proposedMinNetDebt() external view returns (uint256) {
-        return self.proposedMinNetDebt;
+    function proposeMusdGasCompensation(
+        uint256 _musdGasCompensation
+    ) external onlyGovernance {
+        // Making users lock up at least $250 reduces potential dust attacks
+        require(
+            self.minNetDebt + _musdGasCompensation >= MIN_TOTAL_DEBT,
+            "Minimum Net Debt plus Gas Compensation must be at least $250."
+        );
+        self.proposedMusdGasCompensation = _musdGasCompensation;
+        // solhint-disable-next-line not-rely-on-time
+        self.proposedMusdGasCompensationTime = block.timestamp;
+        emit MusdGasCompensationProposed(
+            self.proposedMusdGasCompensation,
+            self.proposedMusdGasCompensationTime
+        );
+    }
+
+    function approveMusdGasCompensation() external onlyGovernance {
+        // solhint-disable not-rely-on-time
+        require(
+            block.timestamp >= self.proposedMusdGasCompensationTime + 7 days,
+            "Must wait at least 7 days before approving a change to Gas Compensation"
+        );
+        require(
+            self.minNetDebt + self.proposedMusdGasCompensation >=
+                MIN_TOTAL_DEBT,
+            "Minimum Net Debt plus Gas Compensation must be at least $250."
+        );
+        self.musdGasCompensation = self.proposedMusdGasCompensation;
+        emit MusdGasCompensationChanged(self.musdGasCompensation);
     }
 
     function minNetDebt() external view returns (uint256) {
         return self.minNetDebt;
     }
 
+    function proposedMinNetDebt() external view returns (uint256) {
+        return self.proposedMinNetDebt;
+    }
+
+    function proposedMusdGasCompensation() external view returns (uint256) {
+        return self.proposedMusdGasCompensation;
+    }
+
+    function getMusdGasCompensation() external view returns (uint256) {
+        return self.musdGasCompensation;
+    }
+
     function stabilityPoolAddress() external view returns (address) {
         return self.stabilityPoolAddress;
     }
 
-    function getCompositeDebt(
-        uint256 _debt
-    ) external pure override returns (uint) {
-        return _getCompositeDebt(_debt);
-    }
-
     function getNonce(address user) public view returns (uint256) {
         return self.nonces[user];
+    }
+
+    // Returns the composite debt (drawn debt + gas compensation) of a trove,
+    // for the purpose of ICR calculation
+    function getCompositeDebt(uint256 _debt) public view returns (uint) {
+        return _debt + self.musdGasCompensation;
+    }
+
+    function getNetDebt(uint256 _debt) public view returns (uint) {
+        return _debt - self.musdGasCompensation;
     }
 
     function _addColl(
@@ -917,7 +963,7 @@ contract BorrowerOperations is
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
-        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
+        vars.compositeDebt = getCompositeDebt(vars.netDebt);
         assert(vars.compositeDebt > 0);
 
         // if BTC overwrite the asset value
@@ -1008,8 +1054,8 @@ contract BorrowerOperations is
             contractsCache.activePool,
             contractsCache.musd,
             self.gasPoolAddress,
-            MUSD_GAS_COMPENSATION,
-            MUSD_GAS_COMPENSATION
+            self.musdGasCompensation,
+            self.musdGasCompensation
         );
 
         // slither-disable-start reentrancy-events
@@ -1049,7 +1095,10 @@ contract BorrowerOperations is
             _borrower
         );
 
-        _requireSufficientMUSDBalance(_borrower, debt - MUSD_GAS_COMPENSATION);
+        _requireSufficientMUSDBalance(
+            _borrower,
+            debt - self.musdGasCompensation
+        );
         if (canMint) {
             uint256 newTCR = _getNewTCRFromTroveChange(
                 coll,
@@ -1076,19 +1125,19 @@ contract BorrowerOperations is
 
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
         activePoolCached.decreaseDebt(
-            debt - MUSD_GAS_COMPENSATION - interestOwed,
+            debt - self.musdGasCompensation - interestOwed,
             interestOwed
         );
 
         // Burn the repaid mUSD from the user's balance
-        musdTokenCached.burn(_borrower, debt - MUSD_GAS_COMPENSATION);
+        musdTokenCached.burn(_borrower, debt - self.musdGasCompensation);
 
         // Burn the gas compensation from the gas pool
         _repayMUSD(
             activePoolCached,
             musdTokenCached,
             self.gasPoolAddress,
-            MUSD_GAS_COMPENSATION,
+            self.musdGasCompensation,
             0
         );
 
@@ -1209,7 +1258,7 @@ contract BorrowerOperations is
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough mUSD
         if (!_isDebtIncrease && _mUSDChange > 0) {
             _requireAtLeastMinNetDebt(
-                _getNetDebt(vars.debt) - vars.netDebtChange
+                getNetDebt(vars.debt) - vars.netDebtChange
             );
             _requireValidMUSDRepayment(vars.debt, vars.netDebtChange);
             _requireSufficientMUSDBalance(_borrower, vars.netDebtChange);
@@ -1499,6 +1548,16 @@ contract BorrowerOperations is
         );
     }
 
+    function _requireValidMUSDRepayment(
+        uint256 _currentDebt,
+        uint256 _debtRepayment
+    ) internal view {
+        require(
+            _debtRepayment <= _currentDebt - self.musdGasCompensation,
+            "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
+        );
+    }
+
     /*
      * In Recovery Mode, only allow:
      *
@@ -1675,16 +1734,6 @@ contract BorrowerOperations is
         require(
             _newICR >= _oldICR,
             "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode"
-        );
-    }
-
-    function _requireValidMUSDRepayment(
-        uint256 _currentDebt,
-        uint256 _debtRepayment
-    ) internal pure {
-        require(
-            _debtRepayment <= _currentDebt - MUSD_GAS_COMPENSATION,
-            "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
         );
     }
 }

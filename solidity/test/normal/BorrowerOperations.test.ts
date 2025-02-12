@@ -167,7 +167,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     minNetDebt = await contracts.borrowerOperations.minNetDebt()
     MUSD_GAS_COMPENSATION =
-      await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
+      await contracts.borrowerOperations.getMusdGasCompensation()
 
     // Setup PCV governance addresses
     await contracts.pcv
@@ -698,7 +698,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("Reverts if net debt < minimum net debt", async () => {
         const amount =
           (await contracts.borrowerOperations.minNetDebt()) -
-          (await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()) -
+          (await contracts.borrowerOperations.getMusdGasCompensation()) -
           1n
         await expect(
           openTrove(contracts, {
@@ -1335,6 +1335,128 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .approveMinNetDebt(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Only governance can call this function",
+        )
+      })
+    })
+  })
+
+  describe("proposeMusdGasCompensation()", () => {
+    it("sets the proposed gas compensation", async () => {
+      const newGasCompensation = to1e18(500)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMusdGasCompensation(newGasCompensation)
+
+      expect(
+        await contracts.borrowerOperations.proposedMusdGasCompensation(),
+      ).to.equal(newGasCompensation)
+    })
+    context("Expected Reverts", () => {
+      it("reverts if the proposed gas compensation is not high enough", async () => {
+        // Lower the min net debt under $250
+        const newMinNetDebt = to1e18(100)
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMinNetDebt(newMinNetDebt)
+
+        // Simulate 7 days passing
+        const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .approveMinNetDebt()
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .proposeMusdGasCompensation(10001n),
+        ).to.be.revertedWith(
+          "Minimum Net Debt plus Gas Compensation must be at least $250.",
+        )
+      })
+    })
+  })
+
+  describe("approveMusdGasCompensation()", () => {
+    it("requires two transactions to change the gas compensation and a 7 day time delay", async () => {
+      const newGasCompensation = to1e18(300)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMusdGasCompensation(newGasCompensation)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveMusdGasCompensation()
+
+      expect(
+        await contracts.borrowerOperations.getMusdGasCompensation(),
+      ).to.equal(newGasCompensation)
+    })
+
+    it("changes the amount of gas held as compensation", async () => {
+      const newGasCompensation = to1e18(100)
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeMusdGasCompensation(newGasCompensation)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveMusdGasCompensation()
+
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      expect(carol.trove.debt.after).to.equal(to1e18("2110"))
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the time delay has not finished", async () => {
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMusdGasCompensation(to1e18(300))
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .approveMusdGasCompensation(),
+        ).to.be.revertedWith(
+          "Must wait at least 7 days before approving a change to Gas Compensation",
+        )
+      })
+
+      it("reverts if called by a non-governance address", async () => {
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeMusdGasCompensation(to1e18(300))
+
+        // Simulate 8 days passing
+        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .approveMusdGasCompensation(),
         ).to.be.revertedWith(
           "BorrowerOps: Only governance can call this function",
         )
