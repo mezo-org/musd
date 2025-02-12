@@ -877,9 +877,7 @@ contract BorrowerOperations is
 
     // Returns the composite debt (drawn debt + gas compensation) of a trove,
     // for the purpose of ICR calculation
-    function getCompositeDebt(
-        uint256 _debt
-    ) public view virtual returns (uint) {
+    function getCompositeDebt(uint256 _debt) public view returns (uint) {
         return _debt + self.musdGasCompensation;
     }
 
