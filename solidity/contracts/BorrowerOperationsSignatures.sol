@@ -83,6 +83,19 @@ contract BorrowerOperationsSignatures is
         uint256 deadline;
     }
 
+    struct Refinance {
+        uint256 maxFeePercentage;
+        address borrower;
+        uint256 nonce;
+        uint256 deadline;
+    }
+
+    struct ClaimCollateral {
+        address borrower;
+        uint256 nonce;
+        uint256 deadline;
+    }
+
     string private constant SIGNING_DOMAIN = "BorrowerOperationsSignatures";
     string private constant SIGNATURE_VERSION = "1";
 
@@ -119,6 +132,16 @@ contract BorrowerOperationsSignatures is
     bytes32 private constant CLOSE_TROVE_TYPEHASH =
         keccak256(
             "CloseTrove(address borrower,uint256 nonce,uint256 deadline)"
+        );
+
+    bytes32 private constant REFINANCE_TYPEHASH =
+        keccak256(
+            "Refinance(uint256 maxFeePercentage,address borrower,uint256 nonce,uint256 deadline)"
+        );
+
+    bytes32 private constant CLAIM_COLLATERAL_TYPEHASH =
+        keccak256(
+            "ClaimCollateral(address borrower,uint256 nonce,uint256 deadline)"
         );
 
     mapping(address => uint256) private nonces;
@@ -528,7 +551,58 @@ contract BorrowerOperationsSignatures is
         );
     }
 
+    function refinanceWithSignature(
+        uint256 _maxFeePercentage,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external {
+        Refinance memory refinanceData = Refinance({
+            maxFeePercentage: _maxFeePercentage,
+            borrower: _borrower,
+            nonce: nonces[_borrower],
+            deadline: _deadline
+        });
+
+        _verifySignature(
+            REFINANCE_TYPEHASH,
+            abi.encode(refinanceData.maxFeePercentage, refinanceData.borrower),
+            _borrower,
+            _signature,
+            _deadline
+        );
+
+        borrowerOperations.restrictedRefinance(
+            refinanceData.borrower,
+            refinanceData.maxFeePercentage
+        );
+    }
+
     function getNonce(address user) public view returns (uint256) {
         return nonces[user];
+    }
+
+    function _verifySignature(
+        bytes32 typeHash,
+        bytes memory data,
+        address borrower,
+        bytes memory signature,
+        uint256 deadline
+    ) internal {
+        // solhint-disable-next-line not-rely-on-time
+        require(block.timestamp <= deadline, "Signature expired");
+        uint256 nonce = nonces[borrower];
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(abi.encodePacked(typeHash, data, nonce, deadline))
+        );
+
+        address recoveredAddress = ECDSA.recover(digest, signature);
+        require(
+            recoveredAddress == borrower,
+            "BorrowerOperationsSignatures: Invalid signature"
+        );
+
+        nonces[borrower]++;
     }
 }

@@ -6782,6 +6782,299 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
+  describe("refinanceWithSignature()", () => {
+    const maxFeePercentage = to1e18(1)
+    const types = {
+      Refinance: [
+        { name: "maxFeePercentage", type: "uint256" },
+        { name: "borrower", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    }
+
+    it("changes the trove's interest rate to the current interest rate with a valid signature", async () => {
+      const newRate = 1000
+      await setInterestRate(contracts, council, newRate)
+      const { borrower, domain, nonce } = await setupSignatureTests(bob)
+
+      // account for governance delay in setting interest rate
+      const timeToNewRate = 7 * 24 * 60 * 60 // 7 days in seconds
+      const deadline = Math.floor(Date.now() / 1000) + 3600 + timeToNewRate // 1 hour from interest rate change approval
+
+      const value = {
+        maxFeePercentage,
+        borrower,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .refinanceWithSignature(maxFeePercentage, borrower, signature, deadline)
+
+      await updateTroveSnapshot(contracts, bob, "after")
+      expect(bob.trove.interestRate.after).to.equal(newRate)
+    })
+
+    it("correctly increments the nonce after a successful transaction", async () => {
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+
+      const value = {
+        maxFeePercentage,
+        borrower,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .refinanceWithSignature(maxFeePercentage, borrower, signature, deadline)
+
+      const newNonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
+      expect(newNonce - nonce).to.equal(1)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when the recovered address does not match the borrower's address", async () => {
+        const { borrower, domain, deadline, nonce } =
+          await setupSignatureTests(bob)
+
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        // Sign with Alice's wallet instead of Bob's
+        const signature = await alice.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the deadline has passed", async () => {
+        const { borrower, domain, nonce } = await setupSignatureTests(bob)
+        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("Signature expired")
+      })
+
+      it("reverts when the nonce is invalid", async () => {
+        const { borrower, domain, deadline, nonce } =
+          await setupSignatureTests(bob)
+
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+
+        // Submit a valid transaction to increment the nonce
+        await contracts.borrowerOperationsSignatures
+          .connect(alice.wallet)
+          .refinanceWithSignature(
+            maxFeePercentage,
+            borrower,
+            signature,
+            deadline,
+          )
+
+        // Attempt to submit the same transaction again which should now be invalid due to the nonce
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the contract address is not correctly specified", async () => {
+        const borrower = bob.address
+        const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperations",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the chain id is not correctly specified", async () => {
+        const borrower = bob.address
+        const contractAddress = addresses.borrowerOperationsSignatures
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperationsSignatures",
+          version: "1",
+          chainId: 0n, // incorrect chain id
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the contract version is not correctly specified", async () => {
+        const borrower = bob.address
+        const contractAddress = addresses.borrowerOperationsSignatures
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "BorrowerOperationsSignatures",
+          version: "0",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+
+      it("reverts when the contract name is not correctly specified", async () => {
+        const borrower = bob.address
+        const contractAddress = addresses.borrowerOperationsSignatures
+
+        const nonce =
+          await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+        const domain = {
+          name: "TroveManager",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: contractAddress,
+        }
+
+        const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+
+        const value = {
+          maxFeePercentage,
+          borrower,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .refinanceWithSignature(
+              maxFeePercentage,
+              borrower,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
+      })
+    })
+  })
+
   describe("setRefinancingFeePercentage()", () => {
     context("Expected Reverts", () => {
       it("reverts if fee percentage is > 100%", async () => {

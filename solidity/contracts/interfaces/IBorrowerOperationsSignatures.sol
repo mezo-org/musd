@@ -71,5 +71,12 @@ interface IBorrowerOperationsSignatures {
         uint256 _deadline
     ) external;
 
+    function refinanceWithSignature(
+        uint256 _maxFeePercentage,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
     function getNonce(address user) external view returns (uint256);
 }

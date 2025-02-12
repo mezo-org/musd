@@ -257,53 +257,7 @@ contract BorrowerOperations is
     }
 
     function refinance(uint256 _maxFeePercentage) external override {
-        ITroveManager troveManagerCached = troveManager;
-        IInterestRateManager interestRateManagerCached = interestRateManager;
-        _requireTroveisActive(troveManagerCached, msg.sender);
-        troveManagerCached.updateSystemAndTroveInterest(msg.sender);
-
-        uint16 oldRate = troveManagerCached.getTroveInterestRate(msg.sender);
-        uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
-            msg.sender
-        );
-        uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(
-            troveManagerCached,
-            musd,
-            amount,
-            _maxFeePercentage
-        );
-        // slither-disable-next-line unused-return
-        troveManagerCached.increaseTroveDebt(msg.sender, fee);
-
-        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(msg.sender);
-
-        interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
-        interestRateManagerCached.removePrincipalFromRate(
-            oldRate,
-            oldPrincipal
-        );
-        uint16 newRate = interestRateManagerCached.interestRate();
-        interestRateManagerCached.addInterestToRate(newRate, oldInterest);
-        interestRateManagerCached.addPrincipalToRate(newRate, oldPrincipal);
-
-        troveManagerCached.setTroveInterestRate(
-            msg.sender,
-            interestRateManagerCached.interestRate()
-        );
-
-        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
-            troveManagerCached.getTroveColl(msg.sender),
-            priceFeed.fetchPrice()
-        );
-        troveManagerCached.setTroveMaxBorrowingCapacity(
-            msg.sender,
-            maxBorrowingCapacity
-        );
-
-        // slither-disable-next-line reentrancy-events
-        emit RefinancingFeePaid(msg.sender, fee);
+        this.restrictedRefinance(msg.sender, _maxFeePercentage);
     }
 
     /*
@@ -684,6 +638,61 @@ contract BorrowerOperations is
 
         // Send the collateral back to the user
         activePoolCached.sendCollateral(_borrower, coll);
+    }
+
+    function restrictedRefinance(
+        address _borrower,
+        uint256 _maxFeePercentage
+    ) public {
+        _requireCallerIsBorrowerOperationsOrSignatures();
+        ITroveManager troveManagerCached = self.troveManager;
+        IInterestRateManager interestRateManagerCached = self
+            .interestRateManager;
+        _requireTroveisActive(troveManagerCached, _borrower);
+        troveManagerCached.updateSystemAndTroveInterest(_borrower);
+
+        uint16 oldRate = troveManagerCached.getTroveInterestRate(_borrower);
+        uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
+            _borrower
+        );
+        uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
+        uint256 amount = (self.refinancingFeePercentage * oldDebt) / 100;
+        uint256 fee = _triggerBorrowingFee(
+            troveManagerCached,
+            self.musd,
+            amount,
+            _maxFeePercentage
+        );
+        // slither-disable-next-line unused-return
+        troveManagerCached.increaseTroveDebt(_borrower, fee);
+
+        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
+
+        interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
+        interestRateManagerCached.removePrincipalFromRate(
+            oldRate,
+            oldPrincipal
+        );
+        uint16 newRate = interestRateManagerCached.interestRate();
+        interestRateManagerCached.addInterestToRate(newRate, oldInterest);
+        interestRateManagerCached.addPrincipalToRate(newRate, oldPrincipal);
+
+        troveManagerCached.setTroveInterestRate(
+            _borrower,
+            interestRateManagerCached.interestRate()
+        );
+
+        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            troveManagerCached.getTroveColl(_borrower),
+            priceFeed.fetchPrice()
+        );
+        troveManagerCached.setTroveMaxBorrowingCapacity(
+            _borrower,
+            maxBorrowingCapacity
+        );
+
+        // slither-disable-next-line reentrancy-events
+        emit RefinancingFeePaid(_borrower, fee);
     }
 
     function restrictedAdjustTrove(
