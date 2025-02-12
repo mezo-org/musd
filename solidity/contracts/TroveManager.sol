@@ -98,6 +98,11 @@ contract TroveManager is
         uint256 entireSystemColl;
     }
 
+    struct LocalVariables_redeemCollateral {
+        uint256 minNetDebt;
+        uint256 gasCompensation;
+    }
+
     struct LiquidationValues {
         uint256 entireTrovePrincipal;
         uint256 entireTroveInterest;
@@ -313,8 +318,10 @@ contract TroveManager is
             collSurplusPool,
             gasPoolAddress
         );
-        // slither-disable-next-line uninitialized-local
+        // slither-disable-start uninitialized-local
         RedemptionTotals memory totals;
+        LocalVariables_redeemCollateral memory vars;
+        // slither-disable-end uninitialized-local
 
         _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
@@ -359,7 +366,8 @@ contract TroveManager is
 
         updateDefaultPoolInterest();
 
-        uint256 minNetDebt = borrowerOperations.minNetDebt();
+        vars.minNetDebt = borrowerOperations.minNetDebt();
+        vars.gasCompensation = borrowerOperations.getMusdGasCompensation();
 
         while (
             currentBorrower != address(0) &&
@@ -388,7 +396,7 @@ contract TroveManager is
                     _upperPartialRedemptionHint,
                     _lowerPartialRedemptionHint,
                     _partialRedemptionHintNICR,
-                    minNetDebt
+                    vars
                 );
 
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
@@ -1514,15 +1522,14 @@ contract TroveManager is
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 _minNetDebt
+        LocalVariables_redeemCollateral memory redeemCollateralVars
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            _getTotalDebt(_borrower) -
-                borrowerOperations.getMusdGasCompensation()
+            _getTotalDebt(_borrower) - redeemCollateralVars.gasCompensation
         );
 
         // Get the collateralLot of equivalent value in USD
@@ -1534,13 +1541,13 @@ contract TroveManager is
         vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.mUSDLot;
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
 
-        if (vars.newDebt == borrowerOperations.getMusdGasCompensation()) {
+        if (vars.newDebt == redeemCollateralVars.gasCompensation) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _redeemCloseTrove(
                 _contractsCache,
                 _borrower,
-                borrowerOperations.getMusdGasCompensation(),
+                redeemCollateralVars.gasCompensation,
                 vars.newColl
             );
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1579,14 +1586,17 @@ contract TroveManager is
              *
              * If the resultant net debt of the partial is less than the minimum, net debt we bail.
              */
+            // slither-disable-start calls-loop
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                borrowerOperations.getNetDebt(vars.newDebt) < _minNetDebt
+                borrowerOperations.getNetDebt(vars.newDebt) <
+                redeemCollateralVars.minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
             }
+            // slither-disable-end calls-loop
 
             // slither-disable-next-line calls-loop
             _contractsCache.sortedTroves.reInsert(
