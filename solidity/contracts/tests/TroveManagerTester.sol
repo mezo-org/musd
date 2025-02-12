@@ -16,19 +16,19 @@ contract TroveManagerTester is TroveManager {
         updateDefaultPoolInterest();
     }
 
-    function computeICR(
-        uint256 _coll,
-        uint256 _debt,
-        uint256 _price
-    ) external pure returns (uint) {
-        return LiquityMath._computeCR(_coll, _debt, _price);
-    }
-
     function getMUSDGasCompensation() external view returns (uint) {
         return borrowerOperations.getMusdGasCompensation();
     }
 
     function getCompositeDebt(uint256 _debt) external view returns (uint) {
         return borrowerOperations.getCompositeDebt(_debt);
+    }
+
+    function computeICR(
+        uint256 _coll,
+        uint256 _debt,
+        uint256 _price
+    ) external pure returns (uint) {
+        return LiquityMath._computeCR(_coll, _debt, _price);
     }
 }
