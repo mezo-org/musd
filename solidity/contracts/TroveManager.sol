@@ -1138,7 +1138,8 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
+        singleLiquidation.mUSDGasCompensation = borrowerOperations
+            .getMusdGasCompensation();
         uint256 collToLiquidate = singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
 
@@ -1332,7 +1333,8 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
+        singleLiquidation.mUSDGasCompensation = borrowerOperations
+            .getMusdGasCompensation();
         vars.collToLiquidate =
             singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
@@ -1519,7 +1521,8 @@ contract TroveManager is
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
+            _getTotalDebt(_borrower) -
+                borrowerOperations.getMusdGasCompensation()
         );
 
         // Get the collateralLot of equivalent value in USD
@@ -1531,13 +1534,13 @@ contract TroveManager is
         vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.mUSDLot;
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
 
-        if (vars.newDebt == MUSD_GAS_COMPENSATION) {
+        if (vars.newDebt == borrowerOperations.getMusdGasCompensation()) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _redeemCloseTrove(
                 _contractsCache,
                 _borrower,
-                MUSD_GAS_COMPENSATION,
+                borrowerOperations.getMusdGasCompensation(),
                 vars.newColl
             );
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1579,7 +1582,7 @@ contract TroveManager is
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                _getNetDebt(vars.newDebt) < _minNetDebt
+                borrowerOperations.getNetDebt(vars.newDebt) < _minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
@@ -1939,7 +1942,7 @@ contract TroveManager is
         uint256 _entireTroveDebt,
         uint256 _entireTroveColl,
         uint256 _price
-    ) internal pure returns (LiquidationValues memory singleLiquidation) {
+    ) internal view returns (LiquidationValues memory singleLiquidation) {
         singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
         singleLiquidation.entireTroveColl = _entireTroveColl;
         uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
@@ -1947,7 +1950,8 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             cappedCollPortion
         );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
+        singleLiquidation.mUSDGasCompensation = borrowerOperations
+            .getMusdGasCompensation();
 
         singleLiquidation.debtToOffset = _entireTroveDebt;
         singleLiquidation.collToSendToSP =

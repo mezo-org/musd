@@ -167,7 +167,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     minNetDebt = await contracts.borrowerOperations.minNetDebt()
     MUSD_GAS_COMPENSATION =
-      await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
+      await contracts.borrowerOperations.getMusdGasCompensation()
 
     // Setup PCV governance addresses
     await contracts.pcv
@@ -698,7 +698,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("Reverts if net debt < minimum net debt", async () => {
         const amount =
           (await contracts.borrowerOperations.minNetDebt()) -
-          (await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()) -
+          (await contracts.borrowerOperations.getMusdGasCompensation()) -
           1n
         await expect(
           openTrove(contracts, {

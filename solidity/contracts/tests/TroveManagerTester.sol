@@ -24,11 +24,11 @@ contract TroveManagerTester is TroveManager {
         return LiquityMath._computeCR(_coll, _debt, _price);
     }
 
-    function getMUSDGasCompensation() external pure returns (uint) {
-        return MUSD_GAS_COMPENSATION;
+    function getMUSDGasCompensation() external view returns (uint) {
+        return borrowerOperations.getMusdGasCompensation();
     }
 
-    function getCompositeDebt(uint256 _debt) external pure returns (uint) {
-        return _getCompositeDebt(_debt);
+    function getCompositeDebt(uint256 _debt) external view returns (uint) {
+        return borrowerOperations.getCompositeDebt(_debt);
     }
 }

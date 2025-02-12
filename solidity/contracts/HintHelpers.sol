@@ -117,7 +117,7 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
             (uint256 pendingPrincipal, uint256 pendingInterest) = troveManager
                 .getPendingDebt(currentTroveuser);
 
-            uint256 netDebt = _getNetDebt(
+            uint256 netDebt = borrowerOperations.getNetDebt(
                 troveManager.getTroveDebt(currentTroveuser)
             ) +
                 pendingPrincipal +
@@ -138,7 +138,9 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
                         ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
                     uint256 newDebt = netDebt - maxRedeemableMUSD;
 
-                    uint256 compositeDebt = _getCompositeDebt(newDebt);
+                    uint256 compositeDebt = borrowerOperations.getCompositeDebt(
+                        newDebt
+                    );
                     partialRedemptionHintNICR = LiquityMath._computeNominalCR(
                         newColl,
                         compositeDebt
