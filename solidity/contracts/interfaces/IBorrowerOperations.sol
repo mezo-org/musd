@@ -7,6 +7,9 @@ interface IBorrowerOperations {
     // --- Events ---
 
     event ActivePoolAddressChanged(address _activePoolAddress);
+    event BorrowerOperationsSignaturesAddressChanged(
+        address _borrowerOperationsSignaturesAddress
+    );
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event GasPoolAddressChanged(address _gasPoolAddress);
@@ -40,6 +43,7 @@ interface IBorrowerOperations {
 
     function setAddresses(
         address _activePoolAddress,
+        address _borrowerOperationsSignaturesAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
@@ -59,48 +63,26 @@ interface IBorrowerOperations {
     function openTrove(
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable;
 
-    function openTroveWithSignature(
+    function restrictedOpenTrove(
+        address _borrower,
         uint256 _maxFeePercentage,
         uint256 _debtAmount,
-        uint256 _assetAmount,
         address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
+        address _lowerHint
     ) external payable;
 
     function proposeMinNetDebt(uint256 _minNetDebt) external;
 
     function approveMinNetDebt() external;
 
-    function repayMUSDWithSignature(
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external;
-
     function addColl(
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
-    ) external payable;
-
-    function addCollWithSignature(
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
     ) external payable;
 
     function moveCollateralGainToTrove(
@@ -116,30 +98,11 @@ interface IBorrowerOperations {
         address _lowerHint
     ) external;
 
-    function withdrawCollWithSignature(
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external;
-
     function withdrawMUSD(
         uint256 _maxFeePercentage,
         uint256 _amount,
         address _upperHint,
         address _lowerHint
-    ) external;
-
-    function withdrawMUSDWithSignature(
-        uint256 _maxFeePercentage,
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
     ) external;
 
     function repayMUSD(
@@ -150,11 +113,7 @@ interface IBorrowerOperations {
 
     function closeTrove() external;
 
-    function closeTroveWithSignature(
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
-    ) external;
+    function restrictedCloseTrove(address _borrower) external;
 
     function refinance(uint256 _maxFeePercentage) external;
 
@@ -163,22 +122,19 @@ interface IBorrowerOperations {
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable;
 
-    function adjustTroveWithSignature(
-        uint256 _maxFeePercentage,
+    function restrictedAdjustTrove(
+        address _borrower,
         uint256 _collWithdrawal,
-        uint256 _debtChange,
+        uint256 _mUSDChange,
         bool _isDebtIncrease,
         uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
-        address _borrower,
-        bytes memory _signature,
-        uint256 _deadline
+        uint256 _maxFeePercentage
     ) external payable;
 
     function claimCollateral() external;
@@ -189,5 +145,5 @@ interface IBorrowerOperations {
 
     function getNetDebt(uint256 _debt) external view returns (uint);
 
-    function getMusdGasCompensation() external view returns (uint256);
+    function musdGasCompensation() external view returns (uint256);
 }

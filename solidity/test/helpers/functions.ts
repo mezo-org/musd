@@ -542,7 +542,6 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
     .openTrove(
       maxFeePercentage,
       musdAmount,
-      assetAmount,
       params.upperHint,
       params.lowerHint,
       {

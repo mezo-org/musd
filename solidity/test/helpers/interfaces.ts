@@ -4,6 +4,7 @@ import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signer
 import {
   ActivePool,
   BorrowerOperations,
+  BorrowerOperationsSignatures,
   CollSurplusPool,
   DefaultPool,
   GasPool,
@@ -22,6 +23,7 @@ import {
 export interface TestingAddresses {
   activePool: string
   borrowerOperations: string
+  borrowerOperationsSignatures: string
   collSurplusPool: string
   defaultPool: string
   gasPool: string
@@ -108,6 +110,7 @@ export interface ContractsState {
 export interface Contracts {
   activePool: ActivePool
   borrowerOperations: BorrowerOperations
+  borrowerOperationsSignatures: BorrowerOperationsSignatures
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
   gasPool: GasPool
