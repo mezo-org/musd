@@ -14,7 +14,6 @@ import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
-import "./BorrowerOperationsState.sol";
 
 contract BorrowerOperations is
     CheckContract,
@@ -76,14 +75,38 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
 
-    BorrowerOperationsState.Storage internal self;
+    // Connected contract declarations
+    ITroveManager public troveManager;
+    address public gasPoolAddress;
+    address public pcvAddress;
+    address public stabilityPoolAddress;
+    address public borrowerOperationsSignaturesAddress;
+    ICollSurplusPool public collSurplusPool;
+    IMUSD public musd;
+    IPCV public pcv;
+    IInterestRateManager public interestRateManager;
+
+    // A doubly linked list of Troves, sorted by their collateral ratios
+    ISortedTroves public sortedTroves;
+
+    // refinancing fee is always a percentage of the borrowing (issuance) fee
+    uint8 public refinancingFeePercentage;
+
+    // Minimum amount of net mUSD debt a trove must have
+    uint256 public minNetDebt;
+    uint256 public proposedMinNetDebt;
+    uint256 public proposedMinNetDebtTime;
+
+    // Amount of mUSD to be locked in gas pool on opening troves
+    uint256 public musdGasCompensation;
+    uint256 public proposedMusdGasCompensation;
+    uint256 public proposedMusdGasCompensationTime;
 
     uint256 public constant MIN_TOTAL_DEBT = 250e18;
 
     modifier onlyGovernance() {
         require(
-            msg.sender == self.pcv.council() ||
-                msg.sender == self.pcv.treasury(),
+            msg.sender == pcv.council() || msg.sender == pcv.treasury(),
             "BorrowerOps: Only governance can call this function"
         );
         _;
@@ -91,9 +114,9 @@ contract BorrowerOperations is
 
     function initialize() external initializer {
         __Ownable_init(msg.sender);
-        self.refinancingFeePercentage = 20;
-        self.minNetDebt = 1800e18;
-        self.musdGasCompensation = 200e18;
+        refinancingFeePercentage = 20;
+        minNetDebt = 1800e18;
+        musdGasCompensation = 200e18;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -104,18 +127,18 @@ contract BorrowerOperations is
     // Calls on PCV behalf
     function mintBootstrapLoanFromPCV(uint256 _musdToMint) external {
         require(
-            msg.sender == self.pcvAddress,
+            msg.sender == pcvAddress,
             "BorrowerOperations: caller must be PCV"
         );
-        self.musd.mint(self.pcvAddress, _musdToMint);
+        musd.mint(pcvAddress, _musdToMint);
     }
 
     function burnDebtFromPCV(uint256 _musdToBurn) external virtual {
         require(
-            msg.sender == self.pcvAddress,
+            msg.sender == pcvAddress,
             "BorrowerOperations: caller must be PCV"
         );
-        self.musd.burn(self.pcvAddress, _musdToBurn);
+        musd.burn(pcvAddress, _musdToBurn);
     }
 
     // --- Borrower Trove Operations ---
@@ -234,9 +257,8 @@ contract BorrowerOperations is
     }
 
     function refinance(uint256 _maxFeePercentage) external override {
-        ITroveManager troveManagerCached = self.troveManager;
-        IInterestRateManager interestRateManagerCached = self
-            .interestRateManager;
+        ITroveManager troveManagerCached = troveManager;
+        IInterestRateManager interestRateManagerCached = interestRateManager;
         _requireTroveisActive(troveManagerCached, msg.sender);
         troveManagerCached.updateSystemAndTroveInterest(msg.sender);
 
@@ -245,10 +267,10 @@ contract BorrowerOperations is
             msg.sender
         );
         uint256 oldDebt = troveManagerCached.getTroveDebt(msg.sender);
-        uint256 amount = (self.refinancingFeePercentage * oldDebt) / 100;
+        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(
             troveManagerCached,
-            self.musd,
+            musd,
             amount,
             _maxFeePercentage
         );
@@ -313,7 +335,7 @@ contract BorrowerOperations is
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
-        self.collSurplusPool.claimColl(msg.sender);
+        collSurplusPool.claimColl(msg.sender);
     }
 
     function setAddresses(
@@ -331,7 +353,7 @@ contract BorrowerOperations is
         address _troveManagerAddress
     ) external override onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
-        assert(self.minNetDebt > 0);
+        assert(minNetDebt > 0);
 
         checkContract(_activePoolAddress);
         checkContract(_borrowerOperationsSignaturesAddress);
@@ -348,21 +370,18 @@ contract BorrowerOperations is
 
         // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
-        self
-            .borrowerOperationsSignaturesAddress = _borrowerOperationsSignaturesAddress;
-        self.collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
+        borrowerOperationsSignaturesAddress = _borrowerOperationsSignaturesAddress;
+        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
-        self.gasPoolAddress = _gasPoolAddress;
-        self.interestRateManager = IInterestRateManager(
-            _interestRateManagerAddress
-        );
-        self.musd = IMUSD(_musdTokenAddress);
-        self.pcv = IPCV(_pcvAddress);
-        self.pcvAddress = _pcvAddress;
+        gasPoolAddress = _gasPoolAddress;
+        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        musd = IMUSD(_musdTokenAddress);
+        pcv = IPCV(_pcvAddress);
+        pcvAddress = _pcvAddress;
         priceFeed = IPriceFeed(_priceFeedAddress);
-        self.sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        self.stabilityPoolAddress = _stabilityPoolAddress;
-        self.troveManager = ITroveManager(_troveManagerAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        stabilityPoolAddress = _stabilityPoolAddress;
+        troveManager = ITroveManager(_troveManagerAddress);
         // slither-disable-end missing-zero-check
 
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -389,37 +408,33 @@ contract BorrowerOperations is
             _refinanceFeePercentage <= 100,
             "BorrowerOps: Refinancing fee percentage must be <= 100"
         );
-        self.refinancingFeePercentage = _refinanceFeePercentage;
+        refinancingFeePercentage = _refinanceFeePercentage;
     }
 
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
         // Making users lock up at least $250 reduces potential dust attacks
         require(
-            _minNetDebt + self.musdGasCompensation >= MIN_TOTAL_DEBT,
+            _minNetDebt + musdGasCompensation >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
-        self.proposedMinNetDebt = _minNetDebt;
+        proposedMinNetDebt = _minNetDebt;
         // solhint-disable-next-line not-rely-on-time
-        self.proposedMinNetDebtTime = block.timestamp;
-        emit MinNetDebtProposed(
-            self.proposedMinNetDebt,
-            self.proposedMinNetDebtTime
-        );
+        proposedMinNetDebtTime = block.timestamp;
+        emit MinNetDebtProposed(proposedMinNetDebt, proposedMinNetDebtTime);
     }
 
     function approveMinNetDebt() external onlyGovernance {
         // solhint-disable not-rely-on-time
         require(
-            block.timestamp >= self.proposedMinNetDebtTime + 7 days,
+            block.timestamp >= proposedMinNetDebtTime + 7 days,
             "Must wait at least 7 days before approving a change to Minimum Net Debt"
         );
         require(
-            self.proposedMinNetDebt + self.musdGasCompensation >=
-                MIN_TOTAL_DEBT,
+            proposedMinNetDebt + musdGasCompensation >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
-        self.minNetDebt = self.proposedMinNetDebt;
-        emit MinNetDebtChanged(self.minNetDebt);
+        minNetDebt = proposedMinNetDebt;
+        emit MinNetDebtChanged(minNetDebt);
     }
 
     function proposeMusdGasCompensation(
@@ -427,51 +442,30 @@ contract BorrowerOperations is
     ) external onlyGovernance {
         // Making users lock up at least $250 reduces potential dust attacks
         require(
-            self.minNetDebt + _musdGasCompensation >= MIN_TOTAL_DEBT,
+            minNetDebt + _musdGasCompensation >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
-        self.proposedMusdGasCompensation = _musdGasCompensation;
+        proposedMusdGasCompensation = _musdGasCompensation;
         // solhint-disable-next-line not-rely-on-time
-        self.proposedMusdGasCompensationTime = block.timestamp;
+        proposedMusdGasCompensationTime = block.timestamp;
         emit MusdGasCompensationProposed(
-            self.proposedMusdGasCompensation,
-            self.proposedMusdGasCompensationTime
+            proposedMusdGasCompensation,
+            proposedMusdGasCompensationTime
         );
     }
 
     function approveMusdGasCompensation() external onlyGovernance {
         // solhint-disable not-rely-on-time
         require(
-            block.timestamp >= self.proposedMusdGasCompensationTime + 7 days,
+            block.timestamp >= proposedMusdGasCompensationTime + 7 days,
             "Must wait at least 7 days before approving a change to Gas Compensation"
         );
         require(
-            self.minNetDebt + self.proposedMusdGasCompensation >=
-                MIN_TOTAL_DEBT,
+            minNetDebt + proposedMusdGasCompensation >= MIN_TOTAL_DEBT,
             "Minimum Net Debt plus Gas Compensation must be at least $250."
         );
-        self.musdGasCompensation = self.proposedMusdGasCompensation;
-        emit MusdGasCompensationChanged(self.musdGasCompensation);
-    }
-
-    function minNetDebt() external view returns (uint256) {
-        return self.minNetDebt;
-    }
-
-    function proposedMinNetDebt() external view returns (uint256) {
-        return self.proposedMinNetDebt;
-    }
-
-    function proposedMusdGasCompensation() external view returns (uint256) {
-        return self.proposedMusdGasCompensation;
-    }
-
-    function getMusdGasCompensation() external view returns (uint256) {
-        return self.musdGasCompensation;
-    }
-
-    function stabilityPoolAddress() external view returns (address) {
-        return self.stabilityPoolAddress;
+        musdGasCompensation = proposedMusdGasCompensation;
+        emit MusdGasCompensationChanged(musdGasCompensation);
     }
 
     function restrictedAddColl(
@@ -503,10 +497,10 @@ contract BorrowerOperations is
     ) public payable {
         _requireCallerIsBorrowerOperationsOrSignatures();
         ContractsCache memory contractsCache = ContractsCache(
-            self.troveManager,
+            troveManager,
             activePool,
-            self.musd,
-            self.interestRateManager
+            musd,
+            interestRateManager
         );
         // slither-disable-next-line uninitialized-local
         LocalVariables_openTrove memory vars;
@@ -601,7 +595,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        self.sortedTroves.insert(_borrower, vars.NICR, _upperHint, _lowerHint);
+        sortedTroves.insert(_borrower, vars.NICR, _upperHint, _lowerHint);
         vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(
             _borrower
         );
@@ -622,9 +616,9 @@ contract BorrowerOperations is
         _withdrawMUSD(
             contractsCache.activePool,
             contractsCache.musd,
-            self.gasPoolAddress,
-            self.musdGasCompensation,
-            self.musdGasCompensation
+            gasPoolAddress,
+            musdGasCompensation,
+            musdGasCompensation
         );
 
         // slither-disable-start reentrancy-events
@@ -644,9 +638,9 @@ contract BorrowerOperations is
 
     function restrictedCloseTrove(address _borrower) public {
         _requireCallerIsBorrowerOperationsOrSignatures();
-        ITroveManager troveManagerCached = self.troveManager;
+        ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
-        IMUSD musdTokenCached = self.musd;
+        IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
 
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
@@ -665,10 +659,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        _requireSufficientMUSDBalance(
-            _borrower,
-            debt - self.musdGasCompensation
-        );
+        _requireSufficientMUSDBalance(_borrower, debt - musdGasCompensation);
         if (canMint) {
             uint256 newTCR = _getNewTCRFromTroveChange(
                 coll,
@@ -695,19 +686,19 @@ contract BorrowerOperations is
 
         // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
         activePoolCached.decreaseDebt(
-            debt - self.musdGasCompensation - interestOwed,
+            debt - musdGasCompensation - interestOwed,
             interestOwed
         );
 
         // Burn the repaid mUSD from the user's balance
-        musdTokenCached.burn(_borrower, debt - self.musdGasCompensation);
+        musdTokenCached.burn(_borrower, debt - musdGasCompensation);
 
         // Burn the gas compensation from the gas pool
         _repayMUSD(
             activePoolCached,
             musdTokenCached,
-            self.gasPoolAddress,
-            self.musdGasCompensation,
+            gasPoolAddress,
+            musdGasCompensation,
             0
         );
 
@@ -727,10 +718,10 @@ contract BorrowerOperations is
     ) public payable {
         _requireCallerIsBorrowerOperationsOrSignatures();
         ContractsCache memory contractsCache = ContractsCache(
-            self.troveManager,
+            troveManager,
             activePool,
-            self.musd,
-            self.interestRateManager
+            musd,
+            interestRateManager
         );
 
         contractsCache.troveManager.updateSystemAndTroveInterest(_borrower);
@@ -767,11 +758,11 @@ contract BorrowerOperations is
          */
         assert(
             msg.sender == _borrower ||
-                (msg.sender == self.stabilityPoolAddress &&
+                (msg.sender == stabilityPoolAddress &&
                     _assetAmount > 0 &&
                     _mUSDChange == 0) ||
                 msg.sender == address(this) ||
-                msg.sender == self.borrowerOperationsSignaturesAddress
+                msg.sender == borrowerOperationsSignaturesAddress
         );
 
         contractsCache.troveManager.applyPendingRewards(_borrower);
@@ -853,12 +844,7 @@ contract BorrowerOperations is
             vars.netDebtChange,
             _isDebtIncrease
         );
-        self.sortedTroves.reInsert(
-            _borrower,
-            vars.newNICR,
-            _upperHint,
-            _lowerHint
-        );
+        sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
@@ -889,11 +875,11 @@ contract BorrowerOperations is
     // Returns the composite debt (drawn debt + gas compensation) of a trove,
     // for the purpose of ICR calculation
     function getCompositeDebt(uint256 _debt) public view returns (uint) {
-        return _debt + self.musdGasCompensation;
+        return _debt + musdGasCompensation;
     }
 
     function getNetDebt(uint256 _debt) public view returns (uint) {
-        return _debt - self.musdGasCompensation;
+        return _debt - musdGasCompensation;
     }
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
@@ -1005,13 +991,13 @@ contract BorrowerOperations is
         _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
 
         // Send fee to PCV contract
-        _musd.mint(self.pcvAddress, fee);
+        _musd.mint(pcvAddress, fee);
         return fee;
     }
 
     function _requireCallerIsBorrowerOperationsOrSignatures() internal view {
         require(
-            msg.sender == self.borrowerOperationsSignaturesAddress ||
+            msg.sender == borrowerOperationsSignaturesAddress ||
                 msg.sender == address(this),
             "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures"
         );
@@ -1058,7 +1044,7 @@ contract BorrowerOperations is
 
     function _requireCallerIsStabilityPool() internal view {
         require(
-            msg.sender == self.stabilityPoolAddress,
+            msg.sender == stabilityPoolAddress,
             "BorrowerOps: Caller is not Stability Pool"
         );
     }
@@ -1118,14 +1104,14 @@ contract BorrowerOperations is
         uint256 _debtRepayment
     ) internal view {
         require(
-            self.musd.balanceOf(_borrower) >= _debtRepayment,
+            musd.balanceOf(_borrower) >= _debtRepayment,
             "BorrowerOps: Caller doesnt have enough mUSD to make repayment"
         );
     }
 
     function _requireAtLeastMinNetDebt(uint256 _netDebt) internal view {
         require(
-            _netDebt >= self.minNetDebt,
+            _netDebt >= minNetDebt,
             "BorrowerOps: Trove's net debt must be greater than minimum"
         );
     }
@@ -1135,7 +1121,7 @@ contract BorrowerOperations is
         uint256 _debtRepayment
     ) internal view {
         require(
-            _debtRepayment <= _currentDebt - self.musdGasCompensation,
+            _debtRepayment <= _currentDebt - musdGasCompensation,
             "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
         );
     }

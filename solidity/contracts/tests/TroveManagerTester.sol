@@ -17,7 +17,7 @@ contract TroveManagerTester is TroveManager {
     }
 
     function getMUSDGasCompensation() external view returns (uint) {
-        return borrowerOperations.getMusdGasCompensation();
+        return borrowerOperations.musdGasCompensation();
     }
 
     function getCompositeDebt(uint256 _debt) external view returns (uint) {

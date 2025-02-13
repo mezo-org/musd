@@ -367,7 +367,7 @@ contract TroveManager is
         updateDefaultPoolInterest();
 
         vars.minNetDebt = borrowerOperations.minNetDebt();
-        vars.gasCompensation = borrowerOperations.getMusdGasCompensation();
+        vars.gasCompensation = borrowerOperations.musdGasCompensation();
 
         while (
             currentBorrower != address(0) &&
@@ -1147,7 +1147,7 @@ contract TroveManager is
             singleLiquidation.entireTroveColl
         );
         singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .getMusdGasCompensation();
+            .musdGasCompensation();
         uint256 collToLiquidate = singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
 
@@ -1342,7 +1342,7 @@ contract TroveManager is
             singleLiquidation.entireTroveColl
         );
         singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .getMusdGasCompensation();
+            .musdGasCompensation();
         vars.collToLiquidate =
             singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
@@ -1880,7 +1880,7 @@ contract TroveManager is
             cappedCollPortion
         );
         singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .getMusdGasCompensation();
+            .musdGasCompensation();
 
         singleLiquidation.debtToOffset = _entireTroveDebt;
         singleLiquidation.collToSendToSP =

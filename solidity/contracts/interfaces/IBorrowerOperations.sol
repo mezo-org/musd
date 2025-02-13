@@ -145,5 +145,5 @@ interface IBorrowerOperations {
 
     function getNetDebt(uint256 _debt) external view returns (uint);
 
-    function getMusdGasCompensation() external view returns (uint256);
+    function musdGasCompensation() external view returns (uint256);
 }
