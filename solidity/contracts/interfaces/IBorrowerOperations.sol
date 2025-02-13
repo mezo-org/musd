@@ -117,6 +117,11 @@ interface IBorrowerOperations {
 
     function refinance(uint256 _maxFeePercentage) external;
 
+    function restrictedRefinance(
+        address _borrower,
+        uint256 _maxFeePercentage
+    ) external;
+
     function adjustTrove(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
@@ -138,6 +143,8 @@ interface IBorrowerOperations {
     ) external payable;
 
     function claimCollateral() external;
+
+    function restrictedClaimCollateral(address _borrower) external;
 
     function minNetDebt() external view returns (uint256);
 

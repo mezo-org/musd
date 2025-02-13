@@ -20,6 +20,12 @@ interface IBorrowerOperationsSignatures {
         uint256 _deadline
     ) external;
 
+    function claimCollateralWithSignature(
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
     function adjustTroveWithSignature(
         uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
@@ -66,6 +72,13 @@ interface IBorrowerOperationsSignatures {
         uint256 _amount,
         address _upperHint,
         address _lowerHint,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
+    ) external;
+
+    function refinanceWithSignature(
+        uint256 _maxFeePercentage,
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
