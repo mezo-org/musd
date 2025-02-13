@@ -3295,16 +3295,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
     })
-
-    it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
-      await expect(
-        contracts.borrowerOperations
-          .connect(alice.wallet)
-          .restrictedWithdrawColl(bob.address, amount, upperHint, lowerHint),
-      ).to.be.revertedWith(
-        "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
-      )
-    })
   })
 
   describe("withdrawMUSD()", () => {

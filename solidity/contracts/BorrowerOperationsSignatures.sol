@@ -194,11 +194,15 @@ contract BorrowerOperationsSignatures is
 
         nonces[_borrower]++;
 
-        borrowerOperations.restrictedAddColl{value: msg.value}(
+        borrowerOperations.restrictedAdjustTrove{value: msg.value}(
             addCollData.borrower,
+            0,
+            0,
+            false,
             addCollData.assetAmount,
             addCollData.upperHint,
-            addCollData.lowerHint
+            addCollData.lowerHint,
+            0
         );
     }
 
@@ -347,11 +351,15 @@ contract BorrowerOperationsSignatures is
 
         nonces[_borrower]++;
 
-        borrowerOperations.restrictedWithdrawColl(
+        borrowerOperations.restrictedAdjustTrove(
             withdrawCollData.borrower,
             withdrawCollData.amount,
+            0,
+            false,
+            0,
             withdrawCollData.upperHint,
-            withdrawCollData.lowerHint
+            withdrawCollData.lowerHint,
+            0
         );
     }
 

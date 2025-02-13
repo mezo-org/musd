@@ -85,13 +85,6 @@ interface IBorrowerOperations {
         address _lowerHint
     ) external payable;
 
-    function restrictedAddColl(
-        address _borrower,
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint
-    ) external payable;
-
     function moveCollateralGainToTrove(
         address _borrower,
         uint256 _assetAmount,
@@ -100,13 +93,6 @@ interface IBorrowerOperations {
     ) external payable;
 
     function withdrawColl(
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint
-    ) external;
-
-    function restrictedWithdrawColl(
-        address _borrower,
         uint256 _amount,
         address _upperHint,
         address _lowerHint

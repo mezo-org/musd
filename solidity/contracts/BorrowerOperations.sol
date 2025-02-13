@@ -140,11 +140,16 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        this.restrictedAddColl{value: msg.value}(
+        _assetAmount = msg.value;
+        this.restrictedAdjustTrove{value: msg.value}(
             msg.sender,
+            0,
+            0,
+            false,
             _assetAmount,
             _upperHint,
-            _lowerHint
+            _lowerHint,
+            0
         );
     }
 
@@ -175,11 +180,15 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        this.restrictedWithdrawColl(
+        this.restrictedAdjustTrove(
             msg.sender,
             _amount,
+            0,
+            false,
+            0,
             _upperHint,
-            _lowerHint
+            _lowerHint,
+            0
         );
     }
 
@@ -479,25 +488,6 @@ contract BorrowerOperations is
             0,
             false,
             _assetAmount,
-            _upperHint,
-            _lowerHint,
-            0
-        );
-    }
-
-    function restrictedWithdrawColl(
-        address _borrower,
-        uint256 _amount,
-        address _upperHint,
-        address _lowerHint
-    ) public {
-        _requireCallerIsBorrowerOperationsOrSignatures();
-        this.restrictedAdjustTrove(
-            _borrower,
-            _amount,
-            0,
-            false,
-            0,
             _upperHint,
             _lowerHint,
             0
