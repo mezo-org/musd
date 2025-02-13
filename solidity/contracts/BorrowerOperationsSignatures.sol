@@ -183,39 +183,27 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
         AddColl memory addCollData = AddColl({
             assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonce,
+            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    ADD_COLL_TYPEHASH,
-                    addCollData.assetAmount,
-                    addCollData.upperHint,
-                    addCollData.lowerHint,
-                    addCollData.borrower,
-                    addCollData.nonce,
-                    addCollData.deadline
-                )
-            )
+        _verifySignature(
+            ADD_COLL_TYPEHASH,
+            abi.encode(
+                addCollData.assetAmount,
+                addCollData.upperHint,
+                addCollData.lowerHint,
+                addCollData.borrower
+            ),
+            _borrower,
+            _signature,
+            _deadline
         );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
 
         borrowerOperations.restrictedAdjustTrove{value: msg.value}(
             addCollData.borrower,
@@ -234,33 +222,19 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
         CloseTrove memory closeTroveData = CloseTrove({
             borrower: _borrower,
-            nonce: nonce,
+            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    CLOSE_TROVE_TYPEHASH,
-                    closeTroveData.borrower,
-                    closeTroveData.nonce,
-                    closeTroveData.deadline
-                )
-            )
+        _verifySignature(
+            CLOSE_TROVE_TYPEHASH,
+            abi.encode(closeTroveData.borrower),
+            _borrower,
+            _signature,
+            _deadline
         );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
 
         borrowerOperations.restrictedCloseTrove(_borrower);
     }
@@ -277,9 +251,8 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
+        _assetAmount = msg.value;
+
         AdjustTrove memory adjustTroveData = AdjustTrove({
             maxFeePercentage: _maxFeePercentage,
             collWithdrawal: _collWithdrawal,
@@ -289,37 +262,27 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonce,
+            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    ADJUST_TROVE_TYPEHASH,
-                    adjustTroveData.maxFeePercentage,
-                    adjustTroveData.collWithdrawal,
-                    adjustTroveData.debtChange,
-                    adjustTroveData.isDebtIncrease,
-                    adjustTroveData.assetAmount,
-                    adjustTroveData.upperHint,
-                    adjustTroveData.lowerHint,
-                    adjustTroveData.borrower,
-                    adjustTroveData.nonce,
-                    adjustTroveData.deadline
-                )
-            )
+        _verifySignature(
+            ADJUST_TROVE_TYPEHASH,
+            abi.encode(
+                adjustTroveData.maxFeePercentage,
+                adjustTroveData.collWithdrawal,
+                adjustTroveData.debtChange,
+                adjustTroveData.isDebtIncrease,
+                adjustTroveData.assetAmount,
+                adjustTroveData.upperHint,
+                adjustTroveData.lowerHint,
+                adjustTroveData.borrower
+            ),
+            _borrower,
+            _signature,
+            _deadline
         );
 
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
-
-        _assetAmount = msg.value;
         borrowerOperations.restrictedAdjustTrove(
             adjustTroveData.borrower,
             adjustTroveData.collWithdrawal,
@@ -395,41 +358,29 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
         OpenTrove memory openTroveData = OpenTrove({
             maxFeePercentage: _maxFeePercentage,
             debtAmount: _debtAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonce,
+            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    OPEN_TROVE_TYPEHASH,
-                    openTroveData.maxFeePercentage,
-                    openTroveData.debtAmount,
-                    openTroveData.upperHint,
-                    openTroveData.lowerHint,
-                    openTroveData.borrower,
-                    openTroveData.nonce,
-                    openTroveData.deadline
-                )
-            )
+        _verifySignature(
+            OPEN_TROVE_TYPEHASH,
+            abi.encode(
+                openTroveData.maxFeePercentage,
+                openTroveData.debtAmount,
+                openTroveData.upperHint,
+                openTroveData.lowerHint,
+                openTroveData.borrower
+            ),
+            _borrower,
+            _signature,
+            _deadline
         );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
 
         borrowerOperations.restrictedOpenTrove{value: msg.value}(
             openTroveData.borrower,
@@ -449,41 +400,29 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
         WithdrawMUSD memory withdrawMUSDData = WithdrawMUSD({
             maxFeePercentage: _maxFeePercentage,
             amount: _amount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonce,
+            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    WITHDRAW_MUSD_TYPEHASH,
-                    withdrawMUSDData.maxFeePercentage,
-                    withdrawMUSDData.amount,
-                    withdrawMUSDData.upperHint,
-                    withdrawMUSDData.lowerHint,
-                    withdrawMUSDData.borrower,
-                    withdrawMUSDData.nonce,
-                    withdrawMUSDData.deadline
-                )
-            )
+        _verifySignature(
+            WITHDRAW_MUSD_TYPEHASH,
+            abi.encode(
+                withdrawMUSDData.maxFeePercentage,
+                withdrawMUSDData.amount,
+                withdrawMUSDData.upperHint,
+                withdrawMUSDData.lowerHint,
+                withdrawMUSDData.borrower
+            ),
+            _borrower,
+            _signature,
+            _deadline
         );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
 
         borrowerOperations.restrictedAdjustTrove(
             withdrawMUSDData.borrower,
@@ -505,39 +444,27 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
         RepayMUSD memory repayMUSDData = RepayMUSD({
             amount: _amount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonce,
+            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    REPAY_MUSD_TYPEHASH,
-                    repayMUSDData.amount,
-                    repayMUSDData.upperHint,
-                    repayMUSDData.lowerHint,
-                    repayMUSDData.borrower,
-                    repayMUSDData.nonce,
-                    repayMUSDData.deadline
-                )
-            )
+        _verifySignature(
+            REPAY_MUSD_TYPEHASH,
+            abi.encode(
+                repayMUSDData.amount,
+                repayMUSDData.upperHint,
+                repayMUSDData.lowerHint,
+                repayMUSDData.borrower
+            ),
+            _borrower,
+            _signature,
+            _deadline
         );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
 
         borrowerOperations.restrictedAdjustTrove(
             repayMUSDData.borrower,
