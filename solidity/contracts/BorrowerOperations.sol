@@ -468,26 +468,6 @@ contract BorrowerOperations is
         emit MusdGasCompensationChanged(musdGasCompensation);
     }
 
-    function restrictedAddColl(
-        address _borrower,
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint
-    ) public payable {
-        _requireCallerIsBorrowerOperationsOrSignatures();
-        _assetAmount = msg.value;
-        this.restrictedAdjustTrove{value: msg.value}(
-            _borrower,
-            0,
-            0,
-            false,
-            _assetAmount,
-            _upperHint,
-            _lowerHint,
-            0
-        );
-    }
-
     function restrictedOpenTrove(
         address _borrower,
         uint256 _maxFeePercentage,
