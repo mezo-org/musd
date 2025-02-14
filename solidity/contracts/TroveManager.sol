@@ -590,7 +590,7 @@ contract TroveManager is
     function getBorrowingFee(
         uint256 _debt
     ) external pure override returns (uint) {
-        return (_debt * getBorrowingRate()) / DECIMAL_PRECISION;
+        return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
     }
 
     function getTroveStatus(
@@ -860,10 +860,6 @@ contract TroveManager is
         coll += pendingCollateral;
         principal += pendingPrincipal;
         interest += pendingInterest;
-    }
-
-    function getBorrowingRate() public pure override returns (uint) {
-        return BORROWING_FEE_FLOOR;
     }
 
     function getPendingCollateral(

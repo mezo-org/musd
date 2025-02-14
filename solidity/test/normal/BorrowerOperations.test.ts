@@ -3255,7 +3255,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("increases the Trove's mUSD debt by the correct amount", async () => {
       const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
-      const borrowingRate = await contracts.troveManager.getBorrowingRate()
+      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
       await setupCarolsTrove()
 
       await updateTroveSnapshot(contracts, carol, "before")
@@ -3585,7 +3585,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           signature,
           deadline,
         )
-      const borrowingRate = await contracts.troveManager.getBorrowingRate()
+      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
       await updateTroveSnapshot(contracts, bob, "after")
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
@@ -5873,7 +5873,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // Note this test only covers a debt increase, but the trove adjustment logic is shared with `adjustTrove`
       await updateTroveSnapshot(contracts, bob, "after")
-      const borrowingRate = await contracts.troveManager.getBorrowingRate()
+      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
           (debtChange * (to1e18(1) + borrowingRate)) / to1e18(1),
