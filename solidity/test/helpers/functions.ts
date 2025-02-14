@@ -2,7 +2,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
-import { assert, expect } from "chai"
+import { expect } from "chai"
 import { GOVERNANCE_TIME_DELAY, to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
 import {
@@ -287,8 +287,6 @@ export async function updateTroveManagerSnapshot(
     await contracts.troveManager.totalStakesSnapshot()
   state.troveManager.troves[checkPoint] =
     await contracts.troveManager.getTroveOwnersCount()
-  state.troveManager.baseRate[checkPoint] =
-    await contracts.troveManager.baseRate()
   state.troveManager.liquidation.collateral[checkPoint] =
     await contracts.troveManager.L_Collateral()
   state.troveManager.liquidation.principal[checkPoint] =
@@ -758,14 +756,6 @@ export function transferMUSD(
   return contracts.musd
     .connect(sender.wallet)
     .transfer(receiver.wallet, amount, NO_GAS)
-}
-
-export async function setBaseRate(contracts: Contracts, rate: bigint) {
-  if ("setBaseRate" in contracts.troveManager) {
-    await contracts.troveManager.setBaseRate(rate)
-  } else {
-    assert.fail("TroveManagerTester not loaded")
-  }
 }
 
 export async function setupTests() {

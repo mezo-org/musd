@@ -26,7 +26,6 @@ import {
   openTrove,
   performRedemption,
   provideToSP,
-  setBaseRate,
   setupTests,
   transferMUSD,
   updateContractsSnapshot,
@@ -2698,8 +2697,6 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     it("a redemption made at zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
-      await setBaseRate(contracts, to1e18("0"))
-
       await setupRedemptionTroves()
 
       await performRedemption(contracts, dennis, dennis, to1e18("100"))
@@ -2709,8 +2706,6 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     it("a redemption made at non-zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
-      await setBaseRate(contracts, to1e18("0.1"))
-
       await setupRedemptionTroves()
 
       await performRedemption(contracts, dennis, dennis, to1e18("100"))
@@ -2720,8 +2715,6 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     it("a redemption made at zero base increases the collateral-fees in PCV contract", async () => {
-      await setBaseRate(contracts, to1e18("0"))
-
       await setupRedemptionTroves()
       await updatePCVSnapshot(contracts, state, "before")
 
@@ -2968,21 +2961,6 @@ describe("TroveManager in Normal Mode", () => {
         await expect(
           performRedemption(contracts, bob, alice, redemptionAmount),
         ).to.be.revertedWith("TroveManager: Only one trove in the system")
-      })
-
-      it("reverts if fee eats up all returned collateral", async () => {
-        await setupRedemptionTroves()
-        await updateTroveSnapshot(contracts, alice, "before")
-
-        // Set base rate to 100%
-        await setBaseRate(contracts, to1e18("1"))
-
-        // Attempt to fully redeem Alice's trove
-        await expect(
-          performRedemption(contracts, dennis, dennis, alice.trove.debt.before),
-        ).to.be.revertedWith(
-          "TroveManager: Fee would eat up all returned collateral",
-        )
       })
     })
 

@@ -168,8 +168,6 @@ contract TroveManager is
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
-    uint256 public baseRate;
-
     mapping(address => Trove) public Troves;
 
     uint256 public totalStakes;
@@ -591,7 +589,7 @@ contract TroveManager is
 
     function getBorrowingFee(
         uint256 _debt
-    ) external view override returns (uint) {
+    ) external pure override returns (uint) {
         return (_debt * getBorrowingRate()) / DECIMAL_PRECISION;
     }
 
@@ -864,9 +862,8 @@ contract TroveManager is
         interest += pendingInterest;
     }
 
-    function getBorrowingRate() public view override returns (uint) {
-        return
-            LiquityMath._min(BORROWING_FEE_FLOOR + baseRate, MAX_BORROWING_FEE);
+    function getBorrowingRate() public pure override returns (uint) {
+        return BORROWING_FEE_FLOOR;
     }
 
     function getPendingCollateral(
@@ -914,12 +911,8 @@ contract TroveManager is
         pendingInterest = (stake * interestPerUnitStaked) / DECIMAL_PRECISION;
     }
 
-    function getRedemptionRate() public view override returns (uint) {
-        return
-            LiquityMath._min(
-                REDEMPTION_FEE_FLOOR + baseRate,
-                DECIMAL_PRECISION
-            );
+    function getRedemptionRate() public pure override returns (uint) {
+        return REDEMPTION_FEE_FLOOR;
     }
 
     /**
@@ -1840,7 +1833,7 @@ contract TroveManager is
 
     function _getRedemptionFee(
         uint256 _collateralDrawn
-    ) internal view returns (uint) {
+    ) internal pure returns (uint) {
         uint256 redemptionFee = (getRedemptionRate() * _collateralDrawn) /
             DECIMAL_PRECISION;
         require(

@@ -84,7 +84,6 @@ export const beforeAndAfter = () => ({ before: 0n, after: 0n })
 function initializeContractState(): ContractsState {
   return {
     troveManager: {
-      baseRate: beforeAndAfter(),
       collateralSnapshot: beforeAndAfter(),
       lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
