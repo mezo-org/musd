@@ -174,6 +174,32 @@ describe("MUSD", () => {
   })
 
   describe("transferFrom()", () => {
+    it.only("allows transferFrom for users without troves", async () => {
+      // First, transfer MUSD to dennis (simulating receiving MUSD without a trove)
+      const transferAmount = to1e18(50)
+      await contracts.musd
+        .connect(alice.wallet)
+        .transfer(dennis.wallet.address, transferAmount)
+
+      // Now dennis (who has no trove) approves carol (simulating DumpySwap)
+      await contracts.musd
+        .connect(dennis.wallet)
+        .approve(carol.wallet.address, transferAmount)
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+
+      // Carol (DumpySwap) tries to transferFrom dennis's tokens
+      await contracts.musd
+        .connect(carol.wallet)
+        .transferFrom(
+          dennis.wallet.address,
+          alice.wallet.address,
+          transferAmount,
+        )
+
+      await updateWalletSnapshot(contracts, dennis, "after")
+      expect(dennis.musd.after).to.be.eq(dennis.musd.before - transferAmount)
+    })
     it("successfully transfers from an account which is it approved to transfer from", async () => {
       const allowanceA0 = await contracts.musd.allowance(
         bob.wallet,
