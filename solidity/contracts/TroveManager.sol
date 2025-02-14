@@ -9,6 +9,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
+import "./dependencies/InterestRateMath.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
@@ -660,7 +661,7 @@ contract TroveManager is
     function updateDefaultPoolInterest() public {
         if (totalStakes > 0) {
             // solhint-disable not-rely-on-time
-            uint256 interest = interestRateManager.calculateInterestOwed(
+            uint256 interest = InterestRateMath.calculateInterestOwed(
                 defaultPool.getPrincipal(),
                 interestRateManager.interestRate(),
                 defaultPool.getLastInterestUpdatedTime(),
@@ -692,15 +693,15 @@ contract TroveManager is
         Trove storage trove = Troves[_borrower];
         // slither-disable-start calls-loop
         interestRateManager.updateSystemInterest(trove.interestRate);
+        // slither-disable-end calls-loop
         // solhint-disable not-rely-on-time
-        trove.interestOwed += interestRateManager.calculateInterestOwed(
+        trove.interestOwed += InterestRateMath.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
             trove.lastInterestUpdateTime,
             block.timestamp
         );
         trove.lastInterestUpdateTime = block.timestamp;
-        // slither-disable-end calls-loop
         // solhint-enable not-rely-on-time
     }
 
@@ -1566,7 +1567,7 @@ contract TroveManager is
             vars.upperBoundNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt -
-                    interestRateManager.calculateInterestOwed(
+                    InterestRateMath.calculateInterestOwed(
                         Troves[_borrower].principal,
                         interestRateManager.interestRate(),
                         block.timestamp - 600,
@@ -1810,7 +1811,7 @@ contract TroveManager is
         return
             Troves[_borrower].principal +
             Troves[_borrower].interestOwed +
-            interestRateManager.calculateInterestOwed(
+            InterestRateMath.calculateInterestOwed(
                 Troves[_borrower].principal,
                 Troves[_borrower].interestRate,
                 Troves[_borrower].lastInterestUpdateTime,

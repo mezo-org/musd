@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "./dependencies/InterestRateMath.sol";
 import "./token/IMUSD.sol";
 import {CheckContract} from "./dependencies/CheckContract.sol";
 import {IActivePool} from "./interfaces/IActivePool.sol";
@@ -28,7 +29,6 @@ contract InterestRateManager is
 
     // Minimum time delay between interest rate proposal and approval
     uint256 public constant MIN_DELAY = 7 days;
-    uint256 public constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
 
     // Mapping from interest rate to total principal and interest owed at that rate
     mapping(uint16 => InterestRateInfo) public interestRateData;
@@ -143,7 +143,7 @@ contract InterestRateManager is
     function updateSystemInterest(uint16 _rate) external {
         InterestRateInfo memory _interestRateData = interestRateData[_rate];
         // solhint-disable not-rely-on-time
-        uint256 interest = calculateInterestOwed(
+        uint256 interest = InterestRateMath.calculateInterestOwed(
             _interestRateData.principal,
             _rate,
             _interestRateData.lastUpdatedTime,
@@ -209,18 +209,6 @@ contract InterestRateManager is
         uint256 _interest
     ) public onlyBorrowerOperationsOrTroveManager {
         interestRateData[_rate].interest -= _interest;
-    }
-
-    function calculateInterestOwed(
-        uint256 _principal,
-        uint16 _interestRate,
-        uint256 startTime,
-        uint256 endTime
-    ) public pure returns (uint256) {
-        uint256 timeElapsed = endTime - startTime;
-        return
-            (_principal * _interestRate * timeElapsed) /
-            (10000 * SECONDS_IN_A_YEAR);
     }
 
     function calculateDebtAdjustment(
