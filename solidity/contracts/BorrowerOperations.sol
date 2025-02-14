@@ -143,14 +143,12 @@ contract BorrowerOperations is
 
     // --- Borrower Trove Operations ---
     function openTrove(
-        uint256 _maxFeePercentage,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
         this.restrictedOpenTrove{value: msg.value}(
             msg.sender,
-            _maxFeePercentage,
             _debtAmount,
             _upperHint,
             _lowerHint
@@ -171,8 +169,7 @@ contract BorrowerOperations is
             false,
             _assetAmount,
             _upperHint,
-            _lowerHint,
-            0
+            _lowerHint
         );
     }
 
@@ -192,8 +189,7 @@ contract BorrowerOperations is
             false,
             _assetAmount,
             _upperHint,
-            _lowerHint,
-            0
+            _lowerHint
         );
     }
 
@@ -210,14 +206,12 @@ contract BorrowerOperations is
             false,
             0,
             _upperHint,
-            _lowerHint,
-            0
+            _lowerHint
         );
     }
 
     // Withdraw mUSD tokens from a trove: mint new mUSD tokens to the owner, and increase the trove's principal accordingly
     function withdrawMUSD(
-        uint256 _maxFeePercentage,
         uint256 _amount,
         address _upperHint,
         address _lowerHint
@@ -229,8 +223,7 @@ contract BorrowerOperations is
             true,
             0,
             _upperHint,
-            _lowerHint,
-            _maxFeePercentage
+            _lowerHint
         );
     }
 
@@ -247,8 +240,7 @@ contract BorrowerOperations is
             false,
             0,
             _upperHint,
-            _lowerHint,
-            0
+            _lowerHint
         );
     }
 
@@ -256,8 +248,8 @@ contract BorrowerOperations is
         this.restrictedCloseTrove(msg.sender);
     }
 
-    function refinance(uint256 _maxFeePercentage) external override {
-        this.restrictedRefinance(msg.sender, _maxFeePercentage);
+    function refinance() external override {
+        this.restrictedRefinance(msg.sender);
     }
 
     /*
@@ -268,7 +260,6 @@ contract BorrowerOperations is
      * If both are positive, it will revert.
      */
     function adjustTrove(
-        uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
@@ -282,10 +273,10 @@ contract BorrowerOperations is
             _isDebtIncrease,
             msg.value,
             _upperHint,
-            _lowerHint,
-            _maxFeePercentage
+            _lowerHint
         );
     }
+
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
@@ -430,7 +421,6 @@ contract BorrowerOperations is
 
     function restrictedOpenTrove(
         address _borrower,
-        uint256 _maxFeePercentage,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
@@ -448,7 +438,6 @@ contract BorrowerOperations is
         vars.price = priceFeed.fetchPrice();
         bool isRecoveryMode = _checkRecoveryMode(vars.price);
 
-        _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
         _requireTroveisNotActive(contractsCache.troveManager, _borrower);
 
         vars.fee;
@@ -458,8 +447,7 @@ contract BorrowerOperations is
             vars.fee = _triggerBorrowingFee(
                 contractsCache.troveManager,
                 contractsCache.musd,
-                _debtAmount,
-                _maxFeePercentage
+                _debtAmount
             );
             vars.netDebt += vars.fee;
         }
@@ -646,10 +634,7 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(_borrower, coll);
     }
 
-    function restrictedRefinance(
-        address _borrower,
-        uint256 _maxFeePercentage
-    ) public {
+    function restrictedRefinance(address _borrower) public {
         _requireCallerIsBorrowerOperationsOrSignatures();
         ITroveManager troveManagerCached = troveManager;
         IInterestRateManager interestRateManagerCached = interestRateManager;
@@ -662,12 +647,7 @@ contract BorrowerOperations is
         );
         uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
         uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(
-            troveManagerCached,
-            musd,
-            amount,
-            _maxFeePercentage
-        );
+        uint256 fee = _triggerBorrowingFee(troveManagerCached, musd, amount);
         // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(_borrower, fee);
 
@@ -707,8 +687,7 @@ contract BorrowerOperations is
         bool _isDebtIncrease,
         uint256 _assetAmount,
         address _upperHint,
-        address _lowerHint,
-        uint256 _maxFeePercentage
+        address _lowerHint
     ) public payable {
         _requireCallerIsBorrowerOperationsOrSignatures();
         ContractsCache memory contractsCache = ContractsCache(
@@ -736,10 +715,6 @@ contract BorrowerOperations is
         vars.isRecoveryMode = _checkRecoveryMode(vars.price);
 
         if (_isDebtIncrease) {
-            _requireValidMaxFeePercentage(
-                _maxFeePercentage,
-                vars.isRecoveryMode
-            );
             _requireNonZeroDebtChange(_mUSDChange);
         }
         _requireSingularCollChange(_collWithdrawal, _assetAmount);
@@ -774,8 +749,7 @@ contract BorrowerOperations is
             vars.fee = _triggerBorrowingFee(
                 contractsCache.troveManager,
                 contractsCache.musd,
-                _mUSDChange,
-                _maxFeePercentage
+                _mUSDChange
             );
             vars.netDebtChange += vars.fee; // The raw debt change includes the fee
         }
@@ -978,11 +952,9 @@ contract BorrowerOperations is
     function _triggerBorrowingFee(
         ITroveManager _troveManager,
         IMUSD _musd,
-        uint256 _amount,
-        uint256 _maxFeePercentage
+        uint256 _amount
     ) internal returns (uint) {
         uint256 fee = _troveManager.getBorrowingFee(_amount);
-        _requireUserAcceptsFee(fee, _amount, _maxFeePercentage);
 
         // Send fee to PCV contract
         _musd.mint(pcvAddress, fee);
@@ -1213,24 +1185,6 @@ contract BorrowerOperations is
         uint256 _price
     ) internal pure returns (uint) {
         return (_coll * _price) / (110 * 1e16);
-    }
-
-    function _requireValidMaxFeePercentage(
-        uint256 _maxFeePercentage,
-        bool _isRecoveryMode
-    ) internal pure {
-        if (_isRecoveryMode) {
-            require(
-                _maxFeePercentage <= DECIMAL_PRECISION,
-                "Max fee percentage must be less than or equal to 100%"
-            );
-        } else {
-            require(
-                _maxFeePercentage >= BORROWING_FEE_FLOOR &&
-                    _maxFeePercentage <= DECIMAL_PRECISION,
-                "Max fee percentage must be between 0.5% and 100%"
-            );
-        }
     }
 
     function _requireICRisAboveMCR(uint256 _newICR) internal pure {

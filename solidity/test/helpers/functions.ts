@@ -492,12 +492,7 @@ export async function adjustTroveToICR(
 
   await contracts.borrowerOperations
     .connect(from)
-    .withdrawMUSD(
-      to1e18("100") / 100n,
-      requestedDebtIncrease,
-      ZERO_ADDRESS,
-      ZERO_ADDRESS,
-    )
+    .withdrawMUSD(requestedDebtIncrease, ZERO_ADDRESS, ZERO_ADDRESS)
 
   return { requestedDebtIncrease, increasedTotalDebt }
 }
@@ -511,10 +506,6 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
   // open minimum debt amount unless extraMUSDAmount is specificed.
   // if (!params.musdAmount) params.musdAmount = (await contracts.borrowerOperations.minNetDebt()) + 1n // add 1 to avoid rounding issues
-
-  // max fee size cant exceed 100%
-  if (params.maxFeePercentage === undefined) params.maxFeePercentage = "100"
-  const maxFeePercentage = to1e18(params.maxFeePercentage) / 100n
 
   // ICR default of 150%
   if (params.ICR === undefined) params.ICR = "200"
@@ -537,15 +528,9 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
   const tx = await contracts.borrowerOperations
     .connect(params.sender)
-    .openTrove(
-      maxFeePercentage,
-      musdAmount,
-      params.upperHint,
-      params.lowerHint,
-      {
-        value: assetAmount, // The amount of chain base asset to send
-      },
-    )
+    .openTrove(musdAmount, params.upperHint, params.lowerHint, {
+      value: assetAmount, // The amount of chain base asset to send
+    })
 
   return {
     musdAmount,
@@ -945,7 +930,6 @@ export async function performRedemption(
       lowerPartialRedemptionHint,
       partialRedemptionHintNICR,
       maxIterations,
-      to1e18("1"),
       NO_GAS,
     )
 }

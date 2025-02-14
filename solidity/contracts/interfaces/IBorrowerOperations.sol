@@ -61,7 +61,6 @@ interface IBorrowerOperations {
     ) external;
 
     function openTrove(
-        uint256 _maxFeePercentage,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
@@ -69,7 +68,6 @@ interface IBorrowerOperations {
 
     function restrictedOpenTrove(
         address _borrower,
-        uint256 _maxFeePercentage,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
@@ -99,7 +97,6 @@ interface IBorrowerOperations {
     ) external;
 
     function withdrawMUSD(
-        uint256 _maxFeePercentage,
         uint256 _amount,
         address _upperHint,
         address _lowerHint
@@ -115,15 +112,11 @@ interface IBorrowerOperations {
 
     function restrictedCloseTrove(address _borrower) external;
 
-    function refinance(uint256 _maxFeePercentage) external;
+    function refinance() external;
 
-    function restrictedRefinance(
-        address _borrower,
-        uint256 _maxFeePercentage
-    ) external;
+    function restrictedRefinance(address _borrower) external;
 
     function adjustTrove(
-        uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
@@ -138,8 +131,7 @@ interface IBorrowerOperations {
         bool _isDebtIncrease,
         uint256 _assetAmount,
         address _upperHint,
-        address _lowerHint,
-        uint256 _maxFeePercentage
+        address _lowerHint
     ) external payable;
 
     function claimCollateral() external;

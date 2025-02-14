@@ -304,8 +304,7 @@ contract TroveManager is
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 _maxIterations,
-        uint256 _maxFeePercentage
+        uint256 _maxIterations
     ) external override {
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
@@ -321,7 +320,6 @@ contract TroveManager is
         LocalVariables_redeemCollateral memory vars;
         // slither-disable-end uninitialized-local
 
-        _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
         _requireTCRoverMCR(totals.price);
         _requireAmountGreaterThanZero(_amount);
@@ -412,12 +410,6 @@ contract TroveManager is
 
         // Calculate the collateral fee
         totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
-
-        _requireUserAcceptsFee(
-            totals.collateralFee,
-            totals.totalCollateralDrawn,
-            _maxFeePercentage
-        );
 
         // Send the collateral fee to the PCV contract
         contractsCache.activePool.sendCollateral(
@@ -1930,16 +1922,6 @@ contract TroveManager is
 
     function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
         require(_amount > 0, "TroveManager: Amount must be greater than zero");
-    }
-
-    function _requireValidMaxFeePercentage(
-        uint256 _maxFeePercentage
-    ) internal pure {
-        require(
-            _maxFeePercentage >= REDEMPTION_FEE_FLOOR &&
-                _maxFeePercentage <= DECIMAL_PRECISION,
-            "Max fee percentage must be between 0.5% and 100%"
-        );
     }
 
     // Check whether or not the system *would be* in Recovery Mode, given an collateral:USD price, and the entire system coll and debt.
