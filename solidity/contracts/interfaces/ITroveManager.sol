@@ -214,8 +214,6 @@ interface ITroveManager {
             uint256 pendingInterest
         );
 
-    function getRedemptionRate() external pure returns (uint);
-
     function getBorrowingFee(uint256 _debt) external pure returns (uint);
 
     function getTroveStatus(address _borrower) external view returns (Status);

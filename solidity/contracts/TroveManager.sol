@@ -907,10 +907,6 @@ contract TroveManager is
         pendingInterest = (stake * interestPerUnitStaked) / DECIMAL_PRECISION;
     }
 
-    function getRedemptionRate() public pure override returns (uint) {
-        return REDEMPTION_FEE_FLOOR;
-    }
-
     /**
      * Updates the debt on the given trove by first paying down interest owed, then the principal.
      * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
@@ -1830,7 +1826,7 @@ contract TroveManager is
     function _getRedemptionFee(
         uint256 _collateralDrawn
     ) internal pure returns (uint) {
-        uint256 redemptionFee = (getRedemptionRate() * _collateralDrawn) /
+        uint256 redemptionFee = (REDEMPTION_FEE_FLOOR * _collateralDrawn) /
             DECIMAL_PRECISION;
         require(
             redemptionFee < _collateralDrawn,
