@@ -102,6 +102,7 @@ contract TroveManager is
     struct LocalVariables_redeemCollateral {
         uint256 minNetDebt;
         uint256 gasCompensation;
+        uint16 interestRate;
     }
 
     struct LiquidationValues {
@@ -369,6 +370,7 @@ contract TroveManager is
 
         vars.minNetDebt = borrowerOperations.minNetDebt();
         vars.gasCompensation = borrowerOperations.musdGasCompensation();
+        vars.interestRate = interestRateManager.interestRate();
 
         while (
             currentBorrower != address(0) &&
@@ -1562,20 +1564,18 @@ contract TroveManager is
             );
         } else {
             // calculate 10 minutes worth of interest to account for delay between the hint call and now
-            // slither-disable-start calls-loop
             // solhint-disable not-rely-on-time
             vars.upperBoundNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt -
                     InterestRateMath.calculateInterestOwed(
                         Troves[_borrower].principal,
-                        interestRateManager.interestRate(),
+                        redeemCollateralVars.interestRate,
                         block.timestamp - 600,
                         block.timestamp
                     )
             );
             // solhint-enable not-rely-on-time
-            // slither-disable-end calls-loop
             vars.newNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt
