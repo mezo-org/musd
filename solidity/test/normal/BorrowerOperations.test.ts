@@ -1205,7 +1205,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               lowerHint,
             ),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+          "BorrowerOps: Caller is not authorized to perform this operation",
         )
       })
     })
@@ -2124,7 +2124,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(alice.wallet)
             .restrictedCloseTrove(bob.address),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+          "BorrowerOps: Caller is not authorized to perform this operation",
         )
       })
     })
@@ -6443,7 +6443,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               maxFeePercentage,
             ),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not BorrowerOperations or BorrowerOperationsSignatures",
+          "BorrowerOps: Caller is not authorized to perform this operation",
         )
       })
     })
