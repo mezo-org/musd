@@ -8,6 +8,7 @@ import {
   getDeployedContract,
   getLatestBlockTimestamp,
   setupTests,
+  updateWalletSnapshot,
 } from "./helpers"
 import { to1e18, GOVERNANCE_TIME_DELAY } from "./utils"
 import {
@@ -217,6 +218,15 @@ describe("MUSD", () => {
   })
 
   describe("transfer()", () => {
+    it.only("allows transfers for users without troves", async () => {
+      await updateWalletSnapshot(contracts, dennis, "before")
+      const transferAmount = to1e18(50)
+      await contracts.musd
+        .connect(alice.wallet)
+        .transfer(dennis.wallet.address, transferAmount)
+      await updateWalletSnapshot(contracts, dennis, "after")
+      expect(dennis.musd.after).to.be.eq(dennis.musd.before + transferAmount)
+    })
     it("increases the recipient's balance by the correct amount", async () => {
       expect(await contracts.musd.balanceOf(alice.wallet)).to.be.eq(to1e18(150))
 
