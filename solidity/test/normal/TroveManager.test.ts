@@ -3344,13 +3344,12 @@ describe("TroveManager in Normal Mode", () => {
 
   describe("calculateInterestOwed()", () => {
     it("should calculate the interest owed for a trove after 15 days", async () => {
-      const interest =
-        await contracts.interestRateManager.calculateInterestOwed(
-          to1e18("10,250"),
-          100n,
-          0n,
-          1296000n, // 15 days in seconds
-        )
+      const interest = await contracts.troveManager.calculateInterestOwed(
+        to1e18("10,250"),
+        100n,
+        0n,
+        1296000n, // 15 days in seconds
+      )
 
       const expectedInterest = calculateInterestOwed(
         to1e18("10,250"),
@@ -3363,13 +3362,12 @@ describe("TroveManager in Normal Mode", () => {
 
     it("should calculate the interest owed for a trove after 30 days", async () => {
       await setupTroveWithInterestRate(100, 30)
-      const interest =
-        await contracts.interestRateManager.calculateInterestOwed(
-          to1e18("10,250"),
-          100n,
-          0n,
-          2592000n, // 30 days in seconds
-        )
+      const interest = await contracts.troveManager.calculateInterestOwed(
+        to1e18("10,250"),
+        100n,
+        0n,
+        2592000n, // 30 days in seconds
+      )
 
       const expectedInterest = calculateInterestOwed(
         to1e18("10,250"),

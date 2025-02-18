@@ -64,11 +64,4 @@ interface IInterestRateManager {
         external
         pure
         returns (uint256 principalAdjustment, uint256 interestAdjustment);
-
-    function calculateInterestOwed(
-        uint256 _principal,
-        uint16 _interestRate,
-        uint256 startTime,
-        uint256 endTime
-    ) external pure returns (uint256);
 }
