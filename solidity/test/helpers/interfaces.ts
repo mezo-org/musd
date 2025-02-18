@@ -61,7 +61,6 @@ type InterestRateInfo = {
 
 export interface ContractsState {
   troveManager: {
-    baseRate: BeforeAndAfter
     collateralSnapshot: BeforeAndAfter
     liquidation: {
       collateral: BeforeAndAfter
@@ -202,7 +201,6 @@ export interface OpenTroveParams {
   musdAmount: string | bigint
   ICR?: string
   lowerHint?: string
-  maxFeePercentage?: string
   sender: HardhatEthersSigner
   upperHint?: string
 }

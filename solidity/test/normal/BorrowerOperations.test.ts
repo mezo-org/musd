@@ -18,7 +18,6 @@ import {
   performRedemption,
   REFINANCING_FEE_PAID,
   removeMintlist,
-  setBaseRate,
   setInterestRate,
   setupTests,
   TestingAddresses,
@@ -114,20 +113,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   }
 
-  async function setNewRate(rate: bigint) {
-    await setBaseRate(contracts, rate)
-  }
-
   async function setupCarolsTroveAndAdjustRate() {
     await openTrove(contracts, {
       musdAmount: "20,000",
       ICR: "500",
       sender: carol.wallet,
     })
-
-    // Artificially make baseRate 5%
-    const newRate = to1e18(5) / 100n
-    await setNewRate(newRate)
   }
 
   async function setupSignatureTests(borrowerUser: User = carol) {
@@ -188,18 +179,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("setNewRate()", () => {
-    it("Changes the base", async () => {
-      const baseRateBefore = await contracts.troveManager.baseRate()
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-      expect(await contracts.troveManager.baseRate()).to.be.greaterThan(
-        baseRateBefore,
-      )
-      expect(await contracts.troveManager.baseRate()).to.equal(newRate)
-    })
-  })
-
   describe("openTrove()", () => {
     it("Opens a trove with net debt >= minimum net debt", async () => {
       await openTrove(contracts, {
@@ -216,36 +195,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(await contracts.sortedTroves.contains(eric.address)).to.equal(true)
     })
 
-    it("Succeeds when fee is less than max fee percentage", async () => {
-      // setup
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-
-      // Attempt with maxFee > 5%
-      await openTrove(contracts, {
-        musdAmount: "10,000",
-        sender: dennis.wallet,
-        maxFeePercentage: "5.0000000000000001",
-      })
-      expect(await contracts.musd.balanceOf(dennis.wallet)).to.equal(
-        to1e18("10,000"),
-      )
-
-      // Attempt with maxFee 100%
-      await openTrove(contracts, {
-        musdAmount: "20,000",
-        sender: eric.wallet,
-        maxFeePercentage: "100",
-      })
-      expect(await contracts.musd.balanceOf(eric.wallet)).to.equal(
-        to1e18("20,000"),
-      )
-    })
-
     it("Borrowing at non-zero base records the (drawn debt + fee  + liq. reserve) on the Trove struct", async () => {
       const musdAmount = to1e18("20,000")
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
 
       fastForwardTime(7200)
 
@@ -505,9 +456,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("Borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
 
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
-
       await fastForwardTime(7200)
 
       await openTrove(contracts, {
@@ -524,8 +472,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(dennis.musd.before).to.equal(0)
 
       const musdAmount = to1e18("40,000")
-      const newRate = to1e18(5) / 100n
-      await setNewRate(newRate)
 
       fastForwardTime(7200)
 
@@ -540,9 +486,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Borrowing at zero base rate changes the PCV contract mUSD fees collected", async () => {
-      state.troveManager.baseRate.before =
-        await contracts.troveManager.baseRate()
-      expect(state.troveManager.baseRate.before).to.be.equal(0)
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
 
       await openTrove(contracts, {
@@ -672,7 +615,9 @@ describe("BorrowerOperations in Normal Mode", () => {
             musdAmount: "0",
             sender: carol.wallet,
           }),
-        ).to.be.revertedWithPanic()
+        ).to.be.revertedWith(
+          "BorrowerOps: Trove's net debt must be greater than minimum",
+        )
       })
 
       it("Reverts if net debt < minimum net debt", async () => {
@@ -688,51 +633,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith(
           "BorrowerOps: Trove's net debt must be greater than minimum",
         )
-      })
-
-      it("Reverts if max fee > 100%", async () => {
-        await expect(
-          openTrove(contracts, {
-            musdAmount: "10,000",
-            sender: carol.wallet,
-            maxFeePercentage: "101",
-          }),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-      })
-
-      it("Reverts if max fee < 0.5% in Normal mode", async () => {
-        await expect(
-          openTrove(contracts, {
-            musdAmount: "10,000",
-            sender: carol.wallet,
-            maxFeePercentage: "0",
-          }),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-
-        await expect(
-          openTrove(contracts, {
-            musdAmount: "10,000",
-            sender: carol.wallet,
-            maxFeePercentage: "0.4999999999999999",
-          }),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-      })
-
-      it("Reverts if fee exceeds max fee percentage", async () => {
-        // setup
-        const newRate = to1e18(5) / 100n
-        await setNewRate(newRate)
-
-        // actual fee percentage: 0.05000000186264514
-        // user's max fee percentage:  0.005
-
-        await expect(
-          openTrove(contracts, {
-            musdAmount: "10,000",
-            sender: carol.wallet,
-            maxFeePercentage: "0.5",
-          }),
-        ).to.be.revertedWith("Fee exceeded provided maximum")
       })
 
       it("Reverts when opening the trove would cause the TCR of the system to fall below the CCR", async () => {
@@ -786,30 +686,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         await checkOpenTroveEvents(transactions, TROVE_UPDATED_ABI)
       })
-
-      it("Emits a TroveUpdated event with the correct collateral and debt after changed baseRate", async () => {
-        // system state change via Tester functionality
-        const newRate = to1e18(5) / 100n
-        await setNewRate(newRate)
-
-        // data setup
-        const transactions = [
-          {
-            musdAmount: "5,000",
-            sender: dennis.wallet,
-          },
-          {
-            musdAmount: "3,000",
-            sender: eric.wallet,
-          },
-        ]
-        await checkOpenTroveEvents(transactions, TROVE_UPDATED_ABI)
-      })
     })
   })
 
   describe("openTroveWithSignature()", () => {
-    const maxFeePercentage = to1e18(100) / 100n
     const debtAmount = to1e18(2000)
     const assetAmount = to1e18(10)
     const upperHint = ZERO_ADDRESS
@@ -817,7 +697,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     const types = {
       OpenTrove: [
-        { name: "maxFeePercentage", type: "uint256" },
         { name: "debtAmount", type: "uint256" },
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
@@ -831,7 +710,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const { borrower, nonce, domain, deadline } = await setupSignatureTests()
 
       const value = {
-        maxFeePercentage,
         debtAmount,
         upperHint,
         lowerHint,
@@ -845,7 +723,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .openTroveWithSignature(
-          maxFeePercentage,
           debtAmount,
           upperHint,
           lowerHint,
@@ -866,7 +743,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const { borrower, nonce, domain, deadline } = await setupSignatureTests()
 
       const value = {
-        maxFeePercentage,
         debtAmount,
         upperHint,
         lowerHint,
@@ -880,7 +756,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .openTroveWithSignature(
-          maxFeePercentage,
           debtAmount,
           upperHint,
           lowerHint,
@@ -903,7 +778,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           upperHint,
           lowerHint,
@@ -918,7 +792,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -937,7 +810,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           upperHint,
           lowerHint,
@@ -951,7 +823,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -971,7 +842,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           assetAmount,
           upperHint,
@@ -986,7 +856,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.borrowerOperationsSignatures
           .connect(carol.wallet)
           .openTroveWithSignature(
-            maxFeePercentage,
             debtAmount,
             upperHint,
             lowerHint,
@@ -1001,7 +870,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -1031,7 +899,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           assetAmount,
           upperHint,
@@ -1046,7 +913,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -1076,7 +942,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           assetAmount,
           upperHint,
@@ -1091,7 +956,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -1121,7 +985,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           assetAmount,
           upperHint,
@@ -1136,7 +999,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -1166,7 +1028,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
-          maxFeePercentage,
           debtAmount,
           assetAmount,
           upperHint,
@@ -1181,7 +1042,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
             .openTroveWithSignature(
-              maxFeePercentage,
               debtAmount,
               upperHint,
               lowerHint,
@@ -1197,13 +1057,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .restrictedOpenTrove(
-              bob.address,
-              maxFeePercentage,
-              debtAmount,
-              upperHint,
-              lowerHint,
-            ),
+            .restrictedOpenTrove(bob.address, debtAmount, upperHint, lowerHint),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not authorized to perform this operation",
         )
@@ -1661,7 +1515,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // do a transaction that will update Alice's reward snapshot values
       await contracts.borrowerOperations.withdrawMUSD(
-        to1e18(1),
         1n,
         alice.wallet,
         alice.wallet,
@@ -3291,7 +3144,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await testUpdatesInterestOwed(contracts, carol, council, () =>
         contracts.borrowerOperations
           .connect(carol.wallet)
-          .withdrawMUSD(to1e18(1), to1e18(1), carol.wallet, carol.wallet),
+          .withdrawMUSD(to1e18(1), carol.wallet, carol.wallet),
       )
     })
 
@@ -3305,56 +3158,32 @@ describe("BorrowerOperations in Normal Mode", () => {
         () =>
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .withdrawMUSD(to1e18(1), to1e18(1), carol.wallet, carol.wallet),
+            .withdrawMUSD(to1e18(1), carol.wallet, carol.wallet),
       )
     })
 
-    it("doesn't change base rate if it is already zero", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(1)
-      await setupCarolsTrove()
-
-      // first withdrawal
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
-
-      expect(await contracts.troveManager.baseRate()).is.equal(0n)
-
-      await fastForwardTime(3600)
-
-      // second withdrawal
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
-
-      expect(await contracts.troveManager.baseRate()).is.equal(0n)
-    })
-
     it("borrowing at zero base rate changes mUSD fees", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTrove()
 
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
       await contracts.borrowerOperations
         .connect(bob.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet)
+        .withdrawMUSD(amount, bob.wallet, bob.wallet)
       state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
 
       expect(state.pcv.musd.after).is.greaterThan(state.pcv.musd.before)
     })
 
     it("increases the Trove's mUSD debt by the correct amount", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
-      const borrowingRate = await contracts.troveManager.getBorrowingRate()
+      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
       await setupCarolsTrove()
 
       await updateTroveSnapshot(contracts, carol, "before")
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        .withdrawMUSD(amount, carol.wallet, carol.wallet)
       await updateTroveSnapshot(contracts, carol, "after")
 
       expect(carol.trove.debt.after).to.equal(
@@ -3364,60 +3193,53 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("borrowing at zero base rate sends debt request to user", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTrove()
-
-      // Check baseRate is zero
-      expect(await contracts.troveManager.baseRate()).to.equal(0)
 
       await fastForwardTime(7200)
 
       carol.musd.before = await contracts.musd.balanceOf(carol.wallet)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        .withdrawMUSD(amount, carol.wallet, carol.wallet)
       carol.musd.after = await contracts.musd.balanceOf(carol.wallet)
 
       expect(carol.musd.after).to.equal(carol.musd.before + amount)
     })
 
     it("withdrawMUSD(): borrowing at non-zero base rate sends requested amount to the user", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTroveAndAdjustRate()
 
       carol.musd.before = await contracts.musd.balanceOf(carol.wallet)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        .withdrawMUSD(amount, carol.wallet, carol.wallet)
       carol.musd.after = await contracts.musd.balanceOf(carol.wallet)
 
       expect(carol.musd.after).to.equal(carol.musd.before + amount)
     })
 
     it("borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTroveAndAdjustRate()
 
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        .withdrawMUSD(amount, carol.wallet, carol.wallet)
       state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
       expect(state.pcv.musd.after).to.greaterThan(state.pcv.musd.before)
     })
 
     it("borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
       await setupCarolsTroveAndAdjustRate()
 
       await updateTroveSnapshot(contracts, carol, "before")
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        .withdrawMUSD(amount, carol.wallet, carol.wallet)
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -3435,7 +3257,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("increases mUSD debt in ActivePool by correct amount", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
 
       await setupCarolsTrove()
@@ -3453,7 +3274,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet)
+        .withdrawMUSD(amount, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updateContractsSnapshot(
@@ -3480,7 +3301,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await removeMintlist(contracts, deployer.wallet)
         await expect(
           contracts.borrowerOperations.withdrawMUSD(
-            to1e18(1),
             1n,
             alice.wallet,
             alice.wallet,
@@ -3499,13 +3319,12 @@ describe("BorrowerOperations in Normal Mode", () => {
           false,
         )
 
-        const maxFeePercentage = to1e18(1)
         const amount = 1n
 
         await expect(
           contracts.borrowerOperations
             .connect(bob.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+            .withdrawMUSD(amount, bob.wallet, bob.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
@@ -3537,87 +3356,38 @@ describe("BorrowerOperations in Normal Mode", () => {
         await fastForwardTime(100 * 24 * 60 * 60)
 
         // Attempt to withdraw mUSD from the first trove, it should succeed
-        const maxFeePercentage = to1e18(1)
         const amount = to1e18(1)
         await contracts.borrowerOperations
           .connect(carol.wallet)
-          .withdrawMUSD(
-            maxFeePercentage,
-            amount,
-            carol.wallet,
-            carol.wallet,
-            NO_GAS,
-          )
+          .withdrawMUSD(amount, carol.wallet, carol.wallet, NO_GAS)
 
         // Attempt to withdraw mUSD from the second trove, it should fail due to interest accrued
         await expect(
           contracts.borrowerOperations
             .connect(dennis.wallet)
-            .withdrawMUSD(
-              maxFeePercentage,
-              amount,
-              dennis.wallet,
-              dennis.wallet,
-              NO_GAS,
-            ),
+            .withdrawMUSD(amount, dennis.wallet, dennis.wallet, NO_GAS),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
       })
 
-      it("reverts if max fee > 100%", async () => {
-        const maxFeePercentage = to1e18(1) + 1n
-        const amount = 1n
-        await expect(
-          contracts.borrowerOperations
-            .connect(bob.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-      })
-
-      it("reverts if max fee < 0.5% in Normal mode", async () => {
-        const maxFeePercentage = to1e18(0.005) - 1n
-        const amount = 1n
-        await expect(
-          contracts.borrowerOperations
-            .connect(bob.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-      })
-
-      it("reverts if fee exceeds max fee percentage", async () => {
-        const newRate = to1e18(5) / 100n
-        await setupCarolsTroveAndAdjustRate()
-
-        // Set max fee percentage to 4.999999999999999999
-        const maxFeePercentage = newRate - 1n
-        const amount = to1e18(1)
-        await expect(
-          contracts.borrowerOperations
-            .connect(bob.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
-        ).to.be.revertedWith("Fee exceeded provided maximum")
-      })
-
       it("reverts when calling address does not have active trove", async () => {
-        const maxFeePercentage = to1e18(1)
         const amount = to1e18(1)
 
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, carol.wallet, carol.wallet),
+            .withdrawMUSD(amount, carol.wallet, carol.wallet),
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
       })
 
       it("reverts when requested withdrawal amount is zero mUSD", async () => {
-        const maxFeePercentage = to1e18(1)
         const amount = 0
 
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, alice.wallet, alice.wallet),
+            .withdrawMUSD(amount, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Debt increase requires non-zero debtChange",
         )
@@ -3630,13 +3400,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         expect(tcr).to.equal(to1e18(1.5))
 
         // Bob attempts to withdraw 1 mUSD.
-        const maxFeePercentage = to1e18(1)
         const amount = to1e18(1)
 
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, alice.wallet, alice.wallet),
+            .withdrawMUSD(amount, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
         )
@@ -3645,14 +3414,12 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("withdrawMUSDWithSignature()", () => {
-    const maxFeePercentage = to1e18(1)
     const amount = to1e18("1")
     const upperHint = ZERO_ADDRESS
     const lowerHint = ZERO_ADDRESS
 
     const types = {
       WithdrawMUSD: [
-        { name: "maxFeePercentage", type: "uint256" },
         { name: "amount", type: "uint256" },
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
@@ -3674,7 +3441,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const nonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
       const value = {
-        maxFeePercentage,
         amount,
         upperHint,
         lowerHint,
@@ -3687,7 +3453,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .withdrawMUSDWithSignature(
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3695,7 +3460,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           signature,
           deadline,
         )
-      const borrowingRate = await contracts.troveManager.getBorrowingRate()
+      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
       await updateTroveSnapshot(contracts, bob, "after")
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
@@ -3708,7 +3473,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
 
       const value = {
-        maxFeePercentage,
         amount,
         upperHint,
         lowerHint,
@@ -3721,7 +3485,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .withdrawMUSDWithSignature(
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3740,7 +3503,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const { borrower, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3755,7 +3517,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -3770,7 +3531,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const { borrower, domain, nonce } = await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3784,7 +3544,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -3800,7 +3559,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           await setupSignatureTests(bob)
 
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3815,7 +3573,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
           .withdrawMUSDWithSignature(
-            maxFeePercentage,
             amount,
             upperHint,
             lowerHint,
@@ -3829,7 +3586,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -3857,7 +3613,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3872,7 +3627,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -3900,7 +3654,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3915,7 +3668,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -3943,7 +3695,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -3958,7 +3709,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -3986,7 +3736,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           amount,
           upperHint,
           lowerHint,
@@ -4001,7 +3750,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .withdrawMUSDWithSignature(
-              maxFeePercentage,
               amount,
               upperHint,
               lowerHint,
@@ -4718,18 +4466,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(5000)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
@@ -4781,18 +4521,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(5000)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet)
 
       await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
@@ -4830,14 +4562,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await testUpdatesInterestOwed(contracts, carol, council, () =>
         contracts.borrowerOperations
           .connect(carol.wallet)
-          .adjustTrove(
-            to1e18(1),
-            0,
-            to1e18(1),
-            true,
-            carol.wallet,
-            carol.wallet,
-          ),
+          .adjustTrove(0, to1e18(1), true, carol.wallet, carol.wallet),
       )
     })
 
@@ -4851,95 +4576,11 @@ describe("BorrowerOperations in Normal Mode", () => {
         () =>
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              to1e18(1),
-              true,
-              carol.wallet,
-              carol.wallet,
-            ),
+            .adjustTrove(0, to1e18(1), true, carol.wallet, carol.wallet),
       )
-    })
-
-    it("doesn't change base rate if it is already zero", async () => {
-      const maxFeePercentage = to1e18(1)
-
-      await setupCarolsTrove()
-      await fastForwardTime(7200)
-      await updateTroveManagerSnapshot(contracts, state, "before")
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          to1e18(37),
-          true,
-          bob.wallet,
-          bob.wallet,
-        )
-
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      // Check baseRate has not decreased
-      expect(state.troveManager.baseRate.after).is.equal(
-        state.troveManager.baseRate.before,
-      )
-      expect(state.troveManager.baseRate.after).is.equal(0)
-    })
-
-    it("borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(37)
-
-      await setupCarolsTroveAndAdjustRate()
-
-      await updateTroveSnapshot(contracts, bob, "before")
-      await fastForwardTime(60)
-
-      const tx = await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .adjustTrove(maxFeePercentage, 0, amount, true, bob.wallet, bob.wallet)
-
-      const emittedFee = await getEventArgByName(
-        tx,
-        BORROWING_FEE_PAID,
-        "BorrowingFeePaid",
-        1,
-      )
-
-      await updateTroveSnapshot(contracts, bob, "after")
-
-      expect(bob.trove.debt.after).to.equal(
-        bob.trove.debt.before + amount + emittedFee,
-      )
-    })
-
-    it("Borrowing at non-zero base rate sends requested amount to the user", async () => {
-      const maxFeePercentage = to1e18(1)
-      const amount = to1e18(37)
-
-      await setupCarolsTroveAndAdjustRate()
-      await updateWalletSnapshot(contracts, carol, "before")
-      await fastForwardTime(7200)
-
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
-
-      await updateWalletSnapshot(contracts, carol, "after")
-      expect(carol.musd.after).to.equal(carol.musd.before + amount)
     })
 
     it("Borrowing at zero base rate sends total requested mUSD to the user", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
       await setupCarolsTrove()
@@ -4948,46 +4589,29 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, amount, true, carol.wallet, carol.wallet)
 
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.equal(carol.musd.before + amount)
     })
 
     it("Borrowing at zero base rate changes mUSD balance of PCV contract", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
 
       await setupCarolsTrove()
       await fastForwardTime(7200)
-      expect(await contracts.troveManager.baseRate()).is.equal(0)
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, amount, true, carol.wallet, carol.wallet)
 
       state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
       expect(state.pcv.musd.after).to.be.greaterThan(state.pcv.musd.before)
     })
 
     it("borrowing at non-zero base rate sends mUSD fee to PCV contract", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
       state.pcv.musd.before = await contracts.musd.balanceOf(addresses.pcv)
@@ -4997,21 +4621,13 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, amount, true, carol.wallet, carol.wallet)
 
       state.pcv.musd.after = await contracts.musd.balanceOf(addresses.pcv)
       expect(state.pcv.musd.after).to.be.greaterThan(state.pcv.musd.before)
     })
 
     it("With 0 coll change, doesnt change borrower's coll or ActivePool coll", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(37)
 
       await setupCarolsTrove()
@@ -5026,14 +4642,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          amount,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, amount, true, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updateContractsSnapshot(
@@ -5053,7 +4662,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("With 0 debt change, doesnt change borrower's debt or ActivePool debt", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
 
       await setupCarolsTrove()
@@ -5068,17 +4676,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          0,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: amount,
-          },
-        )
+        .adjustTrove(0, 0, false, carol.wallet, carol.wallet, {
+          value: amount,
+        })
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updateContractsSnapshot(
@@ -5101,18 +4701,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "before")
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
       const expectedInterest = calculateInterestOwed(
@@ -5134,22 +4726,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "before")
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(5000)
       const collChange = to1e18(1)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
 
       await updateTroveSnapshot(contracts, carol, "after")
       const expectedInterest = calculateInterestOwed(
@@ -5168,7 +4751,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's debt and coll with an increase in both", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5176,17 +4758,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -5205,7 +4779,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's debt and coll with a decrease in both", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5213,14 +4786,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          collChange,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(collChange, debtChange, false, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -5233,7 +4799,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's debt and coll with coll increase, debt decrease", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5241,17 +4806,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -5264,7 +4821,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's debt and coll with coll decrease, debt increase", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5272,14 +4828,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          collChange,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(collChange, debtChange, true, carol.wallet, carol.wallet)
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -5298,7 +4847,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's stake and totalStakes with a coll increase", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
 
       await setupCarolsTrove()
@@ -5307,17 +4855,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          0,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: amount,
-          },
-        )
+        .adjustTrove(0, 0, false, carol.wallet, carol.wallet, {
+          value: amount,
+        })
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updateTroveManagerSnapshot(contracts, state, "after")
@@ -5331,7 +4871,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("updates borrower's stake and totalStakes with a coll decrease", async () => {
-      const maxFeePercentage = to1e18(1)
       const amount = to1e18(1)
 
       await setupCarolsTrove()
@@ -5340,14 +4879,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          amount,
-          0,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(amount, 0, false, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updateTroveManagerSnapshot(contracts, state, "after")
@@ -5361,7 +4893,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("changes mUSD balance by the requested decrease", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5369,14 +4900,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          collChange,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(collChange, debtChange, false, carol.wallet, carol.wallet)
 
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.be.equal(carol.musd.before - debtChange)
@@ -5389,19 +4913,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "before")
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(5000)
       const collChange = to1e18(1)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          collChange,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(collChange, debtChange, false, carol.wallet, carol.wallet)
 
       await updateWalletSnapshot(contracts, carol, "after")
       await updateTroveSnapshot(contracts, carol, "after")
@@ -5411,7 +4927,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("changes mUSD balance by the requested increase", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5419,24 +4934,15 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
 
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.be.equal(carol.musd.before + debtChange)
     })
 
     it("Changes the activePool collateral and raw collateral balance by the requested decrease", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5450,14 +4956,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          collChange,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-        )
+        .adjustTrove(collChange, debtChange, false, carol.wallet, carol.wallet)
       await updateContractsSnapshot(
         contracts,
         state,
@@ -5475,7 +4974,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Changes the activePool collateral and raw collateral balance by the amount of collateral sent", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5489,17 +4987,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
       await updateContractsSnapshot(
         contracts,
         state,
@@ -5517,7 +5007,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Changes the mUSD debt in ActivePool by requested decrease", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5531,17 +5020,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
       await updateContractsSnapshot(
         contracts,
         state,
@@ -5568,22 +5049,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(5000)
       const collChange = to1e18(1)
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
       await updateContractsSnapshot(
         contracts,
         state,
@@ -5605,7 +5077,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Changes the mUSD debt in ActivePool by requested increase", async () => {
-      const maxFeePercentage = to1e18(1)
       const debtChange = to1e18(50)
       const collChange = to1e18(1)
       await setupCarolsTrove()
@@ -5619,17 +5090,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -5664,7 +5127,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(to1e18(1), 0, amount, false, carol.wallet, carol.wallet)
+        .adjustTrove(0, amount, false, carol.wallet, carol.wallet)
 
       await updateTroveSnapshot(contracts, carol, "after")
       const expectedInterest = calculateInterestOwed(
@@ -5700,15 +5163,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              debtChange,
-              false,
-              alice.wallet,
-              alice.wallet,
-              { value: collateralTopUp },
-            ),
+            .adjustTrove(0, debtChange, false, alice.wallet, alice.wallet, {
+              value: collateralTopUp,
+            }),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
@@ -5732,14 +5189,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              debtChange,
-              false,
-              carol.wallet,
-              carol.wallet,
-            ),
+            .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
@@ -5766,50 +5216,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              debtChange,
-              false,
-              alice.wallet,
-              alice.wallet,
-              { value: collateralTopUp },
-            ),
+            .adjustTrove(0, debtChange, false, alice.wallet, alice.wallet, {
+              value: collateralTopUp,
+            }),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
-      })
-
-      it("reverts if max fee < 0.5% in Normal mode", async () => {
-        const collateralTopUp = to1e18(0.02)
-        const debtChange = to1e18(1)
-
-        await expect(
-          contracts.borrowerOperations
-            .connect(alice.wallet)
-            .adjustTrove(0, 0, debtChange, true, alice.wallet, alice.wallet, {
-              value: collateralTopUp,
-            }),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-        await expect(
-          contracts.borrowerOperations
-            .connect(alice.wallet)
-            .adjustTrove(1n, 0, debtChange, true, alice.wallet, alice.wallet, {
-              value: collateralTopUp,
-            }),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
-        await expect(
-          contracts.borrowerOperations
-            .connect(alice.wallet)
-            .adjustTrove(
-              4999999999999999n,
-              0,
-              debtChange,
-              true,
-              alice.wallet,
-              alice.wallet,
-            ),
-        ).to.be.revertedWith("Max fee percentage must be between 0.5% and 100%")
       })
 
       it("reverts when calling address has no active trove", async () => {
@@ -5819,15 +5231,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              debtChange,
-              true,
-              carol.wallet,
-              carol.wallet,
-              { value: collateralTopUp },
-            ),
+            .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet, {
+              value: collateralTopUp,
+            }),
         ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
       })
 
@@ -5836,14 +5242,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              debtChange,
-              true,
-              alice.wallet,
-              alice.wallet,
-            ),
+            .adjustTrove(0, debtChange, true, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
         )
@@ -5862,7 +5261,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .adjustTrove(
-              to1e18(1),
               0,
               remainingDebt + 1n,
               false,
@@ -5884,7 +5282,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .adjustTrove(
-              to1e18(1),
               alice.trove.collateral.before + 1n,
               0,
               true,
@@ -5907,14 +5304,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              to1e18(1),
-              0,
-              debtChange,
-              true,
-              alice.wallet,
-              alice.wallet,
-            ),
+            .adjustTrove(0, debtChange, true, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
@@ -5926,7 +5316,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .adjustTrove(
-              to1e18(1),
               alice.trove.collateral.before,
               alice.trove.debt.before,
               true,
@@ -5942,7 +5331,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(to1e18(1), 0, 0, true, alice.wallet, alice.wallet),
+            .adjustTrove(0, 0, true, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Debt increase requires non-zero debtChange",
         )
@@ -5954,7 +5343,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .adjustTrove(
-              to1e18(1),
               to1e18(1),
               to1e18(1),
               true,
@@ -5971,7 +5359,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(to1e18(1), 0, 0, false, alice.wallet, alice.wallet),
+            .adjustTrove(0, 0, false, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: There must be either a collateral change or a debt change",
         )
@@ -5983,7 +5371,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .adjustTrove(
-              to1e18(1),
               0,
               alice.trove.debt.before,
               false,
@@ -5996,7 +5383,6 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("adjustTroveWithSignature()", () => {
-    const maxFeePercentage = to1e18(1)
     const collWithdrawal = 0
     const debtChange = to1e18("50")
     const isDebtIncrease = true
@@ -6006,7 +5392,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     const types = {
       AdjustTrove: [
-        { name: "maxFeePercentage", type: "uint256" },
         { name: "collWithdrawal", type: "uint256" },
         { name: "debtChange", type: "uint256" },
         { name: "isDebtIncrease", type: "bool" },
@@ -6030,7 +5415,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
 
       const value = {
-        maxFeePercentage,
         collWithdrawal,
         debtChange,
         isDebtIncrease,
@@ -6046,7 +5430,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .adjustTroveWithSignature(
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6060,7 +5443,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // Note this test only covers a debt increase, but the trove adjustment logic is shared with `adjustTrove`
       await updateTroveSnapshot(contracts, bob, "after")
-      const borrowingRate = await contracts.troveManager.getBorrowingRate()
+      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
           (debtChange * (to1e18(1) + borrowingRate)) / to1e18(1),
@@ -6072,7 +5455,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
 
       const value = {
-        maxFeePercentage,
         collWithdrawal,
         debtChange,
         isDebtIncrease,
@@ -6088,7 +5470,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .adjustTroveWithSignature(
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6111,7 +5492,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           await setupSignatureTests(bob)
 
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6130,7 +5510,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6148,7 +5527,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const { borrower, domain, nonce } = await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6165,7 +5543,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6183,7 +5560,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const { borrower, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6201,7 +5577,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
           .adjustTroveWithSignature(
-            maxFeePercentage,
             collWithdrawal,
             debtChange,
             isDebtIncrease,
@@ -6218,7 +5593,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6249,7 +5623,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6267,7 +5640,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6298,7 +5670,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6316,7 +5687,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6347,7 +5717,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6365,7 +5734,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6396,7 +5764,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           collWithdrawal,
           debtChange,
           isDebtIncrease,
@@ -6414,7 +5781,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
             .adjustTroveWithSignature(
-              maxFeePercentage,
               collWithdrawal,
               debtChange,
               isDebtIncrease,
@@ -6440,7 +5806,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               assetAmount,
               upperHint,
               lowerHint,
-              maxFeePercentage,
             ),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not authorized to perform this operation",
@@ -6455,9 +5820,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setInterestRate(contracts, council, 1000)
       await updateTroveSnapshot(contracts, carol, "before")
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateTroveSnapshot(contracts, carol, "after")
       expect(carol.trove.interestRate.before).to.be.equal(0)
@@ -6471,9 +5834,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       const now = await getLatestBlockTimestamp()
       await updateTroveSnapshot(contracts, carol, "after")
@@ -6510,9 +5871,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateInterestRateDataSnapshot(contracts, state, 500, "after")
       await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
@@ -6555,9 +5914,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
       await setInterestRate(contracts, council, 500)
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       const after = BigInt(await getLatestBlockTimestamp())
 
@@ -6587,9 +5944,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "before")
       await updatePCVSnapshot(contracts, state, "before")
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updatePCVSnapshot(contracts, state, "after")
@@ -6604,9 +5959,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -6636,9 +5989,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(council.wallet)
         .setRefinancingFeePercentage(1)
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -6661,9 +6012,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(council.wallet)
         .setRefinancingFeePercentage(50)
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -6683,7 +6032,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .refinance(to1e18(1))
+        .refinance()
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -6708,7 +6057,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setInterestRate(contracts, council, 500)
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .refinance(to1e18(1))
+        .refinance()
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -6742,9 +6091,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const price = await dropPrice(contracts, deployer, carol, to1e18("110"))
 
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -6762,32 +6109,16 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateWalletSnapshot(contracts, carol, "before")
 
       await setInterestRate(contracts, council, 500)
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.equal(carol.musd.before)
     })
-
-    context("Expected Reverts", () => {
-      it("Reverts if fee exceeds max fee percentage", async () => {
-        await setupCarolsTrove()
-        await setNewRate(to1e18(20) / 100n)
-        await expect(
-          contracts.borrowerOperations
-            .connect(carol.wallet)
-            .refinance(to1e18("0.01")),
-        ).to.be.revertedWith("Fee exceeded provided maximum")
-      })
-    })
   })
 
   describe("refinanceWithSignature()", () => {
-    const maxFeePercentage = to1e18(1)
     const types = {
       Refinance: [
-        { name: "maxFeePercentage", type: "uint256" },
         { name: "borrower", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
@@ -6804,7 +6135,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const deadline = Math.floor(Date.now() / 1000) + 3600 + timeToNewRate // 1 hour from interest rate change approval
 
       const value = {
-        maxFeePercentage,
         borrower,
         nonce,
         deadline,
@@ -6813,7 +6143,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await bob.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
-        .refinanceWithSignature(maxFeePercentage, borrower, signature, deadline)
+        .refinanceWithSignature(borrower, signature, deadline)
 
       await updateTroveSnapshot(contracts, bob, "after")
       expect(bob.trove.interestRate.after).to.equal(newRate)
@@ -6824,7 +6154,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
 
       const value = {
-        maxFeePercentage,
         borrower,
         nonce,
         deadline,
@@ -6833,7 +6162,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await bob.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
-        .refinanceWithSignature(maxFeePercentage, borrower, signature, deadline)
+        .refinanceWithSignature(borrower, signature, deadline)
 
       const newNonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
@@ -6846,7 +6175,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           await setupSignatureTests(bob)
 
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -6858,12 +6186,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
@@ -6871,7 +6194,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const { borrower, domain, nonce } = await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -6881,12 +6203,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("Signature expired")
       })
 
@@ -6895,7 +6212,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           await setupSignatureTests(bob)
 
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -6906,23 +6222,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         // Submit a valid transaction to increment the nonce
         await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
-          .refinanceWithSignature(
-            maxFeePercentage,
-            borrower,
-            signature,
-            deadline,
-          )
+          .refinanceWithSignature(borrower, signature, deadline)
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
@@ -6943,7 +6249,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -6954,12 +6259,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
@@ -6980,7 +6280,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -6991,12 +6290,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
@@ -7017,7 +6311,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -7028,12 +6321,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
@@ -7054,7 +6342,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
         const value = {
-          maxFeePercentage,
           borrower,
           nonce,
           deadline,
@@ -7065,12 +6352,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .refinanceWithSignature(
-              maxFeePercentage,
-              borrower,
-              signature,
-              deadline,
-            ),
+            .refinanceWithSignature(borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
     })

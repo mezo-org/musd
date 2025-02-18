@@ -67,7 +67,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
     it("refinance(): reverts when called on a trove that is not active", async () => {
       await dropPriceAndLiquidate(contracts, deployer, carol)
       await expect(
-        contracts.borrowerOperations.connect(carol.wallet).refinance(to1e18(1)),
+        contracts.borrowerOperations.connect(carol.wallet).refinance(),
       ).to.be.revertedWith("BorrowerOps: Trove does not exist or is closed")
     })
 

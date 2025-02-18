@@ -170,8 +170,6 @@ contract TroveManager is
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
-    uint256 public baseRate;
-
     mapping(address => Trove) public Troves;
 
     uint256 public totalStakes;
@@ -308,8 +306,7 @@ contract TroveManager is
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 _maxIterations,
-        uint256 _maxFeePercentage
+        uint256 _maxIterations
     ) external override {
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
@@ -325,7 +322,6 @@ contract TroveManager is
         LocalVariables_redeemCollateral memory vars;
         // slither-disable-end uninitialized-local
 
-        _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
         _requireTCRoverMCR(totals.price);
         _requireAmountGreaterThanZero(_amount);
@@ -417,12 +413,6 @@ contract TroveManager is
 
         // Calculate the collateral fee
         totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
-
-        _requireUserAcceptsFee(
-            totals.collateralFee,
-            totals.totalCollateralDrawn,
-            _maxFeePercentage
-        );
 
         // Send the collateral fee to the PCV contract
         contractsCache.activePool.sendCollateral(
@@ -594,8 +584,8 @@ contract TroveManager is
 
     function getBorrowingFee(
         uint256 _debt
-    ) external view override returns (uint) {
-        return (_debt * getBorrowingRate()) / DECIMAL_PRECISION;
+    ) external pure override returns (uint) {
+        return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
     }
 
     function getTroveStatus(
@@ -867,11 +857,6 @@ contract TroveManager is
         interest += pendingInterest;
     }
 
-    function getBorrowingRate() public view override returns (uint) {
-        return
-            LiquityMath._min(BORROWING_FEE_FLOOR + baseRate, MAX_BORROWING_FEE);
-    }
-
     function getPendingCollateral(
         address _borrower
     ) public view override returns (uint) {
@@ -915,14 +900,6 @@ contract TroveManager is
 
         pendingPrincipal = (stake * principalPerUnitStaked) / DECIMAL_PRECISION;
         pendingInterest = (stake * interestPerUnitStaked) / DECIMAL_PRECISION;
-    }
-
-    function getRedemptionRate() public view override returns (uint) {
-        return
-            LiquityMath._min(
-                REDEMPTION_FEE_FLOOR + baseRate,
-                DECIMAL_PRECISION
-            );
     }
 
     /**
@@ -1841,8 +1818,8 @@ contract TroveManager is
 
     function _getRedemptionFee(
         uint256 _collateralDrawn
-    ) internal view returns (uint) {
-        uint256 redemptionFee = (getRedemptionRate() * _collateralDrawn) /
+    ) internal pure returns (uint) {
+        uint256 redemptionFee = (REDEMPTION_FEE_FLOOR * _collateralDrawn) /
             DECIMAL_PRECISION;
         require(
             redemptionFee < _collateralDrawn,
@@ -1946,16 +1923,6 @@ contract TroveManager is
 
     function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
         require(_amount > 0, "TroveManager: Amount must be greater than zero");
-    }
-
-    function _requireValidMaxFeePercentage(
-        uint256 _maxFeePercentage
-    ) internal pure {
-        require(
-            _maxFeePercentage >= REDEMPTION_FEE_FLOOR &&
-                _maxFeePercentage <= DECIMAL_PRECISION,
-            "Max fee percentage must be between 0.5% and 100%"
-        );
     }
 
     // Check whether or not the system *would be* in Recovery Mode, given an collateral:USD price, and the entire system coll and debt.

@@ -89,17 +89,6 @@ describe("BorrowerOperations in Recovery Mode", () => {
       expect(ICR).is.equal(to1e18(150) / 100n)
     })
 
-    it("Allows max fee < 0.5% in Recovery Mode", async () => {
-      await openTrove(contracts, {
-        musdAmount: "4,000",
-        ICR: "200",
-        sender: carol.wallet,
-        maxFeePercentage: "0.4999999999999999",
-      })
-      const after = await contracts.musd.balanceOf(carol.wallet)
-      expect(after).to.equal(to1e18("4,000"))
-    })
-
     it("Records up-to-date initial snapshots of L_Collateral and L_MUSDDebt", async () => {
       // Liquidate Alice's Trove.
       await contracts.troveManager
@@ -349,13 +338,12 @@ describe("BorrowerOperations in Recovery Mode", () => {
   describe("withdrawMUSD", () => {
     context("Expected Reverts", () => {
       it("reverts when system is in Recovery Mode", async () => {
-        const maxFeePercentage = to1e18(1)
         const amount = 1n
 
         await expect(
           contracts.borrowerOperations
             .connect(bob.wallet)
-            .withdrawMUSD(maxFeePercentage, amount, bob.wallet, bob.wallet),
+            .withdrawMUSD(amount, bob.wallet, bob.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Operation must leave trove with ICR >= CCR",
         )
@@ -434,24 +422,15 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
   describe("adjustTrove", () => {
     it("A trove with ICR < CCR in Recovery Mode can adjust their trove to ICR > CCR", async () => {
-      const maxFeePercentage = to1e18(1)
       const collChange = to1e18("20")
 
       await updateTroveSnapshot(contracts, alice, "before")
       // collateral deposit that would increase ICR > CCR
       await contracts.borrowerOperations
         .connect(alice.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          0,
-          false,
-          alice.wallet,
-          alice.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, 0, false, alice.wallet, alice.wallet, {
+          value: collChange,
+        })
       await updateTroveSnapshot(contracts, alice, "after")
       const ccr = await contracts.troveManager.CCR()
       expect(alice.trove.icr.before).to.be.lessThan(ccr)
@@ -459,7 +438,6 @@ describe("BorrowerOperations in Recovery Mode", () => {
     })
 
     it("A trove with ICR > CCR in Recovery Mode can improve their ICR", async () => {
-      const maxFeePercentage = to1e18(1)
       const collChange = to1e18("20")
 
       await setupCarolsTrove()
@@ -467,46 +445,16 @@ describe("BorrowerOperations in Recovery Mode", () => {
       // collateral deposit that would increase ICR > CCR
       await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          0,
-          false,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, 0, false, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
       await updateTroveSnapshot(contracts, carol, "after")
       const ccr = await contracts.troveManager.CCR()
       expect(carol.trove.icr.before).to.be.greaterThan(ccr)
       expect(carol.trove.icr.after).to.be.greaterThan(carol.trove.icr.before)
     })
 
-    it("allows max fee < 0.5% in Recovery mode", async () => {
-      const maxFeePercentage = 4999999999999999n
-      const collChange = to1e18("20")
-      const debtChange = to1e18("2,000")
-
-      await setupCarolsTrove()
-      await contracts.borrowerOperations
-        .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
-    })
-
     it("debt increase in Recovery Mode charges no fee", async () => {
-      const maxFeePercentage = to1e18(1)
       const collChange = to1e18("20")
       const debtChange = to1e18("2,000")
 
@@ -516,17 +464,9 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .adjustTrove(
-          maxFeePercentage,
-          0,
-          debtChange,
-          true,
-          carol.wallet,
-          carol.wallet,
-          {
-            value: collChange,
-          },
-        )
+        .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet, {
+          value: collChange,
+        })
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -543,7 +483,6 @@ describe("BorrowerOperations in Recovery Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts in Recovery Mode when the adjustment would reduce the TCR", async () => {
-        const maxFeePercentage = to1e18(1)
         const debtChange = to1e18(5000)
         const collChange = to1e18(0.0001)
         await setupCarolsTrove()
@@ -552,14 +491,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              collChange,
-              0,
-              false,
-              carol.wallet,
-              carol.wallet,
-            ),
+            .adjustTrove(collChange, 0, false, carol.wallet, carol.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Collateral withdrawal not permitted Recovery Mode",
         )
@@ -568,14 +500,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              0,
-              debtChange,
-              true,
-              carol.wallet,
-              carol.wallet,
-            ),
+            .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode",
         )
@@ -584,21 +509,13 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              0,
-              debtChange,
-              true,
-              carol.wallet,
-              carol.wallet,
-            ),
+            .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode",
         )
       })
 
       it("collateral withdrawal reverts in Recovery Mode", async () => {
-        const maxFeePercentage = to1e18(1)
         const collChange = to1e18(0.0001)
         await setupCarolsTrove()
 
@@ -606,21 +523,13 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              collChange,
-              0,
-              false,
-              alice.wallet,
-              alice.wallet,
-            ),
+            .adjustTrove(collChange, 0, false, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Collateral withdrawal not permitted Recovery Mode",
         )
       })
 
       it("no mintlist, collateral withdrawal reverts in Recovery Mode", async () => {
-        const maxFeePercentage = to1e18(1)
         const collChange = to1e18(0.0001)
         await setupCarolsTrove()
         await removeMintlist(contracts, deployer.wallet)
@@ -629,21 +538,13 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              collChange,
-              0,
-              false,
-              alice.wallet,
-              alice.wallet,
-            ),
+            .adjustTrove(collChange, 0, false, alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Collateral withdrawal not permitted Recovery Mode",
         )
       })
 
       it("debt increase that would leave ICR < CCR (150%) reverts in Recovery Mode", async () => {
-        const maxFeePercentage = to1e18(1)
         const collChange = to1e18(1)
         const debtChange = to1e18("2,000")
 
@@ -653,24 +554,15 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              0,
-              debtChange,
-              true,
-              alice.wallet,
-              alice.wallet,
-              {
-                value: collChange,
-              },
-            ),
+            .adjustTrove(0, debtChange, true, alice.wallet, alice.wallet, {
+              value: collChange,
+            }),
         ).to.be.revertedWith(
           "BorrowerOps: Operation must leave trove with ICR >= CCR",
         )
       })
 
       it("debt increase that would reduce the ICR reverts in Recovery Mode", async () => {
-        const maxFeePercentage = to1e18(1)
         const debtChange = to1e18("2,000")
 
         await setupCarolsTrove()
@@ -680,14 +572,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(carol.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              0,
-              debtChange,
-              true,
-              carol.wallet,
-              carol.wallet,
-            ),
+            .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Cannot decrease your Trove's ICR in Recovery Mode",
         )
@@ -706,14 +591,7 @@ describe("BorrowerOperations in Recovery Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(bob.wallet)
-            .adjustTrove(
-              maxFeePercentage,
-              0,
-              debtChange,
-              true,
-              bob.wallet,
-              bob.wallet,
-            ),
+            .adjustTrove(0, debtChange, true, bob.wallet, bob.wallet),
         ).to.be.revertedWith(
           "BorrowerOps: Operation must leave trove with ICR >= CCR",
         )

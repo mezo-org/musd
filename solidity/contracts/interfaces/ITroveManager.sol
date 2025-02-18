@@ -109,8 +109,7 @@ interface ITroveManager {
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 _maxIterations,
-        uint256 _maxFeePercentage
+        uint256 _maxIterations
     ) external;
 
     function updateStakeAndTotalStakes(
@@ -214,11 +213,7 @@ interface ITroveManager {
             uint256 pendingInterest
         );
 
-    function getRedemptionRate() external view returns (uint);
-
-    function getBorrowingRate() external view returns (uint);
-
-    function getBorrowingFee(uint256 _debt) external view returns (uint);
+    function getBorrowingFee(uint256 _debt) external pure returns (uint);
 
     function getTroveStatus(address _borrower) external view returns (Status);
 

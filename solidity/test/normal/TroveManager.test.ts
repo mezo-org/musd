@@ -26,7 +26,6 @@ import {
   openTrove,
   performRedemption,
   provideToSP,
-  setBaseRate,
   setupTests,
   transferMUSD,
   updateContractsSnapshot,
@@ -2071,34 +2070,6 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(collNeeded)
     }
 
-    async function redeemWithFee(
-      feePercentage: number,
-      redemptionAmount: bigint = to1e18("100"),
-    ) {
-      const price = await contracts.priceFeed.fetchPrice()
-      const fee = to1e18(feePercentage) / 100n
-
-      const {
-        firstRedemptionHint,
-        partialRedemptionHintNICR,
-        upperPartialRedemptionHint,
-        lowerPartialRedemptionHint,
-      } = await getRedemptionHints(contracts, dennis, redemptionAmount, price)
-
-      return contracts.troveManager
-        .connect(dennis.wallet)
-        .redeemCollateral(
-          redemptionAmount,
-          firstRedemptionHint,
-          upperPartialRedemptionHint,
-          lowerPartialRedemptionHint,
-          partialRedemptionHintNICR,
-          0,
-          fee,
-          NO_GAS,
-        )
-    }
-
     it("ends the redemption sequence when the token redemption request has been filled", async () => {
       await setupRedemptionTroves()
 
@@ -2113,7 +2084,6 @@ describe("TroveManager in Normal Mode", () => {
           alice.address,
           0,
           0,
-          to1e18("1"),
           NO_GAS,
         )
 
@@ -2159,7 +2129,6 @@ describe("TroveManager in Normal Mode", () => {
         alice.address,
         0,
         2, // Max redemptions set to 2, so we will stop after Bob's trove
-        to1e18("1"),
         NO_GAS,
       )
 
@@ -2267,7 +2236,7 @@ describe("TroveManager in Normal Mode", () => {
       // Carol redeems 10 mUSD from Alice's trove ahead of Dennis's redemption
       await contracts.troveManager
         .connect(carol.wallet)
-        .redeemCollateral(to1e18("10"), f, u, l, p, 0, to1e18("1"), NO_GAS)
+        .redeemCollateral(to1e18("10"), f, u, l, p, 0, NO_GAS)
 
       // Dennis tries to redeem with outdated hint
       await contracts.troveManager
@@ -2279,7 +2248,6 @@ describe("TroveManager in Normal Mode", () => {
           lowerPartialRedemptionHint,
           partialRedemptionHintNICR,
           0,
-          to1e18("1"),
           NO_GAS,
         )
 
@@ -2347,7 +2315,6 @@ describe("TroveManager in Normal Mode", () => {
         "0x0000000000000000000000000000000000000000",
         0,
         0,
-        to1e18("1"),
         NO_GAS,
       )
 
@@ -2473,9 +2440,7 @@ describe("TroveManager in Normal Mode", () => {
 
       // stop interest from accruing to make calculations easier
       await setInterestRate(contracts, council, 0)
-      await contracts.borrowerOperations
-        .connect(alice.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(alice.wallet).refinance()
 
       await updateTroveSnapshot(contracts, alice, "before")
       await updateInterestRateDataSnapshot(
@@ -2512,14 +2477,10 @@ describe("TroveManager in Normal Mode", () => {
       // stop interest from accruing to make calculations easier
       await setInterestRate(contracts, council, 0)
 
-      await contracts.borrowerOperations
-        .connect(alice.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(alice.wallet).refinance()
       await updateTroveSnapshot(contracts, alice, "before")
 
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .refinance(to1e18(1))
+      await contracts.borrowerOperations.connect(bob.wallet).refinance()
       await updateTroveSnapshot(contracts, bob, "before")
 
       await updateInterestRateDataSnapshot(
@@ -2582,7 +2543,6 @@ describe("TroveManager in Normal Mode", () => {
           lowerPartialRedemptionHint,
           partialRedemptionHintNICR,
           0,
-          to1e18("1"),
           NO_GAS,
         )
 
@@ -2623,7 +2583,6 @@ describe("TroveManager in Normal Mode", () => {
           lowerPartialRedemptionHint,
           partialRedemptionHintNICR,
           0,
-          to1e18("1"),
           NO_GAS,
         )
 
@@ -2698,8 +2657,6 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     it("a redemption made at zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
-      await setBaseRate(contracts, to1e18("0"))
-
       await setupRedemptionTroves()
 
       await performRedemption(contracts, dennis, dennis, to1e18("100"))
@@ -2709,8 +2666,6 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     it("a redemption made at non-zero base rate sends a non-zero CollateralFee to PCV contract", async () => {
-      await setBaseRate(contracts, to1e18("0.1"))
-
       await setupRedemptionTroves()
 
       await performRedemption(contracts, dennis, dennis, to1e18("100"))
@@ -2720,8 +2675,6 @@ describe("TroveManager in Normal Mode", () => {
     })
 
     it("a redemption made at zero base increases the collateral-fees in PCV contract", async () => {
-      await setBaseRate(contracts, to1e18("0"))
-
       await setupRedemptionTroves()
       await updatePCVSnapshot(contracts, state, "before")
 
@@ -2931,22 +2884,6 @@ describe("TroveManager in Normal Mode", () => {
         ).to.be.revertedWith("TroveManager: Amount must be greater than zero")
       })
 
-      it("reverts if max fee > 100%", async () => {
-        await setupRedemptionTroves()
-
-        await expect(redeemWithFee(101)).to.be.revertedWith(
-          "Max fee percentage must be between 0.5% and 100%",
-        )
-      })
-
-      it("reverts if max fee < 0.5%", async () => {
-        await setupRedemptionTroves()
-
-        await expect(redeemWithFee(0.49)).to.be.revertedWith(
-          "Max fee percentage must be between 0.5% and 100%",
-        )
-      })
-
       it("reverts when requested redemption amount exceeds caller's mUSD token balance", async () => {
         await setupRedemptionTroves()
         await updateWalletSnapshot(contracts, dennis, "before")
@@ -2968,21 +2905,6 @@ describe("TroveManager in Normal Mode", () => {
         await expect(
           performRedemption(contracts, bob, alice, redemptionAmount),
         ).to.be.revertedWith("TroveManager: Only one trove in the system")
-      })
-
-      it("reverts if fee eats up all returned collateral", async () => {
-        await setupRedemptionTroves()
-        await updateTroveSnapshot(contracts, alice, "before")
-
-        // Set base rate to 100%
-        await setBaseRate(contracts, to1e18("1"))
-
-        // Attempt to fully redeem Alice's trove
-        await expect(
-          performRedemption(contracts, dennis, dennis, alice.trove.debt.before),
-        ).to.be.revertedWith(
-          "TroveManager: Fee would eat up all returned collateral",
-        )
       })
     })
 

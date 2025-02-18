@@ -27,7 +27,6 @@ interface IBorrowerOperationsSignatures {
     ) external;
 
     function adjustTroveWithSignature(
-        uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
@@ -49,7 +48,6 @@ interface IBorrowerOperationsSignatures {
     ) external;
 
     function openTroveWithSignature(
-        uint256 _maxFeePercentage,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint,
@@ -59,7 +57,6 @@ interface IBorrowerOperationsSignatures {
     ) external payable;
 
     function withdrawMUSDWithSignature(
-        uint256 _maxFeePercentage,
         uint256 _amount,
         address _upperHint,
         address _lowerHint,
@@ -78,7 +75,6 @@ interface IBorrowerOperationsSignatures {
     ) external;
 
     function refinanceWithSignature(
-        uint256 _maxFeePercentage,
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
