@@ -8,26 +8,14 @@ import "hardhat-contract-sizer"
 import "hardhat-gas-reporter"
 import dotenv from "dotenv-safer"
 
+const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
+  ? [process.env.MATSNET_PRIVATE_KEY]
+  : []
+
 dotenv.config({
   allowEmptyValues: true,
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
-
-const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL
-  ? process.env.MAINNET_RPC_URL
-  : ""
-
-const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
-  ? [process.env.MAINNET_PRIVATE_KEY]
-  : []
-
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL
-  ? process.env.SEPOLIA_RPC_URL
-  : ""
-
-const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY
-  ? [process.env.SEPOLIA_PRIVATE_KEY]
-  : []
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -43,22 +31,11 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
   },
   networks: {
-    mainnet: {
-      url: MAINNET_RPC_URL,
-      accounts: MAINNET_PRIVATE_KEY,
-      chainId: 1,
-      tags: ["etherscan"],
-    },
-    sepolia: {
-      url: SEPOLIA_RPC_URL,
-      accounts: SEPOLIA_PRIVATE_KEY,
-      chainId: 11155111,
-      tags: ["allowStubs", "etherscan"],
-    },
     matsnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
-      accounts: SEPOLIA_PRIVATE_KEY,
+      accounts: MATSNET_PRIVATE_KEY,
+      tags: ["allowStubs", "etherscan"],
     },
     hardhat: {
       initialBaseFeePerGas: 0,

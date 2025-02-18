@@ -136,9 +136,9 @@ graph TD
     TokenSystem-->Core
     Core-->Pools
     Pools-->Support
-    linkStyle 0 stroke-opacity:1  
-    linkStyle 1 stroke-opacity:1  
-    linkStyle 2 stroke-opacity:1   
+    linkStyle 0 stroke-opacity:1
+    linkStyle 1 stroke-opacity:1
+    linkStyle 2 stroke-opacity:1
 ```
 
 - **Token (MUSD)**: The stablecoin at the heart of the system, designed to maintain a peg to USD.
