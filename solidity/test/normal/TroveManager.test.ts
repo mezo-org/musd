@@ -221,6 +221,46 @@ describe("TroveManager in Normal Mode", () => {
     await fastForwardTime(daysInSeconds)
   }
 
+  async function setupUnorderedTroves() {
+    // Open a trove with a high ICR so we don't immediately go into recovery mode
+    await openTrove(contracts, {
+      musdAmount: "10,000",
+      ICR: "400",
+      sender: eric.wallet,
+    })
+
+    // Set up 3 troves with ICR A < B < C and interest rates A < B < C
+    await openTrove(contracts, {
+      musdAmount: "10,000",
+      ICR: "110",
+      sender: alice.wallet,
+    })
+
+    await setInterestRate(contracts, council, 5000)
+
+    await openTrove(contracts, {
+      musdAmount: "10,000",
+      ICR: "115",
+      sender: bob.wallet,
+    })
+
+    await setInterestRate(contracts, council, 10000)
+
+    await openTrove(contracts, {
+      musdAmount: "10,000",
+      ICR: "120",
+      sender: carol.wallet,
+    })
+
+    // Wait 90 days for interest to cause ICRs to flip
+    await fastForwardTime(90 * 24 * 60 * 60)
+
+    // Check that ICRs have flipped so C < B < A
+    await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+    expect(carol.trove.icr.before).to.be.lessThan(bob.trove.icr.before)
+    expect(bob.trove.icr.before).to.be.lessThan(alice.trove.icr.before)
+  }
+
   beforeEach(async () => {
     ;({
       alice,
@@ -1999,7 +2039,7 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  describe("redeemCollateral()", () => {
+  describe.only("redeemCollateral()", () => {
     async function setupRedemptionTroves() {
       // Open three troves with ascending ICRs
       await openTrove(contracts, {
@@ -2845,6 +2885,10 @@ describe("TroveManager in Normal Mode", () => {
           ),
         100n,
       )
+    })
+
+    it.only("redeems troves in the correct order", async () => {
+      await setupUnorderedTroves()
     })
 
     context("Expected Reverts", () => {
