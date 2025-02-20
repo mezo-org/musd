@@ -232,7 +232,7 @@ describe("TroveManager in Normal Mode", () => {
     // Set up 3 troves with ICR A < B < C and interest rates A < B < C
     await openTrove(contracts, {
       musdAmount: "10,000",
-      ICR: "110",
+      ICR: "210",
       sender: alice.wallet,
     })
 
@@ -240,7 +240,7 @@ describe("TroveManager in Normal Mode", () => {
 
     await openTrove(contracts, {
       musdAmount: "10,000",
-      ICR: "115",
+      ICR: "215",
       sender: bob.wallet,
     })
 
@@ -248,7 +248,7 @@ describe("TroveManager in Normal Mode", () => {
 
     await openTrove(contracts, {
       musdAmount: "10,000",
-      ICR: "120",
+      ICR: "220",
       sender: carol.wallet,
     })
 
@@ -2039,7 +2039,7 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  describe.only("redeemCollateral()", () => {
+  describe("redeemCollateral()", () => {
     async function setupRedemptionTroves() {
       // Open three troves with ascending ICRs
       await openTrove(contracts, {
@@ -2887,28 +2887,6 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it.only("redeems from the lowest actual ICR trove first, not by SortedTroves order", async () => {
-      await setupUnorderedTroves()
-      await updateTroveSnapshots(
-        contracts,
-        [alice, bob, carol, dennis],
-        "before",
-      )
-
-      const redemptionAmount = to1e18("500")
-      await contracts.musd.unprotectedMint(dennis.address, redemptionAmount)
-
-      await performRedemption(contracts, dennis, carol, redemptionAmount)
-      await updateTroveSnapshots(
-        contracts,
-        [alice, bob, carol, dennis],
-        "after",
-      )
-
-      // Carol's trove should be hit first as it now has the lowest actual ICR
-      expect(carol.trove.debt.after).to.be.lessThan(carol.trove.debt.before)
-    })
-
     context("Expected Reverts", () => {
       it("reverts when TCR < MCR", async () => {
         const users = [alice, bob, carol, dennis]
@@ -3646,6 +3624,31 @@ describe("TroveManager in Normal Mode", () => {
       expect(
         await contracts.troveManager.hasPendingRewards(alice.address),
       ).to.equal(false)
+    })
+  })
+
+  describe("SortedTroves order divergence edge cases", () => {
+    it.only("redeems based on SortedTroves order, not actual ICR", async () => {
+      await setupUnorderedTroves()
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "before",
+      )
+
+      const redemptionAmount = to1e18("500")
+      await contracts.musd.unprotectedMint(dennis.address, redemptionAmount)
+
+      await performRedemption(contracts, dennis, carol, redemptionAmount)
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
+
+      // Alice's trove is redeemed against first, even though Carol's has the lowest ICR
+      expect(alice.trove.icr.before).to.be.greaterThan(carol.trove.icr.before)
+      expect(alice.trove.debt.after).to.be.lessThan(alice.trove.debt.before)
     })
   })
 })
