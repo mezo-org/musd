@@ -3646,7 +3646,6 @@ describe("TroveManager in Normal Mode", () => {
     it("can fail to trigger recovery mode due to ICR divergence", async () => {
       await setInterestRate(contracts, council, 1000)
 
-      // Open a trove with ICR 155% (not in recovery mode)
       await openTrove(contracts, {
         musdAmount: "5000",
         ICR: "155",
@@ -3659,12 +3658,17 @@ describe("TroveManager in Normal Mode", () => {
       const inRecoveryMode =
         await contracts.troveManager.checkRecoveryMode(price)
 
+      // Alice is the only trove in the system so her ICR = TCR
       await updateTroveSnapshot(contracts, alice, "before")
       const actualTCR = alice.trove.icr.before
 
       const tcr = await contracts.troveManager.getTCR(price)
 
+      // getTCR does not account for the interest accrued so the reported TCR > actual TCR
       expect(tcr).to.be.greaterThan(actualTCR)
+
+      // actualTCR < CCR so recovery mode should be triggered, but it is not
+      expect(actualTCR).to.be.lessThan(await contracts.troveManager.CCR())
       expect(inRecoveryMode).to.be.equal(false)
     })
   })
