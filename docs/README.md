@@ -259,6 +259,59 @@ Each function requires a signature and deadline (when the signature is valid unt
 
 `checkRecoveryMode()`: reveals whether the system is in Recovery Mode (i.e. whether the Total Collateralization Ratio (TCR) is below the Critical Collateralization Ratio (CCR)).
 
+## Opening a Trove from a Front End
+
+We keep a list of all open troves sorted by collateralization ratio on chain, implemented as a linked list. Since finding the proper insertion point for a new trove (or an adjusted trove) would be computationally expensive naively, the relevant functions (like `BorrowerOperations.openTrove`) take a `_upperHint` and `_lowerHint`, to narrow the search.
+
+We use `SortedTroves.findInsertPosition` to find these hints, which in turn needs _approximate_ hints, from `HintHelpers.getApproxHint`. This is involved, so we provide an example (in typescript):
+
+```ts
+// Amount of MUSD to borrow
+const debtAmount = to1e18(2000)
+
+// Amount of collateral (in BTC)
+const assetAmount = to1e18(10)
+
+// Compute hints using HintHelpers and SortedTroves
+
+// Compute expected total debt by adding gas compensation and fee
+const gasCompensation = await troveManager.MUSD_GAS_COMPENSATION()
+const expectedFee = await troveManager.getBorrowingFeeWithDecay(debtAmount)
+const expectedTotalDebt = debtAmount + expectedFee + gasCompensation
+
+// Nominal CR is collateral * 1e20 / totalDebt
+// Note that price is not included in this calculation
+const nicr = (assetAmount * to1e18(100)) / expectedTotalDebt
+
+// Get an approximate address hint from HintHelpers contract
+const numTroves = Number(await sortedTroves.getSize())
+
+// Use 15•sqrt(troves)
+const numTrials = BigInt(Math.ceil(Math.sqrt(numTroves))) * 15n
+
+// A source of noise, does not need to be cryptographically secure.
+const randomSeed = Math.ceil(Math.random() * 100000)
+
+const { 0: approxHint } = await hintHelpers.getApproxHint(
+  nicr,
+  numTrials,
+  randomSeed,
+)
+
+// Use the approximate hint to get exact upper and lower hints
+const { 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(
+  nicr,
+  approxHint,
+  approxHint,
+)
+
+await borrowerOperations
+  .connect(carol.wallet)
+  .openTrove(maxFeePercentage, debtAmount, assetAmount, upperHint, lowerHint, {
+    value: assetAmount,
+  })
+```
+
 ## Definitions
 
 _**Trove:**_ a collateralized debt position, bound to a single Ethereum address. Also referred to as a “CDP” in similar protocols.
