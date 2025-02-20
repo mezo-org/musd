@@ -222,13 +222,6 @@ describe("TroveManager in Normal Mode", () => {
   }
 
   async function setupUnorderedTroves() {
-    // Open a trove with a high ICR so we don't immediately go into recovery mode
-    await openTrove(contracts, {
-      musdAmount: "10,000",
-      ICR: "400",
-      sender: eric.wallet,
-    })
-
     // Set up 3 troves with ICR A < B < C and interest rates A < B < C
     await openTrove(contracts, {
       musdAmount: "10,000",
@@ -3627,8 +3620,8 @@ describe("TroveManager in Normal Mode", () => {
     })
   })
 
-  describe("SortedTroves order divergence edge cases", () => {
-    it.only("redeems based on SortedTroves order, not actual ICR", async () => {
+  describe.only("SortedTroves order divergence edge cases", () => {
+    it("redeems based on SortedTroves order, not actual ICR", async () => {
       await setupUnorderedTroves()
       await updateTroveSnapshots(
         contracts,
@@ -3649,6 +3642,30 @@ describe("TroveManager in Normal Mode", () => {
       // Alice's trove is redeemed against first, even though Carol's has the lowest ICR
       expect(alice.trove.icr.before).to.be.greaterThan(carol.trove.icr.before)
       expect(alice.trove.debt.after).to.be.lessThan(alice.trove.debt.before)
+    })
+    it("can fail to trigger recovery mode due to ICR divergence", async () => {
+      await setInterestRate(contracts, council, 1000)
+
+      // Open a trove with ICR 155% (not in recovery mode)
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "155",
+        sender: alice.wallet,
+      })
+
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const inRecoveryMode =
+        await contracts.troveManager.checkRecoveryMode(price)
+
+      await updateTroveSnapshot(contracts, alice, "before")
+      const actualTCR = alice.trove.icr.before
+
+      const tcr = await contracts.troveManager.getTCR(price)
+
+      expect(tcr).to.be.greaterThan(actualTCR)
+      expect(inRecoveryMode).to.be.equal(false)
     })
   })
 })
