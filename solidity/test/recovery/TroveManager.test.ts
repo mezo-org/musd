@@ -493,7 +493,6 @@ describe("TroveManager in Recovery Mode", () => {
           bob.address,
           0,
           0,
-          to1e18("1"),
           NO_GAS,
         )
       await updateWalletSnapshot(contracts, bob, "before")
@@ -520,7 +519,6 @@ describe("TroveManager in Recovery Mode", () => {
           bob.address,
           0,
           0,
-          to1e18("1"),
           NO_GAS,
         )
 

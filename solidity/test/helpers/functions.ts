@@ -2,7 +2,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { ContractTransactionResponse, LogDescription } from "ethers"
 import { ethers, helpers } from "hardhat"
-import { assert, expect } from "chai"
+import { expect } from "chai"
 import { GOVERNANCE_TIME_DELAY, to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
 import {
@@ -287,8 +287,6 @@ export async function updateTroveManagerSnapshot(
     await contracts.troveManager.totalStakesSnapshot()
   state.troveManager.troves[checkPoint] =
     await contracts.troveManager.getTroveOwnersCount()
-  state.troveManager.baseRate[checkPoint] =
-    await contracts.troveManager.baseRate()
   state.troveManager.liquidation.collateral[checkPoint] =
     await contracts.troveManager.L_Collateral()
   state.troveManager.liquidation.principal[checkPoint] =
@@ -484,7 +482,7 @@ export async function adjustTroveToICR(
   // Calculate the debt required to reach the target ICR
   const targetDebt = (coll * price) / targetICR
   const increasedTotalDebt = targetDebt - debt
-  const borrowingRate = await contracts.troveManager.getBorrowingRate()
+  const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
 
   /* Total increase in debt after the call = targetDebt - debt
    * Requested increase in debt factors in the borrow fee, note you must multiply by to1e18(1) before the division to avoid rounding errors
@@ -494,12 +492,7 @@ export async function adjustTroveToICR(
 
   await contracts.borrowerOperations
     .connect(from)
-    .withdrawMUSD(
-      to1e18("100") / 100n,
-      requestedDebtIncrease,
-      ZERO_ADDRESS,
-      ZERO_ADDRESS,
-    )
+    .withdrawMUSD(requestedDebtIncrease, ZERO_ADDRESS, ZERO_ADDRESS)
 
   return { requestedDebtIncrease, increasedTotalDebt }
 }
@@ -513,10 +506,6 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
   // open minimum debt amount unless extraMUSDAmount is specificed.
   // if (!params.musdAmount) params.musdAmount = (await contracts.borrowerOperations.minNetDebt()) + 1n // add 1 to avoid rounding issues
-
-  // max fee size cant exceed 100%
-  if (params.maxFeePercentage === undefined) params.maxFeePercentage = "100"
-  const maxFeePercentage = to1e18(params.maxFeePercentage) / 100n
 
   // ICR default of 150%
   if (params.ICR === undefined) params.ICR = "200"
@@ -539,15 +528,9 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
 
   const tx = await contracts.borrowerOperations
     .connect(params.sender)
-    .openTrove(
-      maxFeePercentage,
-      musdAmount,
-      params.upperHint,
-      params.lowerHint,
-      {
-        value: assetAmount, // The amount of chain base asset to send
-      },
-    )
+    .openTrove(musdAmount, params.upperHint, params.lowerHint, {
+      value: assetAmount, // The amount of chain base asset to send
+    })
 
   return {
     musdAmount,
@@ -760,14 +743,6 @@ export function transferMUSD(
     .transfer(receiver.wallet, amount, NO_GAS)
 }
 
-export async function setBaseRate(contracts: Contracts, rate: bigint) {
-  if ("setBaseRate" in contracts.troveManager) {
-    await contracts.troveManager.setBaseRate(rate)
-  } else {
-    assert.fail("TroveManagerTester not loaded")
-  }
-}
-
 export async function setupTests() {
   const testSetup = await loadTestSetup()
   const { contracts, state } = testSetup
@@ -955,7 +930,6 @@ export async function performRedemption(
       lowerPartialRedemptionHint,
       partialRedemptionHintNICR,
       maxIterations,
-      to1e18("1"),
       NO_GAS,
     )
 }

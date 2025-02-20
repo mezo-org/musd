@@ -8,10 +8,6 @@ import "../TroveManager.sol";
 for testing the parent's internal functions. */
 
 contract TroveManagerTester is TroveManager {
-    function setBaseRate(uint256 _baseRate) external {
-        baseRate = _baseRate;
-    }
-
     function callUpdateDefaultPoolInterest() external {
         updateDefaultPoolInterest();
     }
@@ -30,5 +26,20 @@ contract TroveManagerTester is TroveManager {
         uint256 _price
     ) external pure returns (uint) {
         return LiquityMath._computeCR(_coll, _debt, _price);
+    }
+
+    function calculateInterestOwed(
+        uint256 _principal,
+        uint16 _interestRate,
+        uint256 startTime,
+        uint256 endTime
+    ) external pure returns (uint256) {
+        return
+            InterestRateMath.calculateInterestOwed(
+                _principal,
+                _interestRate,
+                startTime,
+                endTime
+            );
     }
 }

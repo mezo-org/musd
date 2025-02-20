@@ -9,6 +9,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
+import "./dependencies/InterestRateMath.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
@@ -101,6 +102,7 @@ contract TroveManager is
     struct LocalVariables_redeemCollateral {
         uint256 minNetDebt;
         uint256 gasCompensation;
+        uint16 interestRate;
     }
 
     struct LiquidationValues {
@@ -167,8 +169,6 @@ contract TroveManager is
     uint256 public constant REDEMPTION_FEE_FLOOR =
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
     uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
-
-    uint256 public baseRate;
 
     mapping(address => Trove) public Troves;
 
@@ -306,8 +306,7 @@ contract TroveManager is
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
         uint256 _partialRedemptionHintNICR,
-        uint256 _maxIterations,
-        uint256 _maxFeePercentage
+        uint256 _maxIterations
     ) external override {
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
@@ -323,7 +322,6 @@ contract TroveManager is
         LocalVariables_redeemCollateral memory vars;
         // slither-disable-end uninitialized-local
 
-        _requireValidMaxFeePercentage(_maxFeePercentage);
         totals.price = priceFeed.fetchPrice();
         _requireTCRoverMCR(totals.price);
         _requireAmountGreaterThanZero(_amount);
@@ -368,6 +366,7 @@ contract TroveManager is
 
         vars.minNetDebt = borrowerOperations.minNetDebt();
         vars.gasCompensation = borrowerOperations.musdGasCompensation();
+        vars.interestRate = interestRateManager.interestRate();
 
         while (
             currentBorrower != address(0) &&
@@ -414,12 +413,6 @@ contract TroveManager is
 
         // Calculate the collateral fee
         totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
-
-        _requireUserAcceptsFee(
-            totals.collateralFee,
-            totals.totalCollateralDrawn,
-            _maxFeePercentage
-        );
 
         // Send the collateral fee to the PCV contract
         contractsCache.activePool.sendCollateral(
@@ -591,8 +584,8 @@ contract TroveManager is
 
     function getBorrowingFee(
         uint256 _debt
-    ) external view override returns (uint) {
-        return (_debt * getBorrowingRate()) / DECIMAL_PRECISION;
+    ) external pure override returns (uint) {
+        return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
     }
 
     function getTroveStatus(
@@ -660,7 +653,7 @@ contract TroveManager is
     function updateDefaultPoolInterest() public {
         if (totalStakes > 0) {
             // solhint-disable not-rely-on-time
-            uint256 interest = interestRateManager.calculateInterestOwed(
+            uint256 interest = InterestRateMath.calculateInterestOwed(
                 defaultPool.getPrincipal(),
                 interestRateManager.interestRate(),
                 defaultPool.getLastInterestUpdatedTime(),
@@ -692,15 +685,15 @@ contract TroveManager is
         Trove storage trove = Troves[_borrower];
         // slither-disable-start calls-loop
         interestRateManager.updateSystemInterest(trove.interestRate);
+        // slither-disable-end calls-loop
         // solhint-disable not-rely-on-time
-        trove.interestOwed += interestRateManager.calculateInterestOwed(
+        trove.interestOwed += InterestRateMath.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
             trove.lastInterestUpdateTime,
             block.timestamp
         );
         trove.lastInterestUpdateTime = block.timestamp;
-        // slither-disable-end calls-loop
         // solhint-enable not-rely-on-time
     }
 
@@ -864,11 +857,6 @@ contract TroveManager is
         interest += pendingInterest;
     }
 
-    function getBorrowingRate() public view override returns (uint) {
-        return
-            LiquityMath._min(BORROWING_FEE_FLOOR + baseRate, MAX_BORROWING_FEE);
-    }
-
     function getPendingCollateral(
         address _borrower
     ) public view override returns (uint) {
@@ -912,14 +900,6 @@ contract TroveManager is
 
         pendingPrincipal = (stake * principalPerUnitStaked) / DECIMAL_PRECISION;
         pendingInterest = (stake * interestPerUnitStaked) / DECIMAL_PRECISION;
-    }
-
-    function getRedemptionRate() public view override returns (uint) {
-        return
-            LiquityMath._min(
-                REDEMPTION_FEE_FLOOR + baseRate,
-                DECIMAL_PRECISION
-            );
     }
 
     /**
@@ -1561,20 +1541,18 @@ contract TroveManager is
             );
         } else {
             // calculate 10 minutes worth of interest to account for delay between the hint call and now
-            // slither-disable-start calls-loop
             // solhint-disable not-rely-on-time
             vars.upperBoundNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt -
-                    interestRateManager.calculateInterestOwed(
+                    InterestRateMath.calculateInterestOwed(
                         Troves[_borrower].principal,
-                        interestRateManager.interestRate(),
+                        redeemCollateralVars.interestRate,
                         block.timestamp - 600,
                         block.timestamp
                     )
             );
             // solhint-enable not-rely-on-time
-            // slither-disable-end calls-loop
             vars.newNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
                 vars.newDebt
@@ -1810,7 +1788,7 @@ contract TroveManager is
         return
             Troves[_borrower].principal +
             Troves[_borrower].interestOwed +
-            interestRateManager.calculateInterestOwed(
+            InterestRateMath.calculateInterestOwed(
                 Troves[_borrower].principal,
                 Troves[_borrower].interestRate,
                 Troves[_borrower].lastInterestUpdateTime,
@@ -1840,8 +1818,8 @@ contract TroveManager is
 
     function _getRedemptionFee(
         uint256 _collateralDrawn
-    ) internal view returns (uint) {
-        uint256 redemptionFee = (getRedemptionRate() * _collateralDrawn) /
+    ) internal pure returns (uint) {
+        uint256 redemptionFee = (REDEMPTION_FEE_FLOOR * _collateralDrawn) /
             DECIMAL_PRECISION;
         require(
             redemptionFee < _collateralDrawn,
@@ -1945,16 +1923,6 @@ contract TroveManager is
 
     function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
         require(_amount > 0, "TroveManager: Amount must be greater than zero");
-    }
-
-    function _requireValidMaxFeePercentage(
-        uint256 _maxFeePercentage
-    ) internal pure {
-        require(
-            _maxFeePercentage >= REDEMPTION_FEE_FLOOR &&
-                _maxFeePercentage <= DECIMAL_PRECISION,
-            "Max fee percentage must be between 0.5% and 100%"
-        );
     }
 
     // Check whether or not the system *would be* in Recovery Mode, given an collateral:USD price, and the entire system coll and debt.

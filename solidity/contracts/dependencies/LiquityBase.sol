@@ -86,18 +86,6 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         return TCR < CCR;
     }
 
-    function _requireUserAcceptsFee(
-        uint256 _fee,
-        uint256 _amount,
-        uint256 _maxFeePercentage
-    ) internal pure virtual {
-        uint256 feePercentage = (_fee * DECIMAL_PRECISION) / _amount;
-        require(
-            feePercentage <= _maxFeePercentage,
-            "Fee exceeded provided maximum"
-        );
-    }
-
     // Return the amount of collateral to be drawn from a trove's collateral and sent as gas compensation.
     function _getCollGasCompensation(
         uint256 _entireColl

@@ -27,7 +27,6 @@ contract BorrowerOperationsSignatures is
     }
 
     struct OpenTrove {
-        uint256 maxFeePercentage;
         uint256 debtAmount;
         address upperHint;
         address lowerHint;
@@ -55,7 +54,6 @@ contract BorrowerOperationsSignatures is
     }
 
     struct WithdrawMUSD {
-        uint256 maxFeePercentage;
         uint256 amount;
         address upperHint;
         address lowerHint;
@@ -65,7 +63,6 @@ contract BorrowerOperationsSignatures is
     }
 
     struct AdjustTrove {
-        uint256 maxFeePercentage;
         uint256 collWithdrawal;
         uint256 debtChange;
         bool isDebtIncrease;
@@ -84,7 +81,6 @@ contract BorrowerOperationsSignatures is
     }
 
     struct Refinance {
-        uint256 maxFeePercentage;
         address borrower;
         uint256 nonce;
         uint256 deadline;
@@ -101,7 +97,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant OPEN_TROVE_TYPEHASH =
         keccak256(
-            "OpenTrove(uint256 maxFeePercentage,uint256 debtAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "OpenTrove(uint256 debtAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADD_COLL_TYPEHASH =
@@ -121,12 +117,12 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant WITHDRAW_MUSD_TYPEHASH =
         keccak256(
-            "WithdrawMUSD(uint256 maxFeePercentage,uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "WithdrawMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADJUST_TROVE_TYPEHASH =
         keccak256(
-            "AdjustTrove(uint256 maxFeePercentage,uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "AdjustTrove(uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant CLOSE_TROVE_TYPEHASH =
@@ -135,9 +131,7 @@ contract BorrowerOperationsSignatures is
         );
 
     bytes32 private constant REFINANCE_TYPEHASH =
-        keccak256(
-            "Refinance(uint256 maxFeePercentage,address borrower,uint256 nonce,uint256 deadline)"
-        );
+        keccak256("Refinance(address borrower,uint256 nonce,uint256 deadline)");
 
     bytes32 private constant CLAIM_COLLATERAL_TYPEHASH =
         keccak256(
@@ -212,8 +206,7 @@ contract BorrowerOperationsSignatures is
             false,
             addCollData.assetAmount,
             addCollData.upperHint,
-            addCollData.lowerHint,
-            0
+            addCollData.lowerHint
         );
     }
 
@@ -240,7 +233,6 @@ contract BorrowerOperationsSignatures is
     }
 
     function adjustTroveWithSignature(
-        uint256 _maxFeePercentage,
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
@@ -254,7 +246,6 @@ contract BorrowerOperationsSignatures is
         _assetAmount = msg.value;
 
         AdjustTrove memory adjustTroveData = AdjustTrove({
-            maxFeePercentage: _maxFeePercentage,
             collWithdrawal: _collWithdrawal,
             debtChange: _debtChange,
             isDebtIncrease: _isDebtIncrease,
@@ -269,7 +260,6 @@ contract BorrowerOperationsSignatures is
         _verifySignature(
             ADJUST_TROVE_TYPEHASH,
             abi.encode(
-                adjustTroveData.maxFeePercentage,
                 adjustTroveData.collWithdrawal,
                 adjustTroveData.debtChange,
                 adjustTroveData.isDebtIncrease,
@@ -290,8 +280,7 @@ contract BorrowerOperationsSignatures is
             adjustTroveData.isDebtIncrease,
             adjustTroveData.assetAmount,
             adjustTroveData.upperHint,
-            adjustTroveData.lowerHint,
-            adjustTroveData.maxFeePercentage
+            adjustTroveData.lowerHint
         );
     }
 
@@ -344,13 +333,11 @@ contract BorrowerOperationsSignatures is
             false,
             0,
             withdrawCollData.upperHint,
-            withdrawCollData.lowerHint,
-            0
+            withdrawCollData.lowerHint
         );
     }
 
     function openTroveWithSignature(
-        uint256 _maxFeePercentage,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint,
@@ -359,7 +346,6 @@ contract BorrowerOperationsSignatures is
         uint256 _deadline
     ) external payable {
         OpenTrove memory openTroveData = OpenTrove({
-            maxFeePercentage: _maxFeePercentage,
             debtAmount: _debtAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
@@ -371,7 +357,6 @@ contract BorrowerOperationsSignatures is
         _verifySignature(
             OPEN_TROVE_TYPEHASH,
             abi.encode(
-                openTroveData.maxFeePercentage,
                 openTroveData.debtAmount,
                 openTroveData.upperHint,
                 openTroveData.lowerHint,
@@ -384,7 +369,6 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedOpenTrove{value: msg.value}(
             openTroveData.borrower,
-            openTroveData.maxFeePercentage,
             openTroveData.debtAmount,
             openTroveData.upperHint,
             openTroveData.lowerHint
@@ -392,7 +376,6 @@ contract BorrowerOperationsSignatures is
     }
 
     function withdrawMUSDWithSignature(
-        uint256 _maxFeePercentage,
         uint256 _amount,
         address _upperHint,
         address _lowerHint,
@@ -401,7 +384,6 @@ contract BorrowerOperationsSignatures is
         uint256 _deadline
     ) external {
         WithdrawMUSD memory withdrawMUSDData = WithdrawMUSD({
-            maxFeePercentage: _maxFeePercentage,
             amount: _amount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
@@ -413,7 +395,6 @@ contract BorrowerOperationsSignatures is
         _verifySignature(
             WITHDRAW_MUSD_TYPEHASH,
             abi.encode(
-                withdrawMUSDData.maxFeePercentage,
                 withdrawMUSDData.amount,
                 withdrawMUSDData.upperHint,
                 withdrawMUSDData.lowerHint,
@@ -431,8 +412,7 @@ contract BorrowerOperationsSignatures is
             true,
             0,
             withdrawMUSDData.upperHint,
-            withdrawMUSDData.lowerHint,
-            withdrawMUSDData.maxFeePercentage
+            withdrawMUSDData.lowerHint
         );
     }
 
@@ -473,19 +453,16 @@ contract BorrowerOperationsSignatures is
             false,
             0,
             repayMUSDData.upperHint,
-            repayMUSDData.lowerHint,
-            0
+            repayMUSDData.lowerHint
         );
     }
 
     function refinanceWithSignature(
-        uint256 _maxFeePercentage,
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
     ) external {
         Refinance memory refinanceData = Refinance({
-            maxFeePercentage: _maxFeePercentage,
             borrower: _borrower,
             nonce: nonces[_borrower],
             deadline: _deadline
@@ -493,16 +470,13 @@ contract BorrowerOperationsSignatures is
 
         _verifySignature(
             REFINANCE_TYPEHASH,
-            abi.encode(refinanceData.maxFeePercentage, refinanceData.borrower),
+            abi.encode(refinanceData.borrower),
             _borrower,
             _signature,
             _deadline
         );
 
-        borrowerOperations.restrictedRefinance(
-            refinanceData.borrower,
-            refinanceData.maxFeePercentage
-        );
+        borrowerOperations.restrictedRefinance(refinanceData.borrower);
     }
 
     function claimCollateralWithSignature(
