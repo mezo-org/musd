@@ -2887,8 +2887,26 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it.only("redeems troves in the correct order", async () => {
+    it.only("redeems from the lowest actual ICR trove first, not by SortedTroves order", async () => {
       await setupUnorderedTroves()
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "before",
+      )
+
+      const redemptionAmount = to1e18("500")
+      await contracts.musd.unprotectedMint(dennis.address, redemptionAmount)
+
+      await performRedemption(contracts, dennis, carol, redemptionAmount)
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
+
+      // Carol's trove should be hit first as it now has the lowest actual ICR
+      expect(carol.trove.debt.after).to.be.lessThan(carol.trove.debt.before)
     })
 
     context("Expected Reverts", () => {
