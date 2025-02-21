@@ -138,7 +138,7 @@ In Recovery Mode...
 - We do not charge an origination fee.
 - We do not allow users to close troves.
 - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
-- Troves can be liquidated if their collateral ratio is below 150% (instead of the normal 110%).
+- Troves can be liquidated if their collateral ratio is below the TCR (instead of the normal 110%).
 
 Each of these changes (epecially the stricter liquidation threshold) ensures the system returns back to above 150% TCR quickly.
 
