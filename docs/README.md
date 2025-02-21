@@ -91,6 +91,23 @@ For example, say that the pool currently has $20000 mUSD. A user deposits $5000 
 
 The Stability pool is seeded by a bootstrap loan given to governance. $100m mUSD is minted without backing collateral, and the `PCV` contract assumes $100m of debt. That $100m mUSD is deposited directly into the Stability Pool. 50% of all [protocol fees](#fees) are burned to incrementally pay off this bootstrap loan.
 
+### Redemptions
+
+A user may call `TroveManager.redeemCollateral` to burn mUSD to obtain BTC, $1 for $1 worth (minus the redemption fee). This is the main mechanism [maintaining the peg](#maintaining-the-peg).
+
+The trove with the lowest collateral ratio (but above the 110% liquidation threshold) has an equivalent amount of debt canceled, and then their BTC is trasferred to the redeeming user. This has a net effect of _raising_ their collateral ratio.
+
+For example, say that...
+
+- Alice has $1000 debt backed by $1300 collateral (130% ratio)
+- Bob has $1000 debt backed by $2000 collatearl (200% ratio)
+
+Carol redeems $50. Alice's debt and collateral are reduced by $50. Carol receives `$50 * .995 = $49.75` worth of BTC, and the protocol receives `$50 * .005 = $0.25` as a redemption fee.
+
+Alice now has $950 debt backed by $1250 collateral (132% ratio).
+
+Someone's full debt can be cancelled in this way. For example, if Carol redeemed $1000 instead of $50, then Alice's debt would be fully paid, and she would be left with $300 worth of collateral. The remaining collateral is sent to the `CollSurplusPool`. Alice can collect it by calling `BorrowerOperations.claimCollateral`.
+
 ## Key Changes from THUSD
 
 Much of mUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), but there are a few key differences to highlight:
