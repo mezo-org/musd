@@ -128,6 +128,20 @@ If Bob fully redeems Alice, only $2010 can be redeemed; the Gas Pool burns the r
 
 If Alice closes her own trove, she only needs to pay back $2010; the Gas Pool will burn the remaining $200 to pay off all of the debt.
 
+## Recovery Mode
+
+If the Total Collateral Ratio (TCR), the value of all of the collateral divided by the total debt, of the system ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.
+
+In Recovery Mode...
+
+- We require that newly opened troves have at least 150% (the CCR) collateral, rather than the normal 110%.
+- We do not charge an origination fee.
+- We do not allow users to close troves.
+- Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
+- Troves can be liquidated if their collateral ratio is below 150% (instead of the normal 110%).
+
+Each of these changes (epecially the stricter liquidation threshold) ensures the system returns back to above 150% TCR quickly.
+
 ## Key Changes from THUSD
 
 Much of mUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), but there are a few key differences to highlight:
