@@ -71,6 +71,26 @@ The tradeoffs between immutability and upgradability are explored [here](https:/
 
 The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. Together they control Trove state updates and movements of collateral and mUSD tokens around the system.
 
+### Liquidations
+
+Whenever a trove becomes under-collateralized (sub 110% BTC value to debt), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
+
+When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateral, that user is granted a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and siezes the remaining 99.5% of the trove's collateral.
+
+If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral.
+
+### Stability Pool
+
+The Stability Pool provides a mechanism to socialize liquidations. Users deposit mUSD into the pool, and the stability pool has first priority to provide mUSD to liquidate troves and sieze collateral.
+
+In effect, the Stability Pool is buying BTC at a discount from liquidated troves. If a trove has $10000 in debt backed by $11000 worth of BTC, then when that trove is liquidated, the pool loses $10000 mUSD and gains $10,945 worth of BTC. In effect, they were able to buy $10945 worth of BTC for $10000 which is a ~9% discount.
+
+Users own shares of the pool, and when they exit the pool, they withdraw both their mUSD and their share of seized BTC.
+
+For example, say that the pool currently has $20000 mUSD. A user deposits $5000 mUSD. They would own 5000 shares out of 25000 shares. Later, the pool burns $3000 mUSD and siezes $3270 worth of BTC and the user decides to exit. The pool still has 25000 shares, but now has $22000 mUSD and $3270 BTC. The user withdraws `5000 / 25000 * $22000 = $4400` mUSD and `5000 / 25000 * $3270 = $654` worth of BTC.
+
+The Stability pool is seeded by a bootstrap loan given to governance. $100m mUSD is minted without backing collateral, and the `PCV` contract assumes $100m of debt. That $100m mUSD is deposited directly into the Stability Pool. 50% of all [protocol fees](#fees) are burned to incrementally pay off this bootstrap loan.
+
 ## Key Changes from THUSD
 
 Much of mUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), but there are a few key differences to highlight:
@@ -107,7 +127,7 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 - **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
 
-### System Overview
+## System Overview
 
 The MUSD system consists of four main contract groups:
 
