@@ -128,7 +128,7 @@ If Bob fully redeems Alice, only $2010 can be redeemed; the Gas Pool burns the r
 
 If Alice closes her own trove, she only needs to pay back $2010; the Gas Pool will burn the remaining $200 to pay off all of the debt.
 
-## Recovery Mode
+### Recovery Mode
 
 If the Total Collateral Ratio (TCR), the value of all of the collateral divided by the total debt, of the system ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.
 
@@ -141,6 +141,16 @@ In Recovery Mode...
 - Troves can be liquidated if their collateral ratio is below 150% (instead of the normal 110%).
 
 Each of these changes (epecially the stricter liquidation threshold) ensures the system returns back to above 150% TCR quickly.
+
+### Pending Funds
+
+If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral.
+
+As a gas optimization, we track the these funds as "pending", so each borrower has pending collateral, pending principal, and pending interest, which are moved out of the default pool and back to the active pool the next time a borrower interacts with their trove.
+
+`TroveManager.sol` maintains `L_Collateral`, `L_Principal`, and `L_Interest`, which tracks the total amount of pending collateral, principal, and interest in the default pool, per unit of collateral in the system. On a user level, we track snapshots of those values, so we can calculate the pending funds of a user when they interact with the system.
+
+For example, if `rewardSnapshots[_borrower].collateral < L_Collateral`, then the user has pending collateral.
 
 ## Key Changes from THUSD
 
