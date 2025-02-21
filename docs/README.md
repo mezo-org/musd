@@ -73,7 +73,7 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 ### Liquidations
 
-Whenever a trove becomes under-collateralized (sub 110% BTC value to debt), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
+Whenever a trove becomes under-collateralized (sub 110% BTC value to debt in normal mode, higher in [Recovery Mode](#recovery-mode)), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
 
 When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateral, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and siezes the remaining 99.5% of the trove's collateral.
 
@@ -139,6 +139,8 @@ In Recovery Mode...
 - We do not allow users to close troves.
 - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
 - Troves can be liquidated if their collateral ratio is below the TCR (instead of the normal 110%).
+
+Liquidations in recovery mode do not seize all of the collateral. Instead, 110% of the debt's value is seized, and the rest is recoverable by the borrower.
 
 Each of these changes (especially the stricter liquidation threshold) ensures the system returns back to above 150% TCR quickly.
 
