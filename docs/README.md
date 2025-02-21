@@ -77,7 +77,7 @@ Whenever a trove becomes under-collateralized (sub 110% BTC value to debt in nor
 
 When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateral, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and siezes the remaining 99.5% of the trove's collateral.
 
-If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral.
+If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral. The newly aquired collateral and debt are included for all purposes: calcuating collater ratio, redemptions, closing a trove, etc.
 
 ### Stability Pool
 
