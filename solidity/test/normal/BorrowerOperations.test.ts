@@ -136,6 +136,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     return {
       borrower,
+      target: borrower,
       contractAddress,
       nonce,
       domain,
@@ -701,19 +702,22 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
     }
 
     it("opens a trove with a valid signature and deadline", async () => {
-      const { borrower, nonce, domain, deadline } = await setupSignatureTests()
+      const { borrower, target, nonce, domain, deadline } =
+        await setupSignatureTests()
 
       const value = {
         debtAmount,
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -726,6 +730,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           debtAmount,
           upperHint,
           lowerHint,
+          carol.address,
           carol.address,
           signature,
           deadline,
@@ -740,13 +745,15 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, nonce, domain, deadline } = await setupSignatureTests()
+      const { borrower, target, nonce, domain, deadline } =
+        await setupSignatureTests()
 
       const value = {
         debtAmount,
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -759,6 +766,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           debtAmount,
           upperHint,
           lowerHint,
+          carol.address,
           carol.address,
           signature,
           deadline,
@@ -773,11 +781,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's", async () => {
-        const { borrower, nonce, domain, deadline } =
+        const { borrower, target, nonce, domain, deadline } =
           await setupSignatureTests()
 
         const value = {
           borrower,
+          target,
           debtAmount,
           upperHint,
           lowerHint,
@@ -796,6 +805,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               carol.address,
+              carol.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -804,12 +814,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, nonce, domain } = await setupSignatureTests()
+        const { borrower, target, nonce, domain } = await setupSignatureTests()
 
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
 
         const value = {
           borrower,
+          target,
           debtAmount,
           upperHint,
           lowerHint,
@@ -827,6 +838,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               carol.address,
+              carol.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -835,13 +847,15 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline } = await setupSignatureTests()
+        const { borrower, target, domain, deadline } =
+          await setupSignatureTests()
 
         const nonce =
           await contracts.borrowerOperationsSignatures.getNonce(borrower)
 
         const value = {
           borrower,
+          target,
           debtAmount,
           assetAmount,
           upperHint,
@@ -860,6 +874,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             upperHint,
             lowerHint,
             carol.address,
+            carol.address,
             signature,
             deadline,
             { value: assetAmount },
@@ -874,6 +889,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               carol.address,
+              carol.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -883,6 +899,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = carol.address
+        const target = carol.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -899,6 +916,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           debtAmount,
           assetAmount,
           upperHint,
@@ -917,6 +935,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               carol.address,
+              carol.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -926,6 +945,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = carol.address
+        const target = carol.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -942,6 +962,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           debtAmount,
           assetAmount,
           upperHint,
@@ -960,6 +981,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               carol.address,
+              carol.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -969,6 +991,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = carol.address
+        const target = carol.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -985,6 +1008,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           debtAmount,
           assetAmount,
           upperHint,
@@ -1003,6 +1027,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               carol.address,
+              carol.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -1012,6 +1037,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = carol.address
+        const target = carol.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -1028,6 +1054,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           debtAmount,
           assetAmount,
           upperHint,
@@ -1045,6 +1072,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               debtAmount,
               upperHint,
               lowerHint,
+              carol.address,
               carol.address,
               signature,
               deadline,
@@ -1736,6 +1764,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       CloseTrove: [
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -1748,11 +1777,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("closes the Trove with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -1760,17 +1790,18 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await bob.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
-        .closeTroveWithSignature(borrower, signature, deadline)
+        .closeTroveWithSignature(borrower, borrower, signature, deadline)
 
       expect(bob.trove.status.after).to.equal(0)
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -1778,7 +1809,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await bob.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
-        .closeTroveWithSignature(borrower, signature, deadline)
+        .closeTroveWithSignature(borrower, borrower, signature, deadline)
 
       const newNonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
@@ -1787,11 +1818,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's address", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1802,15 +1834,17 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, domain, nonce } = await setupSignatureTests(bob)
+        const { borrower, target, domain, nonce } =
+          await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1819,15 +1853,16 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("Signature expired")
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1837,18 +1872,19 @@ describe("BorrowerOperations in Normal Mode", () => {
         // Submit a valid transaction to increment the nonce
         await contracts.borrowerOperationsSignatures
           .connect(alice.wallet)
-          .closeTroveWithSignature(borrower, signature, deadline)
+          .closeTroveWithSignature(borrower, borrower, signature, deadline)
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -1865,6 +1901,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1874,12 +1911,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -1896,6 +1934,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1905,12 +1944,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -1927,6 +1967,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1936,12 +1977,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -1958,6 +2000,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -1967,7 +2010,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(alice.wallet)
-            .closeTroveWithSignature(borrower, signature, deadline),
+            .closeTroveWithSignature(borrower, borrower, signature, deadline),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
@@ -2130,6 +2173,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -2137,7 +2181,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("adds the correct collateral amount to the trove with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -2145,6 +2189,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -2157,6 +2202,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           assetAmount,
           upperHint,
           lowerHint,
+          bob.address,
           bob.address,
           signature,
           deadline,
@@ -2171,11 +2217,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
+        target,
         assetAmount,
         upperHint,
         lowerHint,
@@ -2192,6 +2239,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           bob.address,
+          bob.address,
           signature,
           deadline,
           { value: assetAmount },
@@ -2205,7 +2253,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's", async () => {
-        const { borrower, nonce, domain, deadline } =
+        const { borrower, target, nonce, domain, deadline } =
           await setupSignatureTests(bob)
 
         const value = {
@@ -2213,6 +2261,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2228,6 +2277,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -2236,7 +2286,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, nonce, domain } = await setupSignatureTests(bob)
+        const { borrower, target, nonce, domain } =
+          await setupSignatureTests(bob)
 
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
 
@@ -2245,6 +2296,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2259,6 +2311,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -2267,7 +2320,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
 
         const value = {
@@ -2275,6 +2328,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2288,6 +2342,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             assetAmount,
             upperHint,
             lowerHint,
+            bob.address,
             bob.address,
             signature,
             deadline,
@@ -2303,6 +2358,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -2312,6 +2368,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -2331,6 +2388,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2345,6 +2403,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -2354,6 +2413,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -2373,6 +2433,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2387,6 +2448,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -2396,6 +2458,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -2415,6 +2478,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2429,6 +2493,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
               { value: assetAmount },
@@ -2438,6 +2503,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -2457,6 +2523,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2470,6 +2537,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               assetAmount,
               upperHint,
               lowerHint,
+              bob.address,
               bob.address,
               signature,
               deadline,
@@ -2793,6 +2861,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -2801,7 +2870,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("reduces the Trove's collateral by the correct amount with a valid signature", async () => {
       await setupCarolsTrove() // open additional trove to prevent going into recovery mode
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -2809,6 +2878,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -2821,6 +2891,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           amount,
           upperHint,
           lowerHint,
+          bob.address,
           bob.address,
           signature,
           deadline,
@@ -2835,11 +2906,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("correctly increments the nonce after a successful transaction", async () => {
       await setupCarolsTrove()
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
+        target,
         amount,
         upperHint,
         lowerHint,
@@ -2856,6 +2928,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           bob.address,
+          bob.address,
           signature,
           deadline,
         )
@@ -2869,7 +2942,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's", async () => {
         await setupCarolsTrove()
-        const { borrower, nonce, domain, deadline } =
+        const { borrower, target, nonce, domain, deadline } =
           await setupSignatureTests(bob)
 
         const value = {
@@ -2877,6 +2950,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2892,6 +2966,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
             ),
@@ -2900,7 +2975,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the deadline has passed", async () => {
         await setupCarolsTrove()
-        const { borrower, nonce, domain } = await setupSignatureTests(bob)
+        const { borrower, target, nonce, domain } =
+          await setupSignatureTests(bob)
 
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
 
@@ -2909,6 +2985,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2923,6 +3000,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
             ),
@@ -2931,7 +3009,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the nonce is invalid", async () => {
         await setupCarolsTrove()
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
 
         const value = {
@@ -2939,6 +3017,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -2953,6 +3032,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             upperHint,
             lowerHint,
             bob.address,
+            bob.address,
             signature,
             deadline,
           )
@@ -2966,6 +3046,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
             ),
@@ -2975,6 +3056,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the contract address is not correctly specified", async () => {
         await setupCarolsTrove()
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -2994,6 +3076,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3008,6 +3091,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
             ),
@@ -3016,6 +3100,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -3035,6 +3120,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3049,6 +3135,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
             ),
@@ -3057,6 +3144,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -3076,6 +3164,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3090,6 +3179,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               bob.address,
+              bob.address,
               signature,
               deadline,
             ),
@@ -3098,6 +3188,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -3117,6 +3208,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3130,6 +3222,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               amount,
               upperHint,
               lowerHint,
+              bob.address,
               bob.address,
               signature,
               deadline,
@@ -3424,6 +3517,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -3438,6 +3532,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, bob, "before")
       const { domain, deadline } = await setupSignatureTests()
       const borrower = bob.address
+      const target = bob.address
       const nonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
       const value = {
@@ -3445,6 +3540,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -3456,6 +3552,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           amount,
           upperHint,
           lowerHint,
+          borrower,
           borrower,
           signature,
           deadline,
@@ -3469,7 +3566,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -3477,6 +3574,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -3489,6 +3587,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          borrower,
           signature,
           deadline,
         )
@@ -3500,13 +3599,14 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's address", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
           amount,
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3521,6 +3621,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -3528,13 +3629,15 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, domain, nonce } = await setupSignatureTests(bob)
+        const { borrower, target, domain, nonce } =
+          await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
           amount,
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3548,6 +3651,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -3555,7 +3659,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
 
         const value = {
@@ -3563,6 +3667,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3577,6 +3682,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             upperHint,
             lowerHint,
             borrower,
+            borrower,
             signature,
             deadline,
           )
@@ -3590,6 +3696,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -3598,6 +3705,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -3617,6 +3725,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3631,6 +3740,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -3639,6 +3749,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -3658,6 +3769,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3672,6 +3784,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -3680,6 +3793,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -3699,6 +3813,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3713,6 +3828,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -3721,6 +3837,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -3740,6 +3857,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -3753,6 +3871,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               amount,
               upperHint,
               lowerHint,
+              borrower,
               borrower,
               signature,
               deadline,
@@ -4122,6 +4241,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -4129,13 +4249,14 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("reduces the Trove's debt by the correct amount with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
       const value = {
         amount,
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -4148,6 +4269,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          borrower,
           signature,
           deadline,
         )
@@ -4156,13 +4278,14 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
       const value = {
         amount,
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -4174,6 +4297,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           amount,
           upperHint,
           lowerHint,
+          borrower,
           borrower,
           signature,
           deadline,
@@ -4186,13 +4310,14 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's address", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
           amount,
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4207,6 +4332,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -4214,13 +4340,15 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, domain, nonce } = await setupSignatureTests(bob)
+        const { borrower, target, domain, nonce } =
+          await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
           amount,
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4234,6 +4362,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -4241,13 +4370,14 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
           amount,
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4262,6 +4392,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             upperHint,
             lowerHint,
             borrower,
+            borrower,
             signature,
             deadline,
           )
@@ -4275,6 +4406,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -4283,6 +4415,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -4302,6 +4435,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4316,6 +4450,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -4324,6 +4459,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -4343,6 +4479,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4357,6 +4494,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -4365,6 +4503,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -4384,6 +4523,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4398,6 +4538,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -4406,6 +4547,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -4425,6 +4567,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -4438,6 +4581,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               amount,
               upperHint,
               lowerHint,
+              borrower,
               borrower,
               signature,
               deadline,
@@ -5399,6 +5543,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -5411,7 +5556,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("adjusts the Trove's debt by the correct amount with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -5422,6 +5567,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -5436,6 +5582,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           assetAmount,
           upperHint,
           lowerHint,
+          borrower,
           borrower,
           signature,
           deadline,
@@ -5451,7 +5598,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -5462,6 +5609,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -5477,6 +5625,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          borrower,
           signature,
           deadline,
         )
@@ -5488,7 +5637,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's address", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
 
         const value = {
@@ -5499,6 +5648,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5517,6 +5667,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -5524,7 +5675,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, domain, nonce } = await setupSignatureTests(bob)
+        const { borrower, target, domain, nonce } =
+          await setupSignatureTests(bob)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
           collWithdrawal,
@@ -5534,6 +5686,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5550,6 +5703,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -5557,7 +5711,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(bob)
         const value = {
           collWithdrawal,
@@ -5567,6 +5721,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5584,6 +5739,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             upperHint,
             lowerHint,
             borrower,
+            borrower,
             signature,
             deadline,
           )
@@ -5600,6 +5756,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -5608,6 +5765,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -5630,6 +5788,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5647,6 +5806,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -5655,6 +5815,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -5677,6 +5838,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5694,6 +5856,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -5702,6 +5865,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -5724,6 +5888,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5741,6 +5906,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               upperHint,
               lowerHint,
               borrower,
+              borrower,
               signature,
               deadline,
             ),
@@ -5749,6 +5915,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = bob.address
+        const target = bob.address
         const contractAddress = addresses.borrowerOperations
 
         const nonce =
@@ -5771,6 +5938,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -5787,6 +5955,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               assetAmount,
               upperHint,
               lowerHint,
+              borrower,
               borrower,
               signature,
               deadline,
@@ -6362,6 +6531,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       ClaimCollateral: [
         { name: "borrower", type: "address" },
+        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -6375,11 +6545,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("allows the user to claim their collateral surplus with a valid signature", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(alice)
 
       const value = {
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -6387,7 +6558,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await alice.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(bob.wallet)
-        .claimCollateralWithSignature(borrower, signature, deadline, NO_GAS)
+        .claimCollateralWithSignature(
+          borrower,
+          borrower,
+          signature,
+          deadline,
+          NO_GAS,
+        )
 
       await updateWalletSnapshot(contracts, alice, "after")
 
@@ -6395,11 +6572,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, target, domain, deadline, nonce } =
         await setupSignatureTests(alice)
 
       const value = {
         borrower,
+        target,
         nonce,
         deadline,
       }
@@ -6407,7 +6585,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await alice.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(bob.wallet)
-        .claimCollateralWithSignature(borrower, signature, deadline)
+        .claimCollateralWithSignature(borrower, borrower, signature, deadline)
 
       const newNonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
@@ -6416,11 +6594,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts when the recovered address does not match the borrower's address", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(alice)
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6431,15 +6610,22 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the deadline has passed", async () => {
-        const { borrower, domain, nonce } = await setupSignatureTests(alice)
+        const { borrower, target, domain, nonce } =
+          await setupSignatureTests(alice)
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6448,15 +6634,21 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("Signature expired")
       })
 
       it("reverts when the nonce is invalid", async () => {
-        const { borrower, domain, deadline, nonce } =
+        const { borrower, target, domain, deadline, nonce } =
           await setupSignatureTests(alice)
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6466,18 +6658,24 @@ describe("BorrowerOperations in Normal Mode", () => {
         // Submit a valid transaction to increment the nonce
         await contracts.borrowerOperationsSignatures
           .connect(carol.wallet)
-          .claimCollateralWithSignature(borrower, signature, deadline)
+          .claimCollateralWithSignature(borrower, borrower, signature, deadline)
 
         // Attempt to submit the same transaction again which should now be invalid due to the nonce
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract address is not correctly specified", async () => {
         const borrower = alice.address
+        const target = alice.address
         const contractAddress = addresses.pcv // PCV contract address instead of BorrowerOperations
 
         const nonce =
@@ -6494,6 +6692,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6503,12 +6702,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the chain id is not correctly specified", async () => {
         const borrower = alice.address
+        const target = alice.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -6525,6 +6730,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6534,12 +6740,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract version is not correctly specified", async () => {
         const borrower = alice.address
+        const target = alice.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -6556,6 +6768,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6565,12 +6778,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
 
       it("reverts when the contract name is not correctly specified", async () => {
         const borrower = alice.address
+        const target = alice.address
         const contractAddress = addresses.borrowerOperationsSignatures
 
         const nonce =
@@ -6587,6 +6806,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower,
+          target,
           nonce,
           deadline,
         }
@@ -6596,7 +6816,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperationsSignatures
             .connect(carol.wallet)
-            .claimCollateralWithSignature(borrower, signature, deadline),
+            .claimCollateralWithSignature(
+              borrower,
+              borrower,
+              signature,
+              deadline,
+            ),
         ).to.be.revertedWith("BorrowerOperationsSignatures: Invalid signature")
       })
     })
