@@ -288,7 +288,7 @@ contract BorrowerOperationsSignatures is
             adjustTroveData.deadline
         );
 
-        borrowerOperations.restrictedAdjustTrove(
+        borrowerOperations.restrictedAdjustTrove{value: msg.value}(
             adjustTroveData.borrower,
             adjustTroveData.recipient,
             adjustTroveData.collWithdrawal,

@@ -4690,6 +4690,54 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(dennis.btc.after).to.equal(dennis.btc.before + withdrawnCollateral)
     })
 
+    it("allows the caller to pay for collateral increases", async () => {
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+
+      const recipient = dennis.wallet.address
+
+      const addedCollateral = to1e18(1)
+
+      const value = {
+        collWithdrawal: 0n,
+        debtChange: 0n,
+        isDebtIncrease: false,
+        assetAmount: addedCollateral,
+        upperHint,
+        lowerHint,
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      await updateTroveSnapshot(contracts, bob, "before")
+
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .adjustTroveWithSignature(
+          value.collWithdrawal,
+          value.debtChange,
+          value.isDebtIncrease,
+          value.assetAmount,
+          value.upperHint,
+          value.lowerHint,
+          value.borrower,
+          value.recipient,
+          signature,
+          value.deadline,
+          { value: value.assetAmount },
+        )
+
+      await updateTroveSnapshot(contracts, bob, "after")
+
+      expect(bob.trove.collateral.after).to.equal(
+        bob.trove.collateral.before + addedCollateral,
+      )
+    })
+
     it("sends musd to the recipient", async () => {
       const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
