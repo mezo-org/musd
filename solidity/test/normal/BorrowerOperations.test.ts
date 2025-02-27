@@ -1589,6 +1589,35 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.trove.status.after).to.equal(0)
     })
 
+    it("releases collateral to the recipient", async () => {
+      await updateTroveSnapshot(contracts, bob, "before")
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+
+      const recipient = dennis.wallet.address
+
+      const value = {
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .closeTroveWithSignature(borrower, recipient, signature, deadline)
+
+      await updateWalletSnapshot(contracts, dennis, "after")
+
+      expect(dennis.btc.after).to.equal(
+        dennis.btc.before + bob.trove.collateral.before,
+      )
+    })
+
     it("correctly increments the nonce after a successful transaction", async () => {
       const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
@@ -1692,7 +1721,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .restrictedCloseTrove(bob.address),
+            .restrictedCloseTrove(bob.address, bob.address),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not authorized to perform this operation",
         )

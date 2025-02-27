@@ -237,7 +237,10 @@ contract BorrowerOperationsSignatures is
             closeTroveData.deadline
         );
 
-        borrowerOperations.restrictedCloseTrove(_borrower);
+        borrowerOperations.restrictedCloseTrove(
+            closeTroveData.borrower,
+            closeTroveData.recipient
+        );
     }
 
     function adjustTroveWithSignature(

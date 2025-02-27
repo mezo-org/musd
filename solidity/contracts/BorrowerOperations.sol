@@ -240,7 +240,7 @@ contract BorrowerOperations is
     }
 
     function closeTrove() external override {
-        restrictedCloseTrove(msg.sender);
+        restrictedCloseTrove(msg.sender, msg.sender);
     }
 
     function refinance() external override {
@@ -559,7 +559,10 @@ contract BorrowerOperations is
         // slither-disable-end reentrancy-events
     }
 
-    function restrictedCloseTrove(address _borrower) public {
+    function restrictedCloseTrove(
+        address _borrower,
+        address _recipient
+    ) public {
         _requireCallerIsAuthorized(_borrower);
         ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
@@ -626,7 +629,7 @@ contract BorrowerOperations is
         );
 
         // Send the collateral back to the user
-        activePoolCached.sendCollateral(_borrower, coll);
+        activePoolCached.sendCollateral(_recipient, coll);
     }
 
     function restrictedRefinance(address _borrower) public {

@@ -110,7 +110,10 @@ interface IBorrowerOperations {
 
     function closeTrove() external;
 
-    function restrictedCloseTrove(address _borrower) external;
+    function restrictedCloseTrove(
+        address _borrower,
+        address _recipient
+    ) external;
 
     function refinance() external;
 
