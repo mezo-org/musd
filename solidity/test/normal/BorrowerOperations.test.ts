@@ -851,13 +851,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
-          borrower: overridenData.borrower,
-          recipient: overridenData.recipient,
-          debtAmount: overridenData.debtAmount,
-          upperHint: overridenData.upperHint,
-          lowerHint: overridenData.lowerHint,
+          borrower: data.borrower,
+          recipient: data.recipient,
+          debtAmount: data.debtAmount,
+          upperHint: data.upperHint,
+          lowerHint: data.lowerHint,
           nonce: overridenData.nonce,
-          deadline: overridenData.deadline,
+          deadline: data.deadline,
         }
 
         const signature = await overridenData.signer.signTypedData(
@@ -1713,10 +1713,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
-          borrower: overridenData.borrower,
-          recipient: overridenData.recipient,
+          borrower: data.borrower,
+          recipient: data.recipient,
           nonce: overridenData.nonce,
-          deadline: overridenData.deadline,
+          deadline: data.deadline,
         }
 
         const signature = await overridenData.signer.signTypedData(
@@ -2017,12 +2017,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         const overridenData = { ...data, ...overrides }
 
         const value = {
-          assetAmount: overridenData.assetAmount,
-          upperHint: overridenData.upperHint,
-          lowerHint: overridenData.lowerHint,
-          borrower: overridenData.borrower,
+          assetAmount: data.assetAmount,
+          upperHint: data.upperHint,
+          lowerHint: data.lowerHint,
+          borrower: data.borrower,
           nonce: overridenData.nonce,
-          deadline: overridenData.deadline,
+          deadline: data.deadline,
         }
 
         const domain = {
@@ -2542,13 +2542,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         const overriddenData = { ...data, ...overrides }
 
         const value = {
-          amount: overriddenData.amount,
-          upperHint: overriddenData.upperHint,
-          lowerHint: overriddenData.lowerHint,
-          borrower: overriddenData.borrower,
-          recipient: overriddenData.recipient,
+          amount: data.amount,
+          upperHint: data.upperHint,
+          lowerHint: data.lowerHint,
+          borrower: data.borrower,
+          recipient: data.recipient,
           nonce: overriddenData.nonce,
-          deadline: overriddenData.deadline,
+          deadline: data.deadline,
         }
 
         const domain = {
@@ -3048,13 +3048,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
-          amount: overridenData.amount,
-          upperHint: overridenData.upperHint,
-          lowerHint: overridenData.lowerHint,
-          borrower: overridenData.borrower,
-          recipient: overridenData.recipient,
+          amount: data.amount,
+          upperHint: data.upperHint,
+          lowerHint: data.lowerHint,
+          borrower: data.borrower,
+          recipient: data.recipient,
           nonce: overridenData.nonce,
-          deadline: overridenData.deadline,
+          deadline: data.deadline,
         }
 
         const signature = await overridenData.signer.signTypedData(
@@ -3557,12 +3557,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         const overriddenData = { ...data, ...overrides }
 
         const value = {
-          amount: overriddenData.amount,
-          upperHint: overriddenData.upperHint,
-          lowerHint: overriddenData.lowerHint,
-          borrower: overriddenData.borrower,
+          amount: data.amount,
+          upperHint: data.upperHint,
+          lowerHint: data.lowerHint,
+          borrower: data.borrower,
           nonce: overriddenData.nonce,
-          deadline: overriddenData.deadline,
+          deadline: data.deadline,
         }
 
         const domain = {
@@ -4785,16 +4785,16 @@ describe("BorrowerOperations in Normal Mode", () => {
         const overriddenData = { ...data, ...overrides }
 
         const value = {
-          collWithdrawal: overriddenData.collWithdrawal,
-          debtChange: overriddenData.debtChange,
-          isDebtIncrease: overriddenData.isDebtIncrease,
-          assetAmount: overriddenData.assetAmount,
-          upperHint: overriddenData.upperHint,
-          lowerHint: overriddenData.lowerHint,
-          borrower: overriddenData.borrower,
-          recipient: overriddenData.recipient,
+          collWithdrawal: data.collWithdrawal,
+          debtChange: data.debtChange,
+          isDebtIncrease: data.isDebtIncrease,
+          assetAmount: data.assetAmount,
+          upperHint: data.upperHint,
+          lowerHint: data.lowerHint,
+          borrower: data.borrower,
+          recipient: data.recipient,
           nonce: overriddenData.nonce,
-          deadline: overriddenData.deadline,
+          deadline: data.deadline,
         }
 
         const domain = {
@@ -5256,9 +5256,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         const overriddenData = { ...data, ...overrides }
 
         const value = {
-          borrower: overriddenData.borrower,
+          borrower: data.borrower,
           nonce: overriddenData.nonce,
-          deadline: overriddenData.deadline,
+          deadline: data.deadline,
         }
 
         const domain = {
@@ -5441,10 +5441,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         const overriddenData = { ...data, ...overrides }
 
         const value = {
-          borrower: overriddenData.borrower,
-          recipient: overriddenData.recipient,
+          borrower: data.borrower,
+          recipient: data.recipient,
           nonce: overriddenData.nonce,
-          deadline: overriddenData.deadline,
+          deadline: data.deadline,
         }
 
         const domain = {
