@@ -2398,6 +2398,44 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("sends the collateral to the recipient with a valid signature", async () => {
+      await setupCarolsTrove() // open additional trove to prevent going into recovery mode
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+
+      const recipient = dennis.wallet.address
+
+      const value = {
+        amount,
+        upperHint,
+        lowerHint,
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+
+      await contracts.borrowerOperationsSignatures
+        .connect(carol.wallet)
+        .withdrawCollWithSignature(
+          amount,
+          upperHint,
+          lowerHint,
+          bob.address,
+          recipient,
+          signature,
+          deadline,
+        )
+
+      await updateWalletSnapshot(contracts, dennis, "after")
+
+      expect(dennis.btc.after).to.equal(dennis.btc.before + amount)
+    })
+
     it("correctly increments the nonce after a successful transaction", async () => {
       await setupCarolsTrove()
       const { borrower, recipient, domain, deadline, nonce } =
