@@ -392,6 +392,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedOpenTrove{value: msg.value}(
             openTroveData.borrower,
+            openTroveData.recipient,
             openTroveData.debtAmount,
             openTroveData.upperHint,
             openTroveData.lowerHint

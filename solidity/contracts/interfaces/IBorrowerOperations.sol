@@ -68,6 +68,7 @@ interface IBorrowerOperations {
 
     function restrictedOpenTrove(
         address _borrower,
+        address _recipient,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint

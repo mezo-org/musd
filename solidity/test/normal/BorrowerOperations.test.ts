@@ -744,6 +744,43 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.debt.after).to.be.equal(expectedDebt)
     })
 
+    it("withdraws the mUSD to the recipient", async () => {
+      const { borrower, nonce, domain, deadline } = await setupSignatureTests()
+
+      const recipient = dennis.wallet.address
+
+      const value = {
+        debtAmount,
+        upperHint,
+        lowerHint,
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await carol.wallet.signTypedData(domain, types, value)
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+
+      await contracts.borrowerOperationsSignatures
+        .connect(carol.wallet)
+        .openTroveWithSignature(
+          debtAmount,
+          upperHint,
+          lowerHint,
+          carol.address,
+          recipient,
+          signature,
+          deadline,
+          { value: assetAmount },
+        )
+
+      await updateWalletSnapshot(contracts, dennis, "after")
+
+      expect(dennis.musd.after).to.equal(dennis.musd.before + debtAmount)
+    })
+
     it("correctly increments the nonce after a successful transaction", async () => {
       const { borrower, recipient, nonce, domain, deadline } =
         await setupSignatureTests()
@@ -879,7 +916,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .restrictedOpenTrove(bob.address, debtAmount, upperHint, lowerHint),
+            .restrictedOpenTrove(
+              bob.address,
+              bob.address,
+              debtAmount,
+              upperHint,
+              lowerHint,
+            ),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not authorized to perform this operation",
         )

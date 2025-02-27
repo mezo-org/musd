@@ -147,7 +147,13 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedOpenTrove(msg.sender, _debtAmount, _upperHint, _lowerHint);
+        restrictedOpenTrove(
+            msg.sender,
+            msg.sender,
+            _debtAmount,
+            _upperHint,
+            _lowerHint
+        );
     }
 
     // Send collateral to a trove
@@ -422,6 +428,7 @@ contract BorrowerOperations is
 
     function restrictedOpenTrove(
         address _borrower,
+        address _recipient,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
@@ -537,7 +544,7 @@ contract BorrowerOperations is
         _withdrawMUSD(
             contractsCache.activePool,
             contractsCache.musd,
-            _borrower,
+            _recipient,
             _debtAmount,
             vars.netDebt
         );
