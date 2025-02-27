@@ -24,7 +24,7 @@ interface ICollSurplusPool {
 
     function accountSurplus(address _account, uint256 _amount) external;
 
-    function claimColl(address _account) external;
+    function claimColl(address _account, address _recipient) external;
 
     function getCollateralBalance() external view returns (uint);
 

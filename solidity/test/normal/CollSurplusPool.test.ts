@@ -80,7 +80,7 @@ describe("CollSurplusPool in Normal Mode", () => {
         await expect(
           contracts.collSurplusPool
             .connect(alice.wallet)
-            .claimColl(alice.wallet),
+            .claimColl(alice.wallet, alice.wallet),
         ).to.be.revertedWith(
           "CollSurplusPool: Caller is not Borrower Operations",
         )

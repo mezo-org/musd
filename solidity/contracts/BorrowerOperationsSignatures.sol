@@ -533,7 +533,8 @@ contract BorrowerOperationsSignatures is
         );
 
         borrowerOperations.restrictedClaimCollateral(
-            claimCollateralData.borrower
+            claimCollateralData.borrower,
+            claimCollateralData.recipient
         );
     }
 

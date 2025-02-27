@@ -5349,6 +5349,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await alice.wallet.signTypedData(domain, types, value)
+
+      const surplus = await contracts.collSurplusPool.getCollateral(
+        alice.wallet,
+      )
+
       await contracts.borrowerOperationsSignatures
         .connect(bob.wallet)
         .claimCollateralWithSignature(
@@ -5361,7 +5366,36 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateWalletSnapshot(contracts, alice, "after")
 
-      expect(alice.btc.after).to.be.greaterThan(alice.btc.before)
+      expect(alice.btc.after).to.equal(alice.btc.before + surplus)
+    })
+
+    it("sends the collateral to the recipient", async () => {
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(alice)
+
+      const recipient = dennis.address
+
+      const value = {
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await alice.wallet.signTypedData(domain, types, value)
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+      const surplus = await contracts.collSurplusPool.getCollateral(
+        alice.wallet,
+      )
+
+      await contracts.borrowerOperationsSignatures
+        .connect(bob.wallet)
+        .claimCollateralWithSignature(borrower, recipient, signature, deadline)
+
+      await updateWalletSnapshot(contracts, dennis, "after")
+
+      expect(dennis.btc.after).to.equal(dennis.btc.before + surplus)
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {

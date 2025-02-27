@@ -287,7 +287,7 @@ contract BorrowerOperations is
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(msg.sender);
+        collSurplusPool.claimColl(msg.sender, msg.sender);
     }
 
     function setAddresses(
@@ -420,10 +420,13 @@ contract BorrowerOperations is
         emit MusdGasCompensationChanged(musdGasCompensation);
     }
 
-    function restrictedClaimCollateral(address _borrower) public {
+    function restrictedClaimCollateral(
+        address _borrower,
+        address _recipient
+    ) public {
         _requireCallerIsAuthorized(_borrower);
         // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(_borrower);
+        collSurplusPool.claimColl(_borrower, _recipient);
     }
 
     function restrictedOpenTrove(
