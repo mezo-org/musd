@@ -45,9 +45,10 @@ The arbitrageur started with $100k and ended with $109k (ignoring fees). This tr
 
 ### Fees
 
-The protocol collects fees in three places:
+The protocol collects fees in four places:
 
 - An origination fee of 0.5% (governable), which is added as debt to a trove but minted to governance.
+- A redemption fee of 0.5% (governable), which is taken whenever a user redeems mUSD for BTC. For example, at 0.5%, whenever $100 of mUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
 - A refinancing fee, which operates like the origination fee.
 - [Simple](https://www.investopedia.com/terms/s/simple_interest.asp), [fixed](https://www.creditkarma.com/credit/i/fixed-interest-rate) interest on the principal of the loan.
 
@@ -69,6 +70,89 @@ To give borrowers certainty the deployed contracts are immutable. However at som
 The tradeoffs between immutability and upgradability are explored [here](https://medium.com/@ben_longstaff/threshold-usd-token-design-trade-offs-2926087d31c4).
 
 The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. Together they control Trove state updates and movements of collateral and mUSD tokens around the system.
+
+### Liquidations
+
+Whenever a trove becomes under-collateralized (sub 110% BTC value to debt in normal mode, higher in [Recovery Mode](#recovery-mode)), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
+
+When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateral, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and siezes the remaining 99.5% of the trove's collateral.
+
+If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral. The newly aquired collateral and debt are included for all purposes: calcuating collater ratio, redemptions, closing a trove, etc.
+
+### Stability Pool
+
+The Stability Pool provides a mechanism to socialize liquidations. Users deposit mUSD into the pool, and the stability pool has first priority to provide mUSD to liquidate troves and seize collateral.
+
+In effect, the Stability Pool is buying BTC at a discount from liquidated troves. If a trove has $10000 in debt backed by $11000 worth of BTC, then when that trove is liquidated, the pool loses $10000 mUSD and gains $10,945 worth of BTC. In effect, they were able to buy $10945 worth of BTC for $10000 which is a ~9% discount.
+
+Users own shares of the pool, and when they exit the pool, they withdraw both their mUSD and their share of seized BTC.
+
+For example, say that the pool currently has $20000 mUSD. A user deposits $5000 mUSD. They would own 5000 shares out of 25000 shares. Later, the pool burns $3000 mUSD and seizes $3270 worth of BTC and the user decides to exit. The pool still has 25000 shares, but now has $22000 mUSD and $3270 BTC. The user withdraws `5000 / 25000 * $22000 = $4400` mUSD and `5000 / 25000 * $3270 = $654` worth of BTC.
+
+The Stability pool is seeded by a bootstrap loan given to governance. $100m mUSD is minted against future fees, and the `PCV` contract assumes $100m of debt. That $100m mUSD is deposited directly into the Stability Pool. 50% of all [protocol fees](#fees) are burned to incrementally pay off this bootstrap loan.
+
+### Redemptions
+
+A user may call `TroveManager.redeemCollateral` to burn mUSD to obtain BTC, $1 for $1 worth (minus the redemption fee). This is the main mechanism [maintaining the peg](#maintaining-the-peg).
+
+The trove with the lowest collateral ratio (but above the 110% liquidation threshold) has an equivalent amount of debt canceled, and then their BTC is trasferred to the redeeming user. This has a net effect of _raising_ their collateral ratio.
+
+For example, say that...
+
+- Alice has $1000 debt backed by $1300 collateral (130% ratio)
+- Bob has $1000 debt backed by $2000 collatearl (200% ratio)
+
+Carol redeems $50. Alice's debt and collateral are reduced by $50. Carol receives `$50 * .995 = $49.75` worth of BTC, and the protocol receives `$50 * .005 = $0.25` as a redemption fee.
+
+Alice now has $950 debt backed by $1250 collateral (132% ratio).
+
+Someone's full debt can be cancelled in this way. For example, if Carol redeemed $1000 instead of $50, then Alice's debt would be fully paid, and she would be left with $300 worth of collateral. The remaining collateral is sent to the `CollSurplusPool`. Alice can collect it by calling `BorrowerOperations.claimCollateral`.
+
+## Supporting Ideas
+
+### Gas Compensation
+
+When a user opens up a trove, an extra flat $200 mUSD is minted for gas compensation, sent to the `GasPool`, and added to the borrower's debt. This debt is included when calculating the user's collateral ratio.
+
+When a trove is liquidated, the whole debt (including the $200 gas compensation) is paid. The initiator of the liquidation is sent the $200 gas compensation, to offset any gas they might pay to call the liquidation function, especially in times of high network traffic.
+
+In other situations (redemption, closing a trove, repaying debt), the last $200 of debt of a trove is paid by the Gas Pool.
+
+For example, say that Alice wants to mint $2000 mUSD with $3000 of BTC as collateral. Alice will receive $2000, $200 will be sent to the Gas Pool, and a origination fee of $10 (0.5%) is sent to the protocol.
+
+Alice's total debt, for liquidations or calculating collateral ratios, is $2210.
+
+If Bob liquidates Alice, The stability pool burns $2210 and the Gas Pool sends Bob $200.
+
+If Bob fully redeems Alice, only $2010 can be redeemed; the Gas Pool burns the remaining $200 to close Alice's trove.
+
+If Alice closes her own trove, she only needs to pay back $2010; the Gas Pool will burn the remaining $200 to pay off all of the debt.
+
+### Recovery Mode
+
+If the Total Collateral Ratio (TCR), the value of all of the collateral divided by the total debt, of the system ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.
+
+In Recovery Mode...
+
+- We require that newly opened troves have at least 150% (the CCR) collateral, rather than the normal 110%.
+- We do not charge an origination fee.
+- We do not allow users to close troves.
+- Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
+- Troves can be liquidated if their collateral ratio is below the TCR (instead of the normal 110%).
+
+Liquidations in recovery mode do not seize all of the collateral. Instead, 110% of the debt's value is seized, and the rest is recoverable by the borrower.
+
+Each of these changes (especially the stricter liquidation threshold) ensures the system returns back to above 150% TCR quickly.
+
+### Pending Funds
+
+If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral.
+
+As a gas optimization, we track the these funds as "pending", so each borrower has pending collateral, pending principal, and pending interest, which are moved out of the default pool and back to the active pool the next time a borrower interacts with their trove.
+
+`TroveManager.sol` maintains `L_Collateral`, `L_Principal`, and `L_Interest`, which tracks the total amount of pending collateral, principal, and interest in the default pool, per unit of collateral in the system. On a user level, we track snapshots of those values, so we can calculate the pending funds of a user when they interact with the system.
+
+For example, if `rewardSnapshots[_borrower].collateral < L_Collateral`, then the user has pending collateral.
 
 ## Key Changes from THUSD
 
@@ -106,7 +190,7 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 - **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
 
-### System Overview
+## System Overview
 
 The MUSD system consists of four main contract groups:
 
@@ -127,6 +211,7 @@ graph TD
         GasPool
     end
     subgraph Support["Supporting Contracts"]
+        BorrowerOperationsSignatures
         PriceFeed
         SortedTroves
         HintHelpers
@@ -136,21 +221,23 @@ graph TD
     TokenSystem-->Core
     Core-->Pools
     Pools-->Support
-    linkStyle 0 stroke-opacity:1  
-    linkStyle 1 stroke-opacity:1  
-    linkStyle 2 stroke-opacity:1   
+    linkStyle 0 stroke-opacity:1
+    linkStyle 1 stroke-opacity:1
+    linkStyle 2 stroke-opacity:1
 ```
 
 - **Token (MUSD)**: The stablecoin at the heart of the system, designed to maintain a peg to USD.
 - **Core Protocol**: Handles the main operations like opening/closing positions, managing collateral, and maintaining system stability
 - **Asset Pools**: Manages the system's various collateral and liquidity pools
-- **Supporting Contracts**: Provides essential services like price feeds, position sorting, and protocol-controlled value management
+- **Supporting Contracts**: Provides essential services like price feeds, remote trove management, position sorting, and protocol-controlled value management
 
 ### Core Smart Contracts
 
 `MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers mUSD tokens.
 
 `BorrowerOperations.sol` - contains the basic operations by which borrowers interact with their Trove: Trove creation, collateral top-up / withdrawal, stablecoin issuance and repayment. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move collateral/Tokens between Pools or between Pool <> user, where necessary.
+
+`BorrowerOperationsSignatures.sol` - contains `*WithSignature` functions that enable a third party (like a smart contract) to perform actions like adding and removing collateral and musd from a trove, given that the third party supplies a valid signature from the trove owner.
 
 `InterestRateManager.sol` - handles operations for setting interest rates as well as interest related calculations.
 
@@ -190,23 +277,45 @@ graph TD
 
 ### Borrower Operations - `BorrowerOperations.sol`
 
-`openTrove(uint _maxFeePercentage, uint _MUSDAmount, address _upperHint, address _lowerHint)`: payable function that creates a Trove for the caller with the requested debt, and the collateral received. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation. The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee.
+`openTrove(uint _MUSDAmount, address _upperHint, address _lowerHint)`: payable function that creates a Trove for the caller with the requested debt, and the collateral received. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation.
 
 `addColl(address _upperHint, address _lowerHint))`: payable function that adds the received collateral to the caller's active Trove.
 
 `withdrawColl(uint _amount, address _upperHint, address _lowerHint)`: withdraws `_amount` of collateral from the caller’s Trove. Executes only if the user has an active Trove, the withdrawal would not pull the user’s Trove below the minimum collateralization ratio, and the resulting total collateralization ratio of the system is above 150%.
 
-`withdrawMUSD(uint _maxFeePercentage, uint _amount, address _upperHint, address _lowerHint)`: issues `_amount` of mUSD from the caller’s Trove to the caller. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%. The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee.
+`withdrawMUSD(uint _amount, address _upperHint, address _lowerHint)`: issues `_amount` of mUSD from the caller’s Trove to the caller. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%.
 
 `repayMUSD(uint _amount, address _upperHint, address _lowerHint)`: repay `_amount` of mUSD to the caller’s Trove, subject to leaving enough debt in the Trove for gas compensation.
 
-`adjustTrove(address _borrower, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage)`: enables a borrower to simultaneously change both their collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%. The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee. The parameter is ignored if the debt is not increased with the transaction.
+`adjustTrove(address _borrower, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint)`: enables a borrower to simultaneously change both their collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%.
 
 `closeTrove()`: allows a borrower to repay all debt, withdraw all their collateral, and close their Trove. Requires the borrower have an mUSD balance sufficient to repay their Trove's debt, excluding gas compensation - i.e. `(debt - MUSD_GAS_COMPENSATION)` mUSD.
 
 `claimCollateral(address _user)`: when a borrower’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 110%, this function allows the borrower to claim their collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 110% of the debt upon liquidation).
 
-`refinance(uint _maxFeePercentage)`: allows a borrower to move their debt to a new (presumably lower) interest rate. In addition to the original debt, extra debt is issued to pay the refinancing fee. The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the refinancing fee.
+`refinance()`: allows a borrower to move their debt to a new (presumably lower) interest rate. In addition to the original debt, extra debt is issued to pay the refinancing fee.
+
+### BorrowerOperationsSignatures Functions - `BorrowerOpeationsSignatures.sol`
+
+Each function requires a signature and deadline (when the signature is valid until). For examples of how to craft these signatures and deadlines, check out any of the `WithSignature` tests in `BorrowerOperations.test.ts`.
+
+`addCollWithSignature(uint256 _assetAmount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: payable function that adds the received collateral to the signer's active Trove.
+
+`closeTroveWithSignature(address _borrower, bytes memory _signature, uint256 _deadline)`: allows a signer to repay all debt, withdraw all their collateral, and close their Trove. Requires the caller have an mUSD balance sufficient to repay the signer's Trove's debt, excluding gas compensation - i.e. `(debt - MUSD_GAS_COMPENSATION)` mUSD.
+
+`adjustTroveWithSignature(uint256 _collWithdrawal, uint256 _debtChange, bool _isDebtIncrease, uint256 _assetAmount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: enables a caller to simultaneously change a signer's collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%.
+
+`withdrawCollWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: withdraws `_amount` of collateral from the signer's Trove. Executes only if the signer has an active Trove, the withdrawal would not pull the signer's Trove below the minimum collateralization ratio, and the resulting total collateralization ratio of the system is above 150%.
+
+`openTroveWithSignature(uint256 _debtAmount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: payable function that creates a Trove for the signer with the requested debt, and the collateral received from the caller. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation.
+
+`withdrawMUSDWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: issues `_amount` of mUSD from the signer’s Trove to the signer. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%.
+
+`repayMUSDWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: repay `_amount` of mUSD to the signer’s Trove from the caller, subject to leaving enough debt in the Trove for gas compensation.
+
+`refinanceWithSignature(address _borrower, bytes memory _signature, uint256 _deadline)`: allows a caller to move the signer's debt to a new (presumably lower) interest rate. In addition to the original debt, extra debt is issued to pay the refinancing fee.
+
+`claimCollateralWithSignature(address _borrower, bytes memory _signature, uint256 _deadline)`: when a signer’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 110%, this function allows the caller to forward the signer's collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 110% of the debt upon liquidation).
 
 ### TroveManager Functions - `TroveManager.sol`
 
@@ -214,7 +323,7 @@ graph TD
 
 `batchLiquidateTroves(address[] calldata _troveArray)`: callable by anyone, accepts a custom list of Troves addresses as an argument. Steps through the provided list and attempts to liquidate every Trove, until it reaches the end or it runs out of gas. A Trove is liquidated only if it meets the conditions for liquidation. For a batch of 10 Troves, the gas costs per liquidated Trove are roughly between 75K-83K, for a batch of 50 Troves between 54K-69K.
 
-`redeemCollateral(uint _MUSDAmount, address _firstRedemptionHint, address _upperPartialRedemptionHint, address _lowerPartialRedemptionHint, uint _partialRedemptionHintNICR, uint _maxIterations, uint _maxFeePercentage)`: redeems `_MUSDamount` of stablecoins for ether from the system. Decreases the caller’s mUSD balance, and sends them the corresponding amount of collateral. Executes successfully if the caller has sufficient mUSD to redeem. The number of Troves redeemed from is capped by `_maxIterations`. The borrower has to provide a `_maxFeePercentage` that they are willing to accept in case of a fee slippage, i.e. when another redemption transaction is processed first, driving up the redemption fee.
+`redeemCollateral(uint _MUSDAmount, address _firstRedemptionHint, address _upperPartialRedemptionHint, address _lowerPartialRedemptionHint, uint _partialRedemptionHintNICR, uint _maxIterations)`: redeems `_MUSDamount` of stablecoins for ether from the system. Decreases the caller’s mUSD balance, and sends them the corresponding amount of collateral. Executes successfully if the caller has sufficient mUSD to redeem. The number of Troves redeemed from is capped by `_maxIterations`.
 
 `getCurrentICR(address _user, uint _price)`: computes the user’s individual collateralization ratio (ICR) based on their total collateral and total mUSD debt. Returns 2^256 -1 if they have 0 debt.
 
@@ -233,6 +342,59 @@ graph TD
 `getTCR()`: returns the total collateralization ratio (TCR) of the system. The TCR is based on the entire system debt and collateral (including pending rewards).
 
 `checkRecoveryMode()`: reveals whether the system is in Recovery Mode (i.e. whether the Total Collateralization Ratio (TCR) is below the Critical Collateralization Ratio (CCR)).
+
+## Opening a Trove from a Front End
+
+We keep a list of all open troves sorted by collateralization ratio on chain, implemented as a linked list. Since finding the proper insertion point for a new trove (or an adjusted trove) would be computationally expensive naively, the relevant functions (like `BorrowerOperations.openTrove`) take a `_upperHint` and `_lowerHint`, to narrow the search.
+
+We use `SortedTroves.findInsertPosition` to find these hints, which in turn needs _approximate_ hints, from `HintHelpers.getApproxHint`. This is involved, so we provide an example (in typescript):
+
+```ts
+// Amount of MUSD to borrow
+const debtAmount = to1e18(2000)
+
+// Amount of collateral (in BTC)
+const assetAmount = to1e18(10)
+
+// Compute hints using HintHelpers and SortedTroves
+
+// Compute expected total debt by adding gas compensation and fee
+const gasCompensation = await troveManager.MUSD_GAS_COMPENSATION()
+const expectedFee = await troveManager.getBorrowingFeeWithDecay(debtAmount)
+const expectedTotalDebt = debtAmount + expectedFee + gasCompensation
+
+// Nominal CR is collateral * 1e20 / totalDebt
+// Note that price is not included in this calculation
+const nicr = (assetAmount * to1e18(100)) / expectedTotalDebt
+
+// Get an approximate address hint from HintHelpers contract
+const numTroves = Number(await sortedTroves.getSize())
+
+// Use 15•sqrt(troves)
+const numTrials = BigInt(Math.ceil(Math.sqrt(numTroves))) * 15n
+
+// A source of noise, does not need to be cryptographically secure.
+const randomSeed = Math.ceil(Math.random() * 100000)
+
+const { 0: approxHint } = await hintHelpers.getApproxHint(
+  nicr,
+  numTrials,
+  randomSeed,
+)
+
+// Use the approximate hint to get exact upper and lower hints
+const { 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(
+  nicr,
+  approxHint,
+  approxHint,
+)
+
+await borrowerOperations
+  .connect(carol.wallet)
+  .openTrove(maxFeePercentage, debtAmount, assetAmount, upperHint, lowerHint, {
+    value: assetAmount,
+  })
+```
 
 ## Definitions
 

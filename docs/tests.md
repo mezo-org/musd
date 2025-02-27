@@ -84,7 +84,6 @@ export interface OpenTroveParams {
   musdAmount: string | bigint
   ICR?: string
   lowerHint?: string
-  maxFeePercentage?: string
   sender: HardhatEthersSigner
   upperHint?: string
 }
