@@ -885,6 +885,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ signer: alice.wallet })
       })
 
+      it("reverts when the signed recipient doesn't match the call", async () => {
+        await testRevert({ recipient: dennis.wallet })
+      })
+
       it("reverts when the deadline has passed", async () => {
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         await testRevert({ deadline }, "Signature expired")
@@ -1740,6 +1744,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ signer: alice.wallet })
       })
 
+      it("reverts when the signed recipient does not match the call", async () => {
+        await testRevert({ recipient: dennis.wallet.address })
+      })
+
       it("reverts when the nonce is invalid", async () => {
         await testRevert({ nonce: 42 })
       })
@@ -2583,6 +2591,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ signer: alice.wallet })
       })
 
+      it("reverts when the signed recipient does not match the call", async () => {
+        await testRevert({ recipient: dennis.address })
+      })
+
       it("reverts when the deadline has passed", async () => {
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         await testRevert({ deadline }, "Signature expired")
@@ -3080,6 +3092,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the recovered address does not match the borrower's address", async () => {
         await testRevert({ signer: alice.wallet })
+      })
+
+      it("reverts when the signed recipient does not match the call", async () => {
+        await testRevert({ recipient: dennis.address })
       })
 
       it("reverts when the deadline has passed", async () => {
@@ -4832,6 +4848,10 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ signer: alice.wallet })
       })
 
+      it("reverts when the signed recipient does not match the call", async () => {
+        await testRevert({ recipient: dennis.address })
+      })
+
       it("reverts when the deadline has passed", async () => {
         const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
         await testRevert({ deadline }, "Signature expired")
@@ -5474,6 +5494,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the recovered address does not match the borrower's address", async () => {
         await testRevert({ signer: bob.wallet })
+      })
+
+      it("reverts when the signed recipient does not match the call", async () => {
+        await testRevert({ recipient: dennis.address })
       })
 
       it("reverts when the deadline has passed", async () => {
