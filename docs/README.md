@@ -141,6 +141,7 @@ graph TD
         GasPool
     end
     subgraph Support["Supporting Contracts"]
+        BorrowerOperationsSignatures
         PriceFeed
         SortedTroves
         HintHelpers
@@ -165,6 +166,8 @@ graph TD
 `MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers mUSD tokens.
 
 `BorrowerOperations.sol` - contains the basic operations by which borrowers interact with their Trove: Trove creation, collateral top-up / withdrawal, stablecoin issuance and repayment. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move collateral/Tokens between Pools or between Pool <> user, where necessary.
+
+`BorrowerOperationsSignatures.sol` - implements EIP-712 signature verification to allow users to authorize operations on their troves without directly executing transactions. This contract validates signatures and calls the corresponding restricted functions in BorrowerOperations, enabling third-party contracts and services to manage user positions with proper authorization.
 
 `InterestRateManager.sol` - handles operations for setting interest rates as well as interest related calculations.
 
