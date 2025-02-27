@@ -2945,6 +2945,43 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("send the mUSD to the recipient", async () => {
+      const { domain, deadline } = await setupSignatureTests()
+      const borrower = bob.address
+      const recipient = dennis.address
+      const nonce =
+        await contracts.borrowerOperationsSignatures.getNonce(borrower)
+
+      const value = {
+        amount,
+        upperHint,
+        lowerHint,
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      await updateWalletSnapshot(contracts, dennis, "before")
+
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .withdrawMUSDWithSignature(
+          amount,
+          upperHint,
+          lowerHint,
+          borrower,
+          recipient,
+          signature,
+          deadline,
+        )
+
+      await updateWalletSnapshot(contracts, dennis, "after")
+      expect(dennis.musd.after).to.equal(dennis.musd.before + amount)
+    })
+
     it("correctly increments the nonce after a successful transaction", async () => {
       const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
