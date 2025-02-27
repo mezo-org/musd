@@ -2558,7 +2558,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           verifyingContract: overriddenData.verifyingContract,
         }
 
-        // Sign with Alice's wallet instead of Bob's
         const signature = await overriddenData.signer.signTypedData(
           domain,
           types,
@@ -3573,7 +3572,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           verifyingContract: overriddenData.verifyingContract,
         }
 
-        // Sign with Alice's wallet instead of Bob's
         const signature = await overriddenData.signer.signTypedData(
           domain,
           types,
@@ -4806,7 +4804,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           verifyingContract: overriddenData.verifyingContract,
         }
 
-        // Sign with Alice's wallet instead of Bob's
         const signature = await overriddenData.signer.signTypedData(
           domain,
           types,
