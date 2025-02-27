@@ -136,7 +136,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     return {
       borrower,
-      target: borrower,
+      recipient: borrower,
       contractAddress,
       nonce,
       domain,
@@ -702,14 +702,14 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
+        { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
     }
 
     it("opens a trove with a valid signature and deadline", async () => {
-      const { borrower, target, nonce, domain, deadline } =
+      const { borrower, recipient, nonce, domain, deadline } =
         await setupSignatureTests()
 
       const value = {
@@ -717,7 +717,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -745,7 +745,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, nonce, domain, deadline } =
+      const { borrower, recipient, nonce, domain, deadline } =
         await setupSignatureTests()
 
       const value = {
@@ -753,7 +753,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -784,13 +784,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         override: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, target, nonce, deadline } =
+        const { borrower, recipient, nonce, deadline } =
           await setupSignatureTests()
 
         const data = {
           assetAmount,
           borrower,
-          target,
+          recipient,
           debtAmount,
           upperHint,
           lowerHint,
@@ -815,7 +815,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signedValues = {
           borrower: overridenData.borrower,
-          target: overridenData.target,
+          recipient: overridenData.recipient,
           debtAmount: overridenData.debtAmount,
           upperHint: overridenData.upperHint,
           lowerHint: overridenData.lowerHint,
@@ -837,7 +837,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               overridenData.upperHint,
               overridenData.lowerHint,
               overridenData.borrower,
-              overridenData.target,
+              overridenData.recipient,
               signature,
               overridenData.deadline,
               { value: overridenData.assetAmount },
@@ -1558,7 +1558,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       CloseTrove: [
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
+        { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -1571,12 +1571,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("closes the Trove with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -1590,12 +1590,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -1615,12 +1615,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         override: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, target, deadline, nonce } =
+        const { borrower, recipient, deadline, nonce } =
           await setupSignatureTests(bob)
 
         const data = {
           borrower,
-          target,
+          recipient,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -1642,7 +1642,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signedValues = {
           borrower: overridenData.borrower,
-          target: overridenData.target,
+          recipient: overridenData.recipient,
           nonce: overridenData.nonce,
           deadline: overridenData.deadline,
         }
@@ -1658,7 +1658,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(overridenData.caller)
             .closeTroveWithSignature(
               overridenData.borrower,
-              overridenData.target,
+              overridenData.recipient,
               signature,
               overridenData.deadline,
             ),
@@ -2326,7 +2326,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
+        { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -2335,7 +2335,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("reduces the Trove's collateral by the correct amount with a valid signature", async () => {
       await setupCarolsTrove() // open additional trove to prevent going into recovery mode
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -2343,7 +2343,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -2371,12 +2371,12 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("correctly increments the nonce after a successful transaction", async () => {
       await setupCarolsTrove()
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
-        target,
+        recipient,
         amount,
         upperHint,
         lowerHint,
@@ -2410,7 +2410,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
         await setupCarolsTrove()
-        const { borrower, target, nonce, deadline } =
+        const { borrower, recipient, nonce, deadline } =
           await setupSignatureTests(bob)
 
         const data = {
@@ -2418,7 +2418,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
-          target,
+          recipient,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -2436,7 +2436,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint: overriddenData.upperHint,
           lowerHint: overriddenData.lowerHint,
           borrower: overriddenData.borrower,
-          target: overriddenData.target,
+          recipient: overriddenData.recipient,
           nonce: overriddenData.nonce,
           deadline: overriddenData.deadline,
         }
@@ -2463,7 +2463,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               overriddenData.upperHint,
               overriddenData.lowerHint,
               overriddenData.borrower,
-              overriddenData.target,
+              overriddenData.recipient,
               signature,
               overriddenData.deadline,
             ),
@@ -2787,7 +2787,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
+        { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -2802,7 +2802,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, bob, "before")
       const { domain, deadline } = await setupSignatureTests()
       const borrower = bob.address
-      const target = bob.address
+      const recipient = bob.address
       const nonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
       const value = {
@@ -2810,7 +2810,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -2836,7 +2836,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -2844,7 +2844,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -2872,7 +2872,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         override: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, target, nonce, deadline } =
+        const { borrower, recipient, nonce, deadline } =
           await setupSignatureTests(bob)
 
         const data = {
@@ -2880,7 +2880,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
-          target,
+          recipient,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -2906,7 +2906,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint: overridenData.upperHint,
           lowerHint: overridenData.lowerHint,
           borrower: overridenData.borrower,
-          target: overridenData.target,
+          recipient: overridenData.recipient,
           nonce: overridenData.nonce,
           deadline: overridenData.deadline,
         }
@@ -2925,7 +2925,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               overridenData.upperHint,
               overridenData.lowerHint,
               overridenData.borrower,
-              overridenData.target,
+              overridenData.recipient,
               signature,
               overridenData.deadline,
             ),
@@ -4430,7 +4430,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
+        { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -4443,7 +4443,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("adjusts the Trove's debt by the correct amount with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -4454,7 +4454,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -4485,7 +4485,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -4496,7 +4496,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -4527,7 +4527,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         overrides: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, target, nonce, deadline } =
+        const { borrower, recipient, nonce, deadline } =
           await setupSignatureTests(bob)
 
         const data = {
@@ -4538,7 +4538,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint,
           lowerHint,
           borrower,
-          target,
+          recipient,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -4559,7 +4559,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint: overriddenData.upperHint,
           lowerHint: overriddenData.lowerHint,
           borrower: overriddenData.borrower,
-          target: overriddenData.target,
+          recipient: overriddenData.recipient,
           nonce: overriddenData.nonce,
           deadline: overriddenData.deadline,
         }
@@ -4589,7 +4589,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               overriddenData.upperHint,
               overriddenData.lowerHint,
               overriddenData.borrower,
-              overriddenData.target,
+              overriddenData.recipient,
               signature,
               overriddenData.deadline,
             ),
@@ -5088,7 +5088,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       ClaimCollateral: [
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
+        { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -5102,12 +5102,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("allows the user to claim their collateral surplus with a valid signature", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(alice)
 
       const value = {
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -5129,12 +5129,12 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, recipient, domain, deadline, nonce } =
         await setupSignatureTests(alice)
 
       const value = {
         borrower,
-        target,
+        recipient,
         nonce,
         deadline,
       }
@@ -5155,12 +5155,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
         await setupCarolsTrove()
-        const { borrower, target, nonce, deadline } =
+        const { borrower, recipient, nonce, deadline } =
           await setupSignatureTests(alice)
 
         const data = {
           borrower,
-          target,
+          recipient,
           nonce,
           deadline,
           signer: alice.wallet,
@@ -5175,7 +5175,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower: overriddenData.borrower,
-          target: overriddenData.target,
+          recipient: overriddenData.recipient,
           nonce: overriddenData.nonce,
           deadline: overriddenData.deadline,
         }
@@ -5198,7 +5198,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(overriddenData.caller)
             .claimCollateralWithSignature(
               overriddenData.borrower,
-              overriddenData.target,
+              overriddenData.recipient,
               signature,
               overriddenData.deadline,
             ),
