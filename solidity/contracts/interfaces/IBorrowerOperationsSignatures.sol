@@ -10,7 +10,6 @@ interface IBorrowerOperationsSignatures {
         address _upperHint,
         address _lowerHint,
         address _borrower,
-        address _target,
         bytes memory _signature,
         uint256 _deadline
     ) external payable;
@@ -77,7 +76,6 @@ interface IBorrowerOperationsSignatures {
         address _upperHint,
         address _lowerHint,
         address _borrower,
-        address _target,
         bytes memory _signature,
         uint256 _deadline
     ) external;

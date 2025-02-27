@@ -22,7 +22,6 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
-        address target;
         uint256 nonce;
         uint256 deadline;
     }
@@ -52,7 +51,6 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
-        address target;
         uint256 nonce;
         uint256 deadline;
     }
@@ -110,7 +108,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant ADD_COLL_TYPEHASH =
         keccak256(
-            "AddColl(uint256 assetAmount,address upperHint,address lowerHint,address borrower,address target,uint256 nonce,uint256 deadline)"
+            "AddColl(uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant WITHDRAW_COLL_TYPEHASH =
@@ -120,7 +118,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant REPAY_MUSD_TYPEHASH =
         keccak256(
-            "RepayMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,address target,uint256 nonce,uint256 deadline)"
+            "RepayMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant WITHDRAW_MUSD_TYPEHASH =
@@ -182,7 +180,6 @@ contract BorrowerOperationsSignatures is
         address _upperHint,
         address _lowerHint,
         address _borrower,
-        address _target,
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
@@ -191,7 +188,6 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            target: _target,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
@@ -202,8 +198,7 @@ contract BorrowerOperationsSignatures is
                 addCollData.assetAmount,
                 addCollData.upperHint,
                 addCollData.lowerHint,
-                addCollData.borrower,
-                addCollData.target
+                addCollData.borrower
             ),
             addCollData.borrower,
             _signature,
@@ -446,7 +441,6 @@ contract BorrowerOperationsSignatures is
         address _upperHint,
         address _lowerHint,
         address _borrower,
-        address _target,
         bytes memory _signature,
         uint256 _deadline
     ) external {
@@ -455,7 +449,6 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            target: _target,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
@@ -466,8 +459,7 @@ contract BorrowerOperationsSignatures is
                 repayMUSDData.amount,
                 repayMUSDData.upperHint,
                 repayMUSDData.lowerHint,
-                repayMUSDData.borrower,
-                repayMUSDData.target
+                repayMUSDData.borrower
             ),
             repayMUSDData.borrower,
             _signature,

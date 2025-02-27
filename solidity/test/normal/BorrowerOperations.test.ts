@@ -1847,7 +1847,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -1855,7 +1854,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("adds the correct collateral amount to the trove with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
@@ -1863,7 +1862,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         upperHint,
         lowerHint,
         borrower,
-        target,
         nonce,
         deadline,
       }
@@ -1876,7 +1874,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           assetAmount,
           upperHint,
           lowerHint,
-          bob.address,
           bob.address,
           signature,
           deadline,
@@ -1891,12 +1888,11 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       const value = {
         borrower,
-        target,
         assetAmount,
         upperHint,
         lowerHint,
@@ -1912,7 +1908,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           assetAmount,
           upperHint,
           lowerHint,
-          bob.address,
           bob.address,
           signature,
           deadline,
@@ -1930,15 +1925,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         overrides: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, target, deadline, nonce } =
-          await setupSignatureTests(bob)
+        const { borrower, deadline, nonce } = await setupSignatureTests(bob)
 
         const data = {
           assetAmount,
           upperHint,
           lowerHint,
           borrower,
-          target,
           nonce,
           deadline,
           caller: carol.wallet,
@@ -1956,7 +1949,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint: overridenData.upperHint,
           lowerHint: overridenData.lowerHint,
           borrower: overridenData.borrower,
-          target: overridenData.target,
           nonce: overridenData.nonce,
           deadline: overridenData.deadline,
         }
@@ -1982,7 +1974,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               overridenData.upperHint,
               overridenData.lowerHint,
               overridenData.borrower,
-              overridenData.target,
               signature,
               overridenData.deadline,
               { value: overridenData.assetAmount },
@@ -3333,7 +3324,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "upperHint", type: "address" },
         { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
-        { name: "target", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -3341,14 +3331,13 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("reduces the Trove's debt by the correct amount with a valid signature", async () => {
       await updateTroveSnapshot(contracts, bob, "before")
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
       const value = {
         amount,
         upperHint,
         lowerHint,
         borrower,
-        target,
         nonce,
         deadline,
       }
@@ -3360,7 +3349,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           amount,
           upperHint,
           lowerHint,
-          borrower,
           borrower,
           signature,
           deadline,
@@ -3370,14 +3358,13 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, target, domain, deadline, nonce } =
+      const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
       const value = {
         amount,
         upperHint,
         lowerHint,
         borrower,
-        target,
         nonce,
         deadline,
       }
@@ -3389,7 +3376,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           amount,
           upperHint,
           lowerHint,
-          borrower,
           borrower,
           signature,
           deadline,
@@ -3405,15 +3391,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         overrides: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, target, nonce, deadline } =
-          await setupSignatureTests(bob)
+        const { borrower, nonce, deadline } = await setupSignatureTests(bob)
 
         const data = {
           amount,
           upperHint,
           lowerHint,
           borrower,
-          target,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -3431,7 +3415,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           upperHint: overriddenData.upperHint,
           lowerHint: overriddenData.lowerHint,
           borrower: overriddenData.borrower,
-          target: overriddenData.target,
           nonce: overriddenData.nonce,
           deadline: overriddenData.deadline,
         }
@@ -3458,7 +3441,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               overriddenData.upperHint,
               overriddenData.lowerHint,
               overriddenData.borrower,
-              overriddenData.target,
               signature,
               overriddenData.deadline,
             ),
