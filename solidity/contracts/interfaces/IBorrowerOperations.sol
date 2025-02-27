@@ -129,6 +129,7 @@ interface IBorrowerOperations {
 
     function restrictedAdjustTrove(
         address _borrower,
+        address _recipient,
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
         bool _isDebtIncrease,

@@ -207,6 +207,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedAdjustTrove{value: msg.value}(
             addCollData.borrower,
+            addCollData.borrower,
             0,
             0,
             false,
@@ -289,6 +290,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedAdjustTrove(
             adjustTroveData.borrower,
+            adjustTroveData.recipient,
             adjustTroveData.collWithdrawal,
             adjustTroveData.debtChange,
             adjustTroveData.isDebtIncrease,
@@ -345,6 +347,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedAdjustTrove(
             withdrawCollData.borrower,
+            withdrawCollData.recipient,
             withdrawCollData.amount,
             0,
             false,
@@ -430,6 +433,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedAdjustTrove(
             withdrawMUSDData.borrower,
+            withdrawMUSDData.recipient,
             0,
             withdrawMUSDData.amount,
             true,
@@ -470,6 +474,7 @@ contract BorrowerOperationsSignatures is
         );
 
         borrowerOperations.restrictedAdjustTrove(
+            repayMUSDData.borrower,
             repayMUSDData.borrower,
             0,
             repayMUSDData.amount,
