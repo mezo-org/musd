@@ -84,7 +84,7 @@ contract CollSurplusPool is
         emit CollBalanceUpdated(_account, newAmount);
     }
 
-    function claimColl(address _account) external override {
+    function claimColl(address _account, address _recipient) external override {
         _requireCallerIsBorrowerOperations();
         uint256 claimableColl = balances[_account];
         require(
@@ -98,7 +98,7 @@ contract CollSurplusPool is
         collateral -= claimableColl;
         emit CollateralSent(_account, claimableColl);
 
-        _sendCollateral(_account, claimableColl);
+        _sendCollateral(_recipient, claimableColl);
     }
 
     function getCollateral(

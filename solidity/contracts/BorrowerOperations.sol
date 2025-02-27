@@ -147,7 +147,13 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedOpenTrove(msg.sender, _debtAmount, _upperHint, _lowerHint);
+        restrictedOpenTrove(
+            msg.sender,
+            msg.sender,
+            _debtAmount,
+            _upperHint,
+            _lowerHint
+        );
     }
 
     // Send collateral to a trove
@@ -158,6 +164,7 @@ contract BorrowerOperations is
     ) external payable override {
         _assetAmount = msg.value;
         restrictedAdjustTrove(
+            msg.sender,
             msg.sender,
             0,
             0,
@@ -179,6 +186,7 @@ contract BorrowerOperations is
         _assetAmount = msg.value;
         restrictedAdjustTrove(
             _borrower,
+            _borrower,
             0,
             0,
             false,
@@ -195,6 +203,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external override {
         restrictedAdjustTrove(
+            msg.sender,
             msg.sender,
             _amount,
             0,
@@ -213,6 +222,7 @@ contract BorrowerOperations is
     ) external override {
         restrictedAdjustTrove(
             msg.sender,
+            msg.sender,
             0,
             _amount,
             true,
@@ -230,6 +240,7 @@ contract BorrowerOperations is
     ) external override {
         restrictedAdjustTrove(
             msg.sender,
+            msg.sender,
             0,
             _amount,
             false,
@@ -240,7 +251,7 @@ contract BorrowerOperations is
     }
 
     function closeTrove() external override {
-        restrictedCloseTrove(msg.sender);
+        restrictedCloseTrove(msg.sender, msg.sender);
     }
 
     function refinance() external override {
@@ -263,6 +274,7 @@ contract BorrowerOperations is
     ) external payable override {
         restrictedAdjustTrove(
             msg.sender,
+            msg.sender,
             _collWithdrawal,
             _debtChange,
             _isDebtIncrease,
@@ -275,7 +287,7 @@ contract BorrowerOperations is
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
         // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(msg.sender);
+        collSurplusPool.claimColl(msg.sender, msg.sender);
     }
 
     function setAddresses(
@@ -408,14 +420,18 @@ contract BorrowerOperations is
         emit MusdGasCompensationChanged(musdGasCompensation);
     }
 
-    function restrictedClaimCollateral(address _borrower) public {
+    function restrictedClaimCollateral(
+        address _borrower,
+        address _recipient
+    ) public {
         _requireCallerIsAuthorized(_borrower);
         // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(_borrower);
+        collSurplusPool.claimColl(_borrower, _recipient);
     }
 
     function restrictedOpenTrove(
         address _borrower,
+        address _recipient,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
@@ -531,7 +547,7 @@ contract BorrowerOperations is
         _withdrawMUSD(
             contractsCache.activePool,
             contractsCache.musd,
-            _borrower,
+            _recipient,
             _debtAmount,
             vars.netDebt
         );
@@ -559,7 +575,10 @@ contract BorrowerOperations is
         // slither-disable-end reentrancy-events
     }
 
-    function restrictedCloseTrove(address _borrower) public {
+    function restrictedCloseTrove(
+        address _borrower,
+        address _recipient
+    ) public {
         _requireCallerIsAuthorized(_borrower);
         ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
@@ -626,7 +645,7 @@ contract BorrowerOperations is
         );
 
         // Send the collateral back to the user
-        activePoolCached.sendCollateral(_borrower, coll);
+        activePoolCached.sendCollateral(_recipient, coll);
     }
 
     function restrictedRefinance(address _borrower) public {
@@ -677,6 +696,7 @@ contract BorrowerOperations is
 
     function restrictedAdjustTrove(
         address _borrower,
+        address _recipient,
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
         bool _isDebtIncrease,
@@ -826,6 +846,7 @@ contract BorrowerOperations is
             contractsCache.activePool,
             contractsCache.musd,
             _borrower,
+            _recipient,
             vars.collChange,
             vars.isCollIncrease,
             _isDebtIncrease ? _mUSDChange : vars.principalAdjustment,
@@ -873,6 +894,7 @@ contract BorrowerOperations is
         IActivePool _activePool,
         IMUSD _musd,
         address _borrower,
+        address _recipient,
         uint256 _collChange,
         bool _isCollIncrease,
         uint256 _principalChange,
@@ -884,7 +906,7 @@ contract BorrowerOperations is
             _withdrawMUSD(
                 _activePool,
                 _musd,
-                _borrower,
+                _recipient,
                 _principalChange,
                 _netDebtChange
             );
@@ -901,7 +923,7 @@ contract BorrowerOperations is
         if (_isCollIncrease) {
             _activePoolAddColl(_activePool, _collChange);
         } else {
-            _activePool.sendCollateral(_borrower, _collChange);
+            _activePool.sendCollateral(_recipient, _collChange);
         }
     }
 

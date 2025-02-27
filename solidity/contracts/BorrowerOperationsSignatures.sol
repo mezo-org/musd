@@ -31,6 +31,7 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
+        address recipient;
         uint256 nonce;
         uint256 deadline;
     }
@@ -40,6 +41,7 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
+        address recipient;
         uint256 nonce;
         uint256 deadline;
     }
@@ -58,6 +60,7 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
+        address recipient;
         uint256 nonce;
         uint256 deadline;
     }
@@ -70,12 +73,14 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
+        address recipient;
         uint256 nonce;
         uint256 deadline;
     }
 
     struct CloseTrove {
         address borrower;
+        address recipient;
         uint256 nonce;
         uint256 deadline;
     }
@@ -88,6 +93,7 @@ contract BorrowerOperationsSignatures is
 
     struct ClaimCollateral {
         address borrower;
+        address recipient;
         uint256 nonce;
         uint256 deadline;
     }
@@ -97,7 +103,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant OPEN_TROVE_TYPEHASH =
         keccak256(
-            "OpenTrove(uint256 debtAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "OpenTrove(uint256 debtAmount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADD_COLL_TYPEHASH =
@@ -107,7 +113,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant WITHDRAW_COLL_TYPEHASH =
         keccak256(
-            "WithdrawColl(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "WithdrawColl(uint256 amount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant REPAY_MUSD_TYPEHASH =
@@ -117,17 +123,17 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant WITHDRAW_MUSD_TYPEHASH =
         keccak256(
-            "WithdrawMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "WithdrawMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADJUST_TROVE_TYPEHASH =
         keccak256(
-            "AdjustTrove(uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "AdjustTrove(uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant CLOSE_TROVE_TYPEHASH =
         keccak256(
-            "CloseTrove(address borrower,uint256 nonce,uint256 deadline)"
+            "CloseTrove(address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant REFINANCE_TYPEHASH =
@@ -135,7 +141,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant CLAIM_COLLATERAL_TYPEHASH =
         keccak256(
-            "ClaimCollateral(address borrower,uint256 nonce,uint256 deadline)"
+            "ClaimCollateral(address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     mapping(address => uint256) private nonces;
@@ -194,12 +200,13 @@ contract BorrowerOperationsSignatures is
                 addCollData.lowerHint,
                 addCollData.borrower
             ),
-            _borrower,
+            addCollData.borrower,
             _signature,
-            _deadline
+            addCollData.deadline
         );
 
         borrowerOperations.restrictedAdjustTrove{value: msg.value}(
+            addCollData.borrower,
             addCollData.borrower,
             0,
             0,
@@ -212,24 +219,29 @@ contract BorrowerOperationsSignatures is
 
     function closeTroveWithSignature(
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external {
         CloseTrove memory closeTroveData = CloseTrove({
             borrower: _borrower,
+            recipient: _recipient,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
 
         _verifySignature(
             CLOSE_TROVE_TYPEHASH,
-            abi.encode(closeTroveData.borrower),
-            _borrower,
+            abi.encode(closeTroveData.borrower, closeTroveData.recipient),
+            closeTroveData.borrower,
             _signature,
-            _deadline
+            closeTroveData.deadline
         );
 
-        borrowerOperations.restrictedCloseTrove(_borrower);
+        borrowerOperations.restrictedCloseTrove(
+            closeTroveData.borrower,
+            closeTroveData.recipient
+        );
     }
 
     function adjustTroveWithSignature(
@@ -240,6 +252,7 @@ contract BorrowerOperationsSignatures is
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
@@ -253,6 +266,7 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
+            recipient: _recipient,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
@@ -266,15 +280,17 @@ contract BorrowerOperationsSignatures is
                 adjustTroveData.assetAmount,
                 adjustTroveData.upperHint,
                 adjustTroveData.lowerHint,
-                adjustTroveData.borrower
+                adjustTroveData.borrower,
+                adjustTroveData.recipient
             ),
-            _borrower,
+            adjustTroveData.borrower,
             _signature,
-            _deadline
+            adjustTroveData.deadline
         );
 
-        borrowerOperations.restrictedAdjustTrove(
+        borrowerOperations.restrictedAdjustTrove{value: msg.value}(
             adjustTroveData.borrower,
+            adjustTroveData.recipient,
             adjustTroveData.collWithdrawal,
             adjustTroveData.debtChange,
             adjustTroveData.isDebtIncrease,
@@ -289,6 +305,7 @@ contract BorrowerOperationsSignatures is
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external {
@@ -300,6 +317,7 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
+            recipient: _recipient,
             nonce: nonce,
             deadline: _deadline
         });
@@ -312,6 +330,7 @@ contract BorrowerOperationsSignatures is
                     withdrawCollData.upperHint,
                     withdrawCollData.lowerHint,
                     withdrawCollData.borrower,
+                    withdrawCollData.recipient,
                     withdrawCollData.nonce,
                     withdrawCollData.deadline
                 )
@@ -328,6 +347,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedAdjustTrove(
             withdrawCollData.borrower,
+            withdrawCollData.recipient,
             withdrawCollData.amount,
             0,
             false,
@@ -342,6 +362,7 @@ contract BorrowerOperationsSignatures is
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
@@ -350,6 +371,7 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
+            recipient: _recipient,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
@@ -360,15 +382,17 @@ contract BorrowerOperationsSignatures is
                 openTroveData.debtAmount,
                 openTroveData.upperHint,
                 openTroveData.lowerHint,
-                openTroveData.borrower
+                openTroveData.borrower,
+                openTroveData.recipient
             ),
-            _borrower,
+            openTroveData.borrower,
             _signature,
-            _deadline
+            openTroveData.deadline
         );
 
         borrowerOperations.restrictedOpenTrove{value: msg.value}(
             openTroveData.borrower,
+            openTroveData.recipient,
             openTroveData.debtAmount,
             openTroveData.upperHint,
             openTroveData.lowerHint
@@ -380,6 +404,7 @@ contract BorrowerOperationsSignatures is
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external {
@@ -388,6 +413,7 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
+            recipient: _recipient,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
@@ -398,15 +424,17 @@ contract BorrowerOperationsSignatures is
                 withdrawMUSDData.amount,
                 withdrawMUSDData.upperHint,
                 withdrawMUSDData.lowerHint,
-                withdrawMUSDData.borrower
+                withdrawMUSDData.borrower,
+                withdrawMUSDData.recipient
             ),
-            _borrower,
+            withdrawMUSDData.borrower,
             _signature,
-            _deadline
+            withdrawMUSDData.deadline
         );
 
         borrowerOperations.restrictedAdjustTrove(
             withdrawMUSDData.borrower,
+            withdrawMUSDData.recipient,
             0,
             withdrawMUSDData.amount,
             true,
@@ -441,12 +469,13 @@ contract BorrowerOperationsSignatures is
                 repayMUSDData.lowerHint,
                 repayMUSDData.borrower
             ),
-            _borrower,
+            repayMUSDData.borrower,
             _signature,
-            _deadline
+            repayMUSDData.deadline
         );
 
         borrowerOperations.restrictedAdjustTrove(
+            repayMUSDData.borrower,
             repayMUSDData.borrower,
             0,
             repayMUSDData.amount,
@@ -481,24 +510,32 @@ contract BorrowerOperationsSignatures is
 
     function claimCollateralWithSignature(
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external {
         ClaimCollateral memory claimCollateralData = ClaimCollateral({
             borrower: _borrower,
+            recipient: _recipient,
             nonce: nonces[_borrower],
             deadline: _deadline
         });
 
         _verifySignature(
             CLAIM_COLLATERAL_TYPEHASH,
-            abi.encode(claimCollateralData.borrower),
-            _borrower,
+            abi.encode(
+                claimCollateralData.borrower,
+                claimCollateralData.recipient
+            ),
+            claimCollateralData.borrower,
             _signature,
-            _deadline
+            claimCollateralData.deadline
         );
 
-        borrowerOperations.restrictedClaimCollateral(_borrower);
+        borrowerOperations.restrictedClaimCollateral(
+            claimCollateralData.borrower,
+            claimCollateralData.recipient
+        );
     }
 
     function getNonce(address user) public view returns (uint256) {
@@ -506,26 +543,26 @@ contract BorrowerOperationsSignatures is
     }
 
     function _verifySignature(
-        bytes32 typeHash,
-        bytes memory data,
-        address borrower,
-        bytes memory signature,
-        uint256 deadline
+        bytes32 _typeHash,
+        bytes memory _data,
+        address _borrower,
+        bytes memory _signature,
+        uint256 _deadline
     ) internal {
         // solhint-disable-next-line not-rely-on-time
-        require(block.timestamp <= deadline, "Signature expired");
-        uint256 nonce = nonces[borrower];
+        require(block.timestamp <= _deadline, "Signature expired");
+        uint256 nonce = nonces[_borrower];
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encodePacked(typeHash, data, nonce, deadline))
+            keccak256(abi.encodePacked(_typeHash, _data, nonce, _deadline))
         );
 
-        address recoveredAddress = ECDSA.recover(digest, signature);
+        address recoveredAddress = ECDSA.recover(digest, _signature);
         require(
-            recoveredAddress == borrower,
+            recoveredAddress == _borrower,
             "BorrowerOperationsSignatures: Invalid signature"
         );
 
-        nonces[borrower]++;
+        nonces[_borrower]++;
     }
 }

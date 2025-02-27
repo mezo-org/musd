@@ -68,6 +68,7 @@ interface IBorrowerOperations {
 
     function restrictedOpenTrove(
         address _borrower,
+        address _recipient,
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
@@ -110,7 +111,10 @@ interface IBorrowerOperations {
 
     function closeTrove() external;
 
-    function restrictedCloseTrove(address _borrower) external;
+    function restrictedCloseTrove(
+        address _borrower,
+        address _recipient
+    ) external;
 
     function refinance() external;
 
@@ -126,6 +130,7 @@ interface IBorrowerOperations {
 
     function restrictedAdjustTrove(
         address _borrower,
+        address _recipient,
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
         bool _isDebtIncrease,
@@ -136,7 +141,10 @@ interface IBorrowerOperations {
 
     function claimCollateral() external;
 
-    function restrictedClaimCollateral(address _borrower) external;
+    function restrictedClaimCollateral(
+        address _borrower,
+        address _recipient
+    ) external;
 
     function minNetDebt() external view returns (uint256);
 

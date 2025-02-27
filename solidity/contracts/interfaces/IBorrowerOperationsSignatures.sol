@@ -16,12 +16,14 @@ interface IBorrowerOperationsSignatures {
 
     function closeTroveWithSignature(
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external;
 
     function claimCollateralWithSignature(
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external;
@@ -34,6 +36,7 @@ interface IBorrowerOperationsSignatures {
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external payable;
@@ -43,6 +46,7 @@ interface IBorrowerOperationsSignatures {
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external;
@@ -52,6 +56,7 @@ interface IBorrowerOperationsSignatures {
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external payable;
@@ -61,6 +66,7 @@ interface IBorrowerOperationsSignatures {
         address _upperHint,
         address _lowerHint,
         address _borrower,
+        address _recipient,
         bytes memory _signature,
         uint256 _deadline
     ) external;
