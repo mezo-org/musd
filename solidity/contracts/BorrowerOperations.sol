@@ -47,6 +47,7 @@ contract BorrowerOperations is
         uint256 interestAdjustment;
         bool isRecoveryMode;
         uint256 newNICR;
+        uint256 maxBorrowingCapacity;
     }
 
     struct LocalVariables_openTrove {
@@ -793,6 +794,11 @@ contract BorrowerOperations is
             vars
         );
 
+        vars.maxBorrowingCapacity = contractsCache.troveManager.getTroveMaxBorrowingCapacity(_borrower);
+        if (_isDebtIncrease) {
+            _requireHasBorrowingCapacity(vars);
+        }
+
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough mUSD
         if (!_isDebtIncrease && _mUSDChange > 0) {
             _requireAtLeastMinNetDebt(
@@ -1230,6 +1236,13 @@ contract BorrowerOperations is
         require(
             _debtChange > 0,
             "BorrowerOps: Debt increase requires non-zero debtChange"
+        );
+    }
+
+    function _requireHasBorrowingCapacity(LocalVariables_adjustTrove memory _vars) internal pure {
+        require(
+            _vars.maxBorrowingCapacity >= _vars.netDebtChange + _vars.debt + _vars.interestOwed,
+            "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted"
         );
     }
 
