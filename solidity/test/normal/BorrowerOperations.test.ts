@@ -2792,6 +2792,21 @@ describe("BorrowerOperations in Normal Mode", () => {
         ).to.be.revertedWith("MUSD: Caller not allowed to mint")
       })
 
+      it("reverts when withdrawal exceeds maxBorrowingCapacity", async () => {
+        // Price increases 50,000 --> 300,000
+        const price = to1e18("300,000")
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
+
+        const amount = to1e18("10,000")
+        await expect(
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .withdrawMUSD(amount, bob.wallet, bob.wallet),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted",
+        )
+      })
+
       it("reverts when withdrawal would leave trove with ICR < MCR", async () => {
         await setupCarolsTrove() // add extra trove so we can drop Bob's c-ratio below the MCR without putting the system into recovery mode
 
@@ -3060,7 +3075,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
-          amount: data.amount,
+          amount: overridenData.amount,
           upperHint: data.upperHint,
           lowerHint: data.lowerHint,
           borrower: data.borrower,
@@ -3089,6 +3104,17 @@ describe("BorrowerOperations in Normal Mode", () => {
             ),
         ).to.be.revertedWith(message)
       }
+
+      it("reverts when withdrawal exceeds maxBorrowingCapacity", async () => {
+        // Price increases 50,000 --> 300,000
+        const price = to1e18("300,000")
+        await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
+
+        await testRevert(
+          { amount: to1e18("10,000") },
+          "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted",
+        )
+      })
 
       it("reverts when the recovered address does not match the borrower's address", async () => {
         await testRevert({ signer: alice.wallet })

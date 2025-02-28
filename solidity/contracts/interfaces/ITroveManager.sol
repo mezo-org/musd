@@ -213,8 +213,6 @@ interface ITroveManager {
             uint256 pendingInterest
         );
 
-    function getBorrowingFee(uint256 _debt) external pure returns (uint);
-
     function getTroveStatus(address _borrower) external view returns (Status);
 
     function getTroveStake(address _borrower) external view returns (uint);
@@ -233,5 +231,11 @@ interface ITroveManager {
 
     function getTCR(uint256 _price) external view returns (uint);
 
+    function getTroveMaxBorrowingCapacity(
+        address _borrower
+    ) external view returns (uint256);
+
     function checkRecoveryMode(uint256 _price) external view returns (bool);
+
+    function getBorrowingFee(uint256 _debt) external pure returns (uint);
 }
