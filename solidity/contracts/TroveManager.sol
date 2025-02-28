@@ -580,14 +580,6 @@ contract TroveManager is
         return NICR;
     }
 
-    // --- Borrowing fee functions ---
-
-    function getBorrowingFee(
-        uint256 _debt
-    ) external pure override returns (uint) {
-        return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
-    }
-
     function getTroveStatus(
         address _borrower
     ) external view override returns (Status) {
@@ -648,6 +640,12 @@ contract TroveManager is
         uint256 _price
     ) external view override returns (bool) {
         return _checkRecoveryMode(_price);
+    }
+
+    function getBorrowingFee(
+        uint256 _debt
+    ) external pure override returns (uint) {
+        return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
     }
 
     function updateDefaultPoolInterest() public {
@@ -1816,18 +1814,6 @@ contract TroveManager is
         return stake;
     }
 
-    function _getRedemptionFee(
-        uint256 _collateralDrawn
-    ) internal pure returns (uint) {
-        uint256 redemptionFee = (REDEMPTION_FEE_FLOOR * _collateralDrawn) /
-            DECIMAL_PRECISION;
-        require(
-            redemptionFee < _collateralDrawn,
-            "TroveManager: Fee would eat up all returned collateral"
-        );
-        return redemptionFee;
-    }
-
     function _requireCallerIsBorrowerOperations() internal view {
         require(
             msg.sender == address(borrowerOperations),
@@ -1867,6 +1853,18 @@ contract TroveManager is
         singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
         singleLiquidation.principalToRedistribute = 0;
         singleLiquidation.collToRedistribute = 0;
+    }
+
+    function _getRedemptionFee(
+        uint256 _collateralDrawn
+    ) internal pure returns (uint) {
+        uint256 redemptionFee = (REDEMPTION_FEE_FLOOR * _collateralDrawn) /
+            DECIMAL_PRECISION;
+        require(
+            redemptionFee < _collateralDrawn,
+            "TroveManager: Fee would eat up all returned collateral"
+        );
+        return redemptionFee;
     }
 
     /* In a full liquidation, returns the values for a trove's coll and debt to be offset, and coll and debt to be

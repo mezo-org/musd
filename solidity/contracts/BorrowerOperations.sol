@@ -794,7 +794,9 @@ contract BorrowerOperations is
             vars
         );
 
-        vars.maxBorrowingCapacity = contractsCache.troveManager.getTroveMaxBorrowingCapacity(_borrower);
+        vars.maxBorrowingCapacity = contractsCache
+            .troveManager
+            .getTroveMaxBorrowingCapacity(_borrower);
         if (_isDebtIncrease) {
             _requireHasBorrowingCapacity(vars);
         }
@@ -1239,9 +1241,12 @@ contract BorrowerOperations is
         );
     }
 
-    function _requireHasBorrowingCapacity(LocalVariables_adjustTrove memory _vars) internal pure {
+    function _requireHasBorrowingCapacity(
+        LocalVariables_adjustTrove memory _vars
+    ) internal pure {
         require(
-            _vars.maxBorrowingCapacity >= _vars.netDebtChange + _vars.debt + _vars.interestOwed,
+            _vars.maxBorrowingCapacity >=
+                _vars.netDebtChange + _vars.debt + _vars.interestOwed,
             "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted"
         );
     }
