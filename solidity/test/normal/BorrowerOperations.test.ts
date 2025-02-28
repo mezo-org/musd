@@ -3519,6 +3519,41 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(bob.trove.debt.after).to.equal(bob.trove.debt.before - amount)
     })
 
+    it("the caller pays the mUSD", async () => {
+      await updateTroveSnapshot(contracts, bob, "before")
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+      const value = {
+        amount,
+        upperHint,
+        lowerHint,
+        borrower,
+        nonce,
+        deadline,
+      }
+
+      await updateWalletSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .repayMUSDWithSignature(
+          amount,
+          upperHint,
+          lowerHint,
+          borrower,
+          signature,
+          deadline,
+        )
+
+      await updateWalletSnapshot(contracts, alice, "after")
+      await updateWalletSnapshot(contracts, bob, "after")
+      expect(alice.musd.after).to.equal(alice.musd.before - amount)
+      expect(bob.musd.after).to.equal(bob.musd.before)
+    })
+
     it("correctly increments the nonce after a successful transaction", async () => {
       const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
@@ -4645,6 +4680,50 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("the caller pays the mUSD", async () => {
+      const { borrower, recipient, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+
+      const value = {
+        collWithdrawal,
+        debtChange,
+        isDebtIncrease: false,
+        assetAmount,
+        upperHint,
+        lowerHint,
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      await updateWalletSnapshot(contracts, alice, "before")
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .adjustTroveWithSignature(
+          collWithdrawal,
+          debtChange,
+          value.isDebtIncrease,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          borrower,
+          borrower,
+          signature,
+          deadline,
+        )
+
+      await updateWalletSnapshot(contracts, alice, "after")
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      expect(alice.musd.after).to.equal(alice.musd.before - debtChange)
+      expect(bob.musd.after).to.equal(bob.musd.before)
+    })
+
     it("sends collateral to the recipient", async () => {
       const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
@@ -4931,6 +5010,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .restrictedAdjustTrove(
+              bob.address,
               bob.address,
               bob.address,
               collWithdrawal,
