@@ -166,6 +166,7 @@ contract BorrowerOperations is
         restrictedAdjustTrove(
             msg.sender,
             msg.sender,
+            msg.sender,
             0,
             0,
             false,
@@ -187,6 +188,7 @@ contract BorrowerOperations is
         restrictedAdjustTrove(
             _borrower,
             _borrower,
+            _borrower,
             0,
             0,
             false,
@@ -203,6 +205,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external override {
         restrictedAdjustTrove(
+            msg.sender,
             msg.sender,
             msg.sender,
             _amount,
@@ -223,6 +226,7 @@ contract BorrowerOperations is
         restrictedAdjustTrove(
             msg.sender,
             msg.sender,
+            msg.sender,
             0,
             _amount,
             true,
@@ -239,6 +243,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external override {
         restrictedAdjustTrove(
+            msg.sender,
             msg.sender,
             msg.sender,
             0,
@@ -273,6 +278,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external payable override {
         restrictedAdjustTrove(
+            msg.sender,
             msg.sender,
             msg.sender,
             _collWithdrawal,
@@ -697,6 +703,7 @@ contract BorrowerOperations is
     function restrictedAdjustTrove(
         address _borrower,
         address _recipient,
+        address _caller,
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
         bool _isDebtIncrease,
@@ -845,7 +852,7 @@ contract BorrowerOperations is
         _moveTokensAndCollateralfromAdjustment(
             contractsCache.activePool,
             contractsCache.musd,
-            _borrower,
+            _caller,
             _recipient,
             vars.collChange,
             vars.isCollIncrease,
@@ -893,7 +900,7 @@ contract BorrowerOperations is
     function _moveTokensAndCollateralfromAdjustment(
         IActivePool _activePool,
         IMUSD _musd,
-        address _borrower,
+        address _caller,
         address _recipient,
         uint256 _collChange,
         bool _isCollIncrease,
@@ -914,7 +921,7 @@ contract BorrowerOperations is
             _repayMUSD(
                 _activePool,
                 _musd,
-                _borrower,
+                _caller,
                 _principalChange,
                 _interestChange
             );
