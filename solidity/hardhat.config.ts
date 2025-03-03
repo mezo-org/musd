@@ -8,19 +8,20 @@ import "hardhat-contract-sizer"
 import "hardhat-gas-reporter"
 import dotenv from "dotenv-safer"
 
-const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
-  ? [process.env.MATSNET_PRIVATE_KEY]
-  : []
-
 dotenv.config({
   allowEmptyValues: true,
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
+const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
+  ? [process.env.MATSNET_PRIVATE_KEY]
+  : []
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
+      evmVersion: "london",
       optimizer: {
         enabled: true,
         runs: 100,
