@@ -136,14 +136,25 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
 
                     uint256 newColl = collateral -
                         ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
-                    uint256 newDebt = netDebt - maxRedeemableMUSD;
 
-                    uint256 compositeDebt = borrowerOperations.getCompositeDebt(
-                        newDebt
-                    );
+                    uint256 newPrincipal = troveManager.getTrovePrincipal(
+                        currentTroveuser
+                    ) + pendingPrincipal;
+
+                    uint256 interestOwed = troveManager.getTroveDebt(
+                        currentTroveuser
+                    ) +
+                        pendingPrincipal +
+                        pendingInterest -
+                        newPrincipal;
+
+                    if (maxRedeemableMUSD > interestOwed) {
+                        newPrincipal -= maxRedeemableMUSD - interestOwed;
+                    }
+
                     partialRedemptionHintNICR = LiquityMath._computeNominalCR(
                         newColl,
-                        compositeDebt
+                        newPrincipal
                     );
 
                     remainingMUSD -= maxRedeemableMUSD;

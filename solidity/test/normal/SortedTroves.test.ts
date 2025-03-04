@@ -1,7 +1,15 @@
 import { expect } from "chai"
-import { Contracts, User, openTrove, openTroves, setupTests } from "../helpers"
+import {
+  Contracts,
+  User,
+  fastForwardTime,
+  openTrove,
+  openTroves,
+  setInterestRate,
+  setupTests,
+} from "../helpers"
 import { to1e18 } from "../utils"
-import { MAX_BYTES_32 } from "../../helpers/constants"
+import { MAX_BYTES_32, ZERO_ADDRESS } from "../../helpers/constants"
 
 describe("SortedTroves", () => {
   let alice: User
@@ -10,12 +18,30 @@ describe("SortedTroves", () => {
   let dennis: User
   let deployer: User
   let eric: User
+  let treasury: User
   let whale: User
+  let council: User
   let contracts: Contracts
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, dennis, deployer, eric, whale, contracts } =
-      await setupTests())
+    ;({
+      alice,
+      bob,
+      carol,
+      council,
+      dennis,
+      deployer,
+      eric,
+      treasury,
+      whale,
+      contracts,
+    } = await setupTests())
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
   })
 
   describe("contains()", () => {
@@ -152,6 +178,51 @@ describe("SortedTroves", () => {
 
       expect(low).to.equal(bob.wallet)
       expect(high).to.equal(carol.wallet)
+    })
+  })
+
+  describe("reInsert()", () => {
+    it("reinserts troves based only on collateral and principal", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "300",
+        sender: alice.wallet,
+      })
+      await setInterestRate(contracts, council, 5000)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "310",
+        sender: bob.wallet,
+      })
+
+      await setInterestRate(contracts, council, 8000)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "320",
+        sender: carol.wallet,
+      })
+
+      await fastForwardTime(365 * 24 * 60 * 60) // one year
+
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .repayMUSD(1n, ZERO_ADDRESS, ZERO_ADDRESS)
+
+      await contracts.borrowerOperations
+        .connect(bob.wallet)
+        .repayMUSD(1n, ZERO_ADDRESS, ZERO_ADDRESS)
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .repayMUSD(1n, ZERO_ADDRESS, ZERO_ADDRESS)
+
+      const lowest = await contracts.sortedTroves.getLast()
+      const middle = await contracts.sortedTroves.getPrev(lowest)
+      const highest = await contracts.sortedTroves.getPrev(middle)
+
+      expect(lowest).to.equal(alice.address)
+      expect(middle).to.equal(bob.address)
+      expect(highest).to.equal(carol.address)
     })
   })
 })

@@ -64,6 +64,8 @@ contract TroveManager is
     struct LocalVariables_redeemCollateralFromTrove {
         uint256 newDebt;
         uint256 newColl;
+        uint256 newPrincipal;
+        uint256 interestPayment;
         uint256 upperBoundNICR;
         uint256 newNICR;
     }
@@ -568,16 +570,14 @@ contract TroveManager is
     function getNominalICR(
         address _borrower
     ) external view override returns (uint) {
-        (
-            uint256 currentCollateral,
-            uint256 currentDebt
-        ) = _getCurrentTroveAmounts(_borrower);
+        (uint256 pendingPrincipal, ) = getPendingDebt(_borrower);
 
-        uint256 NICR = LiquityMath._computeNominalCR(
-            currentCollateral,
-            currentDebt
-        );
-        return NICR;
+        uint256 collateral = Troves[_borrower].coll +
+            getPendingCollateral(_borrower);
+
+        uint256 principal = Troves[_borrower].principal + pendingPrincipal;
+
+        return LiquityMath._computeNominalCR(collateral, principal);
     }
 
     function getTroveStatus(
@@ -1518,7 +1518,22 @@ contract TroveManager is
         // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
         vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.mUSDLot;
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
+        vars.newPrincipal = Troves[_borrower].principal;
 
+        vars.interestPayment =
+            Troves[_borrower].interestOwed +
+            InterestRateMath.calculateInterestOwed(
+                Troves[_borrower].principal,
+                Troves[_borrower].interestRate,
+                Troves[_borrower].lastInterestUpdateTime,
+                block.timestamp
+            );
+
+        if (singleRedemption.mUSDLot > vars.interestPayment) {
+            vars.newPrincipal -=
+                singleRedemption.mUSDLot -
+                vars.interestPayment;
+        }
         if (vars.newDebt == redeemCollateralVars.gasCompensation) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
@@ -1540,9 +1555,10 @@ contract TroveManager is
         } else {
             // calculate 10 minutes worth of interest to account for delay between the hint call and now
             // solhint-disable not-rely-on-time
+
             vars.upperBoundNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
-                vars.newDebt -
+                vars.newPrincipal -
                     InterestRateMath.calculateInterestOwed(
                         Troves[_borrower].principal,
                         redeemCollateralVars.interestRate,
@@ -1553,7 +1569,7 @@ contract TroveManager is
             // solhint-enable not-rely-on-time
             vars.newNICR = LiquityMath._computeNominalCR(
                 vars.newColl,
-                vars.newDebt
+                vars.newPrincipal
             );
 
             /*
