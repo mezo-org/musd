@@ -834,13 +834,9 @@ contract BorrowerOperations is
         );
 
         // Re-insert trove in to the sorted list
-        vars.newNICR = _getNewNominalICRFromTroveChange(
-            vars.coll,
-            vars.debt,
-            vars.collChange,
-            vars.isCollIncrease,
-            vars.netDebtChange,
-            _isDebtIncrease
+        vars.newNICR = LiquityMath._computeNominalCR(
+            vars.newColl,
+            vars.newPrincipal
         );
         sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
@@ -1190,27 +1186,6 @@ contract BorrowerOperations is
     ) internal pure returns (uint newColl, uint newDebt) {
         newColl = _isCollIncrease ? _coll + _collChange : _coll - _collChange;
         newDebt = _isDebtIncrease ? _debt + _debtChange : _debt - _debtChange;
-    }
-
-    // Compute the new collateral ratio, considering the change in coll and debt. Assumes 0 pending rewards.
-    function _getNewNominalICRFromTroveChange(
-        uint256 _coll,
-        uint256 _debt,
-        uint256 _collChange,
-        bool _isCollIncrease,
-        uint256 _debtChange,
-        bool _isDebtIncrease
-    ) internal pure returns (uint) {
-        (uint256 newColl, uint256 newDebt) = _getNewTroveAmounts(
-            _coll,
-            _debt,
-            _collChange,
-            _isCollIncrease,
-            _debtChange,
-            _isDebtIncrease
-        );
-
-        return LiquityMath._computeNominalCR(newColl, newDebt);
     }
 
     function _calculateMaxBorrowingCapacity(

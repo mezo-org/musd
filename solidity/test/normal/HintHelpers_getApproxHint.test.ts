@@ -1,14 +1,25 @@
 import { expect } from "chai"
-import { Contracts, openTrove, setupTests, User } from "../helpers"
+import {
+  Contracts,
+  User,
+  fastForwardTime,
+  openTrove,
+  setInterestRate,
+  setupTests,
+  updateTroveSnapshot,
+} from "../helpers"
 import { to1e18 } from "../utils"
 
 describe("HintHelpers", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
   let dennis: User
+  let deployer: User
   let eric: User
   let frank: User
+  let treasury: User
   let contracts: Contracts
 
   // eslint-disable-next-line prefer-const
@@ -17,8 +28,24 @@ describe("HintHelpers", () => {
   const sqrtLength = Math.ceil(Math.sqrt(6)) // Sqrt of the number of Troves
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, dennis, eric, frank, contracts } =
-      await setupTests())
+    ;({
+      alice,
+      bob,
+      carol,
+      council,
+      dennis,
+      deployer,
+      eric,
+      frank,
+      treasury,
+      contracts,
+    } = await setupTests())
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
   })
 
   async function setupTroves() {
@@ -34,6 +61,50 @@ describe("HintHelpers", () => {
       ),
     )
   }
+
+  describe("getRedemptionHints()", () => {
+    it("ignores interest", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "300",
+        sender: alice.wallet,
+      })
+      await setInterestRate(contracts, council, 5000)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "310",
+        sender: bob.wallet,
+      })
+
+      await setInterestRate(contracts, council, 8000)
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "320",
+        sender: carol.wallet,
+      })
+
+      await fastForwardTime(365 * 24 * 60 * 60) // one year
+
+      const redeemedAmount = to1e18(1)
+
+      const btcPrice = await contracts.priceFeed.fetchPrice()
+
+      const [firstRedemptionHint, partialRedemptionHintNICR] =
+        await contracts.hintHelpers.getRedemptionHints(to1e18(1), btcPrice, 0)
+
+      const redeemedCollateral = (redeemedAmount * to1e18(1)) / btcPrice
+
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      const nICR = await contracts.hintHelpers.computeNominalCR(
+        alice.trove.collateral.after - redeemedCollateral,
+        alice.trove.debt.after - to1e18(1),
+      )
+
+      expect(firstRedemptionHint).to.equal(alice.address)
+      expect(partialRedemptionHintNICR).to.equal(nICR)
+    })
+  })
 
   describe("getApproxHint()", () => {
     it("returns the address of a Trove within sqrt(length) positions of the correct insert position", async () => {
