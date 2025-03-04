@@ -117,9 +117,9 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
             (uint256 pendingPrincipal, uint256 pendingInterest) = troveManager
                 .getPendingDebt(currentTroveuser);
 
-            uint256 netDebt = borrowerOperations.getNetDebt(
-                troveManager.getTroveDebt(currentTroveuser)
-            ) +
+            uint256 troveDebt = troveManager.getTroveDebt(currentTroveuser);
+
+            uint256 netDebt = borrowerOperations.getNetDebt(troveDebt) +
                 pendingPrincipal +
                 pendingInterest;
 
@@ -137,16 +137,18 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
                     uint256 newColl = collateral -
                         ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
 
-                    uint256 newPrincipal = troveManager.getTrovePrincipal(
+                    uint256 oldPrincipal = troveManager.getTrovePrincipal(
                         currentTroveuser
-                    ) + pendingPrincipal;
+                    );
 
-                    uint256 interestOwed = troveManager.getTroveDebt(
-                        currentTroveuser
-                    ) +
-                        pendingPrincipal +
-                        pendingInterest -
-                        newPrincipal;
+                    uint256 newPrincipal = oldPrincipal + pendingPrincipal;
+
+                    // troveDebt is oldPrincipal + oldInterest + accruedInterest
+                    // so we subtract out the oldPrincipal and add pendingInterest to
+                    // get total interest.
+                    uint256 interestOwed = troveDebt -
+                        oldPrincipal +
+                        pendingInterest;
 
                     if (maxRedeemableMUSD > interestOwed) {
                         newPrincipal -= maxRedeemableMUSD - interestOwed;
