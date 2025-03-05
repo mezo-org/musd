@@ -1146,8 +1146,7 @@ describe("TroveManager in Recovery Mode", () => {
         .connect(deployer.wallet)
         .batchLiquidateTroves([bob.wallet])
 
-      await updateTroveSnapshot(contracts, bob, "after")
-      expect(bob.trove.status.after).to.equal(3n)
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
     })
 
     context("Expected Reverts", () => {
