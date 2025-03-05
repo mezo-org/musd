@@ -722,9 +722,9 @@ contract TroveManager is
 
         vars.price = priceFeed.fetchPrice();
         vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
-        vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
         updateDefaultPoolInterest();
+        vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         if (vars.recoveryModeAtStart) {
