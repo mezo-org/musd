@@ -553,6 +553,41 @@ describe("TroveManager in Recovery Mode", () => {
       expect(bob.btc.after).to.equal(bob.btc.before + surplus)
     })
 
+    it("applies default pool interest before checking recovery mode", async () => {
+      // Alice deposits just barely enough collateral so that we stay slightly above the CCR after carol is liquidated.
+      await setupTroveAndSnapshot(alice, "20000", "225")
+
+      // Bob deposits enough collateral to be above the MCR but below the CCR
+      await setupTroveAndSnapshot(bob, "20000", "120")
+
+      await setInterestRate(contracts, council, 1000)
+
+      // Carol deposits enough collateral to get liquidated after a price
+      // change, with a high enough interest rate that once her default interest
+      // is accounted for, we're in recovery mode, but *not* in recovery mode
+      // without accounting for default interest.
+      await setupTroveAndSnapshot(carol, "20000", "111")
+
+      await dropPriceAndLiquidate(contracts, deployer, carol)
+
+      await fastForwardTime(365 * 24 * 60 * 60) // one year
+
+      // If the stability pool is empty, we can only liquidate troves under the MCR
+      await Promise.all(
+        [alice, bob, carol].map((user) =>
+          provideToSP(contracts, user, to1e18("20,000")),
+        ),
+      )
+
+      // After accounting for default interest, Bob is eligible for liquidation
+      // because we're in recovery mode.
+      await contracts.troveManager
+        .connect(deployer.wallet)
+        .liquidate(bob.wallet)
+
+      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
+    })
+
     context("Expected Reverts", () => {
       it("reverts with ICR > 110%, and StabilityPool mUSD < liquidated debt", async () => {
         await setupTrovesStabilityPoolLessThanDebt()
