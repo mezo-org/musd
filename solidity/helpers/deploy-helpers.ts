@@ -30,6 +30,18 @@ function waitConfirmationsNumber(networkName: string): number {
   }
 }
 
+type ExternalAddresses = {
+  [networkName: string]: {
+    PriceOracleCaller: string
+  }
+}
+
+export const EXTERNAL_ADDRESSES: ExternalAddresses = {
+  matsnet: {
+    PriceOracleCaller: "0x7b7c000000000000000000000000000000000015",
+  },
+}
+
 export default async function waitForTransaction(
   hre: HardhatRuntimeEnvironment,
   txHash: string,
