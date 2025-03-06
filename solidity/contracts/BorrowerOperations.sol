@@ -839,9 +839,9 @@ contract BorrowerOperations is
                 vars.price
             );
 
-            uint256 currentMaxBorrowingCapacity = contractsCache.troveManager.getTroveMaxBorrowingCapacity(
-                _borrower
-            );
+            uint256 currentMaxBorrowingCapacity = contractsCache
+                .troveManager
+                .getTroveMaxBorrowingCapacity(_borrower);
 
             uint256 finalMaxBorrowingCapacity = LiquityMath._min(
                 currentMaxBorrowingCapacity,
