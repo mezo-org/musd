@@ -3833,6 +3833,69 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("adjusts maxBorrowingCapacity proportionally on collateral withdrawal", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      const collWithdrawal = carol.trove.collateral.before / 5n // 20% of current collateral
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(collWithdrawal, 0, false, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const expectedMaxBorrowingCapacity =
+        (carol.trove.collateral.after * price) / to1e18("1.1")
+
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
+        expectedMaxBorrowingCapacity,
+      )
+    })
+
+    it("does not increase maxBorrowingCapacity on collateral withdrawal even if price has risen", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      // Increase the price to double Carol's ICR
+      await dropPrice(contracts, deployer, carol, to1e18("600"))
+
+      const collWithdrawal = 1n
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(collWithdrawal, 0, false, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
+        carol.trove.maxBorrowingCapacity.before,
+      )
+    })
+
+    it("decreases maxBorrowingCapacity on collateral withdrawal if price has fallen", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      const price = await dropPrice(contracts, deployer, carol, to1e18("290"))
+
+      const collWithdrawal = 1n
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(collWithdrawal, 0, false, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const expectedMaxBorrowingCapacity =
+        (carol.trove.collateral.after * price) / to1e18("1.1")
+
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.lessThan(
+        carol.trove.maxBorrowingCapacity.before,
+      )
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
+        expectedMaxBorrowingCapacity,
+      )
+    })
+
     it("Borrowing at zero base rate sends total requested mUSD to the user", async () => {
       const amount = to1e18(37)
 
