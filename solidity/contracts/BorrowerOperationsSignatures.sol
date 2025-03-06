@@ -22,7 +22,6 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
-        uint256 nonce;
         uint256 deadline;
     }
 
@@ -32,7 +31,6 @@ contract BorrowerOperationsSignatures is
         address lowerHint;
         address borrower;
         address recipient;
-        uint256 nonce;
         uint256 deadline;
     }
 
@@ -42,7 +40,6 @@ contract BorrowerOperationsSignatures is
         address lowerHint;
         address borrower;
         address recipient;
-        uint256 nonce;
         uint256 deadline;
     }
 
@@ -51,7 +48,6 @@ contract BorrowerOperationsSignatures is
         address upperHint;
         address lowerHint;
         address borrower;
-        uint256 nonce;
         uint256 deadline;
     }
 
@@ -61,7 +57,6 @@ contract BorrowerOperationsSignatures is
         address lowerHint;
         address borrower;
         address recipient;
-        uint256 nonce;
         uint256 deadline;
     }
 
@@ -74,27 +69,23 @@ contract BorrowerOperationsSignatures is
         address lowerHint;
         address borrower;
         address recipient;
-        uint256 nonce;
         uint256 deadline;
     }
 
     struct CloseTrove {
         address borrower;
         address recipient;
-        uint256 nonce;
         uint256 deadline;
     }
 
     struct Refinance {
         address borrower;
-        uint256 nonce;
         uint256 deadline;
     }
 
     struct ClaimCollateral {
         address borrower;
         address recipient;
-        uint256 nonce;
         uint256 deadline;
     }
 
@@ -188,7 +179,6 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -227,7 +217,6 @@ contract BorrowerOperationsSignatures is
         CloseTrove memory closeTroveData = CloseTrove({
             borrower: _borrower,
             recipient: _recipient,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -268,7 +257,6 @@ contract BorrowerOperationsSignatures is
             lowerHint: _lowerHint,
             borrower: _borrower,
             recipient: _recipient,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -311,14 +299,12 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        uint256 nonce = nonces[_borrower];
         WithdrawColl memory withdrawCollData = WithdrawColl({
             amount: _amount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
             recipient: _recipient,
-            nonce: nonce,
             deadline: _deadline
         });
 
@@ -364,7 +350,6 @@ contract BorrowerOperationsSignatures is
             lowerHint: _lowerHint,
             borrower: _borrower,
             recipient: _recipient,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -406,7 +391,6 @@ contract BorrowerOperationsSignatures is
             lowerHint: _lowerHint,
             borrower: _borrower,
             recipient: _recipient,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -450,7 +434,6 @@ contract BorrowerOperationsSignatures is
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -487,7 +470,6 @@ contract BorrowerOperationsSignatures is
     ) external {
         Refinance memory refinanceData = Refinance({
             borrower: _borrower,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -511,7 +493,6 @@ contract BorrowerOperationsSignatures is
         ClaimCollateral memory claimCollateralData = ClaimCollateral({
             borrower: _borrower,
             recipient: _recipient,
-            nonce: nonces[_borrower],
             deadline: _deadline
         });
 
@@ -545,10 +526,11 @@ contract BorrowerOperationsSignatures is
     ) internal {
         // solhint-disable-next-line not-rely-on-time
         require(block.timestamp <= _deadline, "Signature expired");
-        uint256 nonce = nonces[_borrower];
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encodePacked(_typeHash, _data, nonce, _deadline))
+            keccak256(
+                abi.encodePacked(_typeHash, _data, nonces[_borrower], _deadline)
+            )
         );
 
         address recoveredAddress = ECDSA.recover(digest, _signature);
