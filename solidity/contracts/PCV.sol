@@ -305,6 +305,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             _amount
         );
 
-        // TODO Emit event
+        emit DepositToStabilityPool(_amount);
     }
 }
