@@ -311,8 +311,6 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external {
-        // solhint-disable not-rely-on-time
-        require(block.timestamp <= _deadline, "Signature expired");
         uint256 nonce = nonces[_borrower];
         WithdrawColl memory withdrawCollData = WithdrawColl({
             amount: _amount,
@@ -324,28 +322,19 @@ contract BorrowerOperationsSignatures is
             deadline: _deadline
         });
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    WITHDRAW_COLL_TYPEHASH,
-                    withdrawCollData.amount,
-                    withdrawCollData.upperHint,
-                    withdrawCollData.lowerHint,
-                    withdrawCollData.borrower,
-                    withdrawCollData.recipient,
-                    withdrawCollData.nonce,
-                    withdrawCollData.deadline
-                )
-            )
+        _verifySignature(
+            WITHDRAW_COLL_TYPEHASH,
+            abi.encode(
+                withdrawCollData.amount,
+                withdrawCollData.upperHint,
+                withdrawCollData.lowerHint,
+                withdrawCollData.borrower,
+                withdrawCollData.recipient
+            ),
+            withdrawCollData.borrower,
+            _signature,
+            withdrawCollData.deadline
         );
-
-        address recoveredAddress = ECDSA.recover(digest, _signature);
-        require(
-            recoveredAddress == _borrower,
-            "BorrowerOperationsSignatures: Invalid signature"
-        );
-
-        nonces[_borrower]++;
 
         borrowerOperations.restrictedAdjustTrove(
             withdrawCollData.borrower,
