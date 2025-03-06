@@ -135,7 +135,6 @@ interface IBorrowerOperations {
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable;

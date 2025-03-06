@@ -5042,7 +5042,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               collWithdrawal,
               debtChange,
               isDebtIncrease,
-              assetAmount,
               upperHint,
               lowerHint,
             ),

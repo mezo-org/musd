@@ -212,7 +212,6 @@ contract BorrowerOperationsSignatures is
             0,
             0,
             false,
-            addCollData.assetAmount,
             addCollData.upperHint,
             addCollData.lowerHint
         );
@@ -296,7 +295,6 @@ contract BorrowerOperationsSignatures is
             adjustTroveData.collWithdrawal,
             adjustTroveData.debtChange,
             adjustTroveData.isDebtIncrease,
-            adjustTroveData.assetAmount,
             adjustTroveData.upperHint,
             adjustTroveData.lowerHint
         );
@@ -343,7 +341,6 @@ contract BorrowerOperationsSignatures is
             withdrawCollData.amount,
             0,
             false,
-            0,
             withdrawCollData.upperHint,
             withdrawCollData.lowerHint
         );
@@ -431,7 +428,6 @@ contract BorrowerOperationsSignatures is
             0,
             withdrawMUSDData.amount,
             true,
-            0,
             withdrawMUSDData.upperHint,
             withdrawMUSDData.lowerHint
         );
@@ -474,7 +470,6 @@ contract BorrowerOperationsSignatures is
             0,
             repayMUSDData.amount,
             false,
-            0,
             repayMUSDData.upperHint,
             repayMUSDData.lowerHint
         );
