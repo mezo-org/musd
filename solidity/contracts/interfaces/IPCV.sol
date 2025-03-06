@@ -10,13 +10,14 @@ interface IPCV {
     event MUSDTokenAddressSet(address _musdTokenAddress);
     event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);
 
-    event RolesSet(address _council, address _treasury);
-    event MUSDWithdraw(address _recipient, uint256 _amount);
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
+    event DepositToStabilityPool(uint256 _amount);
+    event MUSDWithdraw(address _recipient, uint256 _amount);
     event PCVDebtPaid(uint256 _paidDebt);
+    event PCVFeePaid(address _recipient, uint256 _amount);
     event RecipientAdded(address _recipient);
     event RecipientRemoved(address _recipient);
-    event PCVFeePaid(address _recipient, uint256 _amount);
+    event RolesSet(address _council, address _treasury);
 
     // --- Functions ---
 
