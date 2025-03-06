@@ -443,7 +443,7 @@ export async function addColl(contracts: Contracts, inputs: AddCollParams) {
 
   return contracts.borrowerOperations
     .connect(inputs.sender)
-    .addColl(amount, params.lowerHint, params.upperHint, {
+    .addColl(params.lowerHint, params.upperHint, {
       value: amount, // The amount of chain base asset to send
     })
 }

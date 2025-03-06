@@ -78,11 +78,7 @@ interface IBorrowerOperations {
 
     function approveMinNetDebt() external;
 
-    function addColl(
-        uint256 _assetAmount,
-        address _upperHint,
-        address _lowerHint
-    ) external payable;
+    function addColl(address _upperHint, address _lowerHint) external payable;
 
     function moveCollateralGainToTrove(
         address _borrower,

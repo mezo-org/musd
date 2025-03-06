@@ -159,11 +159,9 @@ contract BorrowerOperations is
 
     // Send collateral to a trove
     function addColl(
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = msg.value;
         restrictedAdjustTrove(
             msg.sender,
             msg.sender,
