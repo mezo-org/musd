@@ -832,6 +832,19 @@ contract BorrowerOperations is
             _borrower
         );
 
+        // If collateral was withdrawn, update the maxBorrowingCapacity
+        if (!vars.isCollIncrease && vars.collChange > 0) {
+            uint256 newMaxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+                vars.newColl,
+                vars.price
+            );
+
+            contractsCache.troveManager.setTroveMaxBorrowingCapacity(
+                _borrower,
+                newMaxBorrowingCapacity
+            );
+        }
+
         // Re-insert trove in to the sorted list
         vars.newNICR = LiquityMath._computeNominalCR(
             vars.newColl,

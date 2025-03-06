@@ -3833,6 +3833,53 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("adjusts maxBorrowingCapacity proportionally on collateral withdrawal", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      const collWithdrawal = carol.trove.collateral.before / 5n // 20% of current collateral
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(collWithdrawal, 0, false, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const expectedMaxBorrowingCapacity =
+        (carol.trove.collateral.after * price) / to1e18("1.1")
+
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
+        expectedMaxBorrowingCapacity,
+      )
+    })
+
+    it("increases maxBorrowingCapacity on collateral withdrawal due to price change", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      // Increase the price to double Carol's ICR
+      const price = await dropPrice(contracts, deployer, carol, to1e18("600"))
+
+      const collWithdrawal = 1n
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(collWithdrawal, 0, false, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      // Calculate expected borrowing capacity, dividing out 1e18 to get the correct precision
+
+      const expectedMaxBorrowingCapacity =
+        (carol.trove.collateral.after * price) / to1e18("1.1")
+
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
+        expectedMaxBorrowingCapacity,
+      )
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.greaterThan(
+        carol.trove.maxBorrowingCapacity.before,
+      )
+    })
+
     it("Borrowing at zero base rate sends total requested mUSD to the user", async () => {
       const amount = to1e18(37)
 
