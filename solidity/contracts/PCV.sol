@@ -305,6 +305,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             _amount
         );
 
+        // slither-disable-next-line reentrancy-events
         emit DepositToStabilityPool(_amount);
     }
 }
