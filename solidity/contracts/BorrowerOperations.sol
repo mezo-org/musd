@@ -474,7 +474,6 @@ contract BorrowerOperations is
 
         // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
         vars.compositeDebt = getCompositeDebt(vars.netDebt);
-        assert(vars.compositeDebt > 0);
 
         // if BTC overwrite the asset value
         vars.ICR = LiquityMath._computeCR(
