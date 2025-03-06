@@ -3853,12 +3853,12 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("increases maxBorrowingCapacity on collateral withdrawal due to price change", async () => {
+    it("does not increase maxBorrowingCapacity on collateral withdrawal even if price has risen", async () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
       // Increase the price to double Carol's ICR
-      const price = await dropPrice(contracts, deployer, carol, to1e18("600"))
+      await dropPrice(contracts, deployer, carol, to1e18("600"))
 
       const collWithdrawal = 1n
       await contracts.borrowerOperations
@@ -3867,15 +3867,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      // Calculate expected borrowing capacity, dividing out 1e18 to get the correct precision
-
-      const expectedMaxBorrowingCapacity =
-        (carol.trove.collateral.after * price) / to1e18("1.1")
-
       expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
-        expectedMaxBorrowingCapacity,
-      )
-      expect(carol.trove.maxBorrowingCapacity.after).to.be.greaterThan(
         carol.trove.maxBorrowingCapacity.before,
       )
     })
