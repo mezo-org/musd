@@ -1100,6 +1100,9 @@ contract TroveManager is
         address _borrower,
         uint256 _MUSDInStabPool
     ) internal returns (LiquidationValues memory singleLiquidation) {
+        if (TroveOwners.length <= 1) {
+            return singleLiquidation;
+        } // don't liquidate if last trove
         // slither-disable-next-line uninitialized-local
         LocalVariables_InnerSingleLiquidateFunction memory vars;
 
