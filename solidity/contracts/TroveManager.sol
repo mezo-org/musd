@@ -728,7 +728,7 @@ contract TroveManager is
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
         if (vars.recoveryModeAtStart) {
-            totals = _getTotalFromBatchLiquidateRecoveryMode(
+            totals = _getTotalsFromBatchLiquidateNormalMode(
                 activePoolCached,
                 defaultPoolCached,
                 vars.price,
