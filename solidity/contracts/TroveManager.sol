@@ -726,25 +726,13 @@ contract TroveManager is
         updateDefaultPoolInterest();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
-        // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        if (vars.recoveryModeAtStart) {
-            totals = _getTotalsFromBatchLiquidateNormalMode(
-                activePoolCached,
-                defaultPoolCached,
-                vars.price,
-                vars.mUSDInStabPool,
-                _troveArray
-            );
-        } else {
-            //  if !vars.recoveryModeAtStart
-            totals = _getTotalsFromBatchLiquidateNormalMode(
-                activePoolCached,
-                defaultPoolCached,
-                vars.price,
-                vars.mUSDInStabPool,
-                _troveArray
-            );
-        }
+        totals = _getTotalsFromBatchLiquidateNormalMode(
+            activePoolCached,
+            defaultPoolCached,
+            vars.price,
+            vars.mUSDInStabPool,
+            _troveArray
+        );
 
         require(
             totals.totalPrincipalInSequence > 0,
@@ -1098,11 +1086,13 @@ contract TroveManager is
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         address _borrower,
-        uint256 _MUSDInStabPool
+        uint256 _MUSDInStabPool,
+        uint256 _ICR
     ) internal returns (LiquidationValues memory singleLiquidation) {
         if (TroveOwners.length <= 1) {
             return singleLiquidation;
         } // don't liquidate if last trove
+
         // slither-disable-next-line uninitialized-local
         LocalVariables_InnerSingleLiquidateFunction memory vars;
 
@@ -1194,7 +1184,8 @@ contract TroveManager is
                     _activePool,
                     _defaultPool,
                     vars.user,
-                    vars.remainingMUSDInStabPool
+                    vars.remainingMUSDInStabPool,
+                    vars.ICR
                 );
                 vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
 

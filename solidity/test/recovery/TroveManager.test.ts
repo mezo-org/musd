@@ -28,7 +28,7 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 
-describe("TroveManager in Recovery Mode", () => {
+describe.only("TroveManager in Recovery Mode", () => {
   let alice: User
   let bob: User
   let carol: User
