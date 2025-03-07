@@ -1951,7 +1951,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .addCollWithSignature(
-          assetAmount,
           upperHint,
           lowerHint,
           bob.address,
@@ -1985,7 +1984,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .addCollWithSignature(
-          assetAmount,
           upperHint,
           lowerHint,
           bob.address,
@@ -2050,7 +2048,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(overridenData.caller)
             .addCollWithSignature(
-              overridenData.assetAmount,
               overridenData.upperHint,
               overridenData.lowerHint,
               overridenData.borrower,

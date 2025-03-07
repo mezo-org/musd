@@ -18,7 +18,6 @@ contract BorrowerOperationsSignatures is
     using ECDSA for bytes32;
 
     struct AddColl {
-        uint256 assetAmount;
         address upperHint;
         address lowerHint;
         address borrower;
@@ -176,7 +175,6 @@ contract BorrowerOperationsSignatures is
     }
 
     function addCollWithSignature(
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
@@ -184,7 +182,6 @@ contract BorrowerOperationsSignatures is
         uint256 _deadline
     ) external payable {
         AddColl memory addCollData = AddColl({
-            assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
@@ -195,7 +192,7 @@ contract BorrowerOperationsSignatures is
         _verifySignature(
             ADD_COLL_TYPEHASH,
             abi.encode(
-                addCollData.assetAmount,
+                msg.value,
                 addCollData.upperHint,
                 addCollData.lowerHint,
                 addCollData.borrower
