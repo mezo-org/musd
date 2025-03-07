@@ -76,44 +76,40 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     receive() external payable {}
 
-    function payDebt(
-        uint256 _musdToBurn
+    function distributeMUSD(
+        uint256 _amount
     ) external override onlyOwnerOrCouncilOrTreasury {
         require(
-            debtToPay > 0 || feeRecipient != address(0),
-            "PCV: debt has already paid"
-        );
-        require(
-            _musdToBurn <= musd.balanceOf(address(this)),
+            _amount <= musd.balanceOf(address(this)),
             "PCV: not enough tokens"
         );
 
-        // if the debt has already been paid, the feeRecipient should receive all fees
-        if (debtToPay == 0) {
-            feeSplitPercentage = 100;
+        uint256 gaugeSystemDistribution = (_amount * feeSplitPercentage) / 100;
+        uint256 protocolLoanRepayment = _amount - gaugeSystemDistribution;
+        uint256 stabilityPoolDeposit = 0;
+
+        // check for excess to deposit into the stability pool
+        if (protocolLoanRepayment > debtToPay) {
+            stabilityPoolDeposit = protocolLoanRepayment - debtToPay;
+            protocolLoanRepayment = debtToPay;
         }
 
-        uint256 feeToRecipient = (_musdToBurn * feeSplitPercentage) / 100;
-        uint256 feeToDebt = _musdToBurn - feeToRecipient;
-
-        if (feeToDebt > debtToPay) {
-            feeToRecipient += feeToDebt - debtToPay;
-            feeToDebt = debtToPay;
+        if (protocolLoanRepayment > 0) {
+            _repayDebt(protocolLoanRepayment);
         }
 
-        debtToPay -= feeToDebt;
+        if (stabilityPoolDeposit > 0) {
+            depositToStabilityPool(stabilityPoolDeposit);
+        }
 
-        if (feeRecipient != address(0) && feeSplitPercentage > 0) {
+        // send funds to gauge address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
+        if (feeRecipient != address(0) && gaugeSystemDistribution > 0) {
             require(
-                musd.transfer(feeRecipient, feeToRecipient),
+                musd.transfer(feeRecipient, gaugeSystemDistribution),
                 "PCV: sending mUSD failed"
             );
+            emit PCVDistribution(feeRecipient, gaugeSystemDistribution);
         }
-        borrowerOperations.burnDebtFromPCV(feeToDebt);
-
-        // slither-disable-next-line reentrancy-events
-        emit PCVDebtPaid(feeToDebt);
-        emit PCVFeePaid(feeRecipient, feeToRecipient);
     }
 
     function setAddresses(
@@ -156,6 +152,10 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     function setFeeSplit(
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
+        require(
+            feeRecipient != address(0),
+            "PCV must set fee recipient before setFeeSplit"
+        );
         require(
             (debtToPay > 0 && _feeSplitPercentage <= FEE_SPLIT_MAX) ||
                 (debtToPay == 0 && _feeSplitPercentage <= 100),
@@ -317,5 +317,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
 
         emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
+    }
+
+    function _repayDebt(uint _repayment) internal {
+        debtToPay -= _repayment;
+        borrowerOperations.burnDebtFromPCV(_repayment);
+        emit PCVDebtPayment(_repayment);
     }
 }

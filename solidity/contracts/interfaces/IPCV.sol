@@ -11,9 +11,9 @@ interface IPCV {
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
     event MUSDTokenAddressSet(address _musdTokenAddress);
     event MUSDWithdraw(address _recipient, uint256 _amount);
-    event PCVDebtPaid(uint256 _paidDebt);
+    event PCVDebtPayment(uint256 _paidDebt);
     event PCVDepositSP(address indexed user, uint256 musdAmount);
-    event PCVFeePaid(address _recipient, uint256 _amount);
+    event PCVDistribution(address _recipient, uint256 _amount);
     event PCVWithdrawSP(
         address indexed user,
         uint256 musdAmount,
@@ -27,7 +27,7 @@ interface IPCV {
 
     function debtToPay() external returns (uint256);
 
-    function payDebt(uint256 _musdToBurn) external;
+    function distributeMUSD(uint256 _musdToBurn) external;
 
     function setAddresses(
         address _borrowerOperations,

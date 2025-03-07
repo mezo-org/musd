@@ -438,15 +438,15 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   })
 
   describe("PCV", () => {
-    async function payDebt() {
+    async function distributeMUSD() {
       await contracts.pcv.connect(deployer.wallet).initializeDebt()
       const debtToPay = await contracts.pcv.debtToPay()
       await contracts.musd.unprotectedMint(addresses.pcv, debtToPay)
-      await contracts.pcv.connect(deployer.wallet).payDebt(debtToPay)
+      await contracts.pcv.connect(deployer.wallet).distributeMUSD(debtToPay)
     }
 
     it("withdrawMUSD(): reverts when caller is not owner, council or treasury", async () => {
-      await payDebt()
+      await distributeMUSD()
       await expect(
         contracts.pcv.connect(alice.wallet).withdrawMUSD(alice.address, 1),
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
@@ -465,7 +465,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
     })
 
     it("withdrawCollateral(): reverts when caller is not owner, council or treasury", async () => {
-      await payDebt()
+      await distributeMUSD()
       await expect(
         contracts.pcv
           .connect(alice.wallet)
@@ -473,9 +473,9 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 
-    it("payDebt(): reverts when caller is not owner, council or treasury", async () => {
+    it("distributeMUSD(): reverts when caller is not owner, council or treasury", async () => {
       await expect(
-        contracts.pcv.connect(alice.wallet).payDebt(1),
+        contracts.pcv.connect(alice.wallet).distributeMUSD(1),
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 
