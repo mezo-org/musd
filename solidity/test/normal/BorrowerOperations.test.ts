@@ -699,8 +699,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       OpenTrove: [
         { name: "debtAmount", type: "uint256" },
-        { name: "upperHint", type: "address" },
-        { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
         { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
@@ -714,8 +712,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         debtAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -751,8 +747,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         debtAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -787,8 +781,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         debtAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -854,8 +846,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           borrower: data.borrower,
           recipient: data.recipient,
           debtAmount: data.debtAmount,
-          upperHint: data.upperHint,
-          lowerHint: data.lowerHint,
           nonce: overridenData.nonce,
           deadline: data.deadline,
         }
@@ -1924,8 +1914,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       AddColl: [
         { name: "assetAmount", type: "uint256" },
-        { name: "upperHint", type: "address" },
-        { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
@@ -1939,8 +1927,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         assetAmount,
-        upperHint,
-        lowerHint,
         borrower,
         nonce,
         deadline,
@@ -1973,8 +1959,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       const value = {
         borrower,
         assetAmount,
-        upperHint,
-        lowerHint,
         nonce,
         deadline,
       }
@@ -2024,8 +2008,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           assetAmount: data.assetAmount,
-          upperHint: data.upperHint,
-          lowerHint: data.lowerHint,
           borrower: data.borrower,
           nonce: overridenData.nonce,
           deadline: data.deadline,
@@ -2400,8 +2382,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       WithdrawColl: [
         { name: "amount", type: "uint256" },
-        { name: "upperHint", type: "address" },
-        { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
         { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
@@ -2417,8 +2397,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -2455,8 +2433,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -2493,8 +2469,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         borrower,
         recipient,
         amount,
-        upperHint,
-        lowerHint,
         nonce,
         deadline,
       }
@@ -2530,8 +2504,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const data = {
           amount,
-          upperHint,
-          lowerHint,
           borrower,
           recipient,
           nonce,
@@ -2548,8 +2520,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           amount: data.amount,
-          upperHint: data.upperHint,
-          lowerHint: data.lowerHint,
           borrower: data.borrower,
           recipient: data.recipient,
           nonce: overriddenData.nonce,
@@ -2574,8 +2544,8 @@ describe("BorrowerOperations in Normal Mode", () => {
             .connect(overriddenData.caller)
             .withdrawCollWithSignature(
               overriddenData.amount,
-              overriddenData.upperHint,
-              overriddenData.lowerHint,
+              upperHint,
+              lowerHint,
               overriddenData.borrower,
               overriddenData.recipient,
               signature,
@@ -2917,8 +2887,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       WithdrawMUSD: [
         { name: "amount", type: "uint256" },
-        { name: "upperHint", type: "address" },
-        { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
         { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
@@ -2940,8 +2908,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -2977,8 +2943,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -3011,8 +2975,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -3073,8 +3035,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const signedValues = {
           amount: overridenData.amount,
-          upperHint: data.upperHint,
-          lowerHint: data.lowerHint,
           borrower: data.borrower,
           recipient: data.recipient,
           nonce: overridenData.nonce,
@@ -3506,8 +3466,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       RepayMUSD: [
         { name: "amount", type: "uint256" },
-        { name: "upperHint", type: "address" },
-        { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
@@ -3520,8 +3478,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         nonce,
         deadline,
@@ -3548,8 +3504,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         nonce,
         deadline,
@@ -3582,8 +3536,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests(bob)
       const value = {
         amount,
-        upperHint,
-        lowerHint,
         borrower,
         nonce,
         deadline,
@@ -3632,8 +3584,6 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           amount: data.amount,
-          upperHint: data.upperHint,
-          lowerHint: data.lowerHint,
           borrower: data.borrower,
           nonce: overriddenData.nonce,
           deadline: data.deadline,
@@ -4709,8 +4659,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         { name: "debtChange", type: "uint256" },
         { name: "isDebtIncrease", type: "bool" },
         { name: "assetAmount", type: "uint256" },
-        { name: "upperHint", type: "address" },
-        { name: "lowerHint", type: "address" },
         { name: "borrower", type: "address" },
         { name: "recipient", type: "address" },
         { name: "nonce", type: "uint256" },
@@ -4733,8 +4681,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         debtChange,
         isDebtIncrease,
         assetAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -4774,8 +4720,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         debtChange,
         isDebtIncrease: false,
         assetAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -4821,8 +4765,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         debtChange,
         isDebtIncrease,
         assetAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -4865,8 +4807,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         debtChange: 0n,
         isDebtIncrease: false,
         assetAmount: addedCollateral,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -4883,8 +4823,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           value.collWithdrawal,
           value.debtChange,
           value.isDebtIncrease,
-          value.upperHint,
-          value.lowerHint,
+          upperHint,
+          lowerHint,
           value.borrower,
           value.recipient,
           signature,
@@ -4910,8 +4850,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         debtChange,
         isDebtIncrease,
         assetAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -4950,8 +4888,6 @@ describe("BorrowerOperations in Normal Mode", () => {
         debtChange,
         isDebtIncrease,
         assetAmount,
-        upperHint,
-        lowerHint,
         borrower,
         recipient,
         nonce,
@@ -5012,8 +4948,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           debtChange: data.debtChange,
           isDebtIncrease: data.isDebtIncrease,
           assetAmount: data.assetAmount,
-          upperHint: data.upperHint,
-          lowerHint: data.lowerHint,
           borrower: data.borrower,
           recipient: data.recipient,
           nonce: overriddenData.nonce,

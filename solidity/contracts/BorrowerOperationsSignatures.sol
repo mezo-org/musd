@@ -92,32 +92,32 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant OPEN_TROVE_TYPEHASH =
         keccak256(
-            "OpenTrove(uint256 debtAmount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
+            "OpenTrove(uint256 debtAmount,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADD_COLL_TYPEHASH =
         keccak256(
-            "AddColl(uint256 assetAmount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "AddColl(uint256 assetAmount,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant WITHDRAW_COLL_TYPEHASH =
         keccak256(
-            "WithdrawColl(uint256 amount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
+            "WithdrawColl(uint256 amount,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant REPAY_MUSD_TYPEHASH =
         keccak256(
-            "RepayMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,uint256 nonce,uint256 deadline)"
+            "RepayMUSD(uint256 amount,address borrower,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant WITHDRAW_MUSD_TYPEHASH =
         keccak256(
-            "WithdrawMUSD(uint256 amount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
+            "WithdrawMUSD(uint256 amount,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADJUST_TROVE_TYPEHASH =
         keccak256(
-            "AdjustTrove(uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address upperHint,address lowerHint,address borrower,address recipient,uint256 nonce,uint256 deadline)"
+            "AdjustTrove(uint256 collWithdrawal,uint256 debtChange,bool isDebtIncrease,uint256 assetAmount,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant CLOSE_TROVE_TYPEHASH =
@@ -180,12 +180,7 @@ contract BorrowerOperationsSignatures is
 
         _verifySignature(
             ADD_COLL_TYPEHASH,
-            abi.encode(
-                msg.value,
-                addCollData.upperHint,
-                addCollData.lowerHint,
-                addCollData.borrower
-            ),
+            abi.encode(msg.value, addCollData.borrower),
             addCollData.borrower,
             _signature,
             addCollData.deadline
@@ -258,8 +253,6 @@ contract BorrowerOperationsSignatures is
                 adjustTroveData.debtChange,
                 adjustTroveData.isDebtIncrease,
                 msg.value,
-                adjustTroveData.upperHint,
-                adjustTroveData.lowerHint,
                 adjustTroveData.borrower,
                 adjustTroveData.recipient
             ),
@@ -302,8 +295,6 @@ contract BorrowerOperationsSignatures is
             WITHDRAW_COLL_TYPEHASH,
             abi.encode(
                 withdrawCollData.amount,
-                withdrawCollData.upperHint,
-                withdrawCollData.lowerHint,
                 withdrawCollData.borrower,
                 withdrawCollData.recipient
             ),
@@ -346,8 +337,6 @@ contract BorrowerOperationsSignatures is
             OPEN_TROVE_TYPEHASH,
             abi.encode(
                 openTroveData.debtAmount,
-                openTroveData.upperHint,
-                openTroveData.lowerHint,
                 openTroveData.borrower,
                 openTroveData.recipient
             ),
@@ -387,8 +376,6 @@ contract BorrowerOperationsSignatures is
             WITHDRAW_MUSD_TYPEHASH,
             abi.encode(
                 withdrawMUSDData.amount,
-                withdrawMUSDData.upperHint,
-                withdrawMUSDData.lowerHint,
                 withdrawMUSDData.borrower,
                 withdrawMUSDData.recipient
             ),
@@ -427,12 +414,7 @@ contract BorrowerOperationsSignatures is
 
         _verifySignature(
             REPAY_MUSD_TYPEHASH,
-            abi.encode(
-                repayMUSDData.amount,
-                repayMUSDData.upperHint,
-                repayMUSDData.lowerHint,
-                repayMUSDData.borrower
-            ),
+            abi.encode(repayMUSDData.amount, repayMUSDData.borrower),
             repayMUSDData.borrower,
             _signature,
             repayMUSDData.deadline
