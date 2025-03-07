@@ -92,7 +92,7 @@ contract BorrowerOperationsSignatures is
 
     bytes32 private constant OPEN_TROVE_TYPEHASH =
         keccak256(
-            "OpenTrove(uint256 debtAmount,address borrower,address recipient,uint256 nonce,uint256 deadline)"
+            "OpenTrove(uint256 assetAmount,uint256 debtAmount,address borrower,address recipient,uint256 nonce,uint256 deadline)"
         );
 
     bytes32 private constant ADD_COLL_TYPEHASH =
@@ -336,6 +336,7 @@ contract BorrowerOperationsSignatures is
         _verifySignature(
             OPEN_TROVE_TYPEHASH,
             abi.encode(
+                msg.value,
                 openTroveData.debtAmount,
                 openTroveData.borrower,
                 openTroveData.recipient

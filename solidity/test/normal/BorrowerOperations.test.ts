@@ -698,6 +698,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     const types = {
       OpenTrove: [
+        { name: "assetAmount", type: "uint256" },
         { name: "debtAmount", type: "uint256" },
         { name: "borrower", type: "address" },
         { name: "recipient", type: "address" },
@@ -711,6 +712,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests()
 
       const value = {
+        assetAmount,
         debtAmount,
         borrower,
         recipient,
@@ -746,6 +748,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const recipient = dennis.wallet.address
 
       const value = {
+        assetAmount,
         debtAmount,
         borrower,
         recipient,
@@ -780,6 +783,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests()
 
       const value = {
+        assetAmount,
         debtAmount,
         borrower,
         recipient,
@@ -843,6 +847,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
+          assetAmount: data.assetAmount,
           borrower: data.borrower,
           recipient: data.recipient,
           debtAmount: data.debtAmount,
@@ -904,6 +909,14 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
+      })
+
+      it("reverts when the collateral amount is different than the signed value", async () => {
+        await testRevert({ assetAmount: to1e18("22") })
+      })
+
+      it("reverts when the debt is different than the signed value", async () => {
+        await testRevert({ debtAmount: to1e18("8000") })
       })
 
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
@@ -2069,6 +2082,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
       })
+
+      it("reverts when the collateral amount is different than the signed value", async () => {
+        await testRevert({ assetAmount: to1e18("22") })
+      })
     })
   })
 
@@ -2587,6 +2604,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
       })
+
+      it("reverts when the asset amount is does not match the signed value", async () => {
+        await testRevert({ amount: to1e18(777) })
+      })
     })
   })
 
@@ -3034,7 +3055,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
-          amount: overridenData.amount,
+          amount: data.amount,
           borrower: data.borrower,
           recipient: data.recipient,
           nonce: overridenData.nonce,
@@ -3067,8 +3088,45 @@ describe("BorrowerOperations in Normal Mode", () => {
         const price = to1e18("300,000")
         await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
 
-        await testRevert(
-          { amount: to1e18("10,000") },
+        const { borrower, recipient, nonce, deadline } =
+          await setupSignatureTests(bob)
+
+        const changedAmount = to1e18("10,000")
+
+        const domain = {
+          name: "BorrowerOperationsSignatures",
+          version: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: addresses.borrowerOperationsSignatures,
+        }
+
+        const signedValues = {
+          amount: changedAmount,
+          borrower,
+          recipient,
+          nonce,
+          deadline,
+        }
+
+        const signature = await bob.wallet.signTypedData(
+          domain,
+          types,
+          signedValues,
+        )
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(alice.wallet)
+            .withdrawMUSDWithSignature(
+              changedAmount,
+              upperHint,
+              lowerHint,
+              borrower,
+              recipient,
+              signature,
+              deadline,
+            ),
+        ).to.be.revertedWith(
           "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted",
         )
       })
@@ -3105,6 +3163,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
+      })
+
+      it("reverts when the musd amount does not match the signature", async () => {
+        await testRevert({ amount: to1e18(42) })
       })
     })
   })
@@ -3643,6 +3705,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
+      })
+
+      it("reverts when the amount does not match the signature", async () => {
+        await testRevert({ amount: to1e18(333) })
       })
     })
   })
@@ -4980,6 +5046,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               overriddenData.recipient,
               signature,
               overriddenData.deadline,
+              { value: overriddenData.assetAmount },
             ),
         ).to.be.revertedWith(message)
       }
@@ -5016,6 +5083,22 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
+      })
+
+      it("reverts when the collateral withdrawn does not match the signature", async () => {
+        await testRevert({ collWithdrawal: to1e18(123) })
+      })
+
+      it("reverts when the debt change does not match the signature", async () => {
+        await testRevert({ debtChange: to1e18(7) })
+      })
+
+      it("reverts when the debt increase flag does not match the signature", async () => {
+        await testRevert({ isDebtIncrease: false })
+      })
+
+      it("reverts when the asset amount does not match the signature", async () => {
+        await testRevert({ assetAmount: to1e18(888) })
       })
 
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
