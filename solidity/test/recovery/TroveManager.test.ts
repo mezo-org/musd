@@ -28,7 +28,7 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 
-describe.only("TroveManager in Recovery Mode", () => {
+describe("TroveManager in Recovery Mode", () => {
   let alice: User
   let bob: User
   let carol: User
@@ -379,7 +379,7 @@ describe.only("TroveManager in Recovery Mode", () => {
       ).to.equal(0n)
     })
 
-    it.skip("applies default pool interest before checking recovery mode", async () => {
+    it("applies default pool interest before checking recovery mode", async () => {
       // Alice deposits just barely enough collateral so that we stay slightly above the CCR after carol is liquidated.
       await setupTroveAndSnapshot(alice, "20000", "225")
 

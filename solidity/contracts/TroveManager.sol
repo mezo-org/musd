@@ -1403,55 +1403,6 @@ contract TroveManager is
                 0,
                 uint8(TroveManagerOperation.liquidateInRecoveryMode)
             );
-            /*
-             * If 110% <= ICR < current TCR (accounting for the preceding liquidations in the current sequence)
-             * and there is mUSD in the Stability Pool, only offset, with no redistribution,
-             * but at a capped rate of 1.1 and only if the whole debt can be liquidated.
-             * The remainder due to the capped rate will be claimable as collateral surplus.
-             */
-        } else if (
-            (_ICR >= MCR) &&
-            (_ICR < _TCR) &&
-            (singleLiquidation.entireTrovePrincipal <= _MUSDInStabPool)
-        ) {
-            _removeStake(_borrower);
-            _movePendingTroveRewardsToActivePool(
-                _activePool,
-                _defaultPool,
-                vars.pendingColl,
-                vars.pendingPrincipal,
-                vars.pendingInterest
-            );
-            assert(_MUSDInStabPool != 0);
-
-            singleLiquidation = _getCappedOffsetVals(
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.entireTroveColl,
-                _price
-            );
-
-            _closeTrove(_borrower, Status.closedByLiquidation);
-            if (singleLiquidation.collSurplus > 0) {
-                collSurplusPool.accountSurplus(
-                    _borrower,
-                    singleLiquidation.collSurplus
-                );
-            }
-
-            emit TroveLiquidated(
-                _borrower,
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.collToSendToSP,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-            emit TroveUpdated(
-                _borrower,
-                0,
-                0,
-                0,
-                0,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
         } else {
             // if (_ICR >= MCR && ( _ICR >= _TCR || singleLiquidation.entireTroveDebt > _MUSDInStabPool))
             // slither-disable-next-line uninitialized-local
