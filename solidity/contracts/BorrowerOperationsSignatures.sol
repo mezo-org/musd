@@ -68,7 +68,6 @@ contract BorrowerOperationsSignatures is
         uint256 collWithdrawal;
         uint256 debtChange;
         bool isDebtIncrease;
-        uint256 assetAmount;
         address upperHint;
         address lowerHint;
         address borrower;
@@ -245,7 +244,6 @@ contract BorrowerOperationsSignatures is
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
@@ -253,13 +251,10 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        _assetAmount = msg.value;
-
         AdjustTrove memory adjustTroveData = AdjustTrove({
             collWithdrawal: _collWithdrawal,
             debtChange: _debtChange,
             isDebtIncrease: _isDebtIncrease,
-            assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
@@ -274,7 +269,7 @@ contract BorrowerOperationsSignatures is
                 adjustTroveData.collWithdrawal,
                 adjustTroveData.debtChange,
                 adjustTroveData.isDebtIncrease,
-                adjustTroveData.assetAmount,
+                msg.value,
                 adjustTroveData.upperHint,
                 adjustTroveData.lowerHint,
                 adjustTroveData.borrower,

@@ -31,7 +31,6 @@ interface IBorrowerOperationsSignatures {
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
