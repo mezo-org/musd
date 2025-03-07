@@ -177,12 +177,10 @@ contract BorrowerOperations is
     // Send collateral to a trove. Called by only the Stability Pool.
     function moveCollateralGainToTrove(
         address _borrower,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
         _requireCallerIsStabilityPool();
-        _assetAmount = msg.value;
         restrictedAdjustTrove(
             _borrower,
             _borrower,

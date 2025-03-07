@@ -241,7 +241,7 @@ contract StabilityPool is
 
         borrowerOperations.moveCollateralGainToTrove{
             value: depositorCollateralGain
-        }(msg.sender, 0, _upperHint, _lowerHint);
+        }(msg.sender, _upperHint, _lowerHint);
     }
 
     /*

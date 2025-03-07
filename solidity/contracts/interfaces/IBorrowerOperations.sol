@@ -82,7 +82,6 @@ interface IBorrowerOperations {
 
     function moveCollateralGainToTrove(
         address _borrower,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable;
