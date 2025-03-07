@@ -159,11 +159,9 @@ contract BorrowerOperations is
 
     // Send collateral to a trove
     function addColl(
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        _assetAmount = msg.value;
         restrictedAdjustTrove(
             msg.sender,
             msg.sender,
@@ -171,7 +169,6 @@ contract BorrowerOperations is
             0,
             0,
             false,
-            _assetAmount,
             _upperHint,
             _lowerHint
         );
@@ -180,12 +177,10 @@ contract BorrowerOperations is
     // Send collateral to a trove. Called by only the Stability Pool.
     function moveCollateralGainToTrove(
         address _borrower,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) external payable override {
         _requireCallerIsStabilityPool();
-        _assetAmount = msg.value;
         restrictedAdjustTrove(
             _borrower,
             _borrower,
@@ -193,7 +188,6 @@ contract BorrowerOperations is
             0,
             0,
             false,
-            _assetAmount,
             _upperHint,
             _lowerHint
         );
@@ -212,7 +206,6 @@ contract BorrowerOperations is
             _amount,
             0,
             false,
-            0,
             _upperHint,
             _lowerHint
         );
@@ -231,7 +224,6 @@ contract BorrowerOperations is
             0,
             _amount,
             true,
-            0,
             _upperHint,
             _lowerHint
         );
@@ -250,7 +242,6 @@ contract BorrowerOperations is
             0,
             _amount,
             false,
-            0,
             _upperHint,
             _lowerHint
         );
@@ -285,7 +276,6 @@ contract BorrowerOperations is
             _collWithdrawal,
             _debtChange,
             _isDebtIncrease,
-            msg.value,
             _upperHint,
             _lowerHint
         );
@@ -707,7 +697,6 @@ contract BorrowerOperations is
         uint256 _collWithdrawal,
         uint256 _mUSDChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint
     ) public payable {
@@ -739,8 +728,8 @@ contract BorrowerOperations is
         if (_isDebtIncrease) {
             _requireNonZeroDebtChange(_mUSDChange);
         }
-        _requireSingularCollChange(_collWithdrawal, _assetAmount);
-        _requireNonZeroAdjustment(_collWithdrawal, _mUSDChange, _assetAmount);
+        _requireSingularCollChange(_collWithdrawal, msg.value);
+        _requireNonZeroAdjustment(_collWithdrawal, _mUSDChange, msg.value);
         _requireTroveisActive(contractsCache.troveManager, _borrower);
 
         /*
@@ -750,7 +739,7 @@ contract BorrowerOperations is
         assert(
             msg.sender == _borrower ||
                 (msg.sender == stabilityPoolAddress &&
-                    _assetAmount > 0 &&
+                    msg.value > 0 &&
                     _mUSDChange == 0) ||
                 msg.sender == address(this) ||
                 msg.sender == borrowerOperationsSignaturesAddress
@@ -760,7 +749,7 @@ contract BorrowerOperations is
 
         // Get the collChange based on whether or not collateral was sent in the transaction
         (vars.collChange, vars.isCollIncrease) = _getCollChange(
-            _assetAmount,
+            msg.value,
             _collWithdrawal
         );
 

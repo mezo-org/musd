@@ -6,7 +6,6 @@ interface IBorrowerOperationsSignatures {
     function setAddresses(address _borrowerOperationsAddress) external;
 
     function addCollWithSignature(
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
@@ -32,7 +31,6 @@ interface IBorrowerOperationsSignatures {
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,

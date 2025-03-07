@@ -18,7 +18,6 @@ contract BorrowerOperationsSignatures is
     using ECDSA for bytes32;
 
     struct AddColl {
-        uint256 assetAmount;
         address upperHint;
         address lowerHint;
         address borrower;
@@ -64,7 +63,6 @@ contract BorrowerOperationsSignatures is
         uint256 collWithdrawal;
         uint256 debtChange;
         bool isDebtIncrease;
-        uint256 assetAmount;
         address upperHint;
         address lowerHint;
         address borrower;
@@ -167,7 +165,6 @@ contract BorrowerOperationsSignatures is
     }
 
     function addCollWithSignature(
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
@@ -175,7 +172,6 @@ contract BorrowerOperationsSignatures is
         uint256 _deadline
     ) external payable {
         AddColl memory addCollData = AddColl({
-            assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
@@ -185,7 +181,7 @@ contract BorrowerOperationsSignatures is
         _verifySignature(
             ADD_COLL_TYPEHASH,
             abi.encode(
-                addCollData.assetAmount,
+                msg.value,
                 addCollData.upperHint,
                 addCollData.lowerHint,
                 addCollData.borrower
@@ -202,7 +198,6 @@ contract BorrowerOperationsSignatures is
             0,
             0,
             false,
-            addCollData.assetAmount,
             addCollData.upperHint,
             addCollData.lowerHint
         );
@@ -238,7 +233,6 @@ contract BorrowerOperationsSignatures is
         uint256 _collWithdrawal,
         uint256 _debtChange,
         bool _isDebtIncrease,
-        uint256 _assetAmount,
         address _upperHint,
         address _lowerHint,
         address _borrower,
@@ -246,13 +240,10 @@ contract BorrowerOperationsSignatures is
         bytes memory _signature,
         uint256 _deadline
     ) external payable {
-        _assetAmount = msg.value;
-
         AdjustTrove memory adjustTroveData = AdjustTrove({
             collWithdrawal: _collWithdrawal,
             debtChange: _debtChange,
             isDebtIncrease: _isDebtIncrease,
-            assetAmount: _assetAmount,
             upperHint: _upperHint,
             lowerHint: _lowerHint,
             borrower: _borrower,
@@ -266,7 +257,7 @@ contract BorrowerOperationsSignatures is
                 adjustTroveData.collWithdrawal,
                 adjustTroveData.debtChange,
                 adjustTroveData.isDebtIncrease,
-                adjustTroveData.assetAmount,
+                msg.value,
                 adjustTroveData.upperHint,
                 adjustTroveData.lowerHint,
                 adjustTroveData.borrower,
@@ -284,7 +275,6 @@ contract BorrowerOperationsSignatures is
             adjustTroveData.collWithdrawal,
             adjustTroveData.debtChange,
             adjustTroveData.isDebtIncrease,
-            adjustTroveData.assetAmount,
             adjustTroveData.upperHint,
             adjustTroveData.lowerHint
         );
@@ -329,7 +319,6 @@ contract BorrowerOperationsSignatures is
             withdrawCollData.amount,
             0,
             false,
-            0,
             withdrawCollData.upperHint,
             withdrawCollData.lowerHint
         );
@@ -415,7 +404,6 @@ contract BorrowerOperationsSignatures is
             0,
             withdrawMUSDData.amount,
             true,
-            0,
             withdrawMUSDData.upperHint,
             withdrawMUSDData.lowerHint
         );
@@ -457,7 +445,6 @@ contract BorrowerOperationsSignatures is
             0,
             repayMUSDData.amount,
             false,
-            0,
             repayMUSDData.upperHint,
             repayMUSDData.lowerHint
         );

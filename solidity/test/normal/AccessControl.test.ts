@@ -41,9 +41,9 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
           .connect(alice.wallet)
           .moveCollateralGainToTrove(
             alice.address,
-            to1e18("2"),
             alice.address,
             alice.address,
+            { value: to1e18("2") },
           ),
       ).to.be.revertedWith("BorrowerOps: Caller is not Stability Pool")
     })

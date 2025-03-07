@@ -1951,7 +1951,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .addCollWithSignature(
-          assetAmount,
           upperHint,
           lowerHint,
           bob.address,
@@ -1985,7 +1984,6 @@ describe("BorrowerOperations in Normal Mode", () => {
       await contracts.borrowerOperationsSignatures
         .connect(carol.wallet)
         .addCollWithSignature(
-          assetAmount,
           upperHint,
           lowerHint,
           bob.address,
@@ -2050,7 +2048,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(overridenData.caller)
             .addCollWithSignature(
-              overridenData.assetAmount,
               overridenData.upperHint,
               overridenData.lowerHint,
               overridenData.borrower,
@@ -4751,7 +4748,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collWithdrawal,
           debtChange,
           isDebtIncrease,
-          assetAmount,
           upperHint,
           lowerHint,
           borrower,
@@ -4797,7 +4793,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collWithdrawal,
           debtChange,
           value.isDebtIncrease,
-          assetAmount,
           upperHint,
           lowerHint,
           borrower,
@@ -4844,7 +4839,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           withdrawnCollateral,
           debtChange,
           isDebtIncrease,
-          assetAmount,
           upperHint,
           lowerHint,
           borrower,
@@ -4889,7 +4883,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           value.collWithdrawal,
           value.debtChange,
           value.isDebtIncrease,
-          value.assetAmount,
           value.upperHint,
           value.lowerHint,
           value.borrower,
@@ -4935,7 +4928,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collWithdrawal,
           debtChange,
           isDebtIncrease,
-          assetAmount,
           upperHint,
           lowerHint,
           borrower,
@@ -4973,7 +4965,6 @@ describe("BorrowerOperations in Normal Mode", () => {
           collWithdrawal,
           debtChange,
           isDebtIncrease,
-          assetAmount,
           upperHint,
           lowerHint,
           borrower,
@@ -5049,7 +5040,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               overriddenData.collWithdrawal,
               overriddenData.debtChange,
               overriddenData.isDebtIncrease,
-              overriddenData.assetAmount,
               overriddenData.upperHint,
               overriddenData.lowerHint,
               overriddenData.borrower,
@@ -5105,7 +5095,6 @@ describe("BorrowerOperations in Normal Mode", () => {
               collWithdrawal,
               debtChange,
               isDebtIncrease,
-              assetAmount,
               upperHint,
               lowerHint,
             ),
