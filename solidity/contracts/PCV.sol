@@ -157,11 +157,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
         require(
-            debtToPay > 0,
-            "PCV: Must have debt in order to set a fee split."
-        );
-        require(
-            _feeSplitPercentage <= FEE_SPLIT_MAX,
+            (debtToPay > 0 && _feeSplitPercentage <= FEE_SPLIT_MAX) ||
+                (debtToPay == 0 && _feeSplitPercentage <= 100),
             "PCV: Fee split must be at most 50 while debt remains."
         );
         feeSplitPercentage = _feeSplitPercentage;

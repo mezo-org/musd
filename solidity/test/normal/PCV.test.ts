@@ -831,16 +831,16 @@ describe("PCV", () => {
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(2n)
     })
 
+    it("sets fee split greater than 50% if the debt is paid", async () => {
+      await debtPaid()
+      await PCVDeployer.setFeeSplit(51n)
+      expect(await PCVDeployer.feeSplitPercentage()).to.equal(51n)
+    })
+
     context("Expected Reverts", () => {
       it("reverts if fee split is > 50% before debt is paid", async () => {
         await expect(PCVDeployer.setFeeSplit(51n)).to.be.revertedWith(
           "PCV: Fee split must be at most 50 while debt remains.",
-        )
-      })
-      it("reverts if the debt is paid", async () => {
-        await debtPaid()
-        await expect(PCVDeployer.setFeeSplit(1n)).to.be.revertedWith(
-          "PCV: Must have debt in order to set a fee split.",
         )
       })
       it("reverts when caller is not owner/council/treasury", async () => {
