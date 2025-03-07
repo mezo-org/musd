@@ -139,6 +139,7 @@ In Recovery Mode...
 - We do not allow users to close troves.
 - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
 - Troves can be liquidated if their collateral ratio is below the TCR (instead of the normal 110%).
+- Users cannot refinance their trove.
 
 Liquidations in recovery mode do not seize all of the collateral. Instead, 110% of the debt's value is seized, and the rest is recoverable by the borrower.
 

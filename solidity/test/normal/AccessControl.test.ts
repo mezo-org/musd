@@ -15,12 +15,13 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   let bob: User
   let carol: User
   let deployer: User
+  let whale: User
 
   let addresses: TestingAddresses
   let contracts: Contracts
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, deployer, contracts, addresses } =
+    ;({ alice, bob, carol, deployer, whale, contracts, addresses } =
       await setupTests())
 
     await Promise.all(
@@ -32,6 +33,12 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
         }),
       ),
     )
+
+    await openTrove(contracts, {
+      sender: whale.wallet,
+      ICR: "600",
+      musdAmount: "200,000",
+    })
   })
 
   describe("BorrowerOperations", () => {
