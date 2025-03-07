@@ -698,6 +698,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     const types = {
       OpenTrove: [
+        { name: "assetAmount", type: "uint256" },
         { name: "debtAmount", type: "uint256" },
         { name: "borrower", type: "address" },
         { name: "recipient", type: "address" },
@@ -711,6 +712,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests()
 
       const value = {
+        assetAmount,
         debtAmount,
         borrower,
         recipient,
@@ -746,6 +748,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const recipient = dennis.wallet.address
 
       const value = {
+        assetAmount,
         debtAmount,
         borrower,
         recipient,
@@ -780,6 +783,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setupSignatureTests()
 
       const value = {
+        assetAmount,
         debtAmount,
         borrower,
         recipient,
@@ -843,6 +847,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         }
 
         const signedValues = {
+          assetAmount: data.assetAmount,
           borrower: data.borrower,
           recipient: data.recipient,
           debtAmount: data.debtAmount,
@@ -904,6 +909,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
+      })
+
+      it("reverts when the collateral amount is different than the signed value", async () => {
+        await testRevert({ assetAmount: to1e18("22") })
       })
 
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
