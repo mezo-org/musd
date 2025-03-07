@@ -1307,6 +1307,12 @@ contract TroveManager is
         if (TroveOwners.length <= 1) {
             return singleLiquidation;
         } // don't liquidate if last trove
+
+        // Ensure liquidation only happens if ICR is below MCR
+        if (_ICR >= MCR) {
+            return singleLiquidation;
+        }
+
         (
             singleLiquidation.entireTroveColl,
             singleLiquidation.entireTrovePrincipal,
