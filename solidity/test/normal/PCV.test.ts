@@ -2,10 +2,18 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import {
   Contracts,
+  ContractsState,
+  createLiquidationEvent,
   fastForwardTime,
+  getEmittedPCVtoSPDepositValues,
+  getEmittedSPtoPCVWithdrawalValues,
+  getEmittedWithdrawCollateralValues,
   getLatestBlockTimestamp,
+  openTrove,
   setupTests,
   TestingAddresses,
+  updatePCVSnapshot,
+  updateStabilityPoolSnapshot,
   updateWalletSnapshot,
   User,
 } from "../helpers"
@@ -19,8 +27,10 @@ describe("PCV", () => {
   let bob: User
   let council: User
   let deployer: User
+  let whale: User
   let contracts: Contracts
   let treasury: User
+  let state: ContractsState
 
   let bootstrapLoan: bigint
   let delay: bigint
@@ -34,8 +44,17 @@ describe("PCV", () => {
   }
 
   beforeEach(async () => {
-    ;({ alice, bob, council, deployer, treasury, contracts, addresses } =
-      await setupTests())
+    ;({
+      alice,
+      bob,
+      council,
+      deployer,
+      whale,
+      treasury,
+      state,
+      contracts,
+      addresses,
+    } = await setupTests())
 
     // for ease of use when calling onlyOwner* functions
     PCVDeployer = contracts.pcv.connect(deployer.wallet)
@@ -164,33 +183,304 @@ describe("PCV", () => {
   })
 
   describe("depositToStabilityPool()", () => {
-    it("deposits additional mUSD to StabilityPool", async () => {
+    it("deposits additional mUSD to StabilityPool from PCV", async () => {
       const depositAmount = to1e18("20")
       await contracts.musd.unprotectedMint(addresses.pcv, depositAmount)
-      await PCVDeployer.depositToStabilityPool(depositAmount)
+
+      await updatePCVSnapshot(contracts, state, "before")
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+
+      const tx = await PCVDeployer.depositToStabilityPool(depositAmount)
+
+      await updatePCVSnapshot(contracts, state, "after")
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+
+      expect(state.pcv.musd.before).to.equal(depositAmount)
+      expect(state.pcv.musd.after).to.equal(0)
+      expect(state.stabilityPool.musd.before).to.equal(bootstrapLoan)
+      expect(state.stabilityPool.musd.after).to.equal(
+        bootstrapLoan + depositAmount,
+      )
+
       const spBalance = await contracts.stabilityPool.getCompoundedMUSDDeposit(
         addresses.pcv,
       )
-      expect(spBalance).to.equal(bootstrapLoan + depositAmount)
+      expect(state.stabilityPool.musd.after).to.equal(spBalance)
+
+      const { musdAmount } = await getEmittedPCVtoSPDepositValues(tx)
+      expect(depositAmount).to.equal(musdAmount)
     })
 
     context("Expected Reverts", () => {
+      it("reverts when trying to deposit 0 mUSD", async () => {
+        await expect(PCVDeployer.depositToStabilityPool(0n)).to.be.revertedWith(
+          "StabilityPool: Amount must be non-zero",
+        )
+      })
+
       it("reverts when not enough mUSD", async () => {
         await expect(
           PCVDeployer.depositToStabilityPool(bootstrapLoan + 1n),
         ).to.be.revertedWith("PCV: not enough tokens")
       })
+
+      it("reverts when caller is not owner/council/treasury", async () => {
+        await expect(
+          contracts.pcv.connect(alice.wallet).depositToStabilityPool(0),
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+      })
     })
   })
 
-  describe("withdrawMUSD()", () => {
-    it("withdraws mUSD to recipient", async () => {
+  describe("withdrawFromStabilityPool(),", () => {
+    async function checkSuccessfulStabilityPoolWithdrawal(
+      withdrawAmount: bigint,
+      user: User,
+      initialStabilityPoolwithBTC: boolean,
+    ) {
+      if (initialStabilityPoolwithBTC) {
+        // setup StabilityPool to have BTC in it via a liquidation
+        const whaleMusd = "300,000"
+        await openTrove(contracts, {
+          musdAmount: whaleMusd,
+          ICR: "200",
+          sender: whale.wallet,
+        })
+        await createLiquidationEvent(contracts, deployer)
+      }
+
+      // check state assumptions before
+      await updatePCVSnapshot(contracts, state, "before")
+      if (initialStabilityPoolwithBTC === true) {
+        expect(state.pcv.musd.before).to.be.greaterThan(0n) // fees from opening the whale trove + defaulter trove
+      } else {
+        expect(state.pcv.musd.before).to.equal(0n)
+      }
+      expect(state.pcv.collateral.before).to.equal(0n)
+
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+      if (initialStabilityPoolwithBTC === true) {
+        expect(state.stabilityPool.collateral.before).to.be.greaterThan(0n) // BTC from the liquidadtion
+      } else {
+        expect(state.stabilityPool.collateral.before).to.equal(0n)
+      }
+      expect(state.stabilityPool.musd.before).to.be.greaterThan(0n)
+
+      // call to test
+      const tx = await contracts.pcv
+        .connect(user.wallet)
+        .withdrawFromStabilityPool(withdrawAmount)
+
+      // check state assumptions after
+      await updatePCVSnapshot(contracts, state, "after")
+      expect(state.pcv.musd.after).to.equal(
+        state.pcv.musd.before + withdrawAmount,
+      )
+      expect(state.pcv.collateral.after).to.equal(
+        state.stabilityPool.collateral.before,
+      )
+
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+      expect(state.stabilityPool.musd.after).to.equal(
+        state.stabilityPool.musd.before - withdrawAmount,
+      )
+      expect(state.stabilityPool.collateral.after).to.equal(0n)
+
+      // check emitted event data
+      const { musdAmount, collateralAmount } =
+        await getEmittedSPtoPCVWithdrawalValues(tx)
+      expect(withdrawAmount).to.equal(musdAmount)
+      expect(collateralAmount).to.equal(state.pcv.collateral.after)
+    }
+
+    it("has no BTC balance changes if BTC only withdrawal request and stability pool has no BTC", async () => {
+      const withdrawAmount = 0n
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        deployer,
+        false,
+      )
+    })
+
+    it("has no BTC balance changes with mUSD withdrawal request and stability pool has no BTC", async () => {
+      const withdrawAmount = to1e18(1)
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        deployer,
+        false,
+      )
+    })
+
+    it("owner can withdraw BTC collateral from StabilityPool to PCV if no mUSD amount is requested", async () => {
+      const withdrawAmount = 0n
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        deployer,
+        true,
+      )
+    })
+
+    it("owner can withdraw BTC and mUSD from StabilityPool to PCV", async () => {
+      const withdrawAmount = to1e18(1)
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        deployer,
+        true,
+      )
+    })
+
+    it("treasury can withdraw BTC and mUSD from StabilityPool to PCV", async () => {
+      const withdrawAmount = to1e18(1)
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        treasury,
+        true,
+      )
+    })
+
+    it("treasury can withdraw BTC collateral from StabilityPool to PCV if no mUSD amount is requested", async () => {
+      const withdrawAmount = 0n
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        treasury,
+        true,
+      )
+    })
+
+    it("council can withdraw BTC and mUSD from StabilityPool to PCV", async () => {
+      const withdrawAmount = to1e18(1)
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        council,
+        true,
+      )
+    })
+
+    it("council can withdraw BTC collateral from StabilityPool to PCV if no mUSD amount is requested", async () => {
+      const withdrawAmount = 0n
+      await checkSuccessfulStabilityPoolWithdrawal(
+        withdrawAmount,
+        council,
+        true,
+      )
+    })
+
+    it("return entire balance if requested amount is greater than the balance", async () => {
+      const withdrawAmount = bootstrapLoan * 2n
+      const roundingError = 100000000n // Rounding error that occurs when there is only one depositor into the StabilityPool withdrawing everything after a liquidation has been taken
+
+      // setup StabilityPool to have BTC in it
+      const whaleMusd = "300,000"
+      await openTrove(contracts, {
+        musdAmount: whaleMusd,
+        ICR: "200",
+        sender: whale.wallet,
+      })
+      await createLiquidationEvent(contracts, deployer)
+
+      // initial state assertions
+      await updatePCVSnapshot(contracts, state, "before")
+      expect(state.pcv.collateral.before).to.equal(0n)
+      expect(state.pcv.musd.before).to.be.greaterThan(0n)
+
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+      expect(state.stabilityPool.collateral.before).to.be.greaterThan(0n)
+      expect(state.stabilityPool.musd.before).to.be.greaterThan(0n)
+
+      const tx = await contracts.pcv
+        .connect(deployer.wallet)
+        .withdrawFromStabilityPool(withdrawAmount)
+
+      // check results
+      await updatePCVSnapshot(contracts, state, "after")
+      expect(state.pcv.musd.after).to.equal(
+        state.pcv.musd.before + state.stabilityPool.musd.before - roundingError,
+      )
+      expect(state.pcv.collateral.after).to.equal(
+        state.stabilityPool.collateral.before,
+      )
+
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+      expect(state.stabilityPool.musd.after).to.equal(roundingError)
+      expect(state.stabilityPool.collateral.after).to.equal(0n)
+
+      // check event
+      const { musdAmount, collateralAmount } =
+        await getEmittedSPtoPCVWithdrawalValues(tx)
+      expect(musdAmount).to.equal(
+        state.stabilityPool.musd.before - roundingError,
+      )
+      expect(collateralAmount).to.equal(state.pcv.collateral.after)
+    })
+
+    it("return entire balance if requested amount is greater than the balance and there have been no liquidations", async () => {
+      const withdrawAmount = bootstrapLoan * 2n
+
+      // initial state assertions
+      await updatePCVSnapshot(contracts, state, "before")
+      expect(state.pcv.collateral.before).to.equal(0n)
+      expect(state.pcv.musd.before).to.equal(0n)
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+      expect(state.stabilityPool.collateral.before).to.equal(0n)
+      expect(state.stabilityPool.musd.before).to.equal(bootstrapLoan)
+
+      const tx = await contracts.pcv
+        .connect(deployer.wallet)
+        .withdrawFromStabilityPool(withdrawAmount)
+
+      // check results
+      await updatePCVSnapshot(contracts, state, "after")
+      expect(state.pcv.musd.after).to.equal(
+        state.pcv.musd.before + state.stabilityPool.musd.before,
+      )
+      expect(state.pcv.collateral.after).to.equal(
+        state.stabilityPool.collateral.before,
+      )
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+      expect(state.stabilityPool.musd.after).to.equal(0n)
+      expect(state.stabilityPool.collateral.after).to.equal(0n)
+
+      // check event
+      const { musdAmount, collateralAmount } =
+        await getEmittedSPtoPCVWithdrawalValues(tx)
+      expect(musdAmount).to.equal(state.stabilityPool.musd.before)
+      expect(collateralAmount).to.equal(state.pcv.collateral.after)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when caller is not owner/council/treasury", async () => {
+        await expect(
+          contracts.pcv.connect(alice.wallet).withdrawFromStabilityPool(0),
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+      })
+    })
+  })
+
+  describe("withdrawMUSD() from PCV", () => {
+    it("withdraws mUSD to recipient when the loan is paid", async () => {
       await debtPaid()
       const value = to1e18("20")
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv
         .connect(treasury.wallet)
         .withdrawMUSD(alice.address, value)
+      expect(await contracts.musd.balanceOf(alice.address)).to.equal(value)
+      expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
+    })
+
+    it("withdraws mUSD to recipient after recipient is added to the whitelist when the loan is paid", async () => {
+      await debtPaid()
+      const value = to1e18("20")
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+
+      await expect(
+        PCVDeployer.withdrawMUSD(bob.address, value),
+      ).to.be.revertedWith("PCV: recipient must be in whitelist")
+
+      // add bob as the recipient
+      await PCVDeployer.addRecipientToWhitelist(addresses.bob)
+
+      await PCVDeployer.withdrawMUSD(alice.address, value)
       expect(await contracts.musd.balanceOf(alice.address)).to.equal(value)
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
     })
@@ -429,7 +719,23 @@ describe("PCV", () => {
   })
 
   describe("withdrawCollateral()", () => {
-    it("withdraws BTC to recipient", async () => {
+    it("withdraws BTC to recipient when there is a protocol loan", async () => {
+      const value = to1e18("20")
+      await updateWalletSnapshot(contracts, alice, "before")
+      // Send BTC to PCV
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value,
+      })
+      await contracts.pcv
+        .connect(council.wallet)
+        .withdrawCollateral(alice.address, value)
+      await updateWalletSnapshot(contracts, alice, "after")
+      expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
+      expect(alice.btc.after - alice.btc.before).to.equal(value)
+    })
+
+    it("withdraws BTC to recipient when the protocol loan is repaid", async () => {
       await debtPaid()
       const value = to1e18("20")
       await updateWalletSnapshot(contracts, alice, "before")
@@ -444,6 +750,50 @@ describe("PCV", () => {
       await updateWalletSnapshot(contracts, alice, "after")
       expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
       expect(alice.btc.after - alice.btc.before).to.equal(value)
+    })
+
+    it("withdraws BTC to recipient after recipient is added to the whitelist", async () => {
+      const value = to1e18("20")
+      // Send BTC to PCV
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value,
+      })
+      const withdrawAmount = to1e18("1")
+      // make sure funds cant be withdrawn to bob
+      await expect(
+        PCVDeployer.withdrawCollateral(bob.address, withdrawAmount),
+      ).to.be.revertedWith("PCV: recipient must be in whitelist")
+
+      // add bob as the recipient
+      await PCVDeployer.addRecipientToWhitelist(addresses.bob)
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      // withdraw collatearl
+      await PCVDeployer.withdrawCollateral(bob.address, withdrawAmount)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      // check he got them
+      expect(bob.btc.after).to.equal(bob.btc.before + withdrawAmount)
+    })
+
+    it("emits correct values on withdrawing collateral from PCV", async () => {
+      const value = to1e18("20")
+      await updateWalletSnapshot(contracts, alice, "before")
+      // Send BTC to PCV
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value,
+      })
+      const tx = await contracts.pcv
+        .connect(council.wallet)
+        .withdrawCollateral(alice.address, value)
+
+      const { recipient, collateralAmount } =
+        await getEmittedWithdrawCollateralValues(tx)
+      expect(recipient).to.equal(alice.address)
+      expect(collateralAmount).to.equal(value)
     })
 
     context("Expected Reverts", () => {
@@ -465,17 +815,22 @@ describe("PCV", () => {
         ).to.be.revertedWith("Sending BTC failed")
       })
 
-      it("reverts when debt is not paid", async () => {
+      it("reverts when caller is not owner/council/treasury", async () => {
         await expect(
           contracts.pcv
-            .connect(treasury.wallet)
+            .connect(alice.wallet)
             .withdrawCollateral(alice.address, 1n),
-        ).to.be.revertedWith("PCV: debt must be paid")
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
       })
     })
   })
 
   describe("setFeeSplit()", () => {
+    it("sets fee split if percentage is less than max and there is debt", async () => {
+      await PCVDeployer.setFeeSplit(2n)
+      expect(await PCVDeployer.feeSplitPercentage()).to.equal(2n)
+    })
+
     context("Expected Reverts", () => {
       it("reverts if fee split is > 50% before debt is paid", async () => {
         await expect(PCVDeployer.setFeeSplit(51n)).to.be.revertedWith(
@@ -488,6 +843,11 @@ describe("PCV", () => {
           "PCV: Must have debt in order to set a fee split.",
         )
       })
+      it("reverts when caller is not owner/council/treasury", async () => {
+        await expect(
+          contracts.pcv.connect(alice.wallet).setFeeSplit(50n),
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+      })
     })
   })
 
@@ -498,6 +858,73 @@ describe("PCV", () => {
           PCVDeployer.setFeeRecipient(ZERO_ADDRESS),
         ).to.be.revertedWith("PCV: Fee recipient cannot be the zero address.")
       })
+      it("reverts when caller is not owner/council/treasury", async () => {
+        await expect(
+          contracts.pcv.connect(alice.wallet).setFeeRecipient(addresses.alice),
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+      })
+    })
+  })
+
+  describe("Rebalancing", () => {
+    it("treasury can withdraw BTC to swap and redeposit mUSD into StabilityPool", async () => {
+      // setup StabilityPool to have BTC in it via a liquidation
+      const whaleMusd = "300,000"
+      await openTrove(contracts, {
+        musdAmount: whaleMusd,
+        ICR: "200",
+        sender: whale.wallet,
+      })
+      await createLiquidationEvent(contracts, deployer)
+
+      let pcvBalance = await ethers.provider.getBalance(addresses.pcv)
+      expect(pcvBalance).to.equal(0n)
+
+      // check state assumptions before
+      await updateWalletSnapshot(contracts, treasury, "before")
+      await updatePCVSnapshot(contracts, state, "before")
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+      const liquidatedBTC = state.stabilityPool.collateral.before
+
+      // call to withdraw BTC from StabilityPool to PCV
+      await contracts.pcv.connect(treasury.wallet).withdrawFromStabilityPool(0n)
+      pcvBalance = await ethers.provider.getBalance(addresses.pcv)
+      expect(pcvBalance).to.be.equal(liquidatedBTC)
+
+      // call to withdraw BTC from PCV to treasury
+      await contracts.pcv
+        .connect(treasury.wallet)
+        .withdrawCollateral(treasury.address, pcvBalance)
+      pcvBalance = await ethers.provider.getBalance(addresses.pcv)
+      expect(pcvBalance).to.equal(0n)
+
+      const treasuryBalance = await ethers.provider.getBalance(treasury.address)
+      expect(treasuryBalance).to.be.greaterThan(treasury.btc.before) // got to account for gas
+      expect(treasuryBalance - liquidatedBTC).to.be.lessThan(
+        treasury.btc.before,
+      ) // got to account for gas
+
+      // simulate acquiring mUSD and sending it back to PCV
+      const value = to1e18("20,000")
+      await contracts.musd.unprotectedMint(treasury.address, value)
+
+      await contracts.musd
+        .connect(treasury.wallet)
+        .transfer(await contracts.pcv.getAddress(), value)
+
+      // redeposit mUSD to PCV
+      await contracts.pcv.connect(treasury.wallet).depositToStabilityPool(value)
+
+      // check state assumptions after
+      await updatePCVSnapshot(contracts, state, "after")
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+
+      expect(state.stabilityPool.collateral.after).to.equal(0n)
+      expect(state.stabilityPool.musd.after).to.equal(
+        state.stabilityPool.musd.before + value,
+      )
+      expect(state.pcv.collateral.after).to.equal(0n)
+      expect(state.pcv.musd.after).to.equal(state.pcv.musd.before) // note there are mint fees in here
     })
   })
 })

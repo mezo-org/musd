@@ -192,7 +192,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     )
         external
         override
-        onlyAfterDebtPaid
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
@@ -305,7 +304,21 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             _amount
         );
 
-        // slither-disable-next-line reentrancy-events
-        emit DepositToStabilityPool(_amount);
+        emit PCVDepositSP(msg.sender, _amount);
+    }
+
+    function withdrawFromStabilityPool(
+        uint256 _amount
+    ) public onlyOwnerOrCouncilOrTreasury {
+        uint256 collateralBefore = address(this).balance;
+        uint256 musdBefore = musd.balanceOf(address(this));
+
+        IStabilityPool(borrowerOperations.stabilityPoolAddress())
+            .withdrawFromSP(_amount);
+
+        uint256 collateralChange = address(this).balance - collateralBefore;
+        uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
+
+        emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 }

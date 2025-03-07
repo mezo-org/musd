@@ -1520,6 +1520,7 @@ contract TroveManager is
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
         vars.newPrincipal = Troves[_borrower].principal;
 
+        // solhint-disable not-rely-on-time
         vars.interestPayment =
             Troves[_borrower].interestOwed +
             InterestRateMath.calculateInterestOwed(
@@ -1528,6 +1529,7 @@ contract TroveManager is
                 Troves[_borrower].lastInterestUpdateTime,
                 block.timestamp
             );
+        // solhint-enable not-rely-on-time
 
         if (singleRedemption.mUSDLot > vars.interestPayment) {
             vars.newPrincipal -=
