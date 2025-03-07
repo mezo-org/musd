@@ -656,6 +656,8 @@ contract BorrowerOperations is
 
     function restrictedRefinance(address _borrower) public {
         _requireCallerIsAuthorized(_borrower);
+        uint256 price = priceFeed.fetchPrice();
+        _requireNotInRecoveryMode(price);
         ITroveManager troveManagerCached = troveManager;
         IInterestRateManager interestRateManagerCached = interestRateManager;
         _requireTroveisActive(troveManagerCached, _borrower);
@@ -689,7 +691,7 @@ contract BorrowerOperations is
 
         uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
             troveManagerCached.getTroveColl(_borrower),
-            priceFeed.fetchPrice()
+            price
         );
         troveManagerCached.setTroveMaxBorrowingCapacity(
             _borrower,

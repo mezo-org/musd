@@ -5388,6 +5388,13 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("Updates maximum borrowing capacity based on current price and collateral", async () => {
+      // Open a huge trove to prevent recovery mode
+      await openTrove(contracts, {
+        musdAmount: "200,000",
+        ICR: "1000",
+        sender: dennis.wallet,
+      })
+
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 

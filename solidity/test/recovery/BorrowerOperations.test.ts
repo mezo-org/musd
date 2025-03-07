@@ -420,7 +420,19 @@ describe("BorrowerOperations in Recovery Mode", () => {
     })
   })
 
-  describe("adjustTrove", () => {
+  describe("refinance()", () => {
+    context("Expected Reverts", () => {
+      it("reverts when system is in Recovery Mode", async () => {
+        await expect(
+          contracts.borrowerOperations.connect(bob.wallet).refinance(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Operation not permitted during Recovery Mode",
+        )
+      })
+    })
+  })
+
+  describe("adjustTrove()", () => {
     it("A trove with ICR < CCR in Recovery Mode can adjust their trove to ICR > CCR", async () => {
       const collChange = to1e18("20")
 
