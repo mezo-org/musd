@@ -94,9 +94,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             protocolLoanRepayment = debtToPay;
         }
 
-        if (protocolLoanRepayment > 0) {
-            _repayDebt(protocolLoanRepayment);
-        }
+        _repayDebt(protocolLoanRepayment);
 
         if (stabilityPoolDeposit > 0) {
             depositToStabilityPool(stabilityPoolDeposit);
@@ -316,12 +314,20 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint256 collateralChange = address(this).balance - collateralBefore;
         uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
 
+        if (musdChange > debtToPay) {
+            _repayDebt(debtToPay);
+        } else {
+            _repayDebt(musdChange);
+        }
+
         emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 
     function _repayDebt(uint _repayment) internal {
-        debtToPay -= _repayment;
-        borrowerOperations.burnDebtFromPCV(_repayment);
-        emit PCVDebtPayment(_repayment);
+        if (_repayment > 0 && debtToPay > 0) {
+            debtToPay -= _repayment;
+            borrowerOperations.burnDebtFromPCV(_repayment);
+            emit PCVDebtPayment(_repayment);
+        }
     }
 }
