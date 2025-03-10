@@ -12,6 +12,8 @@ interface IPCV {
     event RolesSet(address _council, address _treasury);
 
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
+    event FeeRecipientSet(address _feeRecipient);
+    event FeeSplitSet(uint8 _feeSplitPercentage);
     event MUSDWithdraw(address _recipient, uint256 _amount);
     event PCVDebtPayment(uint256 _paidDebt);
     event PCVDepositSP(address indexed user, uint256 musdAmount);

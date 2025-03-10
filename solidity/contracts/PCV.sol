@@ -76,42 +76,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     receive() external payable {}
 
-    function distributeMUSD(
-        uint256 _amount
-    ) external override onlyOwnerOrCouncilOrTreasury {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-
-        uint256 gaugeSystemDistribution = (_amount * feeSplitPercentage) / 100;
-        uint256 protocolLoanRepayment = _amount - gaugeSystemDistribution;
-        uint256 stabilityPoolDeposit = 0;
-
-        // check for excess to deposit into the stability pool
-        if (protocolLoanRepayment > debtToPay) {
-            stabilityPoolDeposit = protocolLoanRepayment - debtToPay;
-            protocolLoanRepayment = debtToPay;
-        }
-
-        _repayDebt(protocolLoanRepayment);
-
-        if (stabilityPoolDeposit > 0) {
-            depositToStabilityPool(stabilityPoolDeposit);
-        }
-
-        // send funds to gauge address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
-        if (feeRecipient != address(0) && gaugeSystemDistribution > 0) {
-            require(
-                musd.transfer(feeRecipient, gaugeSystemDistribution),
-                "PCV: sending mUSD failed"
-            );
-
-            // slither-disable-next-line reentrancy-events
-            emit PCVDistribution(feeRecipient, gaugeSystemDistribution);
-        }
-    }
-
     function setAddresses(
         address _borrowerOperations,
         address _musdTokenAddress
@@ -147,6 +111,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: Fee recipient cannot be the zero address."
         );
         feeRecipient = _feeRecipient;
+        emit FeeRecipientSet(_feeRecipient);
     }
 
     function setFeeSplit(
@@ -162,6 +127,44 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: Fee split must be at most 50 while debt remains."
         );
         feeSplitPercentage = _feeSplitPercentage;
+
+        emit FeeSplitSet(_feeSplitPercentage);
+    }
+
+    function distributeMUSD(
+        uint256 _amount
+    ) external override onlyOwnerOrCouncilOrTreasury {
+        require(
+            _amount <= musd.balanceOf(address(this)),
+            "PCV: not enough tokens"
+        );
+
+        uint256 gaugeSystemDistribution = (_amount * feeSplitPercentage) / 100;
+        uint256 protocolLoanRepayment = _amount - gaugeSystemDistribution;
+        uint256 stabilityPoolDeposit = 0;
+
+        // check for excess to deposit into the stability pool
+        if (protocolLoanRepayment > debtToPay) {
+            stabilityPoolDeposit = protocolLoanRepayment - debtToPay;
+            protocolLoanRepayment = debtToPay;
+        }
+
+        _repayDebt(protocolLoanRepayment);
+
+        if (stabilityPoolDeposit > 0) {
+            depositToStabilityPool(stabilityPoolDeposit);
+        }
+
+        // send funds to gauge address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
+        if (feeRecipient != address(0) && gaugeSystemDistribution > 0) {
+            require(
+                musd.transfer(feeRecipient, gaugeSystemDistribution),
+                "PCV: sending mUSD failed"
+            );
+
+            // slither-disable-next-line reentrancy-events
+            emit PCVDistribution(feeRecipient, gaugeSystemDistribution);
+        }
     }
 
     function withdrawMUSD(
