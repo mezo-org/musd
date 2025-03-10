@@ -5448,7 +5448,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
-      const price = await dropPrice(contracts, deployer, carol, to1e18("110"))
+      const price = await dropPrice(contracts, deployer, carol, to1e18("111"))
 
       await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
@@ -5512,6 +5512,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setInterestRate(contracts, council, newRate)
       const { borrower, domain, nonce } = await setupSignatureTests(bob)
 
+      // Open a trove with high ICR to prevent recovery mode
+      await setupCarolsTrove()
+
       // account for governance delay in setting interest rate
       const timeToNewRate = 7 * 24 * 60 * 60 // 7 days in seconds
       const deadline = Math.floor(Date.now() / 1000) + 3600 + timeToNewRate // 1 hour from interest rate change approval
@@ -5534,6 +5537,9 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("correctly increments the nonce after a successful transaction", async () => {
       const { borrower, domain, deadline, nonce } =
         await setupSignatureTests(bob)
+
+      // Open a trove with high ICR to prevent recovery mode
+      await setupCarolsTrove()
 
       const value = {
         borrower,
