@@ -12,8 +12,8 @@ contract TroveManagerTester is TroveManager {
         updateDefaultPoolInterest();
     }
 
-    function getCompositeDebt(uint256 _debt) external view returns (uint) {
-        return borrowerOperations.getCompositeDebt(_debt);
+    function getCompositeDebt(uint256 _debt) external pure returns (uint) {
+        return _getCompositeDebt(_debt);
     }
 
     function computeICR(

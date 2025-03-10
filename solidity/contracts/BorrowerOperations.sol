@@ -424,7 +424,7 @@ contract BorrowerOperations is
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
-        vars.compositeDebt = getCompositeDebt(vars.netDebt);
+        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
 
         // if BTC overwrite the asset value
         vars.ICR = LiquityMath._computeCR(
@@ -762,7 +762,7 @@ contract BorrowerOperations is
         // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough mUSD
         if (!_isDebtIncrease && _mUSDChange > 0) {
             _requireAtLeastMinNetDebt(
-                getNetDebt(vars.debt) - vars.netDebtChange
+                _getNetDebt(vars.debt) - vars.netDebtChange
             );
             _requireValidMUSDRepayment(vars.debt, vars.netDebtChange);
             _requireSufficientMUSDBalance(_borrower, vars.netDebtChange);
@@ -838,16 +838,6 @@ contract BorrowerOperations is
             _isDebtIncrease,
             vars.netDebtChange
         );
-    }
-
-    // Returns the composite debt (drawn debt + gas compensation) of a trove,
-    // for the purpose of ICR calculation
-    function getCompositeDebt(uint256 _debt) public pure returns (uint) {
-        return _debt + MUSD_GAS_COMPENSATION;
-    }
-
-    function getNetDebt(uint256 _debt) public pure returns (uint) {
-        return _debt - MUSD_GAS_COMPENSATION;
     }
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)

@@ -95,4 +95,14 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     ) internal pure virtual returns (uint) {
         return _entireColl / PERCENT_DIVISOR;
     }
+
+    // Returns the composite debt (drawn debt + gas compensation) of a trove,
+    // for the purpose of ICR calculation
+    function _getCompositeDebt(uint256 _debt) internal pure returns (uint) {
+        return _debt + MUSD_GAS_COMPENSATION;
+    }
+
+    function _getNetDebt(uint256 _debt) internal pure returns (uint) {
+        return _debt - MUSD_GAS_COMPENSATION;
+    }
 }

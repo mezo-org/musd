@@ -137,8 +137,4 @@ interface IBorrowerOperations {
     ) external;
 
     function minNetDebt() external view returns (uint256);
-
-    function getCompositeDebt(uint256 _debt) external view returns (uint);
-
-    function getNetDebt(uint256 _debt) external view returns (uint);
 }

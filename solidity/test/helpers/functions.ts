@@ -47,7 +47,7 @@ export async function getOpenTroveTotalDebt(
   const price = await contracts.priceFeed.fetchPrice()
   const recoveryMode = await contracts.troveManager.checkRecoveryMode(price)
   const compositeDebt =
-    await contracts.borrowerOperations.getCompositeDebt(musdAmount)
+    await contracts.troveManager.getCompositeDebt(musdAmount)
 
   if (recoveryMode) {
     return compositeDebt

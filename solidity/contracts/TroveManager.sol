@@ -1578,8 +1578,7 @@ contract TroveManager is
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                borrowerOperations.getNetDebt(vars.newDebt) <
-                redeemCollateralVars.minNetDebt
+                _getNetDebt(vars.newDebt) < redeemCollateralVars.minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
