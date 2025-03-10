@@ -842,11 +842,11 @@ contract BorrowerOperations is
 
     // Returns the composite debt (drawn debt + gas compensation) of a trove,
     // for the purpose of ICR calculation
-    function getCompositeDebt(uint256 _debt) public view returns (uint) {
+    function getCompositeDebt(uint256 _debt) public pure returns (uint) {
         return _debt + MUSD_GAS_COMPENSATION;
     }
 
-    function getNetDebt(uint256 _debt) public view returns (uint) {
+    function getNetDebt(uint256 _debt) public pure returns (uint) {
         return _debt - MUSD_GAS_COMPENSATION;
     }
 
@@ -1087,7 +1087,7 @@ contract BorrowerOperations is
     function _requireValidMUSDRepayment(
         uint256 _currentDebt,
         uint256 _debtRepayment
-    ) internal view {
+    ) internal pure {
         require(
             _debtRepayment <= _currentDebt - MUSD_GAS_COMPENSATION,
             "BorrowerOps: Amount repaid must not be larger than the Trove's debt"
