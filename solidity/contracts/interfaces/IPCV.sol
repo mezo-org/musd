@@ -8,8 +8,10 @@ import "../token/IMUSD.sol";
 interface IPCV {
     // --- Events --
     event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);
-    event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
     event MUSDTokenAddressSet(address _musdTokenAddress);
+    event RolesSet(address _council, address _treasury);
+
+    event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
     event MUSDWithdraw(address _recipient, uint256 _amount);
     event PCVDebtPayment(uint256 _paidDebt);
     event PCVDepositSP(address indexed user, uint256 musdAmount);
@@ -21,7 +23,6 @@ interface IPCV {
     );
     event RecipientAdded(address _recipient);
     event RecipientRemoved(address _recipient);
-    event RolesSet(address _council, address _treasury);
 
     // --- Functions ---
 
