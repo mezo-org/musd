@@ -106,6 +106,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
                 musd.transfer(feeRecipient, gaugeSystemDistribution),
                 "PCV: sending mUSD failed"
             );
+
+            // slither-disable-next-line reentrancy-events
             emit PCVDistribution(feeRecipient, gaugeSystemDistribution);
         }
     }
@@ -177,6 +179,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: not enough tokens"
         );
         require(musd.transfer(_recipient, _amount), "PCV: sending mUSD failed");
+
         // slither-disable-next-line reentrancy-events
         emit MUSDWithdraw(_recipient, _amount);
     }
@@ -190,8 +193,10 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        emit CollateralWithdraw(_recipient, _collateralAmount);
         _sendCollateral(_recipient, _collateralAmount);
+
+        // slither-disable-next-line reentrancy-events
+        emit CollateralWithdraw(_recipient, _collateralAmount);
     }
 
     function addRecipientsToWhitelist(
@@ -295,10 +300,12 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             musd.approve(borrowerOperations.stabilityPoolAddress(), _amount),
             "PCV: Approval failed"
         );
+
         IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
             _amount
         );
 
+        // slither-disable-next-line reentrancy-events
         emit PCVDepositSP(msg.sender, _amount);
     }
 
@@ -320,6 +327,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             _repayDebt(musdChange);
         }
 
+        // slither-disable-next-line reentrancy-events
         emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 
@@ -327,6 +335,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         if (_repayment > 0 && debtToPay > 0) {
             debtToPay -= _repayment;
             borrowerOperations.burnDebtFromPCV(_repayment);
+
+            // slither-disable-next-line reentrancy-events
             emit PCVDebtPayment(_repayment);
         }
     }
