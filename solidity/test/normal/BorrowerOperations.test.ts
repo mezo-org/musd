@@ -5473,6 +5473,17 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.equal(carol.musd.before)
     })
+
+    context("Expected Reverts", () => {
+      it.only("should revert if the fee would put the system into recovery mode", async () => {
+        await setInterestRate(contracts, council, 500)
+        await expect(
+          contracts.borrowerOperations.connect(alice.wallet).refinance(),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
+        )
+      })
+    })
   })
 
   describe("refinanceWithSignature()", () => {

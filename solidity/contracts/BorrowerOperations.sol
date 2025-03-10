@@ -663,6 +663,7 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(_borrower, fee);
         activePool.increaseDebt(fee, 0);
+        _requireNewTCRisAboveCCR(troveManagerCached.getTCR(price));
 
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
 
