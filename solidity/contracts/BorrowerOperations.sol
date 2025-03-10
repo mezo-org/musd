@@ -662,6 +662,7 @@ contract BorrowerOperations is
         uint256 fee = _triggerBorrowingFee(troveManagerCached, musd, amount);
         // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(_borrower, fee);
+        activePool.increaseDebt(fee, 0);
 
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
 

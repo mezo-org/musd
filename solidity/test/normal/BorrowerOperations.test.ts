@@ -5207,6 +5207,50 @@ describe("BorrowerOperations in Normal Mode", () => {
       ).to.equal(carol.trove.debt.after)
     })
 
+    it("updates the ActivePool principal", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await setInterestRate(contracts, council, 500)
+      await updateTroveSnapshot(contracts, carol, "before")
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+
+      const after = BigInt(await getLatestBlockTimestamp())
+      await updateTroveSnapshot(contracts, carol, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+
+      const debt =
+        carol.trove.debt.before +
+        calculateInterestOwed(
+          carol.trove.debt.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          after,
+        )
+
+      const expectedFee = debt / 1000n
+
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before + expectedFee,
+      )
+    })
+
     it("updates the ActivePool interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupCarolsTrove()
