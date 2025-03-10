@@ -119,7 +119,7 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
 
             uint256 troveDebt = troveManager.getTroveDebt(currentTroveuser);
 
-            uint256 netDebt = borrowerOperations.getNetDebt(troveDebt) +
+            uint256 netDebt = _getNetDebt(troveDebt) +
                 pendingPrincipal +
                 pendingInterest;
 

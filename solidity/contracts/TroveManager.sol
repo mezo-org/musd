@@ -103,7 +103,6 @@ contract TroveManager is
 
     struct LocalVariables_redeemCollateral {
         uint256 minNetDebt;
-        uint256 gasCompensation;
         uint16 interestRate;
     }
 
@@ -367,7 +366,6 @@ contract TroveManager is
         updateDefaultPoolInterest();
 
         vars.minNetDebt = borrowerOperations.minNetDebt();
-        vars.gasCompensation = borrowerOperations.musdGasCompensation();
         vars.interestRate = interestRateManager.interestRate();
 
         while (
@@ -1124,8 +1122,7 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .musdGasCompensation();
+        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
         uint256 collToLiquidate = singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
 
@@ -1319,8 +1316,7 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .musdGasCompensation();
+        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
         vars.collToLiquidate =
             singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
@@ -1507,7 +1503,7 @@ contract TroveManager is
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         singleRedemption.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            _getTotalDebt(_borrower) - redeemCollateralVars.gasCompensation
+            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
         );
 
         // Get the collateralLot of equivalent value in USD
@@ -1534,13 +1530,13 @@ contract TroveManager is
                 singleRedemption.mUSDLot -
                 vars.interestPayment;
         }
-        if (vars.newDebt == redeemCollateralVars.gasCompensation) {
+        if (vars.newDebt == MUSD_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _redeemCloseTrove(
                 _contractsCache,
                 _borrower,
-                redeemCollateralVars.gasCompensation,
+                MUSD_GAS_COMPENSATION,
                 vars.newColl
             );
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1582,8 +1578,7 @@ contract TroveManager is
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                borrowerOperations.getNetDebt(vars.newDebt) <
-                redeemCollateralVars.minNetDebt
+                _getNetDebt(vars.newDebt) < redeemCollateralVars.minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
@@ -1851,7 +1846,7 @@ contract TroveManager is
         uint256 _entireTroveDebt,
         uint256 _entireTroveColl,
         uint256 _price
-    ) internal view returns (LiquidationValues memory singleLiquidation) {
+    ) internal pure returns (LiquidationValues memory singleLiquidation) {
         singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
         singleLiquidation.entireTroveColl = _entireTroveColl;
         uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
@@ -1859,8 +1854,7 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             cappedCollPortion
         );
-        singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .musdGasCompensation();
+        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
 
         singleLiquidation.debtToOffset = _entireTroveDebt;
         singleLiquidation.collToSendToSP =

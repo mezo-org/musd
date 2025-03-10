@@ -47,7 +47,7 @@ export async function getOpenTroveTotalDebt(
   const price = await contracts.priceFeed.fetchPrice()
   const recoveryMode = await contracts.troveManager.checkRecoveryMode(price)
   const compositeDebt =
-    await contracts.borrowerOperations.getCompositeDebt(musdAmount)
+    await contracts.troveManager.getCompositeDebt(musdAmount)
 
   if (recoveryMode) {
     return compositeDebt
@@ -521,7 +521,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   // amount of debt to take on
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
   const netDebt =
-    totalDebt - (await contracts.troveManager.getMUSDGasCompensation())
+    totalDebt - (await contracts.troveManager.MUSD_GAS_COMPENSATION())
 
   // amount of assets required for the loan
   const assetAmount = (ICR * totalDebt) / price
