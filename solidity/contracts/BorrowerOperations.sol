@@ -663,6 +663,12 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         troveManagerCached.increaseTroveDebt(_borrower, fee);
         activePool.increaseDebt(fee, 0);
+        uint256 newICR = LiquityMath._computeCR(
+            troveManagerCached.getTroveColl(_borrower),
+            troveManagerCached.getTroveDebt(_borrower),
+            price
+        );
+        _requireICRisAboveMCR(newICR);
         _requireNewTCRisAboveCCR(troveManagerCached.getTCR(price));
 
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);

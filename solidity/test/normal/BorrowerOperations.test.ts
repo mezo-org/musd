@@ -5475,12 +5475,24 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     context("Expected Reverts", () => {
-      it.only("should revert if the fee would put the system into recovery mode", async () => {
+      it("should revert if the fee would put the system into recovery mode", async () => {
         await setInterestRate(contracts, council, 500)
         await expect(
           contracts.borrowerOperations.connect(alice.wallet).refinance(),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
+        )
+      })
+
+      it("should revert if the operation would put the user below MCR", async () => {
+        // Open a trove for Carol to prevent hitting recovery mode
+        await setupCarolsTrove()
+        await setInterestRate(contracts, council, 500)
+        await dropPrice(contracts, deployer, alice, to1e18("110"))
+        await expect(
+          contracts.borrowerOperations.connect(alice.wallet).refinance(),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
       })
     })
