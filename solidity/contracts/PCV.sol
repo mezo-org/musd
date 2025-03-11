@@ -139,8 +139,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: not enough tokens"
         );
 
-        uint256 gaugeSystemDistribution = (_amount * feeSplitPercentage) / 100;
-        uint256 protocolLoanRepayment = _amount - gaugeSystemDistribution;
+        uint256 distributedFees = (_amount * feeSplitPercentage) / 100;
+        uint256 protocolLoanRepayment = _amount - distributedFees;
         uint256 stabilityPoolDeposit = 0;
 
         // check for excess to deposit into the stability pool
@@ -155,15 +155,15 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             depositToStabilityPool(stabilityPoolDeposit);
         }
 
-        // send funds to gauge address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
-        if (feeRecipient != address(0) && gaugeSystemDistribution > 0) {
+        // send funds to feeRecipient address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
+        if (feeRecipient != address(0) && distributedFees > 0) {
             require(
-                musd.transfer(feeRecipient, gaugeSystemDistribution),
+                musd.transfer(feeRecipient, distributedFees),
                 "PCV: sending mUSD failed"
             );
 
             // slither-disable-next-line reentrancy-events
-            emit PCVDistribution(feeRecipient, gaugeSystemDistribution);
+            emit PCVDistribution(feeRecipient, distributedFees);
         }
     }
 
@@ -324,17 +324,17 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint256 collateralChange = address(this).balance - collateralBefore;
         uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
 
-        if (musdChange > debtToPay) {
-            _repayDebt(debtToPay);
-        } else {
-            _repayDebt(musdChange);
-        }
+        _repayDebt(musdChange);
 
         // slither-disable-next-line reentrancy-events
         emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 
     function _repayDebt(uint _repayment) internal {
+        if (_repayment > debtToPay) {
+            _repayment = debtToPay;
+        }
+
         if (_repayment > 0 && debtToPay > 0) {
             debtToPay -= _repayment;
             borrowerOperations.burnDebtFromPCV(_repayment);
