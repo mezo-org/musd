@@ -1597,32 +1597,6 @@ contract TroveManager is
         );
     }
 
-    /*
-     *  Get its offset coll/debt and collateral gas comp, and close the trove.
-     */
-    function _getCappedOffsetVals(
-        uint256 _entireTroveDebt,
-        uint256 _entireTroveColl,
-        uint256 _price
-    ) internal pure returns (LiquidationValues memory singleLiquidation) {
-        singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
-        singleLiquidation.entireTroveColl = _entireTroveColl;
-        uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
-
-        singleLiquidation.collGasCompensation = _getCollGasCompensation(
-            cappedCollPortion
-        );
-        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
-
-        singleLiquidation.debtToOffset = _entireTroveDebt;
-        singleLiquidation.collToSendToSP =
-            cappedCollPortion -
-            singleLiquidation.collGasCompensation;
-        singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
-        singleLiquidation.principalToRedistribute = 0;
-        singleLiquidation.collToRedistribute = 0;
-    }
-
     function _getRedemptionFee(
         uint256 _collateralDrawn
     ) internal pure returns (uint) {
