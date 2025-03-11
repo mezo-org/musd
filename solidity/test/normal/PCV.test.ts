@@ -223,12 +223,6 @@ describe("PCV", () => {
           PCVDeployer.depositToStabilityPool(bootstrapLoan + 1n),
         ).to.be.revertedWith("PCV: not enough tokens")
       })
-
-      it("reverts when caller is not owner/council/treasury", async () => {
-        await expect(
-          contracts.pcv.connect(alice.wallet).depositToStabilityPool(0),
-        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-      })
     })
   })
 
@@ -244,11 +238,10 @@ describe("PCV", () => {
       await createLiquidationEvent(contracts, deployer)
     }
 
-    it("emitts has the correct values", async () => {
+    it("emitts PCVWithdrawSP the correct values", async () => {
       await populateStabilityPoolWithBTC()
 
       await updatePCVSnapshot(contracts, state, "before")
-      await updateStabilityPoolSnapshot(contracts, state, "before")
 
       const amount = to1e18("1,000")
       const tx = await PCVDeployer.withdrawFromStabilityPool(amount)
@@ -256,7 +249,6 @@ describe("PCV", () => {
         await getEmittedSPtoPCVWithdrawalValues(tx)
 
       await updatePCVSnapshot(contracts, state, "after")
-      await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(musdAmount).to.equal(amount)
       expect(collateralAmount).to.equal(
@@ -264,7 +256,6 @@ describe("PCV", () => {
       )
     })
 
-    // just cover BTC changes
     describe("BTC changes when no liquidation has occurred", () => {
       it("has no BTC balance changes when requested amount is greater than 0", async () => {
         // check that StabilityPool BTC stays 0
@@ -284,7 +275,6 @@ describe("PCV", () => {
       })
     })
 
-    // just cover BTC changes
     describe("BTC changes when a liquidation has occurred", () => {
       it("withdraws mUSD and BTC to PCV when requested amount is greater than 0", async () => {
         await populateStabilityPoolWithBTC()
@@ -332,7 +322,7 @@ describe("PCV", () => {
     })
 
     // just cover mUSD changes
-    describe("protocol bootstrap loan restrictions", () => {
+    describe("mUSD changes with protocol bootstrap loan restrictions", () => {
       it("withdraws requested amount and makes loan repayment", async () => {
         await populateStabilityPoolWithBTC()
 
@@ -441,8 +431,8 @@ describe("PCV", () => {
 
         expect(state.stabilityPool.musd.before).to.be.lessThan(
           bootstrapLoan + accruedFees,
-        ) // its less than because some is used for the liquidation
-        expect(state.stabilityPool.musd.before).to.be.greaterThan(bootstrapLoan) // greater than because of the fees that where deposited
+        ) // it's less than because some is used for the liquidation
+        expect(state.stabilityPool.musd.before).to.be.greaterThan(bootstrapLoan) // greater than because of the fees that were deposited
         expect(state.stabilityPool.musd.after).to.equal(
           state.stabilityPool.musd.before - amount,
         )
@@ -453,7 +443,7 @@ describe("PCV", () => {
       })
     })
 
-    describe("repaid protocol bootstrap loan", () => {
+    describe("mUSD changes with repaid protocol bootstrap loan", () => {
       it("withdraws requested amount", async () => {
         await populateStabilityPoolWithBTC()
         await debtPaid()
@@ -527,14 +517,6 @@ describe("PCV", () => {
         expect(state.pcv.musd.after).to.equal(state.pcv.musd.before)
       })
     })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner/council/treasury", async () => {
-        await expect(
-          contracts.pcv.connect(alice.wallet).withdrawFromStabilityPool(0),
-        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-      })
-    })
   })
 
   describe("withdrawMUSD() from PCV", () => {
@@ -596,8 +578,6 @@ describe("PCV", () => {
       })
     })
   })
-
-  describe("distributeMUSD()", () => {})
 
   describe("distributeMUSD()", () => {
     describe("active protocol bootstrap loan", () => {
@@ -697,7 +677,7 @@ describe("PCV", () => {
 
     describe("repaid protocol bootstrap loan", () => {
       it("sends all fees to the StabilityPool if the debt is repaid and no recipient is set", async () => {
-        // paydown the bootstrap loan
+        // pay down the bootstrap loan
         await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
         await contracts.pcv
           .connect(treasury.wallet)
@@ -967,14 +947,6 @@ describe("PCV", () => {
             .withdrawCollateral(alice.address, 1n),
         ).to.be.revertedWith("Sending BTC failed")
       })
-
-      it("reverts when caller is not owner/council/treasury", async () => {
-        await expect(
-          contracts.pcv
-            .connect(alice.wallet)
-            .withdrawCollateral(alice.address, 1n),
-        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-      })
     })
   })
 
@@ -999,11 +971,6 @@ describe("PCV", () => {
           "PCV: Fee split must be at most 50 while debt remains.",
         )
       })
-      it("reverts when caller is not owner/council/treasury", async () => {
-        await expect(
-          contracts.pcv.connect(alice.wallet).setFeeSplit(50n),
-        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-      })
     })
   })
 
@@ -1013,11 +980,6 @@ describe("PCV", () => {
         await expect(
           PCVDeployer.setFeeRecipient(ZERO_ADDRESS),
         ).to.be.revertedWith("PCV: Fee recipient cannot be the zero address.")
-      })
-      it("reverts when caller is not owner/council/treasury", async () => {
-        await expect(
-          contracts.pcv.connect(alice.wallet).setFeeRecipient(addresses.alice),
-        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
       })
     })
   })

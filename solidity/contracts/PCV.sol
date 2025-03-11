@@ -173,8 +173,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     )
         external
         override
-        onlyAfterDebtPaid
         onlyOwnerOrCouncilOrTreasury
+        onlyAfterDebtPaid
         onlyWhitelistedRecipient(_recipient)
     {
         require(
