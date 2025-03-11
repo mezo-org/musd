@@ -745,7 +745,7 @@ contract TroveManager is
         updateDefaultPoolInterest();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
-        totals = _getTotalFromBatchLiquidate(
+        totals = _getTotalsFromBatchLiquidate(
             activePoolCached,
             defaultPoolCached,
             vars.price,
@@ -1173,7 +1173,7 @@ contract TroveManager is
         Troves[_borrower].stake = 0;
     }
 
-    function _getTotalFromBatchLiquidate(
+    function _getTotalsFromBatchLiquidate(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint256 _price,
