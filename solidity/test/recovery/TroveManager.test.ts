@@ -441,6 +441,15 @@ describe("TroveManager in Recovery Mode", () => {
           contracts.troveManager.liquidate(alice.address),
         ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
       })
+
+      it("reverts if trove has ICR > MCR", async () => {
+        await setupTroveAndSnapshot(alice, "5000", "200")
+        await setupTroveAndSnapshot(bob, "5000", "200")
+        await dropPrice(contracts, deployer, alice, to1e18("120"))
+        await expect(
+          contracts.troveManager.liquidate(alice.address),
+        ).to.be.revertedWith("TroveManager: nothing to liquidate")
+      })
     })
   })
 
