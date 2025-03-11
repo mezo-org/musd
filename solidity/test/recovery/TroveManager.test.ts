@@ -460,7 +460,7 @@ describe("TroveManager in Recovery Mode", () => {
       expect(await checkRecoveryMode()).to.equal(true)
     })
 
-    it("liquidating a single trove returns to normal mode if TCR > MCR", async () => {
+    it("liquidating a single trove returns to normal mode if new TCR > CCR", async () => {
       await setupTroveAndSnapshot(alice, "100,000", "200")
       await setupTroveAndSnapshot(bob, "30,000", "160")
       await setupTroveAndSnapshot(carol, "70,000", "120")
