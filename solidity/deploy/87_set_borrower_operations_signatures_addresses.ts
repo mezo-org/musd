@@ -8,17 +8,22 @@ import {
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
 
-  const { borrowerOperations } =
+  const { borrowerOperations, interestRateManager } =
     await fetchAllDeployedContracts(isHardhatNetwork)
 
   await execute(
     "BorrowerOperationsSignatures",
     "setAddresses",
     await borrowerOperations.getAddress(),
+    await interestRateManager.getAddress(),
   )
 }
 
 export default func
 
 func.tags = ["SetAddresses", "SetBorrowerOperationsSignatures"]
-func.dependencies = ["BorrowerOperations", "BorrowerOperationsSignatures"]
+func.dependencies = [
+  "BorrowerOperations",
+  "BorrowerOperationsSignatures",
+  "InterestRateManager",
+]

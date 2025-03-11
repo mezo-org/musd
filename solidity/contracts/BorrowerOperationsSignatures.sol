@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./dependencies/CheckContract.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IBorrowerOperationsSignatures.sol";
+import "./interfaces/IInterestRateManager.sol";
 
 contract BorrowerOperationsSignatures is
     IBorrowerOperationsSignatures,
@@ -126,7 +127,9 @@ contract BorrowerOperationsSignatures is
         );
 
     bytes32 private constant REFINANCE_TYPEHASH =
-        keccak256("Refinance(address borrower,uint256 nonce,uint256 deadline)");
+        keccak256(
+            "Refinance(address borrower,uint16 interestRate,uint256 nonce,uint256 deadline)"
+        );
 
     bytes32 private constant CLAIM_COLLATERAL_TYPEHASH =
         keccak256(
@@ -134,10 +137,14 @@ contract BorrowerOperationsSignatures is
         );
 
     mapping(address => uint256) private nonces;
-    IBorrowerOperations private borrowerOperations;
+    IBorrowerOperations public borrowerOperations;
+    IInterestRateManager public interestRateManager;
 
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress
+    );
+    event InterestRateManagerAddressChanged(
+        address _newInterestRateManagerAddress
     );
 
     function initialize() external initializer {
@@ -151,15 +158,19 @@ contract BorrowerOperationsSignatures is
     }
 
     function setAddresses(
-        address _borrowerOperationsAddress
+        address _borrowerOperationsAddress,
+        address _interestRateManagerAddress
     ) external onlyOwner {
         checkContract(_borrowerOperationsAddress);
+        checkContract(_interestRateManagerAddress);
 
         // slither-disable-start missing-zero-check
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
+        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         // slither-disable-end missing-zero-check
 
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
 
         renounceOwnership();
     }
@@ -445,7 +456,10 @@ contract BorrowerOperationsSignatures is
 
         _verifySignature(
             REFINANCE_TYPEHASH,
-            abi.encode(refinanceData.borrower),
+            abi.encode(
+                refinanceData.borrower,
+                interestRateManager.interestRate()
+            ),
             _borrower,
             _signature,
             _deadline
