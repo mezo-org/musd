@@ -1,19 +1,22 @@
 import { expect } from "chai"
 import {
-  NO_GAS,
   Contracts,
   ContractsState,
   TestingAddresses,
   User,
   applyLiquidationFee,
+  calculateInterestOwed,
   checkTroveActive,
   checkTroveClosedByLiquidation,
   dropPrice,
   dropPriceAndLiquidate,
+  fastForwardTime,
   getEmittedLiquidationValues,
+  getLatestBlockTimestamp,
   getTroveEntireColl,
   openTrove,
   provideToSP,
+  setInterestRate,
   setupTests,
   updateContractsSnapshot,
   updatePendingSnapshot,
@@ -23,10 +26,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  setInterestRate,
-  fastForwardTime,
-  calculateInterestOwed,
-  getLatestBlockTimestamp,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -459,6 +458,18 @@ describe("TroveManager in Recovery Mode", () => {
       await dropPrice(contracts, deployer, alice, to1e18("109"))
       await contracts.troveManager.batchLiquidateTroves([alice.address])
       expect(await checkRecoveryMode()).to.equal(true)
+    })
+
+    it("liquidating a single trove returns to normal mode if TCR > MCR", async () => {
+      await setupTroveAndSnapshot(alice, "100,000", "200")
+      await setupTroveAndSnapshot(bob, "30,000", "160")
+      await setupTroveAndSnapshot(carol, "70,000", "120")
+      await provideToSP(contracts, alice, to1e18("100,000"))
+      await dropPrice(contracts, deployer, carol, to1e18("108"))
+      expect(await checkRecoveryMode()).to.equal(true)
+
+      await contracts.troveManager.batchLiquidateTroves([carol.address])
+      expect(await checkRecoveryMode()).to.equal(false)
     })
 
     it("a batch liquidation containing Pool offsets increases the TCR", async () => {
