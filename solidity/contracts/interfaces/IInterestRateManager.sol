@@ -18,6 +18,7 @@ interface IInterestRateManager {
     event InterestRateProposed(uint16 proposedRate, uint256 proposalTime);
     event InterestRateUpdated(uint16 newInterestRate);
     event MaxInterestRateUpdated(uint16 newMaxInterestRate);
+    event InterestNumeratorChanged(uint256 _newNumerator);
 
     function setAddresses(
         address _activePoolAddress,

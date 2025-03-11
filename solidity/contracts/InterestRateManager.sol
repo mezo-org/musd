@@ -158,6 +158,7 @@ contract InterestRateManager is
         uint16 _rate
     ) external onlyBorrowerOperationsOrTroveManager {
         interestNumerator += _principal * _rate;
+        emit InterestNumeratorChanged(interestNumerator);
     }
 
     function updateSystemInterest() external {
@@ -177,6 +178,7 @@ contract InterestRateManager is
             activePool.increaseDebt(0, interest);
         }
 
+        //slither-disable-next-line reentrancy-no-eth
         lastUpdatedTime = block.timestamp;
     }
 
@@ -205,6 +207,7 @@ contract InterestRateManager is
         uint16 _rate
     ) public onlyBorrowerOperationsOrTroveManager {
         interestNumerator -= _principal * _rate;
+        emit InterestNumeratorChanged(interestNumerator);
     }
 
     function calculateDebtAdjustment(
