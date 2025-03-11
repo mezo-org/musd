@@ -73,11 +73,11 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 ### Liquidations
 
-Whenever a trove becomes under-collateralized (sub 110% BTC value to debt in normal mode, higher in [Recovery Mode](#recovery-mode)), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
+Whenever a trove becomes under-collateralized (sub 110% BTC value to debt), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
 
-When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateral, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and siezes the remaining 99.5% of the trove's collateral.
+When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% CR, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and seizes the remaining 99.5% of the trove's collateral.
 
-If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral. The newly aquired collateral and debt are included for all purposes: calcuating collater ratio, redemptions, closing a trove, etc.
+If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proportional ownership of all deposited collateral. The newly acquired collateral and debt are included for all purposes: calculating collateralization ratio, redemptions, closing a trove, etc.
 
 ### Stability Pool
 
@@ -138,12 +138,9 @@ In Recovery Mode...
 - We do not charge an origination fee.
 - We do not allow users to close troves.
 - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
-- Troves can be liquidated if their collateral ratio is below the TCR (instead of the normal 110%).
 - Users cannot refinance their trove.
 
-Liquidations in recovery mode do not seize all of the collateral. Instead, 110% of the debt's value is seized, and the rest is recoverable by the borrower.
-
-Each of these changes (especially the stricter liquidation threshold) ensures the system returns back to above 150% TCR quickly.
+Each of these changes ensures the system returns back to above 150% TCR quickly.
 
 ### Pending Funds
 
@@ -204,6 +201,10 @@ The mUSD system implements EIP-712 signature verification through the `BorrowerO
 - **Authorization Flow**: The signature verification contract validates the user's signature before calling the corresponding restricted function in the BorrowerOperations contract.
 
 This feature enhances user experience by enabling delegation of transaction execution while maintaining security through cryptographic verification of user intent. It also creates opportunities for third-party applications to build on top of mUSD by allowing them to manage user positions with proper authorization.
+
+### No Special Recovery Mode Liquidations
+
+Unlike THUSD, mUSD does not have special handling for liquidations during recovery mode. All liquidations follow a single process regardless of the system's collateralization ratio.
 
 ## System Overview
 
@@ -334,7 +335,7 @@ Each function requires a signature and deadline (when the signature is valid unt
 
 ### TroveManager Functions - `TroveManager.sol`
 
-`liquidate(address _borrower)`: callable by anyone, attempts to liquidate the Trove of `_user`. Executes successfully if `_user`’s Trove meets the conditions for liquidation (e.g. in Normal Mode, it liquidates if the Trove's ICR < the system MCR).
+`liquidate(address _borrower)`: callable by anyone, attempts to liquidate the Trove of `_user`. Executes successfully if `_user`’s Trove meets the conditions for liquidation (i.e. the Trove's ICR < the system MCR).
 
 `batchLiquidateTroves(address[] calldata _troveArray)`: callable by anyone, accepts a custom list of Troves addresses as an argument. Steps through the provided list and attempts to liquidate every Trove, until it reaches the end or it runs out of gas. A Trove is liquidated only if it meets the conditions for liquidation. For a batch of 10 Troves, the gas costs per liquidated Trove are roughly between 75K-83K, for a batch of 50 Troves between 54K-69K.
 

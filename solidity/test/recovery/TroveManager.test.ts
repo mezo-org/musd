@@ -1,19 +1,22 @@
 import { expect } from "chai"
 import {
-  NO_GAS,
   Contracts,
   ContractsState,
   TestingAddresses,
   User,
   applyLiquidationFee,
+  calculateInterestOwed,
   checkTroveActive,
   checkTroveClosedByLiquidation,
   dropPrice,
   dropPriceAndLiquidate,
+  fastForwardTime,
   getEmittedLiquidationValues,
+  getLatestBlockTimestamp,
   getTroveEntireColl,
   openTrove,
   provideToSP,
+  setInterestRate,
   setupTests,
   updateContractsSnapshot,
   updatePendingSnapshot,
@@ -23,10 +26,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  setInterestRate,
-  fastForwardTime,
-  calculateInterestOwed,
-  getLatestBlockTimestamp,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -372,17 +371,6 @@ describe("TroveManager in Recovery Mode", () => {
       )
     })
 
-    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: offsets the trove entirely with the pool", async () => {
-      const { spDeposit, totalDebt } = await setupTrovesForStabilityPoolTests()
-
-      await updateStabilityPoolSnapshot(contracts, state, "before")
-      await dropPrice(contracts, deployer, bob, to1e18("112"))
-      await contracts.troveManager.liquidate(bob.address)
-      await updateStabilityPoolSnapshot(contracts, state, "after")
-
-      expect(state.stabilityPool.musd.after).to.equal(spDeposit - totalDebt)
-    })
-
     it("with ICR% = 110 < TCR, and StabilityPool mUSD > debt to liquidate: offsets the trove entirely with the pool, there’s no collateral surplus", async () => {
       await setupTrovesForStabilityPoolTests()
 
@@ -392,203 +380,6 @@ describe("TroveManager in Recovery Mode", () => {
       expect(
         await contracts.collSurplusPool.getCollateral(bob.address),
       ).to.equal(0n)
-    })
-
-    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: removes stake and updates totalStakes", async () => {
-      await setupTrovesForStabilityPoolTests()
-
-      await updateStabilityPoolSnapshot(contracts, state, "before")
-      await dropPrice(contracts, deployer, bob, to1e18("112"))
-      await contracts.troveManager.liquidate(bob.address)
-      await updateStabilityPoolSnapshot(contracts, state, "after")
-
-      await updateTroveSnapshot(contracts, bob, "after")
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      expect(bob.trove.stake.after).to.equal(0n)
-      expect(state.troveManager.stakes.after).to.equal(
-        alice.trove.collateral.before + dennis.trove.collateral.before,
-      )
-    })
-
-    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: updates system snapshots", async () => {
-      await setupTrovesForStabilityPoolTests()
-      await updateTroveManagerSnapshot(contracts, state, "before")
-      await dropPrice(contracts, deployer, bob, to1e18("112"))
-      await contracts.troveManager.liquidate(bob.address)
-      await updateTroveManagerSnapshot(contracts, state, "after")
-      expect(state.troveManager.stakesSnapshot.after).to.equal(
-        alice.trove.collateral.before + dennis.trove.collateral.before,
-      )
-      expect(state.troveManager.collateralSnapshot.after).to.equal(
-        alice.trove.collateral.before + dennis.trove.collateral.before,
-      )
-    })
-
-    it("with 110% < ICR < TCR, and StabilityPool mUSD > debt to liquidate: closes the Trove", async () => {
-      await setupTrovesForStabilityPoolTests()
-      await dropPrice(contracts, deployer, bob, to1e18("112"))
-      await contracts.troveManager.liquidate(bob.address)
-      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
-    })
-
-    it("with 110% < ICR < TCR, and StabilityPool THUSD > debt to liquidate: can liquidate troves out of order", async () => {
-      await setupTroveAndSnapshot(alice, "5000", "200")
-      await setupTroveAndSnapshot(bob, "5000", "202")
-      await setupTroveAndSnapshot(carol, "5000", "204")
-      await setupTroveAndSnapshot(dennis, "5000", "206")
-      const totalDebtToBeLiquidated =
-        alice.trove.debt.before +
-        bob.trove.debt.before +
-        carol.trove.debt.before +
-        dennis.trove.debt.before
-      await openTrove(contracts, {
-        musdAmount: totalDebtToBeLiquidated + to1e18("5000"),
-        ICR: "210",
-        sender: eric.wallet,
-      })
-
-      await provideToSP(contracts, eric, totalDebtToBeLiquidated + to1e18("1"))
-
-      await dropPrice(contracts, deployer, alice, to1e18("111"))
-
-      // Troves should be ordered by ICR, low to high: A, B, C, D, E
-      await updateTroveSnapshot(contracts, carol, "after")
-
-      // Liquidate out of ICR order
-      await contracts.troveManager.liquidate(carol.address)
-      await contracts.troveManager.liquidate(dennis.address)
-      await contracts.troveManager.liquidate(bob.address)
-      await contracts.troveManager.liquidate(alice.address)
-
-      expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
-        true,
-      )
-      expect(await checkTroveClosedByLiquidation(contracts, dennis)).to.equal(
-        true,
-      )
-      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
-      expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
-        true,
-      )
-    })
-
-    it("with 110% < ICR < TCR, can claim collateral, re-open, be redeemed and claim again", async () => {
-      await setupTrovesForStabilityPoolTests()
-
-      const price = await contracts.priceFeed.fetchPrice()
-      await dropPrice(contracts, deployer, bob, to1e18("111"))
-      expect(await checkRecoveryMode()).to.equal(true)
-
-      await contracts.troveManager.liquidate(bob.address)
-
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .claimCollateral(NO_GAS)
-
-      await contracts.mockAggregator.connect(deployer.wallet).setPrice(price)
-      const { netDebt } = await setupTrove(bob, "1800", "120")
-      await contracts.troveManager
-        .connect(dennis.wallet)
-        .redeemCollateral(
-          netDebt,
-          bob.address,
-          bob.address,
-          bob.address,
-          0,
-          0,
-          NO_GAS,
-        )
-      await updateWalletSnapshot(contracts, bob, "before")
-      const surplus = await contracts.collSurplusPool.getCollateral(bob.address)
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .claimCollateral(NO_GAS)
-      await updateWalletSnapshot(contracts, bob, "after")
-      expect(bob.btc.after).to.equal(bob.btc.before + surplus)
-    })
-
-    it("with 110% < ICR < TCR, can claim collateral, after another claim from a redemption", async () => {
-      // Open two troves:
-      const { netDebt } = await setupTrove(bob, "2000", "222")
-      await setupTrove(alice, "5000", "266")
-
-      // A redeems some collateral, creating a surplus for B
-      await contracts.troveManager
-        .connect(alice.wallet)
-        .redeemCollateral(
-          netDebt,
-          bob.address,
-          bob.address,
-          bob.address,
-          0,
-          0,
-          NO_GAS,
-        )
-
-      // B claims collateral
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .claimCollateral(NO_GAS)
-
-      // B reopens trove
-      const { totalDebt } = await setupTroveAndSnapshot(bob, "2000", "240")
-
-      // C opens a trove and deposits to SP
-      await setupTrove(carol, "5000", "266")
-      const spDeposit = totalDebt
-      await provideToSP(contracts, carol, spDeposit)
-
-      // Price drops, reducing TCR below 150%
-      await dropPrice(contracts, deployer, alice, to1e18("149"))
-
-      // B is liquidated
-      await contracts.troveManager.liquidate(bob.address)
-
-      // B claims collateral
-      await updateWalletSnapshot(contracts, bob, "before")
-      const surplus = await contracts.collSurplusPool.getCollateral(bob.address)
-      await contracts.borrowerOperations
-        .connect(bob.wallet)
-        .claimCollateral(NO_GAS)
-
-      // Check balance and coll surplus are equal
-      await updateWalletSnapshot(contracts, bob, "after")
-      expect(bob.btc.after).to.equal(bob.btc.before + surplus)
-    })
-
-    it("applies default pool interest before checking recovery mode", async () => {
-      // Alice deposits just barely enough collateral so that we stay slightly above the CCR after carol is liquidated.
-      await setupTroveAndSnapshot(alice, "20000", "225")
-
-      // Bob deposits enough collateral to be above the MCR but below the CCR
-      await setupTroveAndSnapshot(bob, "20000", "120")
-
-      await setInterestRate(contracts, council, 1000)
-
-      // Carol deposits enough collateral to get liquidated after a price
-      // change, with a high enough interest rate that once her default interest
-      // is accounted for, we're in recovery mode, but *not* in recovery mode
-      // without accounting for default interest.
-      await setupTroveAndSnapshot(carol, "20000", "111")
-
-      await dropPriceAndLiquidate(contracts, deployer, carol)
-
-      await fastForwardTime(365 * 24 * 60 * 60) // one year
-
-      // If the stability pool is empty, we can only liquidate troves under the MCR
-      await Promise.all(
-        [alice, bob, carol].map((user) =>
-          provideToSP(contracts, user, to1e18("20,000")),
-        ),
-      )
-
-      // After accounting for default interest, Bob is eligible for liquidation
-      // because we're in recovery mode.
-      await contracts.troveManager
-        .connect(deployer.wallet)
-        .liquidate(bob.wallet)
-
-      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
     })
 
     context("Expected Reverts", () => {
@@ -649,31 +440,36 @@ describe("TroveManager in Recovery Mode", () => {
           contracts.troveManager.liquidate(alice.address),
         ).to.be.revertedWith("TroveManager: Trove does not exist or is closed")
       })
+
+      it("reverts if trove has ICR > MCR", async () => {
+        await setupTroveAndSnapshot(alice, "5000", "200")
+        await setupTroveAndSnapshot(bob, "5000", "200")
+        await dropPrice(contracts, deployer, alice, to1e18("120"))
+        await expect(
+          contracts.troveManager.liquidate(alice.address),
+        ).to.be.revertedWith("TroveManager: nothing to liquidate")
+      })
     })
   })
 
   describe("batchLiquidateTroves()", () => {
     it("liquidating a single trove does not return to normal mode if TCR < MCR", async () => {
       await setupBatchLiquidation()
+      await dropPrice(contracts, deployer, alice, to1e18("109"))
       await contracts.troveManager.batchLiquidateTroves([alice.address])
       expect(await checkRecoveryMode()).to.equal(true)
     })
 
-    it("troves with ICR > MCR can be liquidated", async () => {
-      await setupBatchLiquidation()
-      await contracts.troveManager.batchLiquidateTroves([
-        alice.address,
-        bob.address,
-        carol.address,
-      ])
+    it("liquidating a single trove returns to normal mode if new TCR > CCR", async () => {
+      await setupTroveAndSnapshot(alice, "100,000", "200")
+      await setupTroveAndSnapshot(bob, "30,000", "160")
+      await setupTroveAndSnapshot(carol, "70,000", "120")
+      await provideToSP(contracts, alice, to1e18("100,000"))
+      await dropPrice(contracts, deployer, carol, to1e18("108"))
+      expect(await checkRecoveryMode()).to.equal(true)
 
-      expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
-        true,
-      )
-      expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
-      expect(await checkTroveClosedByLiquidation(contracts, carol)).to.equal(
-        true,
-      )
+      await contracts.troveManager.batchLiquidateTroves([carol.address])
+      expect(await checkRecoveryMode()).to.equal(false)
     })
 
     it("a batch liquidation containing Pool offsets increases the TCR", async () => {
@@ -771,53 +567,6 @@ describe("TroveManager in Recovery Mode", () => {
 
       expect(state.troveManager.TCR.after).to.equal(
         remainingColl / remainingDebt,
-      )
-    })
-
-    it("with all ICRs > 110%, liquidates Troves until system leaves recovery mode", async () => {
-      // Open 5 troves
-      await setupTroveAndSnapshot(bob, "5000", "240")
-      await setupTroveAndSnapshot(carol, "5000", "240")
-      await setupTroveAndSnapshot(dennis, "5000", "232")
-      await setupTroveAndSnapshot(eric, "5000", "230")
-      await setupTroveAndSnapshot(frank, "5000", "228")
-
-      // Open a trove for Alice that contains the debt of 3 other troves plus min debt
-      const amount =
-        dennis.trove.debt.before +
-        eric.trove.debt.before +
-        frank.trove.debt.before
-
-      await openTrove(contracts, {
-        musdAmount: amount + to1e18("1800"),
-        sender: alice.wallet,
-        ICR: "400",
-      })
-
-      // Alice provides the total debt to the SP
-      await provideToSP(contracts, alice, amount)
-
-      // Drop the price to put the system into recovery mode (TCR < 150%)
-      // Since frank has the lowest ICR, everyone else should have ICR > 111%
-      await dropPrice(contracts, deployer, frank, to1e18("111"))
-      expect(await checkRecoveryMode()).to.equal(true)
-
-      // Liquidate Troves until the system leaves recovery mode
-      await contracts.troveManager.batchLiquidateTroves(
-        [frank, eric, dennis, carol, bob].map((user) => user.wallet),
-      )
-
-      // Check that we are no longer in recovery mode
-      expect(await checkRecoveryMode()).to.equal(false)
-
-      // Only frank should be liquidated, everyone else is still active
-      expect(await checkTroveActive(contracts, alice)).to.equal(true)
-      expect(await checkTroveActive(contracts, bob)).to.equal(true)
-      expect(await checkTroveActive(contracts, carol)).to.equal(true)
-      expect(await checkTroveActive(contracts, dennis)).to.equal(true)
-      expect(await checkTroveActive(contracts, eric)).to.equal(true)
-      expect(await checkTroveClosedByLiquidation(contracts, frank)).to.equal(
-        true,
       )
     })
 
@@ -980,58 +729,6 @@ describe("TroveManager in Recovery Mode", () => {
       expect(await checkTroveClosedByLiquidation(contracts, bob)).to.equal(true)
     })
 
-    it("with a non fulfilled liquidation: still can liquidate further troves after the non-liquidated, emptied pool", async () => {
-      await setupTroveAndSnapshot(alice, "5000", "150")
-      await setupTroveAndSnapshot(bob, "5000", "150")
-      await setupTroveAndSnapshot(carol, "20,000", "180")
-      await setupTroveAndSnapshot(dennis, "2000", "160")
-
-      // Carol deposits enough to cover Alice and Dennis' debt
-      const spDeposit = alice.trove.debt.before + dennis.trove.debt.before
-      await provideToSP(contracts, carol, spDeposit)
-
-      await dropPrice(contracts, deployer, alice, to1e18("115"))
-
-      // Troves in ICR order: Alice, Bob, Dennis, Carol
-      await contracts.troveManager.batchLiquidateTroves(
-        [alice, bob, carol, dennis].map((user) => user.wallet),
-      )
-
-      expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
-        true,
-      )
-      // SP can cover Dennis' debt, so he gets liquidated even though he has a higher ICR than Bob
-      expect(await checkTroveClosedByLiquidation(contracts, dennis)).to.equal(
-        true,
-      )
-      expect(await checkTroveActive(contracts, bob)).to.equal(true)
-      expect(await checkTroveActive(contracts, carol)).to.equal(true)
-    })
-
-    it("with a non fulfilled liquidation: non liquidated trove remains active", async () => {
-      await setupTroveAndSnapshot(alice, "5000", "150")
-      await setupTroveAndSnapshot(bob, "5000", "150")
-      await setupTroveAndSnapshot(carol, "20,000", "160")
-
-      // Carol deposits enough to cover Alice's debt and half of Bob's
-      const spDeposit = alice.trove.debt.before + bob.trove.debt.before / 2n
-      await provideToSP(contracts, carol, spDeposit)
-
-      await dropPrice(contracts, deployer, alice, to1e18("115"))
-
-      await contracts.troveManager.batchLiquidateTroves([
-        alice.wallet,
-        bob.wallet,
-      ])
-
-      expect(await checkTroveClosedByLiquidation(contracts, alice)).to.equal(
-        true,
-      )
-      // Bob should remain active because his trove was only partially liquidated
-      expect(await checkTroveActive(contracts, bob)).to.equal(true)
-      expect(await checkTroveActive(contracts, carol)).to.equal(true)
-    })
-
     it("does not affect the liquidated user's token balances", async () => {
       await setupTrove(alice, "5000", "150")
       await setupTrove(bob, "5000", "150")
@@ -1114,48 +811,6 @@ describe("TroveManager in Recovery Mode", () => {
         carol.stabilityPool.collateralGain.after,
         10000,
       )
-    })
-
-    it("Liquidating troves at ICR <=100% with SP deposits does not alter their deposit or collateral gain", async () => {
-      // Open three troves: Alice, Bob, Carol
-      await setupTroveAndSnapshot(alice, "2000", "200")
-      await setupTroveAndSnapshot(bob, "2000", "200")
-      await setupTroveAndSnapshot(carol, "20,000", "200")
-
-      // All deposit into the stability pool
-      const aliceDeposit = to1e18("500")
-      const bobDeposit = to1e18("1000")
-      const carolDeposit = to1e18("3000")
-      await provideToSP(contracts, alice, aliceDeposit)
-      await provideToSP(contracts, bob, bobDeposit)
-      await provideToSP(contracts, carol, carolDeposit)
-
-      await updateStabilityPoolUserSnapshots(
-        contracts,
-        [alice, bob, carol],
-        "before",
-      )
-
-      await dropPrice(contracts, deployer, alice, to1e18("100"))
-      await contracts.troveManager.batchLiquidateTroves(
-        [alice, bob, carol].map((user) => user.wallet),
-      )
-
-      // Check that each user's deposit has not changed
-      await updateStabilityPoolUserSnapshots(
-        contracts,
-        [alice, bob, carol],
-        "after",
-      )
-
-      expect(aliceDeposit).to.equal(alice.stabilityPool.compoundedDeposit.after)
-      expect(bobDeposit).to.equal(bob.stabilityPool.compoundedDeposit.after)
-      expect(carolDeposit).to.equal(carol.stabilityPool.compoundedDeposit.after)
-
-      // Check that each user's collateral gain has not changed
-      expect(0n).to.equal(alice.stabilityPool.collateralGain.after)
-      expect(0n).to.equal(bob.stabilityPool.collateralGain.after)
-      expect(0n).to.equal(carol.stabilityPool.collateralGain.after)
     })
 
     context("Expected Reverts", () => {
