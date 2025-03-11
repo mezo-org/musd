@@ -38,7 +38,7 @@ contract InterestRateManager is
     // interest rates is then:
     //
     // (now - lastUpdatedTimeA) * principalA * interestRateA / (10000 * secondsInAYear) +
-    // (now - lastUpdatedTimeB) * principalB * interestRateB / (10000 * secondsInAYear) +
+    // (now - lastUpdatedTimeB) * principalB * interestRateB / (10000 * secondsInAYear)
     //
     // To simplify this and make it so that we do not need to loop over a list
     // of troves, we track the sum of principal * interestRate as the variable
