@@ -68,6 +68,7 @@ contract TroveManager is
         uint256 interestPayment;
         uint256 upperBoundNICR;
         uint256 newNICR;
+        uint256 mUSDLot;
     }
 
     struct LocalVariables_InnerSingleLiquidateFunction {
@@ -131,14 +132,16 @@ contract TroveManager is
     }
 
     struct SingleRedemptionValues {
-        uint256 mUSDLot;
+        uint256 principal;
+        uint256 interest;
         uint256 collateralLot;
         bool cancelledPartial;
     }
 
     struct RedemptionTotals {
         uint256 remainingMUSD;
-        uint256 totalMUSDToRedeem;
+        uint256 totalPrincipalToRedeem;
+        uint256 totalInterestToRedeem;
         uint256 totalCollateralDrawn;
         uint256 collateralFee;
         uint256 collateralToSendToRedeemer;
@@ -400,10 +403,14 @@ contract TroveManager is
 
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
 
-            totals.totalMUSDToRedeem += singleRedemption.mUSDLot;
+            totals.totalPrincipalToRedeem += singleRedemption.principal;
+            totals.totalInterestToRedeem += singleRedemption.interest;
             totals.totalCollateralDrawn += singleRedemption.collateralLot;
 
-            totals.remainingMUSD -= singleRedemption.mUSDLot;
+            totals.remainingMUSD -=
+                singleRedemption.principal +
+                singleRedemption.interest;
+
             currentBorrower = nextUserToCheck;
         }
         require(
@@ -426,15 +433,21 @@ contract TroveManager is
 
         emit Redemption(
             _amount,
-            totals.totalMUSDToRedeem,
+            totals.totalPrincipalToRedeem + totals.totalInterestToRedeem,
             totals.totalCollateralDrawn,
             totals.collateralFee
         );
 
         // Burn the total mUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
-        contractsCache.musdToken.burn(msg.sender, totals.totalMUSDToRedeem);
+        contractsCache.musdToken.burn(
+            msg.sender,
+            totals.totalPrincipalToRedeem + totals.totalInterestToRedeem
+        );
         // Update Active Pool mUSD, and send collateral to account
-        contractsCache.activePool.decreaseDebt(totals.totalMUSDToRedeem, 0);
+        contractsCache.activePool.decreaseDebt(
+            totals.totalPrincipalToRedeem,
+            totals.totalInterestToRedeem
+        );
         contractsCache.activePool.sendCollateral(
             msg.sender,
             totals.collateralToSendToRedeemer
@@ -524,9 +537,9 @@ contract TroveManager is
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
         updateSystemAndTroveInterest(_borrower);
-        interestRateManager.addPrincipalToRate(
-            Troves[_borrower].interestRate,
-            _debtIncrease
+        interestRateManager.addPrincipal(
+            _debtIncrease,
+            Troves[_borrower].interestRate
         );
         uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
         Troves[_borrower].principal = newDebt;
@@ -680,7 +693,7 @@ contract TroveManager is
     function updateSystemAndTroveInterest(address _borrower) public {
         Trove storage trove = Troves[_borrower];
         // slither-disable-start calls-loop
-        interestRateManager.updateSystemInterest(trove.interestRate);
+        interestRateManager.updateSystemInterest();
         // slither-disable-end calls-loop
         // solhint-disable not-rely-on-time
         trove.interestOwed += InterestRateMath.calculateInterestOwed(
@@ -704,9 +717,19 @@ contract TroveManager is
             "TroveManager: Calldata address array must not be empty"
         );
 
+        interestRateManager.updateSystemInterest();
+
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
-            updateSystemAndTroveInterest(borrower);
+
+            Trove storage trove = Troves[borrower];
+            trove.interestOwed += InterestRateMath.calculateInterestOwed(
+                trove.principal,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
+                block.timestamp
+            );
+            trove.lastInterestUpdateTime = block.timestamp;
         }
 
         IActivePool activePoolCached = activePool;
@@ -947,13 +970,9 @@ contract TroveManager is
 
             // slither-disable-start calls-loop
             // Apply pending rewards to system interest rate data
-            interestRateManager.addPrincipalToRate(
-                trove.interestRate,
-                pendingPrincipal
-            );
-            interestRateManager.addInterestToRate(
-                trove.interestRate,
-                pendingInterest
+            interestRateManager.addPrincipal(
+                pendingPrincipal,
+                trove.interestRate
             );
             // slither-disable-end calls-loop
 
@@ -1466,9 +1485,9 @@ contract TroveManager is
         uint256 _collateral
     ) internal {
         // slither-disable-next-line calls-loop
-        interestRateManager.removePrincipalFromRate(
-            Troves[_borrower].interestRate,
-            _amount
+        interestRateManager.removePrincipal(
+            _amount,
+            Troves[_borrower].interestRate
         );
         Troves[_borrower].principal -= _amount;
         // slither-disable-next-line calls-loop
@@ -1501,18 +1520,18 @@ contract TroveManager is
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
-        singleRedemption.mUSDLot = LiquityMath._min(
+        vars.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
             _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
         );
 
         // Get the collateralLot of equivalent value in USD
         singleRedemption.collateralLot =
-            (singleRedemption.mUSDLot * DECIMAL_PRECISION) /
+            (vars.mUSDLot * DECIMAL_PRECISION) /
             _price;
 
         // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
-        vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.mUSDLot;
+        vars.newDebt = _getTotalDebt(_borrower) - vars.mUSDLot;
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
         vars.newPrincipal = Troves[_borrower].principal;
 
@@ -1525,11 +1544,14 @@ contract TroveManager is
                 block.timestamp
             );
 
-        if (singleRedemption.mUSDLot > vars.interestPayment) {
-            vars.newPrincipal -=
-                singleRedemption.mUSDLot -
-                vars.interestPayment;
+        if (vars.mUSDLot > vars.interestPayment) {
+            vars.newPrincipal -= vars.mUSDLot - vars.interestPayment;
+            singleRedemption.interest = vars.interestPayment;
+            singleRedemption.principal = vars.mUSDLot - vars.interestPayment;
+        } else {
+            singleRedemption.interest = vars.mUSDLot;
         }
+
         if (vars.newDebt == MUSD_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
@@ -1593,7 +1615,7 @@ contract TroveManager is
                 _lowerPartialRedemptionHint
             );
 
-            _updateTroveDebt(_borrower, singleRedemption.mUSDLot);
+            _updateTroveDebt(_borrower, vars.mUSDLot);
             Troves[_borrower].coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);
 
@@ -1676,13 +1698,9 @@ contract TroveManager is
         }
 
         // slither-disable-start calls-loop
-        interestRateManager.removePrincipalFromRate(
-            Troves[_borrower].interestRate,
-            Troves[_borrower].principal
-        );
-        interestRateManager.removeInterestFromRate(
-            Troves[_borrower].interestRate,
-            Troves[_borrower].interestOwed
+        interestRateManager.removePrincipal(
+            Troves[_borrower].principal,
+            Troves[_borrower].interestRate
         );
         // slither-disable-end calls-loop
 

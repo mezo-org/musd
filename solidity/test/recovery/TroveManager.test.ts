@@ -3,6 +3,7 @@ import {
   NO_GAS,
   Contracts,
   ContractsState,
+  TestingAddresses,
   User,
   applyLiquidationFee,
   checkTroveActive,
@@ -14,6 +15,7 @@ import {
   openTrove,
   provideToSP,
   setupTests,
+  updateContractsSnapshot,
   updatePendingSnapshot,
   updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshots,
@@ -23,13 +25,13 @@ import {
   updateWalletSnapshot,
   setInterestRate,
   fastForwardTime,
-  updateInterestRateDataSnapshot,
   calculateInterestOwed,
   getLatestBlockTimestamp,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
 describe("TroveManager in Recovery Mode", () => {
+  let addresses: TestingAddresses
   let alice: User
   let bob: User
   let carol: User
@@ -44,6 +46,7 @@ describe("TroveManager in Recovery Mode", () => {
 
   beforeEach(async () => {
     ;({
+      addresses,
       alice,
       bob,
       carol,
@@ -727,8 +730,14 @@ describe("TroveManager in Recovery Mode", () => {
       await setupTrove(bob, "5000", "155")
       await setupTrove(carol, "1800", "150")
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
-      await updateTroveSnapshot(contracts, carol, "before")
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveManagerSnapshot(contracts, state, "before")
       const entireSystemCollBefore =
         await contracts.troveManager.getEntireSystemColl()
@@ -737,26 +746,26 @@ describe("TroveManager in Recovery Mode", () => {
       const liquidationTx = await contracts.troveManager.batchLiquidateTroves([
         carol.wallet,
       ])
-      await updateTroveSnapshot(contracts, carol, "after")
+      await updateTroveSnapshots(contracts, [alice, bob, carol], "after")
       const { collGasCompensation } =
         await getEmittedLiquidationValues(liquidationTx)
 
       // Calculate interest on total system debt
       const after = await getLatestBlockTimestamp()
+
       const interestOwed =
         calculateInterestOwed(
-          state.interestRateManager.interestRateData[1000].principal.before,
+          state.activePool.principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           BigInt(after),
-        ) + state.interestRateManager.interestRateData[1000].interest.before
+        ) + state.activePool.interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
-      const remainingDebt =
-        state.interestRateManager.interestRateData[1000].principal.before +
-        interestOwed
+
+      const remainingDebt = state.activePool.principal.before + interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
 

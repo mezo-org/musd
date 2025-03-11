@@ -30,8 +30,28 @@ contract InterestRateManager is
     // Minimum time delay between interest rate proposal and approval
     uint256 public constant MIN_DELAY = 7 days;
 
-    // Mapping from interest rate to total principal and interest owed at that rate
-    mapping(uint16 => InterestRateInfo) public interestRateData;
+    // In order to calculate interest on a trove, we calculate:
+    //
+    // (now - lastUpdatedTime) * principal * interestRate / (10000 * secondsInAYear)
+    //
+    // To calculate the interest on two troves (A and B)) with two different
+    // interest rates is then:
+    //
+    // (now - lastUpdatedTimeA) * principalA * interestRateA / (10000 * secondsInAYear) +
+    // (now - lastUpdatedTimeB) * principalB * interestRateB / (10000 * secondsInAYear)
+    //
+    // To simplify this and make it so that we do not need to loop over a list
+    // of troves, we track the sum of principal * interestRate as the variable
+    // `interestNumerator`.
+    //
+    // This lets us calculate interest as:
+    //
+    // (now - lastUpdatedTime) * interestNumerator / (10000 * secondsInAYear)
+    //
+    // Each time the principal change or we accrue interest, we update the
+    // `lastUpdatedTime` and the `interestNumerator` accordingly.
+    uint256 public interestNumerator;
+    uint256 public lastUpdatedTime;
 
     IActivePool public activePool;
     address public borrowerOperationsAddress;
@@ -133,34 +153,33 @@ contract InterestRateManager is
         emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
 
-    function addPrincipalToRate(
-        uint16 _rate,
-        uint256 _principal
+    function addPrincipal(
+        uint256 _principal,
+        uint16 _rate
     ) external onlyBorrowerOperationsOrTroveManager {
-        interestRateData[_rate].principal += _principal;
+        interestNumerator += _principal * _rate;
+        emit InterestNumeratorChanged(interestNumerator);
     }
 
-    function updateSystemInterest(uint16 _rate) external {
-        InterestRateInfo memory _interestRateData = interestRateData[_rate];
-        // solhint-disable not-rely-on-time
-        uint256 interest = InterestRateMath.calculateInterestOwed(
-            _interestRateData.principal,
-            _rate,
-            _interestRateData.lastUpdatedTime,
-            block.timestamp
-        );
-        // solhint-enable not-rely-on-time
+    function updateSystemInterest() external {
+        if (interestNumerator > 0) {
+            // solhint-disable not-rely-on-time
+            uint256 interest = InterestRateMath.calculateAggregatedInterestOwed(
+                interestNumerator,
+                lastUpdatedTime,
+                block.timestamp
+            );
+            // solhint-enable not-rely-on-time
 
-        addInterestToRate(_rate, interest);
+            // slither-disable-next-line calls-loop
+            musdToken.mint(address(pcv), interest);
 
-        // solhint-disable-next-line not-rely-on-time
-        interestRateData[_rate].lastUpdatedTime = block.timestamp;
+            // slither-disable-next-line calls-loop
+            activePool.increaseDebt(0, interest);
+        }
 
-        // slither-disable-next-line calls-loop
-        musdToken.mint(address(pcv), interest);
-
-        // slither-disable-next-line calls-loop
-        activePool.increaseDebt(0, interest);
+        //slither-disable-next-line reentrancy-no-eth
+        lastUpdatedTime = block.timestamp;
     }
 
     function updateTroveDebt(
@@ -180,35 +199,15 @@ contract InterestRateManager is
             interestAdjustment = _payment;
         }
 
-        removeInterestFromRate(_rate, interestAdjustment);
-        removePrincipalFromRate(_rate, principalAdjustment);
+        removePrincipal(principalAdjustment, _rate);
     }
 
-    function getInterestRateData(
+    function removePrincipal(
+        uint256 _principal,
         uint16 _rate
-    ) external view returns (InterestRateInfo memory) {
-        return interestRateData[_rate];
-    }
-
-    function addInterestToRate(
-        uint16 _rate,
-        uint256 _interest
     ) public onlyBorrowerOperationsOrTroveManager {
-        interestRateData[_rate].interest += _interest;
-    }
-
-    function removePrincipalFromRate(
-        uint16 _rate,
-        uint256 _principal
-    ) public onlyBorrowerOperationsOrTroveManager {
-        interestRateData[_rate].principal -= _principal;
-    }
-
-    function removeInterestFromRate(
-        uint16 _rate,
-        uint256 _interest
-    ) public onlyBorrowerOperationsOrTroveManager {
-        interestRateData[_rate].interest -= _interest;
+        interestNumerator -= _principal * _rate;
+        emit InterestNumeratorChanged(interestNumerator);
     }
 
     function calculateDebtAdjustment(

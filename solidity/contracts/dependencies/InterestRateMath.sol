@@ -16,4 +16,13 @@ library InterestRateMath {
             (_principal * _interestRate * timeElapsed) /
             (10000 * SECONDS_IN_A_YEAR);
     }
+
+    function calculateAggregatedInterestOwed(
+        uint256 _interestNumerator,
+        uint256 _startTime,
+        uint256 _endTime
+    ) internal pure returns (uint256) {
+        uint256 timeElapsed = _endTime - _startTime;
+        return (timeElapsed * _interestNumerator) / (10000 * SECONDS_IN_A_YEAR);
+    }
 }
