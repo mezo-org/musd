@@ -56,7 +56,6 @@ contract TroveManager is
     struct LocalVariables_OuterLiquidationFunction {
         uint256 price;
         uint256 mUSDInStabPool;
-        bool recoveryModeAtStart;
         uint256 liquidatedColl;
     }
 
@@ -743,7 +742,6 @@ contract TroveManager is
         vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
 
         updateDefaultPoolInterest();
-        vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
         totals = _getTotalsFromBatchLiquidate(
             activePoolCached,
