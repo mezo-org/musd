@@ -132,6 +132,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       verifyingContract: contractAddress,
     }
     const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+    const interestRate = await contracts.interestRateManager.interestRate()
 
     return {
       borrower,
@@ -140,6 +141,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       nonce,
       domain,
       deadline,
+      interestRate,
     }
   }
 
@@ -5429,6 +5431,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     const types = {
       Refinance: [
         { name: "borrower", type: "address" },
+        { name: "interestRate", type: "uint16" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -5437,7 +5440,8 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("changes the trove's interest rate to the current interest rate with a valid signature", async () => {
       const newRate = 1000
       await setInterestRate(contracts, council, newRate)
-      const { borrower, domain, nonce } = await setupSignatureTests(bob)
+      const { borrower, interestRate, domain, nonce } =
+        await setupSignatureTests(bob)
 
       // Open a trove with high ICR to prevent recovery mode
       await setupCarolsTrove()
@@ -5448,6 +5452,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         borrower,
+        interestRate,
         nonce,
         deadline,
       }
@@ -5462,7 +5467,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, interestRate, domain, deadline, nonce } =
         await setupSignatureTests(bob)
 
       // Open a trove with high ICR to prevent recovery mode
@@ -5470,6 +5475,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         borrower,
+        interestRate,
         nonce,
         deadline,
       }
@@ -5489,10 +5495,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         overrides: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, nonce, deadline } = await setupSignatureTests(bob)
+        const { borrower, interestRate, nonce, deadline } =
+          await setupSignatureTests(bob)
 
         const data = {
           borrower,
+          interestRate,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -5507,6 +5515,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower: data.borrower,
+          interestRate: overriddenData.interestRate,
           nonce: overriddenData.nonce,
           deadline: data.deadline,
         }
@@ -5537,6 +5546,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the recovered address does not match the borrower's address", async () => {
         await testRevert({ signer: alice.wallet })
+      })
+
+      it("reverts when the interest rate is different than the signed value", async () => {
+        await testRevert({ interestRate: 200 })
       })
 
       it("reverts when the deadline has passed", async () => {

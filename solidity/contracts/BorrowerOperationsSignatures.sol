@@ -127,7 +127,9 @@ contract BorrowerOperationsSignatures is
         );
 
     bytes32 private constant REFINANCE_TYPEHASH =
-        keccak256("Refinance(address borrower,uint256 nonce,uint256 deadline)");
+        keccak256(
+            "Refinance(address borrower,uint16 interestRate,uint256 nonce,uint256 deadline)"
+        );
 
     bytes32 private constant CLAIM_COLLATERAL_TYPEHASH =
         keccak256(
@@ -454,7 +456,10 @@ contract BorrowerOperationsSignatures is
 
         _verifySignature(
             REFINANCE_TYPEHASH,
-            abi.encode(refinanceData.borrower),
+            abi.encode(
+                refinanceData.borrower,
+                interestRateManager.interestRate()
+            ),
             _borrower,
             _signature,
             _deadline
