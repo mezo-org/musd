@@ -33,15 +33,11 @@ interface IInterestRateManager {
 
     function setMaxInterestRate(uint16 _newMaxInterestRate) external;
 
-    function addPrincipalToRate(uint16 _rate, uint256 _principal) external;
+    function addPrincipal(uint256 _principal, uint16 _rate) external;
 
-    function addInterestToRate(uint16 _rate, uint256 _interest) external;
+    function removePrincipal(uint256 _principal, uint16 _rate) external;
 
-    function removePrincipalFromRate(uint16 _rate, uint256 _principal) external;
-
-    function removeInterestFromRate(uint16 _rate, uint256 _interest) external;
-
-    function updateSystemInterest(uint16 _rate) external;
+    function updateSystemInterest() external;
 
     function updateTroveDebt(
         uint256 _interestOwed,
@@ -52,10 +48,6 @@ interface IInterestRateManager {
         returns (uint256 principalAdjustment, uint256 interestAdjustment);
 
     function interestRate() external view returns (uint16);
-
-    function getInterestRateData(
-        uint16 _rate
-    ) external view returns (InterestRateInfo memory);
 
     function calculateDebtAdjustment(
         uint256 _interestOwed,

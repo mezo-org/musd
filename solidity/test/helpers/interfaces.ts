@@ -53,12 +53,6 @@ type BeforeAndAfter = {
   after: bigint
 }
 
-type InterestRateInfo = {
-  principal: BeforeAndAfter
-  interest: BeforeAndAfter
-  lastUpdatedTime: BeforeAndAfter
-}
-
 export interface ContractsState {
   troveManager: {
     collateralSnapshot: BeforeAndAfter
@@ -100,9 +94,6 @@ export interface ContractsState {
     S: BeforeAndAfter
     currentEpoch: BeforeAndAfter
     currentScale: BeforeAndAfter
-  }
-  interestRateManager: {
-    interestRateData: Record<number, InterestRateInfo>
   }
 }
 

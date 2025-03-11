@@ -37,7 +37,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  updateInterestRateDataSnapshot,
   setInterestRate,
   getTroveEntireDebt,
   TROVE_UPDATED_ABI,
@@ -244,22 +243,30 @@ describe("TroveManager in Normal Mode", () => {
   })
 
   describe("liquidate()", () => {
-    it("removes liquidated trove's principal and interest from system interest rate data", async () => {
+    it("removes liquidated trove's principal and interest from system interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupTroves()
       await fastForwardTime(365 * 24 * 60 * 60)
       await updateTroveSnapshots(contracts, [alice, bob], "before")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await dropPriceAndLiquidate(contracts, deployer, alice)
       const after = BigInt(await getLatestBlockTimestamp())
       await updateTroveSnapshots(contracts, [alice, bob], "after")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(bob.trove.debt.after)
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      expect(state.activePool.principal.after).to.equal(bob.trove.debt.after)
+      expect(state.activePool.interest.after).to.equal(
         calculateInterestOwed(
           bob.trove.debt.before,
           1000,
@@ -281,17 +288,25 @@ describe("TroveManager in Normal Mode", () => {
       // liquidate Carol to create pending rewards for everyone
       await dropPriceAndLiquidate(contracts, deployer, carol)
       await updateTroveSnapshots(contracts, [alice, bob], "before")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await dropPriceAndLiquidate(contracts, deployer, alice)
       const after = BigInt(await getLatestBlockTimestamp())
       await updateTroveSnapshots(contracts, [alice, bob], "after")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(bob.trove.debt.after)
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      expect(state.activePool.principal.after).to.equal(bob.trove.debt.after)
+      expect(state.activePool.interest.after).to.equal(
         calculateInterestOwed(
           bob.trove.debt.before,
           1000,
@@ -525,7 +540,13 @@ describe("TroveManager in Normal Mode", () => {
         sender: carol.wallet,
       })
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveSnapshot(contracts, carol, "before")
       await updateTroveManagerSnapshot(contracts, state, "before")
 
@@ -549,18 +570,16 @@ describe("TroveManager in Normal Mode", () => {
       // Calculate interest on total system debt
       const interestOwed =
         calculateInterestOwed(
-          state.interestRateManager.interestRateData[1000].principal.before,
+          state.activePool.principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           carol.trove.lastInterestUpdateTime.after,
-        ) + state.interestRateManager.interestRateData[1000].interest.before
+        ) + state.activePool.interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
-      const remainingDebt =
-        state.interestRateManager.interestRateData[1000].principal.before +
-        interestOwed
+      const remainingDebt = state.activePool.principal.before + interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
 
@@ -1639,7 +1658,13 @@ describe("TroveManager in Normal Mode", () => {
         sender: carol.wallet,
       })
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveSnapshot(contracts, carol, "before")
       await updateTroveManagerSnapshot(contracts, state, "before")
 
@@ -1662,18 +1687,16 @@ describe("TroveManager in Normal Mode", () => {
       const after = await getLatestBlockTimestamp()
       const interestOwed =
         calculateInterestOwed(
-          state.interestRateManager.interestRateData[1000].principal.before,
+          state.activePool.principal.before,
           1000,
           carol.trove.lastInterestUpdateTime.before,
           BigInt(after),
-        ) + state.interestRateManager.interestRateData[1000].interest.before
+        ) + state.activePool.interest.before
 
       // Calculate expected tcr
       const remainingColl =
         (entireSystemCollBefore - collGasCompensation) * newPrice
-      const remainingDebt =
-        state.interestRateManager.interestRateData[1000].principal.before +
-        interestOwed
+      const remainingDebt = state.activePool.principal.before + interestOwed
 
       await updateTroveManagerSnapshot(contracts, state, "after")
 
@@ -2008,7 +2031,7 @@ describe("TroveManager in Normal Mode", () => {
         sender: alice.wallet,
       })
       await openTrove(contracts, {
-        musdAmount: "2000",
+        musdAmount: "4000",
         ICR: "300",
         sender: bob.wallet,
       })
@@ -2167,7 +2190,7 @@ describe("TroveManager in Normal Mode", () => {
     it("performs partial redemption if resultant debt is > minimum net debt", async () => {
       await setupRedemptionTroves()
 
-      const redemptionAmount = to1e18("4120") // Alice and Bob's net debt + 100 mUSD
+      const redemptionAmount = to1e18("6130") // Alice and Bob's net debt + 100 mUSD
       await performRedemption(contracts, dennis, dennis, redemptionAmount)
 
       // Check that Alice and Bob's troves are closed by redemption
@@ -2190,7 +2213,7 @@ describe("TroveManager in Normal Mode", () => {
       await setupRedemptionTroves()
 
       // Alice and Bob's net debt + 300 mUSD.  A partial redemption of 300 mUSD would put Carol below minimum net debt
-      const redemptionAmount = to1e18("4320")
+      const redemptionAmount = to1e18("6330")
 
       await performRedemption(contracts, dennis, dennis, redemptionAmount)
 
@@ -2380,7 +2403,7 @@ describe("TroveManager in Normal Mode", () => {
       )
     })
 
-    it("correctly updates system interest rate and principal data for a partial redemption", async () => {
+    it("correctly updates system interest and principal for a partial redemption", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupRedemptionTroves()
 
@@ -2388,26 +2411,24 @@ describe("TroveManager in Normal Mode", () => {
 
       await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
 
-      await updateTroveSnapshot(contracts, alice, "before")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
-
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await performRedemption(contracts, dennis, alice, redemptionAmount)
 
-      await updateTroveSnapshot(contracts, alice, "after")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
-
-      const now = BigInt(await getLatestBlockTimestamp())
-      const beforeRedemptionInterest = [alice, bob, carol, dennis].reduce(
-        (acc, user) =>
-          calculateInterestOwed(
-            user.trove.debt.before,
-            1000,
-            user.trove.lastInterestUpdateTime.before,
-            now,
-          ) + acc,
-        0n,
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
       )
 
+      await updateTroveSnapshot(contracts, alice, "after")
       const interestAccrued = calculateInterestOwed(
         alice.trove.debt.before,
         1000,
@@ -2420,18 +2441,25 @@ describe("TroveManager in Normal Mode", () => {
         interestAccrued < redemptionAmount ? interestAccrued : redemptionAmount
       const principalAdjustment = redemptionAmount - interestAdjustment
 
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(beforeRedemptionInterest - interestAdjustment)
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[1000].principal.before -
-          principalAdjustment,
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before - principalAdjustment,
+      )
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before +
+          calculateInterestOwed(
+            alice.trove.debt.before +
+              bob.trove.debt.before +
+              carol.trove.debt.before +
+              dennis.trove.debt.before,
+            1000,
+            dennis.trove.lastInterestUpdateTime.before,
+            alice.trove.lastInterestUpdateTime.after,
+          ) -
+          interestAdjustment,
       )
     })
 
-    it("correctly updates system interest rate and principal data for a full redemption", async () => {
+    it("correctly updates system interest and principal for a full redemption", async () => {
       const interestRate = 1000
       await setInterestRate(contracts, council, interestRate)
       await setupRedemptionTroves()
@@ -2442,12 +2470,17 @@ describe("TroveManager in Normal Mode", () => {
       await setInterestRate(contracts, council, 0)
       await contracts.borrowerOperations.connect(alice.wallet).refinance()
 
-      await updateTroveSnapshot(contracts, alice, "before")
-      await updateInterestRateDataSnapshot(
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "before",
+      )
+      await updateContractsSnapshot(
         contracts,
         state,
-        interestRate,
+        "activePool",
         "before",
+        addresses,
       )
 
       // subtract 200 mUSD from Alice's debt for gas compensation
@@ -2456,18 +2489,35 @@ describe("TroveManager in Normal Mode", () => {
         to1e18("200")
       await performRedemption(contracts, dennis, alice, redemptionAmount)
 
-      await updateTroveSnapshot(contracts, alice, "after")
-      await updateInterestRateDataSnapshot(contracts, state, 0, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
 
-      expect(
-        state.interestRateManager.interestRateData[0].interest.after,
-      ).to.equal(0)
-      expect(
-        state.interestRateManager.interestRateData[0].principal.after,
-      ).to.equal(0)
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before +
+          // carol and dennis still accrue interest
+          calculateInterestOwed(
+            bob.trove.debt.before +
+              carol.trove.debt.before +
+              dennis.trove.debt.before,
+            1000,
+            alice.trove.lastInterestUpdateTime.before,
+            alice.trove.lastInterestUpdateTime.after,
+          ) -
+          alice.trove.interestOwed.before,
+      )
     })
 
-    it("correctly updates system interest rate and principal data for a mix of full and partial redemptions", async () => {
+    it("correctly updates system interest and principal for a mix of full and partial redemptions", async () => {
       const interestRate = 1000
       await setInterestRate(contracts, council, interestRate)
       await setupRedemptionTroves()
@@ -2478,32 +2528,51 @@ describe("TroveManager in Normal Mode", () => {
       await setInterestRate(contracts, council, 0)
 
       await contracts.borrowerOperations.connect(alice.wallet).refinance()
-      await updateTroveSnapshot(contracts, alice, "before")
-
       await contracts.borrowerOperations.connect(bob.wallet).refinance()
-      await updateTroveSnapshot(contracts, bob, "before")
 
-      await updateInterestRateDataSnapshot(
+      const aliceDebt = await contracts.troveManager.getTroveDebt(alice.address)
+      const redemptionAmount = aliceDebt + to1e18("400")
+
+      await updateContractsSnapshot(
         contracts,
         state,
-        interestRate,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
         "before",
       )
 
-      const redemptionAmount =
-        (await contracts.troveManager.getTroveDebt(alice.address)) +
-        to1e18("400")
       await performRedemption(contracts, dennis, alice, redemptionAmount)
 
-      await updateTroveSnapshots(contracts, [alice, bob], "after")
-      await updateInterestRateDataSnapshot(contracts, state, 0, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
 
-      expect(
-        state.interestRateManager.interestRateData[0].interest.after,
-      ).to.equal(bob.trove.interestOwed.after)
-      expect(
-        state.interestRateManager.interestRateData[0].principal.after,
-      ).to.equal(bob.trove.debt.after)
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before +
+          // carol and dennis still accrue interest
+          calculateInterestOwed(
+            carol.trove.debt.before + dennis.trove.debt.before,
+            1000,
+            bob.trove.lastInterestUpdateTime.before,
+            bob.trove.lastInterestUpdateTime.after,
+          ) -
+          alice.trove.interestOwed.before -
+          bob.trove.interestOwed.before,
+      )
     })
 
     it("has the same functionality with invalid first hint, zero address", async () => {
@@ -3306,16 +3375,28 @@ describe("TroveManager in Normal Mode", () => {
     it("should mint additional calculated interest to the PCV", async () => {
       await setupTroveWithInterestRate(1000, 365)
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
       await updatePCVSnapshot(contracts, state, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
 
       await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
       await updatePCVSnapshot(contracts, state, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
 
       expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
-        state.interestRateManager.interestRateData[1000].interest.after,
+        state.activePool.interest.after - state.activePool.interest.before,
       )
     })
 
@@ -3377,22 +3458,33 @@ describe("TroveManager in Normal Mode", () => {
 
     it("should update the system interest", async () => {
       await setupTroveWithInterestRate(100, 30)
-      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, alice, "before")
 
       await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
 
-      expect(
-        state.interestRateManager.interestRateData[100].interest.after,
-      ).to.equal(
-        calculateInterestOwed(
-          to1e18(10250),
-          100,
-          state.interestRateManager.interestRateData[100].lastUpdatedTime
-            .before,
-          BigInt(await getLatestBlockTimestamp()),
-        ),
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before +
+          calculateInterestOwed(
+            to1e18(10250),
+            100,
+            alice.trove.lastInterestUpdateTime.before,
+            BigInt(await getLatestBlockTimestamp()),
+          ),
       )
     })
 
@@ -3400,24 +3492,34 @@ describe("TroveManager in Normal Mode", () => {
       await setupTroveWithInterestRate(100, 30)
       await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, alice, "before")
 
       await fastForwardTime(30 * 24 * 60 * 60)
       await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+      await updateTroveSnapshot(contracts, alice, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
 
-      expect(
-        state.interestRateManager.interestRateData[100].interest.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[100].interest.before +
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before +
           calculateInterestOwed(
             to1e18(10250),
             100,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .before,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .after,
+            alice.trove.lastInterestUpdateTime.before,
+            alice.trove.lastInterestUpdateTime.after,
           ),
       )
     })
@@ -3430,27 +3532,39 @@ describe("TroveManager in Normal Mode", () => {
         musdAmount: "20,000",
       })
 
-      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
       await updateTroveSnapshots(contracts, [alice, bob], "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
 
       await fastForwardTime(30 * 24 * 60 * 60)
       await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [alice, bob], "after")
 
-      expect(
-        state.interestRateManager.interestRateData[100].interest.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[100].interest.before +
-          calculateInterestOwed(
-            alice.trove.debt.before + bob.trove.debt.before,
-            100,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .before,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .after,
-          ),
+      // We already accrued alice's interest when bob opened his trove, so we
+      // only care about the interest between bob's opening time and when alice was
+      // finally updated.
+      const interest = calculateInterestOwed(
+        alice.trove.debt.before + bob.trove.debt.before,
+        100,
+        bob.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before + interest,
       )
     })
 
@@ -3463,48 +3577,45 @@ describe("TroveManager in Normal Mode", () => {
         musdAmount: "20,000",
       })
 
-      await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [alice, bob], "before")
 
-      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
-
-      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
-
       await fastForwardTime(30 * 24 * 60 * 60)
-      await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
-
-      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
-
       await contracts.troveManager.updateSystemAndTroveInterest(bob.wallet)
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, bob, "after")
 
-      await updateInterestRateDataSnapshot(contracts, state, 200, "after")
-
-      expect(
-        state.interestRateManager.interestRateData[100].interest.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[100].interest.before +
-          calculateInterestOwed(
-            alice.trove.debt.before,
-            100,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .before,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .after,
-          ),
+      // We already accrued alice's interest when bob opened his trove, so we
+      // only care about the interest between bob's opening time and when bob was
+      // finally updated.
+      const aliceInterest = calculateInterestOwed(
+        alice.trove.debt.before,
+        Number(alice.trove.interestRate.before),
+        bob.trove.lastInterestUpdateTime.before,
+        bob.trove.lastInterestUpdateTime.after,
       )
 
-      expect(
-        state.interestRateManager.interestRateData[200].interest.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[200].interest.before +
-          calculateInterestOwed(
-            bob.trove.debt.before,
-            200,
-            state.interestRateManager.interestRateData[200].lastUpdatedTime
-              .before,
-            state.interestRateManager.interestRateData[200].lastUpdatedTime
-              .after,
-          ),
+      const bobInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        Number(bob.trove.interestRate.after),
+        bob.trove.lastInterestUpdateTime.before,
+        bob.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.interest.after).to.equal(
+        state.activePool.interest.before + aliceInterest + bobInterest,
       )
     })
   })

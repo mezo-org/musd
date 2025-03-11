@@ -508,6 +508,7 @@ contract BorrowerOperations is
             _debtAmount,
             vars.netDebt
         );
+
         // Move the mUSD gas compensation to the Gas Pool
         _withdrawMUSD(
             contractsCache.activePool,
@@ -615,9 +616,6 @@ contract BorrowerOperations is
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
 
         uint16 oldRate = troveManagerCached.getTroveInterestRate(_borrower);
-        uint256 oldInterest = troveManagerCached.getTroveInterestOwed(
-            _borrower
-        );
         uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
         uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
         uint256 fee = _triggerBorrowingFee(troveManagerCached, musd, amount);
@@ -634,14 +632,9 @@ contract BorrowerOperations is
 
         uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
 
-        interestRateManagerCached.removeInterestFromRate(oldRate, oldInterest);
-        interestRateManagerCached.removePrincipalFromRate(
-            oldRate,
-            oldPrincipal
-        );
+        interestRateManagerCached.removePrincipal(oldPrincipal, oldRate);
         uint16 newRate = interestRateManagerCached.interestRate();
-        interestRateManagerCached.addInterestToRate(newRate, oldInterest);
-        interestRateManagerCached.addPrincipalToRate(newRate, oldPrincipal);
+        interestRateManagerCached.addPrincipal(oldPrincipal, newRate);
 
         troveManagerCached.setTroveInterestRate(
             _borrower,

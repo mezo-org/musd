@@ -524,9 +524,9 @@ contract TroveManager is
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
         updateSystemAndTroveInterest(_borrower);
-        interestRateManager.addPrincipalToRate(
-            Troves[_borrower].interestRate,
-            _debtIncrease
+        interestRateManager.addPrincipal(
+            _debtIncrease,
+            Troves[_borrower].interestRate
         );
         uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
         Troves[_borrower].principal = newDebt;
@@ -680,7 +680,7 @@ contract TroveManager is
     function updateSystemAndTroveInterest(address _borrower) public {
         Trove storage trove = Troves[_borrower];
         // slither-disable-start calls-loop
-        interestRateManager.updateSystemInterest(trove.interestRate);
+        interestRateManager.updateSystemInterest();
         // slither-disable-end calls-loop
         // solhint-disable not-rely-on-time
         trove.interestOwed += InterestRateMath.calculateInterestOwed(
@@ -704,9 +704,19 @@ contract TroveManager is
             "TroveManager: Calldata address array must not be empty"
         );
 
+        interestRateManager.updateSystemInterest();
+
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
-            updateSystemAndTroveInterest(borrower);
+
+            Trove storage trove = Troves[borrower];
+            trove.interestOwed += InterestRateMath.calculateInterestOwed(
+                trove.principal,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
+                block.timestamp
+            );
+            trove.lastInterestUpdateTime = block.timestamp;
         }
 
         IActivePool activePoolCached = activePool;
@@ -947,13 +957,9 @@ contract TroveManager is
 
             // slither-disable-start calls-loop
             // Apply pending rewards to system interest rate data
-            interestRateManager.addPrincipalToRate(
-                trove.interestRate,
-                pendingPrincipal
-            );
-            interestRateManager.addInterestToRate(
-                trove.interestRate,
-                pendingInterest
+            interestRateManager.addPrincipal(
+                pendingPrincipal,
+                trove.interestRate
             );
             // slither-disable-end calls-loop
 
@@ -1466,9 +1472,9 @@ contract TroveManager is
         uint256 _collateral
     ) internal {
         // slither-disable-next-line calls-loop
-        interestRateManager.removePrincipalFromRate(
-            Troves[_borrower].interestRate,
-            _amount
+        interestRateManager.removePrincipal(
+            _amount,
+            Troves[_borrower].interestRate
         );
         Troves[_borrower].principal -= _amount;
         // slither-disable-next-line calls-loop
@@ -1676,13 +1682,9 @@ contract TroveManager is
         }
 
         // slither-disable-start calls-loop
-        interestRateManager.removePrincipalFromRate(
-            Troves[_borrower].interestRate,
-            Troves[_borrower].principal
-        );
-        interestRateManager.removeInterestFromRate(
-            Troves[_borrower].interestRate,
-            Troves[_borrower].interestOwed
+        interestRateManager.removePrincipal(
+            Troves[_borrower].principal,
+            Troves[_borrower].interestRate
         );
         // slither-disable-end calls-loop
 

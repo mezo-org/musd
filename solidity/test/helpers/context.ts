@@ -85,7 +85,6 @@ function initializeContractState(): ContractsState {
   return {
     troveManager: {
       collateralSnapshot: beforeAndAfter(),
-      lastFeeOperationTime: beforeAndAfter(),
       liquidation: {
         collateral: beforeAndAfter(),
         principal: beforeAndAfter(),
@@ -95,9 +94,6 @@ function initializeContractState(): ContractsState {
       stakesSnapshot: beforeAndAfter(),
       troves: beforeAndAfter(),
       TCR: beforeAndAfter(),
-    },
-    interestRateManager: {
-      interestRateData: {},
     },
     activePool: {
       btc: beforeAndAfter(),
