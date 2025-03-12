@@ -234,7 +234,7 @@ contract InterestRateManager is
             _newInterestRate <= maxInterestRate,
             "Interest rate exceeds the maximum interest rate"
         );
-        troveManager.updateDefaultPoolInterest();
+        troveManager.updateSystemInterest();
         interestRate = _newInterestRate;
         emit InterestRateUpdated(_newInterestRate);
     }

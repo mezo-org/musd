@@ -135,7 +135,7 @@ interface ITroveManager {
         uint256 _maxBorrowingCapacity
     ) external;
 
-    function updateDefaultPoolInterest() external;
+    function updateSystemInterest() external;
 
     function updateSystemAndTroveInterest(address _borrower) external;
 

@@ -9,7 +9,7 @@ for testing the parent's internal functions. */
 
 contract TroveManagerTester is TroveManager {
     function callUpdateDefaultPoolInterest() external {
-        updateDefaultPoolInterest();
+        _updateDefaultPoolInterest();
     }
 
     function getCompositeDebt(uint256 _debt) external pure returns (uint) {
