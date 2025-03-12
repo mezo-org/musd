@@ -655,37 +655,6 @@ contract TroveManager is
         return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
     }
 
-    function updateDefaultPoolInterest() public {
-        if (totalStakes > 0) {
-            // solhint-disable not-rely-on-time
-            uint256 interest = InterestRateMath.calculateInterestOwed(
-                defaultPool.getPrincipal(),
-                interestRateManager.interestRate(),
-                defaultPool.getLastInterestUpdatedTime(),
-                block.timestamp
-            );
-            // solhint-enable not-rely-on-time
-
-            // slither-disable-start divide-before-multiply
-            uint256 interestNumerator = interest *
-                DECIMAL_PRECISION +
-                lastInterestError_Redistribution;
-
-            uint256 pendingInterestPerUnitStaked = interestNumerator /
-                totalStakes;
-
-            lastInterestError_Redistribution =
-                interestNumerator -
-                (pendingInterestPerUnitStaked * totalStakes);
-            // slither-disable-end divide-before-multiply
-
-            L_Interest += pendingInterestPerUnitStaked;
-
-            defaultPool.increaseDebt(0, interest);
-            emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
-        }
-    }
-
     function updateSystemAndTroveInterest(address _borrower) public {
         updateSystemInterest();
         _updateTroveInterest(_borrower);
@@ -694,7 +663,7 @@ contract TroveManager is
     function updateSystemInterest() public {
         // slither-disable-next-line calls-loop
         interestRateManager.updateSystemInterest();
-        updateDefaultPoolInterest();
+        _updateDefaultPoolInterest();
     }
 
     /*
@@ -924,6 +893,37 @@ contract TroveManager is
         );
         trove.lastInterestUpdateTime = block.timestamp;
         // solhint-enable not-rely-on-time
+    }
+
+    function _updateDefaultPoolInterest() internal {
+        if (totalStakes > 0) {
+            // solhint-disable not-rely-on-time
+            uint256 interest = InterestRateMath.calculateInterestOwed(
+                defaultPool.getPrincipal(),
+                interestRateManager.interestRate(),
+                defaultPool.getLastInterestUpdatedTime(),
+                block.timestamp
+            );
+            // solhint-enable not-rely-on-time
+
+            // slither-disable-start divide-before-multiply
+            uint256 interestNumerator = interest *
+                DECIMAL_PRECISION +
+                lastInterestError_Redistribution;
+
+            uint256 pendingInterestPerUnitStaked = interestNumerator /
+                totalStakes;
+
+            lastInterestError_Redistribution =
+                interestNumerator -
+                (pendingInterestPerUnitStaked * totalStakes);
+            // slither-disable-end divide-before-multiply
+
+            L_Interest += pendingInterestPerUnitStaked;
+
+            defaultPool.increaseDebt(0, interest);
+            emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
+        }
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
