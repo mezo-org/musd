@@ -355,7 +355,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   describe("StabilityPool", () => {
     it("offset(): reverts when called by an account that is not TroveManager", async () => {
       await expect(
-        contracts.stabilityPool.connect(alice.wallet).offset(100, 10),
+        contracts.stabilityPool.connect(alice.wallet).offset(100, 0, 10),
       ).to.be.revertedWith("StabilityPool: Caller is not TroveManager")
     })
 
