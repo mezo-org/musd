@@ -31,6 +31,7 @@ import {
   updateContractsSnapshot,
   updatePCVSnapshot,
   updatePendingSnapshot,
+  updateStabilityPoolSnapshot,
   updateStabilityPoolUserSnapshot,
   updateStabilityPoolUserSnapshots,
   updateTroveManagerSnapshot,
@@ -1335,6 +1336,67 @@ describe("TroveManager in Normal Mode", () => {
       expect(state.activePool.interest.after).to.equal(expectedInterest)
       expect(state.activePool.debt.after).to.equal(
         bob.trove.debt.before + expectedInterest,
+      )
+    })
+
+    it("decreases ActivePool collateral, principal, and interest owed by correct amounts when offset by the stability pool", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupTroves()
+      await provideToSP(contracts, bob, to1e18("20,000"))
+
+      await fastForwardTime(365 * 24 * 60 * 60)
+
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+      await updateStabilityPoolSnapshot(contracts, state, "before")
+
+      // Close Alice's Trove
+      await dropPriceAndLiquidate(contracts, deployer, alice)
+
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshot(contracts, alice, "after")
+      const after = await getLatestBlockTimestamp()
+
+      const aliceInterest = calculateInterestOwed(
+        alice.trove.debt.before,
+        Number(alice.trove.interestRate.before),
+        alice.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
+      )
+
+      const stabilityPoolLoss =
+        state.stabilityPool.musd.before - state.stabilityPool.musd.after
+
+      expect(state.activePool.collateral.after).to.equal(
+        bob.trove.collateral.before,
+      )
+      expect(state.activePool.principal.after).to.equal(bob.trove.debt.before)
+
+      // ActivePool interest should only include Bob's interest
+      const expectedInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        1000,
+        bob.trove.lastInterestUpdateTime.before,
+        BigInt(after),
+      )
+
+      expect(state.activePool.interest.after).to.equal(expectedInterest)
+      expect(state.activePool.principal.after).to.equal(bob.trove.debt.before)
+      expect(stabilityPoolLoss).to.equal(
+        alice.trove.debt.before + aliceInterest,
       )
     })
 

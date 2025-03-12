@@ -82,7 +82,8 @@ contract TroveManager is
         uint256 totalInterestInSequence;
         uint256 totalCollGasCompensation;
         uint256 totalMUSDGasCompensation;
-        uint256 totalDebtToOffset;
+        uint256 totalPrincipalToOffset;
+        uint256 totalInterestToOffset;
         uint256 totalCollToSendToSP;
         uint256 totalPrincipalToRedistribute;
         uint256 totalInterestToRedistribute;
@@ -110,7 +111,8 @@ contract TroveManager is
         uint256 entireTroveColl;
         uint256 collGasCompensation;
         uint256 mUSDGasCompensation;
-        uint256 debtToOffset;
+        uint256 principalToOffset;
+        uint256 interestToOffset;
         uint256 collToSendToSP;
         uint256 principalToRedistribute;
         uint256 interestToRedistribute;
@@ -712,7 +714,8 @@ contract TroveManager is
 
         // Move liquidated collateral and debt to the appropriate pools
         stabilityPoolCached.offset(
-            totals.totalDebtToOffset,
+            totals.totalPrincipalToOffset,
+            totals.totalInterestToOffset,
             totals.totalCollToSendToSP
         );
         _redistributeDebtAndColl(
@@ -1127,7 +1130,8 @@ contract TroveManager is
             singleLiquidation.collGasCompensation;
 
         (
-            singleLiquidation.debtToOffset,
+            singleLiquidation.principalToOffset,
+            singleLiquidation.interestToOffset,
             singleLiquidation.collToSendToSP,
             singleLiquidation.principalToRedistribute,
             singleLiquidation.interestToRedistribute,
@@ -1190,7 +1194,9 @@ contract TroveManager is
                     vars.user,
                     vars.remainingMUSDInStabPool
                 );
-                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
+                vars.remainingMUSDInStabPool -=
+                    singleLiquidation.principalToOffset +
+                    singleLiquidation.interestToOffset;
 
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(
@@ -1613,7 +1619,8 @@ contract TroveManager is
         internal
         pure
         returns (
-            uint256 debtToOffset,
+            uint256 principalToOffset,
+            uint256 interestToOffset,
             uint256 collToSendToSP,
             uint256 principalToRedistribute,
             uint256 interestToRedistribute,
@@ -1631,21 +1638,19 @@ contract TroveManager is
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            uint256 interestToOffset = LiquityMath._min(
-                _interest,
-                _MUSDInStabPool
-            );
-            uint256 principalToOffset = LiquityMath._min(
+            interestToOffset = LiquityMath._min(_interest, _MUSDInStabPool);
+            principalToOffset = LiquityMath._min(
                 _principal,
                 _MUSDInStabPool - interestToOffset
             );
-            debtToOffset = principalToOffset + interestToOffset;
+            uint256 debtToOffset = principalToOffset + interestToOffset;
             collToSendToSP = (_coll * debtToOffset) / (_principal + _interest);
             interestToRedistribute = _interest - interestToOffset;
             principalToRedistribute = _principal - principalToOffset;
             collToRedistribute = _coll - collToSendToSP;
         } else {
-            debtToOffset = 0;
+            principalToOffset = 0;
+            interestToOffset = 0;
             collToSendToSP = 0;
             principalToRedistribute = _principal;
             interestToRedistribute = _interest;
@@ -1682,9 +1687,13 @@ contract TroveManager is
             oldTotals.totalCollInSequence +
             singleLiquidation.entireTroveColl;
 
-        newTotals.totalDebtToOffset =
-            oldTotals.totalDebtToOffset +
-            singleLiquidation.debtToOffset;
+        newTotals.totalPrincipalToOffset =
+            oldTotals.totalPrincipalToOffset +
+            singleLiquidation.principalToOffset;
+
+        newTotals.totalInterestToOffset =
+            oldTotals.totalInterestToOffset +
+            singleLiquidation.interestToOffset;
 
         newTotals.totalCollToSendToSP =
             oldTotals.totalCollToSendToSP +
