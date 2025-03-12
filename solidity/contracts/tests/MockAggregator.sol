@@ -35,6 +35,7 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
     }
 
     function setBlockTime(uint256 _blockTime) external onlyOwner {
+        // slither-disable-next-line events-maths
         blockTime = _blockTime;
     }
 
