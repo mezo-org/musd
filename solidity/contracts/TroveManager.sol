@@ -309,6 +309,7 @@ contract TroveManager is
         uint256 _partialRedemptionHintNICR,
         uint256 _maxIterations
     ) external override {
+        updateSystemInterest();
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
             defaultPool,
@@ -363,8 +364,6 @@ contract TroveManager is
             _maxIterations = type(uint256).max;
         }
 
-        updateDefaultPoolInterest();
-
         vars.minNetDebt = borrowerOperations.minNetDebt();
         vars.interestRate = interestRateManager.interestRate();
 
@@ -374,6 +373,8 @@ contract TroveManager is
             _maxIterations > 0
         ) {
             _maxIterations--;
+            _updateTroveInterest(currentBorrower);
+
             // Save the address of the Trove preceding the current one, before potentially modifying the list
             // slither-disable-next-line calls-loop
             address nextUserToCheck = contractsCache.sortedTroves.getPrev(
@@ -476,7 +477,6 @@ contract TroveManager is
     function applyPendingRewards(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
 
-        updateDefaultPoolInterest();
         return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
@@ -533,7 +533,6 @@ contract TroveManager is
         uint256 _debtIncrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
-        updateSystemAndTroveInterest(_borrower);
         interestRateManager.addPrincipal(
             _debtIncrease,
             Troves[_borrower].interestRate
@@ -688,19 +687,14 @@ contract TroveManager is
     }
 
     function updateSystemAndTroveInterest(address _borrower) public {
-        Trove storage trove = Troves[_borrower];
-        // slither-disable-start calls-loop
+        updateSystemInterest();
+        _updateTroveInterest(_borrower);
+    }
+
+    function updateSystemInterest() public {
+        // slither-disable-next-line calls-loop
         interestRateManager.updateSystemInterest();
-        // slither-disable-end calls-loop
-        // solhint-disable not-rely-on-time
-        trove.interestOwed += InterestRateMath.calculateInterestOwed(
-            trove.principal,
-            trove.interestRate,
-            trove.lastInterestUpdateTime,
-            block.timestamp
-        );
-        trove.lastInterestUpdateTime = block.timestamp;
-        // solhint-enable not-rely-on-time
+        updateDefaultPoolInterest();
     }
 
     /*
@@ -714,19 +708,12 @@ contract TroveManager is
             "TroveManager: Calldata address array must not be empty"
         );
 
-        interestRateManager.updateSystemInterest();
+        updateSystemInterest();
 
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
 
-            Trove storage trove = Troves[borrower];
-            trove.interestOwed += InterestRateMath.calculateInterestOwed(
-                trove.principal,
-                trove.interestRate,
-                trove.lastInterestUpdateTime,
-                block.timestamp
-            );
-            trove.lastInterestUpdateTime = block.timestamp;
+            _updateTroveInterest(borrower);
         }
 
         IActivePool activePoolCached = activePool;
@@ -740,8 +727,6 @@ contract TroveManager is
 
         vars.price = priceFeed.fetchPrice();
         vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
-
-        updateDefaultPoolInterest();
 
         totals = _getTotalsFromBatchLiquidate(
             activePoolCached,
@@ -913,8 +898,6 @@ contract TroveManager is
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 
-        updateSystemAndTroveInterest(_borrower);
-
         // slither-disable-start calls-loop
         (
             uint256 principalAdjustment,
@@ -927,6 +910,20 @@ contract TroveManager is
         // slither-disable-end calls-loop
         trove.principal -= principalAdjustment;
         trove.interestOwed -= interestAdjustment;
+    }
+
+    function _updateTroveInterest(address _borrower) public {
+        Trove storage trove = Troves[_borrower];
+
+        // solhint-disable not-rely-on-time
+        trove.interestOwed += InterestRateMath.calculateInterestOwed(
+            trove.principal,
+            trove.interestRate,
+            trove.lastInterestUpdateTime,
+            block.timestamp
+        );
+        trove.lastInterestUpdateTime = block.timestamp;
+        // solhint-enable not-rely-on-time
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
@@ -945,7 +942,6 @@ contract TroveManager is
                 uint256 pendingPrincipal,
                 uint256 pendingInterest
             ) = getPendingDebt(_borrower);
-            updateSystemAndTroveInterest(_borrower);
 
             // Apply pending rewards to trove's state
             trove.coll += pendingCollateral;
@@ -1033,8 +1029,6 @@ contract TroveManager is
         if (_principal == 0 && _interest == 0) {
             return;
         }
-
-        updateDefaultPoolInterest();
 
         /*
          * Add distributed collateral, principal, and interest

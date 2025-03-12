@@ -276,8 +276,7 @@ contract BorrowerOperations is
 
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
-        // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(msg.sender, msg.sender);
+        restrictedClaimCollateral(msg.sender, msg.sender);
     }
 
     function setAddresses(
@@ -383,6 +382,8 @@ contract BorrowerOperations is
         address _recipient
     ) public {
         _requireCallerIsAuthorized(_borrower);
+        troveManager.updateSystemInterest();
+
         // send collateral from CollSurplus Pool to owner
         collSurplusPool.claimColl(_borrower, _recipient);
     }
@@ -401,6 +402,7 @@ contract BorrowerOperations is
             musd,
             interestRateManager
         );
+        contractsCache.troveManager.updateSystemInterest();
         // slither-disable-next-line uninitialized-local
         LocalVariables_openTrove memory vars;
 
@@ -539,11 +541,11 @@ contract BorrowerOperations is
     ) public {
         _requireCallerIsAuthorized(_borrower);
         ITroveManager troveManagerCached = troveManager;
+        troveManagerCached.updateSystemAndTroveInterest(_borrower);
+
         IActivePool activePoolCached = activePool;
         IMUSD musdTokenCached = musd;
         bool canMint = musdTokenCached.mintList(address(this));
-
-        troveManagerCached.updateSystemAndTroveInterest(_borrower);
 
         _requireTroveisActive(troveManagerCached, _borrower);
         uint256 price = priceFeed.fetchPrice();
@@ -609,11 +611,13 @@ contract BorrowerOperations is
     function restrictedRefinance(address _borrower) public {
         _requireCallerIsAuthorized(_borrower);
         uint256 price = priceFeed.fetchPrice();
-        _requireNotInRecoveryMode(price);
         ITroveManager troveManagerCached = troveManager;
-        IInterestRateManager interestRateManagerCached = interestRateManager;
-        _requireTroveisActive(troveManagerCached, _borrower);
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
+
+        _requireNotInRecoveryMode(price);
+        _requireTroveisActive(troveManagerCached, _borrower);
+
+        IInterestRateManager interestRateManagerCached = interestRateManager;
 
         uint16 oldRate = troveManagerCached.getTroveInterestRate(_borrower);
         uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
