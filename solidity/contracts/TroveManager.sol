@@ -881,7 +881,7 @@ contract TroveManager is
         trove.interestOwed -= interestAdjustment;
     }
 
-    function _updateTroveInterest(address _borrower) public {
+    function _updateTroveInterest(address _borrower) internal {
         Trove storage trove = Troves[_borrower];
 
         // solhint-disable not-rely-on-time
