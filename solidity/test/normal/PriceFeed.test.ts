@@ -1,7 +1,13 @@
 import { expect } from "chai"
 import { to1e18 } from "../utils"
 
-import { Contracts, User, getDeployedContract, setupTests } from "../helpers"
+import {
+  Contracts,
+  User,
+  getLatestBlockTimestamp,
+  getDeployedContract,
+  setupTests,
+} from "../helpers"
 import type { PriceFeed } from "../../typechain"
 
 describe("PriceFeed in Normal Mode", () => {
@@ -78,6 +84,20 @@ describe("PriceFeed in Normal Mode", () => {
       expect(await contracts.priceFeed.fetchPrice()).to.be.equal(
         to1e18("50,000"),
       )
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when the price feed data is old", async () => {
+        const now = BigInt(await getLatestBlockTimestamp())
+        const fifteenMinutesAgo = now - 15n * 60n
+        await contracts.mockAggregator
+          .connect(deployer.wallet)
+          .setBlockTime(fifteenMinutesAgo)
+
+        await expect(contracts.priceFeed.fetchPrice()).to.be.revertedWith(
+          "PriceFeed: Oracle is stale.",
+        )
+      })
     })
   })
 })

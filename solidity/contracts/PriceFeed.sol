@@ -10,6 +10,7 @@ import "./interfaces/IPriceFeed.sol";
 contract PriceFeed is IPriceFeed, Ownable2StepUpgradeable {
     /// @dev Used to convert an oracle price answer to an 18-digit precision uint
     uint8 public constant TARGET_DIGITS = 18;
+    uint256 private constant ONE_MINUTE_IN_SECONDS = 60;
 
     // State ------------------------------------------------------------------------------------------------------------
     ChainlinkAggregatorV3Interface public oracle;
@@ -43,7 +44,11 @@ contract PriceFeed is IPriceFeed, Ownable2StepUpgradeable {
 
     function fetchPrice() public view virtual returns (uint256) {
         // slither-disable-next-line unused-return
-        (, int256 price, , , ) = oracle.latestRoundData();
+        (, int256 price, , uint256 updatedAt, ) = oracle.latestRoundData();
+        require(
+            block.timestamp - updatedAt <= ONE_MINUTE_IN_SECONDS,
+            "PriceFeed: Oracle is stale."
+        );
         return _scalePriceByDigits(uint256(price), oracle.decimals());
     }
 

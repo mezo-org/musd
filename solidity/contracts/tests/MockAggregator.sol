@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
     uint256 private _price;
     uint8 private precision;
+    uint256 private blockTime;
 
     constructor(uint8 _decimals) Ownable(msg.sender) {
         precision = _decimals;
@@ -33,6 +34,10 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
         return true;
     }
 
+    function setBlockTime(uint256 _blockTime) external onlyOwner {
+        blockTime = _blockTime;
+    }
+
     function latestRoundData()
         external
         view
@@ -45,8 +50,11 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
         )
     {
         require(precision <= 77, "Decimals too large"); // Prevent overflow
-
-        return (0, int256(_price), 0, 0, 0);
+        updatedAt = blockTime;
+        if (updatedAt == 0) {
+            updatedAt = block.timestamp;
+        }
+        answer = int256(_price);
     }
 
     function decimals() public view returns (uint8) {
