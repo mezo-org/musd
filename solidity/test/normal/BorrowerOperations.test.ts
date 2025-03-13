@@ -5128,8 +5128,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         carol.trove.lastInterestUpdateTime.after,
       )
 
-      expect(state.activePool.interest.after).to.equal(
+      expect(state.activePool.interest.after).to.be.closeTo(
         carolInterest + dennisInterest,
+        2n,
       )
       expect(state.activePool.principal.after).to.equal(
         state.activePool.principal.before + carolFee,

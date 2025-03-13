@@ -15,7 +15,7 @@ import {
   WithdrawCollParams,
 } from "./interfaces"
 import { LIQUIDATION_ABI } from "./abi"
-import { fastForwardTime } from "./time"
+import { SECONDS_IN_ONE_YEAR, fastForwardTime } from "./time"
 import { getAddresses, loadTestSetup } from "./context"
 
 export const NO_GAS = {
@@ -918,11 +918,10 @@ export function calculateInterestOwed(
   endTimeSeconds: bigint,
 ) {
   const elapsedSeconds = endTimeSeconds - startTimeSeconds
-  const secondsInOneYear = 31536000n
 
   return (
     (principal * BigInt(interestRateBips) * elapsedSeconds) /
-    (10000n * secondsInOneYear)
+    (10000n * SECONDS_IN_ONE_YEAR)
   )
 }
 

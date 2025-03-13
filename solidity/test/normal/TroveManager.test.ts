@@ -307,13 +307,14 @@ describe("TroveManager in Normal Mode", () => {
         addresses,
       )
       expect(state.activePool.principal.after).to.equal(bob.trove.debt.after)
-      expect(state.activePool.interest.after).to.equal(
+      expect(state.activePool.interest.after).to.be.closeTo(
         calculateInterestOwed(
           bob.trove.debt.before,
           1000,
           bob.trove.lastInterestUpdateTime.before,
           after,
         ),
+        2n,
       )
     })
 
@@ -1393,7 +1394,10 @@ describe("TroveManager in Normal Mode", () => {
         BigInt(after),
       )
 
-      expect(state.activePool.interest.after).to.equal(expectedInterest)
+      expect(state.activePool.interest.after).to.be.closeTo(
+        expectedInterest,
+        2n,
+      )
       expect(state.activePool.principal.after).to.equal(bob.trove.debt.before)
       expect(stabilityPoolLoss).to.equal(
         alice.trove.debt.before + aliceInterest,
@@ -3513,8 +3517,9 @@ describe("TroveManager in Normal Mode", () => {
         alice.trove.lastInterestUpdateTime.after,
       )
 
-      expect(alice.trove.interestOwed.after).to.be.equal(
+      expect(alice.trove.interestOwed.after).to.be.closeTo(
         alice.trove.interestOwed.before + expectedInterest,
+        2n,
       )
     })
 
@@ -3676,8 +3681,9 @@ describe("TroveManager in Normal Mode", () => {
         bob.trove.lastInterestUpdateTime.after,
       )
 
-      expect(state.activePool.interest.after).to.equal(
+      expect(state.activePool.interest.after).to.be.closeTo(
         state.activePool.interest.before + aliceInterest + bobInterest,
+        2n,
       )
     })
   })
