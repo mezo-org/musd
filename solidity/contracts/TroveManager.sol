@@ -275,8 +275,6 @@ contract TroveManager is
     }
 
     function liquidate(address _borrower) external override {
-        _requireTroveIsActive(_borrower);
-
         address[] memory borrowers = new address[](1);
         borrowers[0] = _borrower;
         batchLiquidateTroves(borrowers);
@@ -684,6 +682,7 @@ contract TroveManager is
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
 
+            _requireTroveIsActive(borrower);
             _updateTroveInterest(borrower);
         }
 
