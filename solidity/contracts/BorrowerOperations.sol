@@ -344,6 +344,7 @@ contract BorrowerOperations is
             "BorrowerOps: Refinancing fee percentage must be <= 100"
         );
         refinancingFeePercentage = _refinanceFeePercentage;
+        emit RefinancingFeePercentageChanged(_refinanceFeePercentage);
     }
 
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
