@@ -70,16 +70,13 @@ The StabilityPool is initallly populated with a bootstrapping loan. This can onl
 
 When the protocol's mUSD is withdrawn from the StabilityPool to the PCV contract it is first used to repay any outstanding protocol loan balance. This is to ensure that the bootstrap loan can not be withdrawn from the protocol.
 
-TODO
-
-- Lack of StabilityPool incentives
-- Repayment schedule
-- Accounting trick
-- Rebalancing BTC
+It is anticipated that repayments on the protocol bootstrap loan will be made on a roughly weekly basis via calls to distributeMUSD in the PCV contract.
 
 ### Protocol Controlled Value
 
-Overtime as the protocol accrues interest and fees the bootstrap loan gets repaid and the portion of the mUSD in the StabilityPool that is Protocol Owned Liquidity increases.
+Protocol Owned Liquidty as the name suggests is owned by the protocol, it is intended to provide utility to the protocol regardless of market conditions and without requiring incentives for the liquidity to stay in place.
+
+Over time as the protocol accrues interest and fees the bootstrap loan gets repaid and the portion of the mUSD in the StabilityPool that is Protocol Owned Liquidity increases.
 
 The PCV contract has the ability to distribute the mUSD that it accrues from interest and fees. The fee split for how to use that mUSD can be set by governance.
 
@@ -105,9 +102,9 @@ To illustrate how the mUSD is distributed, assume the feeSplitPercentage is set 
 
 Note that the call to distribute MUSD does not require the entire balance of mUSD held by the PCV contract to be distributed. This means that the distributions to the feeRecipient from the PCV contract can be smoothed out.
 
-When the protocols mUSD is used to take liquidations that results in BTC from the liquidated loans to be in the StabilityPool. The governance process is able to withdraw the BTC to exchange it into mUSD to redeposit into the StabilityPool.
+When the protocol's StabilityPool deposit is used to offset liquidations, that results in BTC from the liquidated loans to be in the StabilityPool. The governance process is able to withdraw the BTC to exchange it into mUSD to redeposit into the StabilityPool.
 
-At launch this process will be done manually however one of the governance addresses maybe updated to point to a smart contract to automate the process in the future.
+At launch this process will be done manually however one of the governance addresses may be updated to point to a smart contract to automate the process in the future.
 
 The feeRecipient address in the PCV contract can be changed via governance.
 
@@ -115,9 +112,9 @@ The feeRecipient address in the PCV contract can be changed via governance.
 
 Unlike Liquity v1 the mUSD smart contracts are upgradable. This provides the flexibility to fix any small issues that arise after launch.
 
-Substancial changes to the functionality would be done by deploying a new set of contracts and adding the new contracts to the mUSD token contracts mintlist and burnlist. This ensures that for any substancial changes the user must take an action to opt in and migrate funds between versions.
+Substantial changes to the functionality would be done by deploying a new set of contracts and adding the new contracts to the mUSD token contracts mintlist and burnlist. This ensures that for any substantial changes the user must take an action to opt in and migrate funds between versions.
 
-When the protocol has been battle tested in production the contracts will be hardend with the upgradability removed. This will give borrowers certainty.
+When the protocol has been battle tested in production the contracts will be hardened with the upgradability removed. This will give borrowers certainty.
 
 ### Liquidations
 
