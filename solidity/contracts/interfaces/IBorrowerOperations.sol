@@ -18,6 +18,7 @@ interface IBorrowerOperations {
     event MinNetDebtProposed(uint256 _minNetDebt, uint256 _proposalTime);
     event PCVAddressChanged(address _pcvAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
+    event RefinancingFeePercentageChanged(uint8 _refinanceFeePercentage);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event StabilityPoolAddressChanged(address _stabilityPoolAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
