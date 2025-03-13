@@ -171,7 +171,6 @@ contract TroveManager is
 
     uint256 public constant REDEMPTION_FEE_FLOOR =
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
-    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
     mapping(address => Trove) public Troves;
 
