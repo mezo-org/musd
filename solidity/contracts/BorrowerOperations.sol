@@ -526,8 +526,6 @@ contract BorrowerOperations is
         return fee;
     }
 
-    // INTERNAL FUNCTIONS GO HERE
-
     function _openTrove(
         address _borrower,
         address _recipient,

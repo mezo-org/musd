@@ -932,7 +932,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedOpenTrove(
               bob.address,
               bob.address,
@@ -1672,7 +1672,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the implementation is called from a non-BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedCloseTrove(bob.address, bob.address),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
