@@ -937,8 +937,6 @@ contract TroveManager is
     ) internal {
         Trove storage trove = Troves[_borrower];
         if (hasPendingRewards(_borrower)) {
-            _requireTroveIsActive(_borrower);
-
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
