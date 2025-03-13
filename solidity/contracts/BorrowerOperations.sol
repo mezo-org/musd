@@ -141,7 +141,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedOpenTrove(
+        this.restrictedOpenTrove{value: msg.value}(
             msg.sender,
             msg.sender,
             _debtAmount,
@@ -155,7 +155,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedAdjustTrove(
+        this.restrictedAdjustTrove{value: msg.value}(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -174,7 +174,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external payable override {
         _requireCallerIsStabilityPool();
-        restrictedAdjustTrove(
+        this.restrictedAdjustTrove{value: msg.value}(
             _borrower,
             _borrower,
             _borrower,
@@ -192,7 +192,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        restrictedAdjustTrove(
+        this.restrictedAdjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -210,7 +210,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        restrictedAdjustTrove(
+        this.restrictedAdjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -228,7 +228,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        restrictedAdjustTrove(
+        this.restrictedAdjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -241,11 +241,11 @@ contract BorrowerOperations is
     }
 
     function closeTrove() external override {
-        restrictedCloseTrove(msg.sender, msg.sender);
+        this.restrictedCloseTrove(msg.sender, msg.sender);
     }
 
     function refinance() external override {
-        restrictedRefinance(msg.sender);
+        this.restrictedRefinance(msg.sender);
     }
 
     /*
@@ -262,7 +262,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedAdjustTrove(
+        this.restrictedAdjustTrove{value: msg.value}(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -276,7 +276,7 @@ contract BorrowerOperations is
 
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
-        restrictedClaimCollateral(msg.sender, msg.sender);
+        this.restrictedClaimCollateral(msg.sender, msg.sender);
     }
 
     function setAddresses(
@@ -381,7 +381,7 @@ contract BorrowerOperations is
         address _borrower,
         address _recipient
     ) public {
-        _requireCallerIsAuthorized(_borrower);
+        _requireCallerIsAuthorized();
         troveManager.updateSystemInterest();
 
         // send collateral from CollSurplus Pool to owner
@@ -395,7 +395,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) public payable {
-        _requireCallerIsAuthorized(_borrower);
+        _requireCallerIsAuthorized();
         ContractsCache memory contractsCache = ContractsCache(
             troveManager,
             activePool,
@@ -539,7 +539,7 @@ contract BorrowerOperations is
         address _borrower,
         address _recipient
     ) public {
-        _requireCallerIsAuthorized(_borrower);
+        _requireCallerIsAuthorized();
         ITroveManager troveManagerCached = troveManager;
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
 
@@ -609,7 +609,7 @@ contract BorrowerOperations is
     }
 
     function restrictedRefinance(address _borrower) public {
-        _requireCallerIsAuthorized(_borrower);
+        _requireCallerIsAuthorized();
         uint256 price = priceFeed.fetchPrice();
         ITroveManager troveManagerCached = troveManager;
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
@@ -668,7 +668,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) public payable {
-        _requireCallerIsAuthorized(_borrower);
+        _requireCallerIsAuthorized();
         ContractsCache memory contractsCache = ContractsCache(
             troveManager,
             activePool,
@@ -957,10 +957,10 @@ contract BorrowerOperations is
         return fee;
     }
 
-    function _requireCallerIsAuthorized(address _borrower) internal view {
+    function _requireCallerIsAuthorized() internal view {
         require(
             msg.sender == borrowerOperationsSignaturesAddress ||
-                msg.sender == _borrower ||
+                msg.sender == address(this) ||
                 msg.sender == stabilityPoolAddress,
             "BorrowerOps: Caller is not authorized to perform this operation"
         );

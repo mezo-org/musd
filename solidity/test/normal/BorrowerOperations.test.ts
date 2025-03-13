@@ -5022,16 +5022,16 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedAdjustTrove(
               bob.address,
               bob.address,
+              alice.address,
+              0,
+              to1e18(100),
+              false,
               bob.address,
-              collWithdrawal,
-              debtChange,
-              isDebtIncrease,
-              upperHint,
-              lowerHint,
+              bob.address,
             ),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not authorized to perform this operation",
