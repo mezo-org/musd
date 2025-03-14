@@ -375,7 +375,7 @@ contract BorrowerOperations is
     function restrictedClaimCollateral(
         address _borrower,
         address _recipient
-    ) public {
+    ) external {
         _requireCallerIsBorrowerOperationsSignatures();
         _claimCollateral(_borrower, _recipient);
     }
@@ -386,7 +386,7 @@ contract BorrowerOperations is
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
-    ) public payable {
+    ) external payable {
         _requireCallerIsBorrowerOperationsSignatures();
         _openTrove(_borrower, _recipient, _debtAmount, _upperHint, _lowerHint);
     }
@@ -394,12 +394,12 @@ contract BorrowerOperations is
     function restrictedCloseTrove(
         address _borrower,
         address _recipient
-    ) public {
+    ) external {
         _requireCallerIsBorrowerOperationsSignatures();
         _closeTrove(_borrower, _recipient);
     }
 
-    function restrictedRefinance(address _borrower) public {
+    function restrictedRefinance(address _borrower) external {
         _requireCallerIsBorrowerOperationsSignatures();
         _refinance(_borrower);
     }
@@ -413,7 +413,7 @@ contract BorrowerOperations is
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint
-    ) public payable {
+    ) external payable {
         _requireCallerIsBorrowerOperationsSignatures();
         _adjustTrove(
             _borrower,
