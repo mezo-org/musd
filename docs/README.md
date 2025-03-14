@@ -58,18 +58,63 @@ Simple interest is non-compounding. For example, if a user owes a principal of $
 
 ## Core Ideas
 
-### Immutability
+### Part of Ecosystem
 
-To give borrowers certainty the deployed contracts are immutable. However at some point in the future if the price feeds no longer work the price feed logic will fail.
+The mUSD CDP is a part of the Mezo ecosystem. The interest and fees from mUSD flow into other parts of Mezo.
 
-- Sets of immutable contracts are deployed together for different versions or collaterals.
-- The mintlist in the mUSD Token contract is used to sunset contracts if a new version is deployed by preventing any new debt positions from being opened. However the contracts will continue to function.
-- There is a governance delay to make changes to the mint list.
-- There is a governance delay to deploy new sets of contracts.
+### Protocol Bootstrap Loan
 
-The tradeoffs between immutability and upgradability are explored [here](https://medium.com/@ben_longstaff/threshold-usd-token-design-trade-offs-2926087d31c4).
+In Liquity v1 deposits to the StabilityPool earn the LQTY token, this resulted in lots of mint and deposits to the StabilityPool. In mUSD there are no direct incentives for depositing into the StabilityPool, it is not anticipated that borrowers will deposit into the StabilityPool.
 
-The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. Together they control Trove state updates and movements of collateral and mUSD tokens around the system.
+The StabilityPool is initallly populated with a bootstrapping loan. This can only leave the StabilityPool via liquidations.
+
+When the protocol's mUSD is withdrawn from the StabilityPool to the PCV contract it is first used to repay any outstanding protocol loan balance. This is to ensure that the bootstrap loan can not be withdrawn from the protocol.
+
+It is anticipated that repayments on the protocol bootstrap loan will be made on a roughly weekly basis via calls to distributeMUSD in the PCV contract.
+
+### Protocol Controlled Value
+
+Protocol Owned Liquidty as the name suggests is owned by the protocol, it is intended to provide utility to the protocol regardless of market conditions and without requiring incentives for the liquidity to stay in place.
+
+Over time as the protocol accrues interest and fees the bootstrap loan gets repaid and the portion of the mUSD in the StabilityPool that is Protocol Owned Liquidity increases.
+
+The PCV contract has the ability to distribute the mUSD that it accrues from interest and fees. The fee split for how to use that mUSD can be set by governance.
+
+To illustrate how the mUSD is distributed, assume the feeSplitPercentage is set to 60%
+
+- Protocol Loan
+  - feeRecipient is not set.
+    - 100% of the amount pays down the loan.
+  - feeRecipient is set
+    - Loan repayment <= outstanding loan
+      - 60% is used as a repayment of the Protocol loan.
+      - 40% is sent to the feeRecipient.
+    - Loan repayment > outstanding loan
+      - Protocol loan is repaid.
+      - 40% is sent to the feeRecipient.
+      - Excess loan repayment amount is deposited into the StabilityPool.
+- Protocol Loan has been repaid
+  - feeRecipient is not set
+    - 100% of the amount is deposited into the StabilityPool.
+  - feeRecipient is set
+    - 60% is deposited into the StabilityPool.
+    - 40% is sent to the feeRecipient.
+
+Note that the call to distribute MUSD does not require the entire balance of mUSD held by the PCV contract to be distributed. This means that the distributions to the feeRecipient from the PCV contract can be smoothed out.
+
+When the protocol's StabilityPool deposit is used to offset liquidations, that results in BTC from the liquidated loans to be in the StabilityPool. The governance process is able to withdraw the BTC to exchange it into mUSD to redeposit into the StabilityPool.
+
+At launch this process will be done manually however one of the governance addresses may be updated to point to a smart contract to automate the process in the future.
+
+The feeRecipient address in the PCV contract can be changed via governance.
+
+### Immutability and Upgradability
+
+Unlike Liquity v1 the mUSD smart contracts are upgradable. This provides the flexibility to fix any small issues that arise after launch.
+
+Substantial changes to the functionality would be done by deploying a new set of contracts and adding the new contracts to the mUSD token contracts mintlist and burnlist. This ensures that for any substantial changes the user must take an action to opt in and migrate funds between versions.
+
+When the protocol has been battle tested in production the contracts will be hardened with the upgradability removed. This will give borrowers certainty.
 
 ### Liquidations
 

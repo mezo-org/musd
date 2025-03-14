@@ -7,23 +7,30 @@ import "../token/IMUSD.sol";
 
 interface IPCV {
     // --- Events --
-    event MUSDTokenAddressSet(address _musdTokenAddress);
     event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);
+    event MUSDTokenAddressSet(address _musdTokenAddress);
+    event RolesSet(address _council, address _treasury);
 
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
-    event DepositToStabilityPool(uint256 _amount);
+    event FeeRecipientSet(address _feeRecipient);
+    event FeeSplitSet(uint8 _feeSplitPercentage);
     event MUSDWithdraw(address _recipient, uint256 _amount);
-    event PCVDebtPaid(uint256 _paidDebt);
-    event PCVFeePaid(address _recipient, uint256 _amount);
+    event PCVDebtPayment(uint256 _paidDebt);
+    event PCVDepositSP(address indexed user, uint256 musdAmount);
+    event PCVDistribution(address _recipient, uint256 _amount);
+    event PCVWithdrawSP(
+        address indexed user,
+        uint256 musdAmount,
+        uint256 collateralAmount
+    );
     event RecipientAdded(address _recipient);
     event RecipientRemoved(address _recipient);
-    event RolesSet(address _council, address _treasury);
 
     // --- Functions ---
 
     function debtToPay() external returns (uint256);
 
-    function payDebt(uint256 _musdToBurn) external;
+    function distributeMUSD(uint256 _musdToBurn) external;
 
     function setAddresses(
         address _borrowerOperations,

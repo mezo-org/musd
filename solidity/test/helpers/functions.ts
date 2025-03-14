@@ -14,7 +14,7 @@ import {
   User,
   WithdrawCollParams,
 } from "./interfaces"
-import { LIQUIDATION_ABI } from "./abi"
+import { LIQUIDATION_ABI, PCV_ABI } from "./abi"
 import { SECONDS_IN_ONE_YEAR, fastForwardTime } from "./time"
 import { getAddresses, loadTestSetup } from "./context"
 
@@ -381,6 +381,47 @@ export async function getDebtAndCollFromTroveUpdatedEvents(
     principal: event?.args[1],
     interest: event?.args[2],
     coll: event?.args[3],
+  }
+}
+
+export async function getEmittedWithdrawCollateralValues(
+  tx: ContractTransactionResponse,
+) {
+  const [recipient, collateralAmount] = (
+    await getAllEventsByName(tx, PCV_ABI, "CollateralWithdraw")
+  )[0].args
+
+  return {
+    recipient,
+    collateralAmount,
+  }
+}
+
+export async function getEmittedPCVtoSPDepositValues(
+  tx: ContractTransactionResponse,
+) {
+  const [user, musdAmount, collateralAmount] = (
+    await getAllEventsByName(tx, PCV_ABI, "PCVDepositSP")
+  )[0].args
+
+  return {
+    user,
+    musdAmount,
+    collateralAmount,
+  }
+}
+
+export async function getEmittedSPtoPCVWithdrawalValues(
+  tx: ContractTransactionResponse,
+) {
+  const [user, musdAmount, collateralAmount] = (
+    await getAllEventsByName(tx, PCV_ABI, "PCVWithdrawSP")
+  )[0].args
+
+  return {
+    user,
+    musdAmount,
+    collateralAmount,
   }
 }
 

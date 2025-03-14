@@ -13,3 +13,17 @@ export const BORROWING_FEE_PAID = [
 export const REFINANCING_FEE_PAID = [
   "event RefinancingFeePaid(address indexed _borrower, uint256 _fee)",
 ]
+
+export const PCV_ABI = [
+  "event PCVDepositSP(address indexed user, uint256 musdAmount)",
+  "event PCVWithdrawSP(address indexed user, uint256 musdAmount, uint256 collateralAmount)",
+  "event MUSDTokenAddressSet(address _musdTokenAddress)",
+  "event BorrowerOperationsAddressSet(address _borrowerOperationsAddress)",
+  "event RolesSet(address _council, address _treasury)",
+  "event MUSDWithdraw(address _recipient, uint256 _amount)",
+  "event CollateralWithdraw(address _recipient, uint256 _collateralAmount)",
+  "event PCVDebtPaid(uint256 _paidDebt)",
+  "event RecipientAdded(address _recipient)",
+  "event RecipientRemoved(address _recipient)",
+  "event PCVFeePaid(address _recipient, uint256 _amount)",
+]
