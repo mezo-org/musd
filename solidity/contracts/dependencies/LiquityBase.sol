@@ -22,6 +22,9 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     // Critical system collateral ratio. If the system's total collateral ratio (TCR) falls below the CCR, Recovery Mode is triggered.
     uint256 public constant CCR = 1.5e18; // 150%
 
+    // Amount of mUSD to be locked in gas pool on opening troves
+    uint256 public constant MUSD_GAS_COMPENSATION = 200e18;
+
     uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
     uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /
@@ -91,5 +94,15 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         uint256 _entireColl
     ) internal pure virtual returns (uint) {
         return _entireColl / PERCENT_DIVISOR;
+    }
+
+    // Returns the composite debt (drawn debt + gas compensation) of a trove,
+    // for the purpose of ICR calculation
+    function _getCompositeDebt(uint256 _debt) internal pure returns (uint) {
+        return _debt + MUSD_GAS_COMPENSATION;
+    }
+
+    function _getNetDebt(uint256 _debt) internal pure returns (uint) {
+        return _debt - MUSD_GAS_COMPENSATION;
     }
 }

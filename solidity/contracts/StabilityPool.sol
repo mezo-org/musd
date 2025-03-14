@@ -250,26 +250,32 @@ contract StabilityPool is
      * Only called by liquidation functions in the TroveManager.
      */
     function offset(
-        uint256 _debtToOffset,
+        uint256 _principalToOffset,
+        uint256 _interestToOffset,
         uint256 _collToAdd
     ) external override {
         _requireCallerIsTroveManager();
         uint256 totalMUSD = totalMUSDDeposits; // cached to save an SLOAD
-        if (totalMUSD == 0 || _debtToOffset == 0) {
+        uint256 debtToOffset = _principalToOffset + _interestToOffset;
+        if (totalMUSD == 0 || debtToOffset == 0) {
             return;
         }
 
         (
             uint256 collateralGainPerUnitStaked,
             uint256 mUSDLossPerUnitStaked
-        ) = _computeRewardsPerUnitStaked(_collToAdd, _debtToOffset, totalMUSD);
+        ) = _computeRewardsPerUnitStaked(_collToAdd, debtToOffset, totalMUSD);
 
         _updateRewardSumAndProduct(
             collateralGainPerUnitStaked,
             mUSDLossPerUnitStaked
         ); // updates S and P
 
-        _moveOffsetCollAndDebt(_collToAdd, _debtToOffset);
+        _moveOffsetCollAndDebt(
+            _collToAdd,
+            _principalToOffset,
+            _interestToOffset
+        );
     }
 
     // --- Getters for public variables. Required by IPool interface ---
@@ -461,16 +467,18 @@ contract StabilityPool is
 
     function _moveOffsetCollAndDebt(
         uint256 _collToAdd,
-        uint256 _debtToOffset
+        uint256 _principalToOffset,
+        uint256 _interestToOffset
     ) internal {
         IActivePool activePoolCached = activePool;
 
+        uint256 debtToOffset = _principalToOffset + _interestToOffset;
         // Cancel the liquidated debt with the mUSD in the stability pool
-        activePoolCached.decreaseDebt(_debtToOffset, 0);
-        _decreaseMUSD(_debtToOffset);
+        activePoolCached.decreaseDebt(_principalToOffset, _interestToOffset);
+        _decreaseMUSD(debtToOffset);
 
         // Burn the debt that was successfully offset
-        musd.burn(address(this), _debtToOffset);
+        musd.burn(address(this), debtToOffset);
 
         activePoolCached.sendCollateral(address(this), _collToAdd);
     }

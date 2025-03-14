@@ -14,11 +14,11 @@ This document outlines a block-based simple interest approach to manage debt and
 
 ### 2. Total Debt Tracking
 
-For the system, we maintain for each interest rate:
+For the system, we maintain:
 
-- Total debt amount
-- Total interest owed
+- The sum of each principal multiplied by its rate (aggreated interest numerator)
 - Timestamp of the last update
+- The total accrued principal and interest in the active pool
 
 ### 3. Individual Trove Data
 
@@ -48,14 +48,22 @@ Each trove stores:
 
 ### Updating Total System Interest
 
-System interest is stored per interest rate. When a trove is modified, the interest for that rate is updated:
+System interest is stored with an aggregated rate. When a user uses the system, the interest is updated:
 
 1. Calculate new interest:
    ```
-   new_interest = total_debt * (current_timestamp - last_update_timestamp) * interest_rate_per_second
+   new_interest = interest_numerator * (current_timestamp - last_update_timestamp) / seconds_in_a_year
    ```
 2. Add new interest to total interest owed
 3. Update the last update timestamp
+
+Whenever principal is added (or removed), we update interest and then update the `interest_numerator`
+
+```
+interest_numerator = interest_numerator + added_principal * interest_rate
+```
+
+This means that `interest_numerator` represents an aggregated interest rate (in bips) for the system.
 
 ### Opening a New Trove
 
@@ -77,16 +85,20 @@ System interest is stored per interest rate. When a trove is modified, the inter
 ### Trove Interactions (Borrowing/Repaying/Adjusting)
 
 1. Calculate new interest owed up to current timestamp
-2. Add new interest to stored interest for the trove and for the system at the trove's interest rate
-3. Process the requested operation (note that repayments will first be applied to owed interest before paying off principal)
-4. Optionally mint and distribute accumulated interest to PCV and gauge pool
+2. Update the system's total interest
+3. Add new interest to stored interest for the trove
+4. Mint and distribute accumulated interest to PCV and gauge pool
+5. Process the requested operation (note that repayments will first be applied to owed interest before paying off principal)
+6. Adjust the `interest_numerator`
 
 ### Closing a Trove
 
 1. Calculate final interest owed up to current timestamp
-2. Add final interest to stored interest
-3. Process repayment of total obligations (debt + total interest)
-4. Mint and distribute any remaining unminted interest
+2. Update the system's total interest
+3. Add final interest to stored interest
+4. Process repayment of total obligations (debt + total interest)
+5. Mint and distribute any remaining unminted interest
+6. Adjust the `interest_numerator`
 
 ## Advantages of this Approach
 
@@ -103,7 +115,7 @@ System interest is stored per interest rate. When a trove is modified, the inter
 - Simple interest results in lower total interest compared to compound interest
 - Interest doesn't earn interest, which may not reflect traditional lending practices
 - Protocol earns less revenue compared to compound interest approaches
-- Interest distribution can be batched but must be tracked carefully
+- Interest distribution is batched but must be tracked carefully
 - Fixed rates based on maximum capacity may result in lower initial yields if users don't borrow their full capacity
 - Revenue stream is dependent on user interaction as we only mint the interest when total interest value changes
 - Time-based calculations are more predictable than block-based ones

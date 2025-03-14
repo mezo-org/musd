@@ -3,7 +3,11 @@
 pragma solidity ^0.8.24;
 
 library InterestRateMath {
-    uint256 private constant SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
+    // https://sibenotes.com/maths/how-many-seconds-are-in-a-year/
+    // 365.2425 days per year * 24 hours per day *
+    // 60 minutes per hour * 60 seconds per minute
+    uint256 public constant SECONDS_IN_A_YEAR = 31_556_952;
+    uint256 private constant BPS = 10_000;
 
     function calculateInterestOwed(
         uint256 _principal,
@@ -14,6 +18,15 @@ library InterestRateMath {
         uint256 timeElapsed = _endTime - _startTime;
         return
             (_principal * _interestRate * timeElapsed) /
-            (10000 * SECONDS_IN_A_YEAR);
+            (BPS * SECONDS_IN_A_YEAR);
+    }
+
+    function calculateAggregatedInterestOwed(
+        uint256 _interestNumerator,
+        uint256 _startTime,
+        uint256 _endTime
+    ) internal pure returns (uint256) {
+        uint256 timeElapsed = _endTime - _startTime;
+        return (timeElapsed * _interestNumerator) / (BPS * SECONDS_IN_A_YEAR);
     }
 }

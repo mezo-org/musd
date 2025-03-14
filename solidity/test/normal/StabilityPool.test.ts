@@ -1325,10 +1325,11 @@ describe("StabilityPool in Normal Mode", () => {
       })
     })
 
-    it("updates the system interest owed for the Trove's interest rate", async () => {
+    it("updates the system interest", async () => {
       await testUpdatesSystemInterestOwed(
         contracts,
         state,
+        addresses,
         carol,
         dennis,
         council,

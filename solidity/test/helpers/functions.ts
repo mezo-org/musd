@@ -15,8 +15,8 @@ import {
   WithdrawCollParams,
 } from "./interfaces"
 import { LIQUIDATION_ABI, PCV_ABI } from "./abi"
-import { fastForwardTime } from "./time"
-import { beforeAndAfter, getAddresses, loadTestSetup } from "./context"
+import { SECONDS_IN_ONE_YEAR, fastForwardTime } from "./time"
+import { getAddresses, loadTestSetup } from "./context"
 
 export const NO_GAS = {
   maxFeePerGas: 0,
@@ -47,7 +47,7 @@ export async function getOpenTroveTotalDebt(
   const price = await contracts.priceFeed.fetchPrice()
   const recoveryMode = await contracts.troveManager.checkRecoveryMode(price)
   const compositeDebt =
-    await contracts.borrowerOperations.getCompositeDebt(musdAmount)
+    await contracts.troveManager.getCompositeDebt(musdAmount)
 
   if (recoveryMode) {
     return compositeDebt
@@ -153,29 +153,6 @@ export async function updatePCVSnapshot(
   state.pcv.musd[checkPoint] = await contracts.musd.balanceOf(
     await contracts.pcv.getAddress(),
   )
-}
-
-export async function updateInterestRateDataSnapshot(
-  contracts: Contracts,
-  state: ContractsState,
-  interestRate: number,
-  checkPoint: CheckPoint,
-) {
-  const { principal, interest, lastUpdatedTime } =
-    await contracts.interestRateManager.interestRateData(interestRate)
-
-  const data = state.interestRateManager.interestRateData[interestRate] ?? {}
-
-  data.principal ??= beforeAndAfter()
-  data.principal[checkPoint] = principal
-
-  data.interest ??= beforeAndAfter()
-  data.interest[checkPoint] = interest
-
-  data.lastUpdatedTime ??= beforeAndAfter()
-  data.lastUpdatedTime[checkPoint] = lastUpdatedTime
-
-  state.interestRateManager.interestRateData[interestRate] = data
 }
 
 export async function updatePendingSnapshot(
@@ -562,7 +539,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   // amount of debt to take on
   const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
   const netDebt =
-    totalDebt - (await contracts.troveManager.getMUSDGasCompensation())
+    totalDebt - (await contracts.troveManager.MUSD_GAS_COMPENSATION())
 
   // amount of assets required for the loan
   const assetAmount = (ICR * totalDebt) / price
@@ -982,11 +959,10 @@ export function calculateInterestOwed(
   endTimeSeconds: bigint,
 ) {
   const elapsedSeconds = endTimeSeconds - startTimeSeconds
-  const secondsInOneYear = 31536000n
 
   return (
     (principal * BigInt(interestRateBips) * elapsedSeconds) /
-    (10000n * secondsInOneYear)
+    (10000n * SECONDS_IN_ONE_YEAR)
   )
 }
 
@@ -1039,6 +1015,7 @@ export async function testUpdatesInterestOwed(
 export async function testUpdatesSystemInterestOwed(
   contracts: Contracts,
   state: ContractsState,
+  addresses: TestingAddresses,
   userA: User,
   userB: User,
   governance: User,
@@ -1050,36 +1027,42 @@ export async function testUpdatesSystemInterestOwed(
     ICR: "1000",
     sender: userA.wallet,
   })
-  await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
   await setInterestRate(contracts, governance, 200)
   await openTrove(contracts, {
     musdAmount: "50,000",
     sender: userB.wallet,
   })
-  await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+
+  await updateContractsSnapshot(
+    contracts,
+    state,
+    "activePool",
+    "before",
+    addresses,
+  )
+  await updateTroveSnapshots(contracts, [userA, userB], "before")
 
   await fn()
-  await updateTroveSnapshot(contracts, userA, "after")
-  await updateInterestRateDataSnapshot(contracts, state, 100, "after")
-  await updateTroveSnapshot(contracts, userB, "after")
-  await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
-  // Check that 100 bps interest rate data is updated
-  expect(
-    state.interestRateManager.interestRateData[100].interest.after,
-  ).to.be.greaterThan(
-    state.interestRateManager.interestRateData[100].interest.before,
+  await updateTroveSnapshots(contracts, [userA, userB], "after")
+  await updateContractsSnapshot(
+    contracts,
+    state,
+    "activePool",
+    "after",
+    addresses,
   )
-  expect(
-    state.interestRateManager.interestRateData[100].interest.after,
-  ).to.equal(userA.trove.interestOwed.after)
 
-  // Check that 200 bps interest rate data is unchanged
-  expect(
-    state.interestRateManager.interestRateData[200].interest.after,
-  ).to.equal(state.interestRateManager.interestRateData[200].interest.before)
-  expect(
-    state.interestRateManager.interestRateData[200].interest.after,
-  ).to.equal(userB.trove.interestOwed.after)
+  expect(state.activePool.interest.after).to.be.closeTo(
+    userA.trove.interestOwed.after +
+      userB.trove.interestOwed.after +
+      calculateInterestOwed(
+        userB.trove.debt.after,
+        200,
+        userB.trove.lastInterestUpdateTime.before,
+        userA.trove.lastInterestUpdateTime.after,
+      ),
+    5n,
+  )
 }

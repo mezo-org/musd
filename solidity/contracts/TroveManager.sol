@@ -29,8 +29,7 @@ contract TroveManager is
 {
     enum TroveManagerOperation {
         applyPendingRewards,
-        liquidateInNormalMode,
-        liquidateInRecoveryMode,
+        liquidate,
         redeemCollateral
     }
 
@@ -57,7 +56,6 @@ contract TroveManager is
     struct LocalVariables_OuterLiquidationFunction {
         uint256 price;
         uint256 mUSDInStabPool;
-        bool recoveryModeAtStart;
         uint256 liquidatedColl;
     }
 
@@ -68,6 +66,7 @@ contract TroveManager is
         uint256 interestPayment;
         uint256 upperBoundNICR;
         uint256 newNICR;
+        uint256 mUSDLot;
     }
 
     struct LocalVariables_InnerSingleLiquidateFunction {
@@ -83,7 +82,8 @@ contract TroveManager is
         uint256 totalInterestInSequence;
         uint256 totalCollGasCompensation;
         uint256 totalMUSDGasCompensation;
-        uint256 totalDebtToOffset;
+        uint256 totalPrincipalToOffset;
+        uint256 totalInterestToOffset;
         uint256 totalCollToSendToSP;
         uint256 totalPrincipalToRedistribute;
         uint256 totalInterestToRedistribute;
@@ -96,14 +96,12 @@ contract TroveManager is
         uint256 i;
         uint256 ICR;
         address user;
-        bool backToNormalMode;
         uint256 entireSystemDebt;
         uint256 entireSystemColl;
     }
 
     struct LocalVariables_redeemCollateral {
         uint256 minNetDebt;
-        uint256 gasCompensation;
         uint16 interestRate;
     }
 
@@ -113,7 +111,8 @@ contract TroveManager is
         uint256 entireTroveColl;
         uint256 collGasCompensation;
         uint256 mUSDGasCompensation;
-        uint256 debtToOffset;
+        uint256 principalToOffset;
+        uint256 interestToOffset;
         uint256 collToSendToSP;
         uint256 principalToRedistribute;
         uint256 interestToRedistribute;
@@ -132,14 +131,16 @@ contract TroveManager is
     }
 
     struct SingleRedemptionValues {
-        uint256 mUSDLot;
+        uint256 principal;
+        uint256 interest;
         uint256 collateralLot;
         bool cancelledPartial;
     }
 
     struct RedemptionTotals {
         uint256 remainingMUSD;
-        uint256 totalMUSDToRedeem;
+        uint256 totalPrincipalToRedeem;
+        uint256 totalInterestToRedeem;
         uint256 totalCollateralDrawn;
         uint256 collateralFee;
         uint256 collateralToSendToRedeemer;
@@ -170,7 +171,6 @@ contract TroveManager is
 
     uint256 public constant REDEMPTION_FEE_FLOOR =
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
-    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
     mapping(address => Trove) public Troves;
 
@@ -310,6 +310,7 @@ contract TroveManager is
         uint256 _partialRedemptionHintNICR,
         uint256 _maxIterations
     ) external override {
+        updateSystemInterest();
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
             defaultPool,
@@ -364,10 +365,7 @@ contract TroveManager is
             _maxIterations = type(uint256).max;
         }
 
-        updateDefaultPoolInterest();
-
         vars.minNetDebt = borrowerOperations.minNetDebt();
-        vars.gasCompensation = borrowerOperations.musdGasCompensation();
         vars.interestRate = interestRateManager.interestRate();
 
         while (
@@ -376,6 +374,8 @@ contract TroveManager is
             _maxIterations > 0
         ) {
             _maxIterations--;
+            _updateTroveInterest(currentBorrower);
+
             // Save the address of the Trove preceding the current one, before potentially modifying the list
             // slither-disable-next-line calls-loop
             address nextUserToCheck = contractsCache.sortedTroves.getPrev(
@@ -402,10 +402,14 @@ contract TroveManager is
 
             if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
 
-            totals.totalMUSDToRedeem += singleRedemption.mUSDLot;
+            totals.totalPrincipalToRedeem += singleRedemption.principal;
+            totals.totalInterestToRedeem += singleRedemption.interest;
             totals.totalCollateralDrawn += singleRedemption.collateralLot;
 
-            totals.remainingMUSD -= singleRedemption.mUSDLot;
+            totals.remainingMUSD -=
+                singleRedemption.principal +
+                singleRedemption.interest;
+
             currentBorrower = nextUserToCheck;
         }
         require(
@@ -428,15 +432,21 @@ contract TroveManager is
 
         emit Redemption(
             _amount,
-            totals.totalMUSDToRedeem,
+            totals.totalPrincipalToRedeem + totals.totalInterestToRedeem,
             totals.totalCollateralDrawn,
             totals.collateralFee
         );
 
         // Burn the total mUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
-        contractsCache.musdToken.burn(msg.sender, totals.totalMUSDToRedeem);
+        contractsCache.musdToken.burn(
+            msg.sender,
+            totals.totalPrincipalToRedeem + totals.totalInterestToRedeem
+        );
         // Update Active Pool mUSD, and send collateral to account
-        contractsCache.activePool.decreaseDebt(totals.totalMUSDToRedeem, 0);
+        contractsCache.activePool.decreaseDebt(
+            totals.totalPrincipalToRedeem,
+            totals.totalInterestToRedeem
+        );
         contractsCache.activePool.sendCollateral(
             msg.sender,
             totals.collateralToSendToRedeemer
@@ -468,7 +478,6 @@ contract TroveManager is
     function applyPendingRewards(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
 
-        updateDefaultPoolInterest();
         return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
@@ -525,10 +534,9 @@ contract TroveManager is
         uint256 _debtIncrease
     ) external override returns (uint) {
         _requireCallerIsBorrowerOperations();
-        updateSystemAndTroveInterest(_borrower);
-        interestRateManager.addPrincipalToRate(
-            Troves[_borrower].interestRate,
-            _debtIncrease
+        interestRateManager.addPrincipal(
+            _debtIncrease,
+            Troves[_borrower].interestRate
         );
         uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
         Troves[_borrower].principal = newDebt;
@@ -648,51 +656,15 @@ contract TroveManager is
         return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
     }
 
-    function updateDefaultPoolInterest() public {
-        if (totalStakes > 0) {
-            // solhint-disable not-rely-on-time
-            uint256 interest = InterestRateMath.calculateInterestOwed(
-                defaultPool.getPrincipal(),
-                interestRateManager.interestRate(),
-                defaultPool.getLastInterestUpdatedTime(),
-                block.timestamp
-            );
-            // solhint-enable not-rely-on-time
-
-            // slither-disable-start divide-before-multiply
-            uint256 interestNumerator = interest *
-                DECIMAL_PRECISION +
-                lastInterestError_Redistribution;
-
-            uint256 pendingInterestPerUnitStaked = interestNumerator /
-                totalStakes;
-
-            lastInterestError_Redistribution =
-                interestNumerator -
-                (pendingInterestPerUnitStaked * totalStakes);
-            // slither-disable-end divide-before-multiply
-
-            L_Interest += pendingInterestPerUnitStaked;
-
-            defaultPool.increaseDebt(0, interest);
-            emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
-        }
+    function updateSystemAndTroveInterest(address _borrower) public {
+        updateSystemInterest();
+        _updateTroveInterest(_borrower);
     }
 
-    function updateSystemAndTroveInterest(address _borrower) public {
-        Trove storage trove = Troves[_borrower];
-        // slither-disable-start calls-loop
-        interestRateManager.updateSystemInterest(trove.interestRate);
-        // slither-disable-end calls-loop
-        // solhint-disable not-rely-on-time
-        trove.interestOwed += InterestRateMath.calculateInterestOwed(
-            trove.principal,
-            trove.interestRate,
-            trove.lastInterestUpdateTime,
-            block.timestamp
-        );
-        trove.lastInterestUpdateTime = block.timestamp;
-        // solhint-enable not-rely-on-time
+    function updateSystemInterest() public {
+        // slither-disable-next-line calls-loop
+        interestRateManager.updateSystemInterest();
+        _updateDefaultPoolInterest();
     }
 
     /*
@@ -706,9 +678,12 @@ contract TroveManager is
             "TroveManager: Calldata address array must not be empty"
         );
 
+        updateSystemInterest();
+
         for (uint i = 0; i < _troveArray.length; i++) {
             address borrower = _troveArray[i];
-            updateSystemAndTroveInterest(borrower);
+
+            _updateTroveInterest(borrower);
         }
 
         IActivePool activePoolCached = activePool;
@@ -723,28 +698,13 @@ contract TroveManager is
         vars.price = priceFeed.fetchPrice();
         vars.mUSDInStabPool = stabilityPoolCached.getTotalMUSDDeposits();
 
-        updateDefaultPoolInterest();
-        vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
-
-        // Perform the appropriate liquidation sequence - tally values and obtain their totals.
-        if (vars.recoveryModeAtStart) {
-            totals = _getTotalFromBatchLiquidateRecoveryMode(
-                activePoolCached,
-                defaultPoolCached,
-                vars.price,
-                vars.mUSDInStabPool,
-                _troveArray
-            );
-        } else {
-            //  if !vars.recoveryModeAtStart
-            totals = _getTotalsFromBatchLiquidateNormalMode(
-                activePoolCached,
-                defaultPoolCached,
-                vars.price,
-                vars.mUSDInStabPool,
-                _troveArray
-            );
-        }
+        totals = _getTotalsFromBatchLiquidate(
+            activePoolCached,
+            defaultPoolCached,
+            vars.price,
+            vars.mUSDInStabPool,
+            _troveArray
+        );
 
         require(
             totals.totalPrincipalInSequence > 0,
@@ -753,7 +713,8 @@ contract TroveManager is
 
         // Move liquidated collateral and debt to the appropriate pools
         stabilityPoolCached.offset(
-            totals.totalDebtToOffset,
+            totals.totalPrincipalToOffset,
+            totals.totalInterestToOffset,
             totals.totalCollToSendToSP
         );
         _redistributeDebtAndColl(
@@ -908,8 +869,6 @@ contract TroveManager is
     function _updateTroveDebt(address _borrower, uint256 _payment) internal {
         Trove storage trove = Troves[_borrower];
 
-        updateSystemAndTroveInterest(_borrower);
-
         // slither-disable-start calls-loop
         (
             uint256 principalAdjustment,
@@ -924,6 +883,52 @@ contract TroveManager is
         trove.interestOwed -= interestAdjustment;
     }
 
+    function _updateTroveInterest(address _borrower) internal {
+        Trove storage trove = Troves[_borrower];
+
+        // solhint-disable not-rely-on-time
+        trove.interestOwed += InterestRateMath.calculateInterestOwed(
+            trove.principal,
+            trove.interestRate,
+            trove.lastInterestUpdateTime,
+            block.timestamp
+        );
+        trove.lastInterestUpdateTime = block.timestamp;
+        // solhint-enable not-rely-on-time
+    }
+
+    function _updateDefaultPoolInterest() internal {
+        if (totalStakes == 0) {
+            return;
+        }
+
+        // solhint-disable not-rely-on-time
+        uint256 interest = InterestRateMath.calculateInterestOwed(
+            defaultPool.getPrincipal(),
+            interestRateManager.interestRate(),
+            defaultPool.getLastInterestUpdatedTime(),
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        // slither-disable-start divide-before-multiply
+        uint256 interestNumerator = interest *
+            DECIMAL_PRECISION +
+            lastInterestError_Redistribution;
+
+        uint256 pendingInterestPerUnitStaked = interestNumerator / totalStakes;
+
+        lastInterestError_Redistribution =
+            interestNumerator -
+            (pendingInterestPerUnitStaked * totalStakes);
+        // slither-disable-end divide-before-multiply
+
+        L_Interest += pendingInterestPerUnitStaked;
+
+        defaultPool.increaseDebt(0, interest);
+        emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
+    }
+
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
     function _applyPendingRewards(
         IActivePool _activePool,
@@ -932,15 +937,12 @@ contract TroveManager is
     ) internal {
         Trove storage trove = Troves[_borrower];
         if (hasPendingRewards(_borrower)) {
-            _requireTroveIsActive(_borrower);
-
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
                 uint256 pendingPrincipal,
                 uint256 pendingInterest
             ) = getPendingDebt(_borrower);
-            updateSystemAndTroveInterest(_borrower);
 
             // Apply pending rewards to trove's state
             trove.coll += pendingCollateral;
@@ -949,13 +951,9 @@ contract TroveManager is
 
             // slither-disable-start calls-loop
             // Apply pending rewards to system interest rate data
-            interestRateManager.addPrincipalToRate(
-                trove.interestRate,
-                pendingPrincipal
-            );
-            interestRateManager.addInterestToRate(
-                trove.interestRate,
-                pendingInterest
+            interestRateManager.addPrincipal(
+                pendingPrincipal,
+                trove.interestRate
             );
             // slither-disable-end calls-loop
 
@@ -1033,8 +1031,6 @@ contract TroveManager is
             return;
         }
 
-        updateDefaultPoolInterest();
-
         /*
          * Add distributed collateral, principal, and interest
          * rewards-per-unit-staked to the running totals. Division uses a
@@ -1093,8 +1089,8 @@ contract TroveManager is
         _activePool.sendCollateral(address(_defaultPool), _coll);
     }
 
-    // Liquidate one trove, in Normal Mode.
-    function _liquidateNormalMode(
+    // Liquidate one trove
+    function _liquidate(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         address _borrower,
@@ -1102,6 +1098,9 @@ contract TroveManager is
     ) internal returns (LiquidationValues memory singleLiquidation) {
         // slither-disable-next-line uninitialized-local
         LocalVariables_InnerSingleLiquidateFunction memory vars;
+        if (TroveOwners.length <= 1) {
+            return singleLiquidation;
+        } // don't liquidate if last trove
 
         (
             singleLiquidation.entireTroveColl,
@@ -1124,13 +1123,13 @@ contract TroveManager is
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .musdGasCompensation();
+        singleLiquidation.mUSDGasCompensation = MUSD_GAS_COMPENSATION;
         uint256 collToLiquidate = singleLiquidation.entireTroveColl -
             singleLiquidation.collGasCompensation;
 
         (
-            singleLiquidation.debtToOffset,
+            singleLiquidation.principalToOffset,
+            singleLiquidation.interestToOffset,
             singleLiquidation.collToSendToSP,
             singleLiquidation.principalToRedistribute,
             singleLiquidation.interestToRedistribute,
@@ -1147,7 +1146,7 @@ contract TroveManager is
             _borrower,
             singleLiquidation.entireTrovePrincipal,
             singleLiquidation.entireTroveColl,
-            uint8(TroveManagerOperation.liquidateInNormalMode)
+            uint8(TroveManagerOperation.liquidate)
         );
         emit TroveUpdated(
             _borrower,
@@ -1155,7 +1154,7 @@ contract TroveManager is
             0,
             0,
             0,
-            uint8(TroveManagerOperation.liquidateInNormalMode)
+            uint8(TroveManagerOperation.liquidate)
         );
         return singleLiquidation;
     }
@@ -1168,7 +1167,7 @@ contract TroveManager is
         Troves[_borrower].stake = 0;
     }
 
-    function _getTotalsFromBatchLiquidateNormalMode(
+    function _getTotalsFromBatchLiquidate(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint256 _price,
@@ -1182,18 +1181,21 @@ contract TroveManager is
 
         vars.remainingMUSDInStabPool = _MUSDInStabPool;
 
-        for (vars.i = 0; vars.i < _troveArray.length; vars.i++) {
+        uint troveArrayLength = _troveArray.length;
+        for (vars.i = 0; vars.i < troveArrayLength; vars.i++) {
             vars.user = _troveArray[vars.i];
             vars.ICR = getCurrentICR(vars.user, _price);
 
             if (vars.ICR < MCR) {
-                singleLiquidation = _liquidateNormalMode(
+                singleLiquidation = _liquidate(
                     _activePool,
                     _defaultPool,
                     vars.user,
                     vars.remainingMUSDInStabPool
                 );
-                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
+                vars.remainingMUSDInStabPool -=
+                    singleLiquidation.principalToOffset +
+                    singleLiquidation.interestToOffset;
 
                 // Add liquidation values to their respective running totals
                 totals = _addLiquidationValuesToTotals(
@@ -1202,258 +1204,6 @@ contract TroveManager is
                 );
             }
         }
-    }
-
-    /*
-     * This function is used when the batch liquidation sequence starts during Recovery Mode. However, it
-     * handle the case where the system *leaves* Recovery Mode, part way through the liquidation sequence
-     */
-    function _getTotalFromBatchLiquidateRecoveryMode(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
-        uint256 _price,
-        uint256 _MUSDInStabPool,
-        address[] memory _troveArray
-    ) internal returns (LiquidationTotals memory totals) {
-        // slither-disable-next-line uninitialized-local
-        LocalVariables_LiquidationSequence memory vars;
-        // slither-disable-next-line uninitialized-local
-        LiquidationValues memory singleLiquidation;
-
-        vars.remainingMUSDInStabPool = _MUSDInStabPool;
-        vars.backToNormalMode = false;
-        vars.entireSystemDebt = getEntireSystemDebt();
-        vars.entireSystemColl = getEntireSystemColl();
-
-        for (vars.i = 0; vars.i < _troveArray.length; vars.i++) {
-            vars.user = _troveArray[vars.i];
-            // Skip non-active troves
-            if (Troves[vars.user].status != Status.active) {
-                continue;
-            }
-            vars.ICR = getCurrentICR(vars.user, _price);
-
-            if (!vars.backToNormalMode) {
-                // Skip this trove if ICR is greater than MCR and Stability Pool is empty
-                if (vars.ICR >= MCR && vars.remainingMUSDInStabPool == 0) {
-                    continue;
-                }
-
-                uint256 TCR = LiquityMath._computeCR(
-                    vars.entireSystemColl,
-                    vars.entireSystemDebt,
-                    _price
-                );
-
-                singleLiquidation = _liquidateRecoveryMode(
-                    _activePool,
-                    _defaultPool,
-                    vars.user,
-                    vars.ICR,
-                    vars.remainingMUSDInStabPool,
-                    TCR,
-                    _price
-                );
-
-                // Update aggregate trackers
-                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
-                vars.entireSystemDebt -= singleLiquidation.debtToOffset;
-                vars.entireSystemColl -=
-                    singleLiquidation.collToSendToSP +
-                    singleLiquidation.collGasCompensation +
-                    singleLiquidation.collSurplus;
-
-                // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(
-                    totals,
-                    singleLiquidation
-                );
-
-                vars.backToNormalMode = !_checkPotentialRecoveryMode(
-                    vars.entireSystemColl,
-                    vars.entireSystemDebt,
-                    _price
-                );
-            } else if (vars.backToNormalMode && vars.ICR < MCR) {
-                singleLiquidation = _liquidateNormalMode(
-                    _activePool,
-                    _defaultPool,
-                    vars.user,
-                    vars.remainingMUSDInStabPool
-                );
-                vars.remainingMUSDInStabPool -= singleLiquidation.debtToOffset;
-
-                // Add liquidation values to their respective running totals
-                totals = _addLiquidationValuesToTotals(
-                    totals,
-                    singleLiquidation
-                );
-            } else continue; // In Normal Mode skip troves with ICR >= MCR
-        }
-    }
-
-    // Liquidate one trove, in Recovery Mode.
-    function _liquidateRecoveryMode(
-        IActivePool _activePool,
-        IDefaultPool _defaultPool,
-        address _borrower,
-        uint256 _ICR,
-        uint256 _MUSDInStabPool,
-        uint256 _TCR,
-        uint256 _price
-    ) internal returns (LiquidationValues memory singleLiquidation) {
-        // slither-disable-next-line uninitialized-local
-        LocalVariables_InnerSingleLiquidateFunction memory vars;
-        if (TroveOwners.length <= 1) {
-            return singleLiquidation;
-        } // don't liquidate if last trove
-        (
-            singleLiquidation.entireTroveColl,
-            singleLiquidation.entireTrovePrincipal,
-            singleLiquidation.entireTroveInterest,
-            vars.pendingColl,
-            vars.pendingPrincipal,
-            vars.pendingInterest
-        ) = getEntireDebtAndColl(_borrower);
-
-        singleLiquidation.collGasCompensation = _getCollGasCompensation(
-            singleLiquidation.entireTroveColl
-        );
-        singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .musdGasCompensation();
-        vars.collToLiquidate =
-            singleLiquidation.entireTroveColl -
-            singleLiquidation.collGasCompensation;
-
-        // If ICR <= 100%, purely redistribute the Trove across all active Troves
-        if (_ICR <= _100pct) {
-            _removeStake(_borrower);
-            _movePendingTroveRewardsToActivePool(
-                _activePool,
-                _defaultPool,
-                vars.pendingColl,
-                vars.pendingPrincipal,
-                vars.pendingInterest
-            );
-
-            singleLiquidation.debtToOffset = 0;
-            singleLiquidation.collToSendToSP = 0;
-            singleLiquidation.principalToRedistribute = singleLiquidation
-                .entireTrovePrincipal;
-            singleLiquidation.collToRedistribute = vars.collToLiquidate;
-
-            _closeTrove(_borrower, Status.closedByLiquidation);
-            emit TroveLiquidated(
-                _borrower,
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.entireTroveColl,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-            emit TroveUpdated(
-                _borrower,
-                0,
-                0,
-                0,
-                0,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-
-            // If 100% < ICR < MCR, offset as much as possible, and redistribute the remainder
-        } else if ((_ICR > _100pct) && (_ICR < MCR)) {
-            _removeStake(_borrower);
-            _movePendingTroveRewardsToActivePool(
-                _activePool,
-                _defaultPool,
-                vars.pendingColl,
-                vars.pendingPrincipal,
-                vars.pendingInterest
-            );
-
-            (
-                singleLiquidation.debtToOffset,
-                singleLiquidation.collToSendToSP,
-                singleLiquidation.principalToRedistribute,
-                singleLiquidation.interestToRedistribute,
-                singleLiquidation.collToRedistribute
-            ) = _getOffsetAndRedistributionVals(
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.entireTroveInterest,
-                vars.collToLiquidate,
-                _MUSDInStabPool
-            );
-
-            _closeTrove(_borrower, Status.closedByLiquidation);
-            emit TroveLiquidated(
-                _borrower,
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.entireTroveColl,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-            emit TroveUpdated(
-                _borrower,
-                0,
-                0,
-                0,
-                0,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-            /*
-             * If 110% <= ICR < current TCR (accounting for the preceding liquidations in the current sequence)
-             * and there is mUSD in the Stability Pool, only offset, with no redistribution,
-             * but at a capped rate of 1.1 and only if the whole debt can be liquidated.
-             * The remainder due to the capped rate will be claimable as collateral surplus.
-             */
-        } else if (
-            (_ICR >= MCR) &&
-            (_ICR < _TCR) &&
-            (singleLiquidation.entireTrovePrincipal <= _MUSDInStabPool)
-        ) {
-            _removeStake(_borrower);
-            _movePendingTroveRewardsToActivePool(
-                _activePool,
-                _defaultPool,
-                vars.pendingColl,
-                vars.pendingPrincipal,
-                vars.pendingInterest
-            );
-            assert(_MUSDInStabPool != 0);
-
-            singleLiquidation = _getCappedOffsetVals(
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.entireTroveColl,
-                _price
-            );
-
-            _closeTrove(_borrower, Status.closedByLiquidation);
-            if (singleLiquidation.collSurplus > 0) {
-                collSurplusPool.accountSurplus(
-                    _borrower,
-                    singleLiquidation.collSurplus
-                );
-            }
-
-            emit TroveLiquidated(
-                _borrower,
-                singleLiquidation.entireTrovePrincipal,
-                singleLiquidation.collToSendToSP,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-            emit TroveUpdated(
-                _borrower,
-                0,
-                0,
-                0,
-                0,
-                uint8(TroveManagerOperation.liquidateInRecoveryMode)
-            );
-        } else {
-            // if (_ICR >= MCR && ( _ICR >= _TCR || singleLiquidation.entireTroveDebt > _MUSDInStabPool))
-            // slither-disable-next-line uninitialized-local
-            LiquidationValues memory zeroVals;
-            return zeroVals;
-        }
-
-        return singleLiquidation;
     }
 
     /*
@@ -1470,9 +1220,9 @@ contract TroveManager is
         uint256 _collateral
     ) internal {
         // slither-disable-next-line calls-loop
-        interestRateManager.removePrincipalFromRate(
-            Troves[_borrower].interestRate,
-            _amount
+        interestRateManager.removePrincipal(
+            _amount,
+            Troves[_borrower].interestRate
         );
         Troves[_borrower].principal -= _amount;
         // slither-disable-next-line calls-loop
@@ -1505,18 +1255,18 @@ contract TroveManager is
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
-        singleRedemption.mUSDLot = LiquityMath._min(
+        vars.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
-            _getTotalDebt(_borrower) - redeemCollateralVars.gasCompensation
+            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
         );
 
         // Get the collateralLot of equivalent value in USD
         singleRedemption.collateralLot =
-            (singleRedemption.mUSDLot * DECIMAL_PRECISION) /
+            (vars.mUSDLot * DECIMAL_PRECISION) /
             _price;
 
         // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
-        vars.newDebt = _getTotalDebt(_borrower) - singleRedemption.mUSDLot;
+        vars.newDebt = _getTotalDebt(_borrower) - vars.mUSDLot;
         vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
         vars.newPrincipal = Troves[_borrower].principal;
 
@@ -1531,18 +1281,21 @@ contract TroveManager is
             );
         // solhint-enable not-rely-on-time
 
-        if (singleRedemption.mUSDLot > vars.interestPayment) {
-            vars.newPrincipal -=
-                singleRedemption.mUSDLot -
-                vars.interestPayment;
+        if (vars.mUSDLot > vars.interestPayment) {
+            vars.newPrincipal -= vars.mUSDLot - vars.interestPayment;
+            singleRedemption.interest = vars.interestPayment;
+            singleRedemption.principal = vars.mUSDLot - vars.interestPayment;
+        } else {
+            singleRedemption.interest = vars.mUSDLot;
         }
-        if (vars.newDebt == redeemCollateralVars.gasCompensation) {
+
+        if (vars.newDebt == MUSD_GAS_COMPENSATION) {
             // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
             _removeStake(_borrower);
             _redeemCloseTrove(
                 _contractsCache,
                 _borrower,
-                redeemCollateralVars.gasCompensation,
+                MUSD_GAS_COMPENSATION,
                 vars.newColl
             );
             _closeTrove(_borrower, Status.closedByRedemption);
@@ -1584,8 +1337,7 @@ contract TroveManager is
             if (
                 _partialRedemptionHintNICR < vars.newNICR ||
                 _partialRedemptionHintNICR > vars.upperBoundNICR ||
-                borrowerOperations.getNetDebt(vars.newDebt) <
-                redeemCollateralVars.minNetDebt
+                _getNetDebt(vars.newDebt) < redeemCollateralVars.minNetDebt
             ) {
                 singleRedemption.cancelledPartial = true;
                 return singleRedemption;
@@ -1600,7 +1352,7 @@ contract TroveManager is
                 _lowerPartialRedemptionHint
             );
 
-            _updateTroveDebt(_borrower, singleRedemption.mUSDLot);
+            _updateTroveDebt(_borrower, vars.mUSDLot);
             Troves[_borrower].coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);
 
@@ -1683,13 +1435,9 @@ contract TroveManager is
         }
 
         // slither-disable-start calls-loop
-        interestRateManager.removePrincipalFromRate(
-            Troves[_borrower].interestRate,
-            Troves[_borrower].principal
-        );
-        interestRateManager.removeInterestFromRate(
-            Troves[_borrower].interestRate,
-            Troves[_borrower].interestOwed
+        interestRateManager.removePrincipal(
+            Troves[_borrower].principal,
+            Troves[_borrower].interestRate
         );
         // slither-disable-end calls-loop
 
@@ -1846,33 +1594,6 @@ contract TroveManager is
         );
     }
 
-    /*
-     *  Get its offset coll/debt and collateral gas comp, and close the trove.
-     */
-    function _getCappedOffsetVals(
-        uint256 _entireTroveDebt,
-        uint256 _entireTroveColl,
-        uint256 _price
-    ) internal view returns (LiquidationValues memory singleLiquidation) {
-        singleLiquidation.entireTrovePrincipal = _entireTroveDebt;
-        singleLiquidation.entireTroveColl = _entireTroveColl;
-        uint256 cappedCollPortion = (_entireTroveDebt * MCR) / _price;
-
-        singleLiquidation.collGasCompensation = _getCollGasCompensation(
-            cappedCollPortion
-        );
-        singleLiquidation.mUSDGasCompensation = borrowerOperations
-            .musdGasCompensation();
-
-        singleLiquidation.debtToOffset = _entireTroveDebt;
-        singleLiquidation.collToSendToSP =
-            cappedCollPortion -
-            singleLiquidation.collGasCompensation;
-        singleLiquidation.collSurplus = _entireTroveColl - cappedCollPortion;
-        singleLiquidation.principalToRedistribute = 0;
-        singleLiquidation.collToRedistribute = 0;
-    }
-
     function _getRedemptionFee(
         uint256 _collateralDrawn
     ) internal pure returns (uint) {
@@ -1897,7 +1618,8 @@ contract TroveManager is
         internal
         pure
         returns (
-            uint256 debtToOffset,
+            uint256 principalToOffset,
+            uint256 interestToOffset,
             uint256 collToSendToSP,
             uint256 principalToRedistribute,
             uint256 interestToRedistribute,
@@ -1915,21 +1637,19 @@ contract TroveManager is
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            uint256 interestToOffset = LiquityMath._min(
-                _interest,
-                _MUSDInStabPool
-            );
-            uint256 principalToOffset = LiquityMath._min(
+            interestToOffset = LiquityMath._min(_interest, _MUSDInStabPool);
+            principalToOffset = LiquityMath._min(
                 _principal,
                 _MUSDInStabPool - interestToOffset
             );
-            debtToOffset = principalToOffset + interestToOffset;
+            uint256 debtToOffset = principalToOffset + interestToOffset;
             collToSendToSP = (_coll * debtToOffset) / (_principal + _interest);
             interestToRedistribute = _interest - interestToOffset;
             principalToRedistribute = _principal - principalToOffset;
             collToRedistribute = _coll - collToSendToSP;
         } else {
-            debtToOffset = 0;
+            principalToOffset = 0;
+            interestToOffset = 0;
             collToSendToSP = 0;
             principalToRedistribute = _principal;
             interestToRedistribute = _interest;
@@ -1939,21 +1659,6 @@ contract TroveManager is
 
     function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
         require(_amount > 0, "TroveManager: Amount must be greater than zero");
-    }
-
-    // Check whether or not the system *would be* in Recovery Mode, given an collateral:USD price, and the entire system coll and debt.
-    function _checkPotentialRecoveryMode(
-        uint256 _entireSystemColl,
-        uint256 _entireSystemDebt,
-        uint256 _price
-    ) internal pure returns (bool) {
-        uint256 TCR = LiquityMath._computeCR(
-            _entireSystemColl,
-            _entireSystemDebt,
-            _price
-        );
-
-        return TCR < CCR;
     }
 
     function _addLiquidationValuesToTotals(
@@ -1981,9 +1686,13 @@ contract TroveManager is
             oldTotals.totalCollInSequence +
             singleLiquidation.entireTroveColl;
 
-        newTotals.totalDebtToOffset =
-            oldTotals.totalDebtToOffset +
-            singleLiquidation.debtToOffset;
+        newTotals.totalPrincipalToOffset =
+            oldTotals.totalPrincipalToOffset +
+            singleLiquidation.principalToOffset;
+
+        newTotals.totalInterestToOffset =
+            oldTotals.totalInterestToOffset +
+            singleLiquidation.interestToOffset;
 
         newTotals.totalCollToSendToSP =
             oldTotals.totalCollToSendToSP +

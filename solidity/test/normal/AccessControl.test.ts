@@ -135,11 +135,11 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       )
     })
 
-    it("addPrincipalToRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
+    it("addPrincipal(): reverts when called by account that is not borrower operations or trove manager", async () => {
       await expect(
         contracts.interestRateManager
           .connect(alice.wallet)
-          .addPrincipalToRate(1000n, to1e18(2300)),
+          .addPrincipal(to1e18(2300), 1000n),
       ).to.be.revertedWith(
         "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
       )
@@ -155,31 +155,11 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       )
     })
 
-    it("addInterestToRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
+    it("removePrincipal(): reverts when called by account that is not borrower operations or trove manager", async () => {
       await expect(
         contracts.interestRateManager
           .connect(alice.wallet)
-          .addInterestToRate(1000n, to1e18(4300)),
-      ).to.be.revertedWith(
-        "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
-      )
-    })
-
-    it("removePrincipalFromRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
-      await expect(
-        contracts.interestRateManager
-          .connect(alice.wallet)
-          .removePrincipalFromRate(1000n, to1e18(4300)),
-      ).to.be.revertedWith(
-        "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
-      )
-    })
-
-    it("removeInterestFromRate(): reverts when called by account that is not borrower operations or trove manager", async () => {
-      await expect(
-        contracts.interestRateManager
-          .connect(alice.wallet)
-          .removeInterestFromRate(1000n, to1e18(4300)),
+          .removePrincipal(to1e18(4300), 1000n),
       ).to.be.revertedWith(
         "InterestRateManager: Only BorrowerOperations or TroveManager may call this function.",
       )
@@ -375,7 +355,7 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   describe("StabilityPool", () => {
     it("offset(): reverts when called by an account that is not TroveManager", async () => {
       await expect(
-        contracts.stabilityPool.connect(alice.wallet).offset(100, 10),
+        contracts.stabilityPool.connect(alice.wallet).offset(100, 0, 10),
       ).to.be.revertedWith("StabilityPool: Caller is not TroveManager")
     })
 

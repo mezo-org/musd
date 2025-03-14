@@ -25,7 +25,6 @@ import {
   testUpdatesSystemInterestOwed,
   TROVE_UPDATED_ABI,
   updateContractsSnapshot,
-  updateInterestRateDataSnapshot,
   updatePCVSnapshot,
   updatePendingSnapshot,
   updateRewardSnapshot,
@@ -133,6 +132,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       verifyingContract: contractAddress,
     }
     const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+    const interestRate = await contracts.interestRateManager.interestRate()
 
     return {
       borrower,
@@ -141,6 +141,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       nonce,
       domain,
       deadline,
+      interestRate,
     }
   }
 
@@ -161,7 +162,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     minNetDebt = await contracts.borrowerOperations.minNetDebt()
     MUSD_GAS_COMPENSATION =
-      await contracts.borrowerOperations.musdGasCompensation()
+      await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
 
     // Setup PCV governance addresses
     await contracts.pcv
@@ -433,10 +434,14 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("Adds the trove's principal to the principal for its interest rate", async () => {
-      const principalBefore = (
-        await contracts.interestRateManager.interestRateData(0)
-      ).principal
+    it("Adds the trove's principal to the active pool", async () => {
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
 
       await openTrove(contracts, {
         musdAmount: "5,000",
@@ -444,13 +449,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         sender: dennis.wallet,
       })
 
-      const principalAfter = (
-        await contracts.interestRateManager.interestRateData(0)
-      ).principal
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
 
       await updateTroveSnapshot(contracts, dennis, "before")
-      expect(principalAfter - principalBefore).to.equal(
-        dennis.trove.debt.before,
+
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before + dennis.trove.debt.before,
       )
     })
 
@@ -624,7 +634,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("Reverts if net debt < minimum net debt", async () => {
         const amount =
           (await contracts.borrowerOperations.minNetDebt()) -
-          (await contracts.borrowerOperations.musdGasCompensation()) -
+          (await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()) -
           1n
         await expect(
           openTrove(contracts, {
@@ -922,7 +932,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedOpenTrove(
               bob.address,
               bob.address,
@@ -931,7 +941,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               lowerHint,
             ),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not authorized to perform this operation",
+          "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
     })
@@ -954,9 +964,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(council.wallet)
             .proposeMinNetDebt(10001n),
-        ).to.be.revertedWith(
-          "Minimum Net Debt plus Gas Compensation must be at least $250.",
-        )
+        ).to.be.revertedWith("Minimum Net Debt must be at least $50.")
       })
     })
   })
@@ -1055,128 +1063,6 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("proposeMusdGasCompensation()", () => {
-    it("sets the proposed gas compensation", async () => {
-      const newGasCompensation = to1e18(500)
-      await contracts.borrowerOperations
-        .connect(council.wallet)
-        .proposeMusdGasCompensation(newGasCompensation)
-
-      expect(
-        await contracts.borrowerOperations.proposedMusdGasCompensation(),
-      ).to.equal(newGasCompensation)
-    })
-    context("Expected Reverts", () => {
-      it("reverts if the proposed gas compensation is not high enough", async () => {
-        // Lower the min net debt under $250
-        const newMinNetDebt = to1e18(100)
-        await contracts.borrowerOperations
-          .connect(council.wallet)
-          .proposeMinNetDebt(newMinNetDebt)
-
-        // Simulate 7 days passing
-        const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-        await fastForwardTime(timeToIncrease)
-
-        await contracts.borrowerOperations
-          .connect(council.wallet)
-          .approveMinNetDebt()
-
-        await expect(
-          contracts.borrowerOperations
-            .connect(council.wallet)
-            .proposeMusdGasCompensation(10001n),
-        ).to.be.revertedWith(
-          "Minimum Net Debt plus Gas Compensation must be at least $250.",
-        )
-      })
-    })
-  })
-
-  describe("approveMusdGasCompensation()", () => {
-    it("requires two transactions to change the gas compensation and a 7 day time delay", async () => {
-      const newGasCompensation = to1e18(300)
-      await contracts.borrowerOperations
-        .connect(council.wallet)
-        .proposeMusdGasCompensation(newGasCompensation)
-
-      // Simulate 7 days passing
-      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-      await fastForwardTime(timeToIncrease)
-
-      await contracts.borrowerOperations
-        .connect(council.wallet)
-        .approveMusdGasCompensation()
-
-      expect(await contracts.borrowerOperations.musdGasCompensation()).to.equal(
-        newGasCompensation,
-      )
-    })
-
-    it("changes the amount of gas held as compensation", async () => {
-      const newGasCompensation = to1e18(100)
-      await contracts.borrowerOperations
-        .connect(council.wallet)
-        .proposeMusdGasCompensation(newGasCompensation)
-
-      // Simulate 7 days passing
-      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
-      await fastForwardTime(timeToIncrease)
-
-      await contracts.borrowerOperations
-        .connect(council.wallet)
-        .approveMusdGasCompensation()
-
-      await openTrove(contracts, {
-        musdAmount: "2000",
-        ICR: "200",
-        sender: carol.wallet,
-      })
-
-      await updateTroveSnapshot(contracts, carol, "after")
-
-      expect(carol.trove.debt.after).to.equal(to1e18("2110"))
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts if the time delay has not finished", async () => {
-        await contracts.borrowerOperations
-          .connect(council.wallet)
-          .proposeMusdGasCompensation(to1e18(300))
-
-        // Simulate 6 days passing
-        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
-        await fastForwardTime(timeToIncrease)
-
-        await expect(
-          contracts.borrowerOperations
-            .connect(council.wallet)
-            .approveMusdGasCompensation(),
-        ).to.be.revertedWith(
-          "Must wait at least 7 days before approving a change to Gas Compensation",
-        )
-      })
-
-      it("reverts if called by a non-governance address", async () => {
-        await contracts.borrowerOperations
-          .connect(council.wallet)
-          .proposeMusdGasCompensation(to1e18(300))
-
-        // Simulate 8 days passing
-        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
-        await fastForwardTime(timeToIncrease)
-
-        await expect(
-          contracts.borrowerOperations
-            .connect(alice.wallet)
-            .approveMusdGasCompensation(),
-        ).to.be.revertedWith(
-          "BorrowerOps: Only governance can call this function",
-        )
-      })
-    })
-  })
-
   describe("closeTrove", () => {
     it("no mintlist, succeeds when it would lower the TCR below CCR", async () => {
       await openTrove(contracts, {
@@ -1238,28 +1124,40 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.interestOwed.after).to.equal(0)
     })
 
-    it("removes principal and interest from system interest rate data", async () => {
+    it("removes principal and interest from the active pool", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupCarolsTrove()
 
       await fastForwardTime(60 * 60 * 24 * 365)
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
 
       await contracts.musd
         .connect(bob.wallet)
         .transfer(carol.wallet, to1e18("10,000"))
+
       await contracts.borrowerOperations.connect(carol.wallet).closeTrove()
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+      await updateTroveSnapshots(contracts, [alice, bob], "after")
 
       await updateTroveSnapshot(contracts, carol, "after")
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(0)
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(0)
+      expect(state.activePool.principal.after).to.equal(
+        alice.trove.debt.after + bob.trove.debt.after,
+      )
+      expect(state.activePool.interest.after).to.equal(0)
     })
 
     it("sets Trove's stake to zero", async () => {
@@ -1771,13 +1669,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ domainName: "TroveManager" })
       })
 
-      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+      it("reverts when the implementation is called from a non-BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedCloseTrove(bob.address, bob.address),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not authorized to perform this operation",
+          "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
     })
@@ -1892,10 +1790,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("updates the system interest owed for the interest rate of the Trove", async () => {
+    it("updates the system interest", async () => {
       await testUpdatesSystemInterestOwed(
         contracts,
         state,
+        addresses,
         carol,
         dennis,
         council,
@@ -2272,10 +2171,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("updates the system interest owed for the Trove's interest rate", async () => {
+    it("updates the system interest", async () => {
       await testUpdatesSystemInterestOwed(
         contracts,
         state,
+        addresses,
         carol,
         dennis,
         council,
@@ -2620,10 +2520,11 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("updates the system interest owed for the Trove's interest rate", async () => {
+    it("updates the system interest", async () => {
       await testUpdatesSystemInterestOwed(
         contracts,
         state,
+        addresses,
         carol,
         dennis,
         council,
@@ -3204,59 +3105,62 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("updates the system interest owed for the Trove's interest rate", async () => {
+    it("updates the system interest", async () => {
       await setInterestRate(contracts, council, 100)
       await openTrove(contracts, {
         musdAmount: "50,000",
         ICR: "1000",
         sender: carol.wallet,
       })
-      await updateInterestRateDataSnapshot(contracts, state, 100, "before")
 
       await setInterestRate(contracts, council, 200)
       await openTrove(contracts, {
         musdAmount: "50,000",
         sender: dennis.wallet,
       })
-      await updateInterestRateDataSnapshot(contracts, state, 200, "before")
+
+      await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
       const amount = to1e18("1,000")
       await contracts.borrowerOperations
         .connect(carol.wallet)
         .repayMUSD(amount, carol.wallet, carol.wallet)
-      await updateTroveSnapshot(contracts, carol, "after")
-      await updateInterestRateDataSnapshot(contracts, state, 100, "after")
-      await updateTroveSnapshot(contracts, dennis, "after")
-      await updateInterestRateDataSnapshot(contracts, state, 200, "after")
 
-      // Check that 100 bps interest rate data is updated
-      expect(
-        state.interestRateManager.interestRateData[100].interest.after,
-      ).to.equal(0n)
-      expect(
-        state.interestRateManager.interestRateData[100].principal.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[100].principal.before -
-          amount +
+      await updateTroveSnapshots(contracts, [carol, dennis], "after")
+
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+
+      const carolInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        Number(carol.trove.interestRate.before),
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+
+      // interest adjustment is the minimum of interest accrued and repayed amount
+      const interestAdjustment = carolInterest < amount ? carolInterest : amount
+
+      expect(state.activePool.interest.after).to.equal(
+        calculateInterestOwed(
+          carol.trove.debt.before,
+          Number(carol.trove.interestRate.before),
+          carol.trove.lastInterestUpdateTime.before,
+          carol.trove.lastInterestUpdateTime.after,
+        ) +
           calculateInterestOwed(
-            state.interestRateManager.interestRateData[100].principal.before,
-            100,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .before,
-            state.interestRateManager.interestRateData[100].lastUpdatedTime
-              .after,
-          ),
+            dennis.trove.debt.before,
+            Number(dennis.trove.interestRate.before),
+            dennis.trove.lastInterestUpdateTime.before,
+            carol.trove.lastInterestUpdateTime.after,
+          ) -
+          interestAdjustment,
       )
-
-      // Check that 200 bps interest rate data is unchanged
-      expect(
-        state.interestRateManager.interestRateData[200].interest.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[200].interest.before,
-      )
-      expect(
-        state.interestRateManager.interestRateData[200].interest.after,
-      ).to.equal(dennis.trove.interestOwed.after)
     })
 
     it("succeeds when it would leave trove with net debt >= minimum net debt", async () => {
@@ -3714,7 +3618,7 @@ describe("BorrowerOperations in Normal Mode", () => {
   })
 
   describe("adjustTrove()", () => {
-    it("removes principal and interest from system interest rate data when decreasing debt", async () => {
+    it("removes principal and interest from system interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await openTrove(contracts, {
         musdAmount: "10,000",
@@ -3729,7 +3633,13 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
       const debtChange = to1e18(5000)
@@ -3737,13 +3647,17 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(carol.wallet)
         .adjustTrove(0, debtChange, false, carol.wallet, carol.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
       const after = BigInt(await getLatestBlockTimestamp())
 
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(
+      expect(state.activePool.interest.after).to.equal(
         calculateInterestOwed(
           dennis.trove.debt.before,
           1000,
@@ -3761,11 +3675,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           after,
         )
 
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[1000].principal.before -
-          principalAdjustment,
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before - principalAdjustment,
       )
     })
 
@@ -3784,7 +3695,13 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
       const debtChange = to1e18(5000)
@@ -3792,13 +3709,17 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(carol.wallet)
         .adjustTrove(0, debtChange, true, carol.wallet, carol.wallet)
 
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
       const after = BigInt(await getLatestBlockTimestamp())
 
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(
+      expect(state.activePool.interest.after).to.equal(
         calculateInterestOwed(
           dennis.trove.debt.before,
           1000,
@@ -3815,12 +3736,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const fee = await contracts.troveManager.getBorrowingFee(debtChange)
 
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(
-        state.interestRateManager.interestRateData[1000].principal.before +
-          debtChange +
-          fee,
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before + debtChange + fee,
       )
     })
 
@@ -3836,6 +3753,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await testUpdatesSystemInterestOwed(
         contracts,
         state,
+        addresses,
         carol,
         dennis,
         council,
@@ -5101,22 +5019,22 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ assetAmount: to1e18(888) })
       })
 
-      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+      it("reverts when the implementation is called from a non-BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedAdjustTrove(
               bob.address,
               bob.address,
+              alice.address,
+              0,
+              to1e18(100),
+              false,
               bob.address,
-              collWithdrawal,
-              debtChange,
-              isDebtIncrease,
-              upperHint,
-              lowerHint,
+              bob.address,
             ),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not authorized to perform this operation",
+          "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
     })
@@ -5158,7 +5076,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(carol.trove.interestOwed.after).to.equal(expectedInterest)
     })
 
-    it("updates the system principal and interest owed for the new interest rate of the Trove and the previous one", async () => {
+    it("updates the system principal and interest", async () => {
       await setInterestRate(contracts, council, 1000)
       await openTrove(contracts, {
         musdAmount: "10,000",
@@ -5175,36 +5093,92 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await setInterestRate(contracts, council, 500)
 
-      await updateInterestRateDataSnapshot(contracts, state, 500, "before")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
       await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
-      await updateInterestRateDataSnapshot(contracts, state, 500, "after")
-      await updateInterestRateDataSnapshot(contracts, state, 1000, "after")
-      await updateTroveSnapshots(contracts, [carol, dennis], "after")
-      const after = BigInt(await getLatestBlockTimestamp())
-
-      expect(
-        state.interestRateManager.interestRateData[1000].interest.after,
-      ).to.equal(
-        calculateInterestOwed(
-          dennis.trove.debt.before,
-          1000,
-          dennis.trove.lastInterestUpdateTime.before,
-          after,
-        ),
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
       )
-      expect(
-        state.interestRateManager.interestRateData[1000].principal.after,
-      ).to.equal(dennis.trove.debt.before)
-      expect(
-        state.interestRateManager.interestRateData[500].interest.after,
-      ).to.equal(carol.trove.interestOwed.after)
-      expect(
-        state.interestRateManager.interestRateData[500].principal.after,
-      ).to.equal(carol.trove.debt.after)
+      await updateTroveSnapshots(contracts, [carol, dennis], "after")
+
+      const carolInterest = calculateInterestOwed(
+        carol.trove.debt.before,
+        Number(carol.trove.interestRate.before),
+        carol.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+      const carolFee = (carol.trove.debt.before + carolInterest) / 1000n
+
+      const dennisInterest = calculateInterestOwed(
+        dennis.trove.debt.before,
+        Number(dennis.trove.interestRate.before),
+        dennis.trove.lastInterestUpdateTime.before,
+        carol.trove.lastInterestUpdateTime.after,
+      )
+
+      expect(state.activePool.interest.after).to.be.closeTo(
+        carolInterest + dennisInterest,
+        2n,
+      )
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before + carolFee,
+      )
+    })
+
+    it("updates the ActivePool principal", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "before",
+        addresses,
+      )
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      await setInterestRate(contracts, council, 500)
+      await updateTroveSnapshot(contracts, carol, "before")
+      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+
+      const after = BigInt(await getLatestBlockTimestamp())
+      await updateTroveSnapshot(contracts, carol, "after")
+      await updateContractsSnapshot(
+        contracts,
+        state,
+        "activePool",
+        "after",
+        addresses,
+      )
+
+      const debt =
+        carol.trove.debt.before +
+        calculateInterestOwed(
+          carol.trove.debt.before,
+          1000,
+          carol.trove.lastInterestUpdateTime.before,
+          after,
+        )
+
+      const expectedFee = debt / 1000n
+
+      expect(state.activePool.principal.after).to.equal(
+        state.activePool.principal.before + expectedFee,
+      )
     })
 
     it("updates the ActivePool interest", async () => {
@@ -5404,7 +5378,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
-      const price = await dropPrice(contracts, deployer, carol, to1e18("110"))
+      const price = await dropPrice(contracts, deployer, carol, to1e18("111"))
 
       await contracts.borrowerOperations.connect(carol.wallet).refinance()
 
@@ -5429,12 +5403,36 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.equal(carol.musd.before)
     })
+
+    context("Expected Reverts", () => {
+      it("should revert if the fee would put the system into recovery mode", async () => {
+        await setInterestRate(contracts, council, 500)
+        await expect(
+          contracts.borrowerOperations.connect(alice.wallet).refinance(),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
+        )
+      })
+
+      it("should revert if the operation would put the user below MCR", async () => {
+        // Open a trove for Carol to prevent hitting recovery mode
+        await setupCarolsTrove()
+        await setInterestRate(contracts, council, 500)
+        await dropPrice(contracts, deployer, alice, to1e18("110"))
+        await expect(
+          contracts.borrowerOperations.connect(alice.wallet).refinance(),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
+        )
+      })
+    })
   })
 
   describe("refinanceWithSignature()", () => {
     const types = {
       Refinance: [
         { name: "borrower", type: "address" },
+        { name: "interestRate", type: "uint16" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" },
       ],
@@ -5443,7 +5441,11 @@ describe("BorrowerOperations in Normal Mode", () => {
     it("changes the trove's interest rate to the current interest rate with a valid signature", async () => {
       const newRate = 1000
       await setInterestRate(contracts, council, newRate)
-      const { borrower, domain, nonce } = await setupSignatureTests(bob)
+      const { borrower, interestRate, domain, nonce } =
+        await setupSignatureTests(bob)
+
+      // Open a trove with high ICR to prevent recovery mode
+      await setupCarolsTrove()
 
       // account for governance delay in setting interest rate
       const timeToNewRate = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -5451,6 +5453,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const value = {
         borrower,
+        interestRate,
         nonce,
         deadline,
       }
@@ -5465,11 +5468,15 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
 
     it("correctly increments the nonce after a successful transaction", async () => {
-      const { borrower, domain, deadline, nonce } =
+      const { borrower, interestRate, domain, deadline, nonce } =
         await setupSignatureTests(bob)
+
+      // Open a trove with high ICR to prevent recovery mode
+      await setupCarolsTrove()
 
       const value = {
         borrower,
+        interestRate,
         nonce,
         deadline,
       }
@@ -5489,10 +5496,12 @@ describe("BorrowerOperations in Normal Mode", () => {
         overrides: object,
         message: string = "BorrowerOperationsSignatures: Invalid signature",
       ) => {
-        const { borrower, nonce, deadline } = await setupSignatureTests(bob)
+        const { borrower, interestRate, nonce, deadline } =
+          await setupSignatureTests(bob)
 
         const data = {
           borrower,
+          interestRate,
           nonce,
           deadline,
           signer: bob.wallet,
@@ -5507,6 +5516,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
         const value = {
           borrower: data.borrower,
+          interestRate: overriddenData.interestRate,
           nonce: overriddenData.nonce,
           deadline: data.deadline,
         }
@@ -5537,6 +5547,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       it("reverts when the recovered address does not match the borrower's address", async () => {
         await testRevert({ signer: alice.wallet })
+      })
+
+      it("reverts when the interest rate is different than the signed value", async () => {
+        await testRevert({ interestRate: 200 })
       })
 
       it("reverts when the deadline has passed", async () => {
