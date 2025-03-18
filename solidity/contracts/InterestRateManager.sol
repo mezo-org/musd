@@ -191,13 +191,8 @@ contract InterestRateManager is
         onlyTroveManager
         returns (uint256 principalAdjustment, uint256 interestAdjustment)
     {
-        if (_payment >= _interestOwed) {
-            principalAdjustment = _payment - _interestOwed;
-            interestAdjustment = _interestOwed;
-        } else {
-            principalAdjustment = 0;
-            interestAdjustment = _payment;
-        }
+        (principalAdjustment, interestAdjustment) = InterestRateMath
+            .calculateDebtAdjustment(_interestOwed, _payment);
 
         removePrincipal(principalAdjustment, _rate);
     }
