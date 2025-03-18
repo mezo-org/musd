@@ -560,6 +560,32 @@ describe("MUSD", () => {
       ).to.equal(true)
     })
 
+    it("puts multiple accounts to pending list", async () => {
+      await contracts.musd
+        .connect(deployer.wallet)
+        .startRevokeMintList([
+          addresses.borrowerOperations,
+          addresses.interestRateManager,
+        ])
+
+      const timeNow = await getLatestBlockTimestamp()
+      expect(await contracts.musd.pendingRevokedMintAddresses(0)).to.be.equal(
+        addresses.borrowerOperations,
+      )
+      expect(await contracts.musd.pendingRevokedMintAddresses(1)).to.be.equal(
+        addresses.interestRateManager,
+      )
+      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(
+        timeNow,
+      )
+      expect(
+        await contracts.musd.mintList(addresses.borrowerOperations),
+      ).to.equal(true)
+      expect(
+        await contracts.musd.mintList(addresses.interestRateManager),
+      ).to.equal(true)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when caller is not owner", async () => {
         await expect(
@@ -634,6 +660,29 @@ describe("MUSD", () => {
       ).to.equal(false)
     })
 
+    it("removes multiple accounts from minting list", async () => {
+      await contracts.musd
+        .connect(deployer.wallet)
+        .startRevokeMintList([
+          addresses.borrowerOperations,
+          addresses.interestRateManager,
+        ])
+      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
+
+      await contracts.musd.connect(deployer.wallet).finalizeRevokeMintList()
+
+      expect(
+        await contracts.musd.getPendingRevokedMintAddressesLength(),
+      ).to.be.equal(0)
+      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(0)
+      expect(
+        await contracts.musd.mintList(addresses.borrowerOperations),
+      ).to.equal(false)
+      expect(
+        await contracts.musd.mintList(addresses.interestRateManager),
+      ).to.equal(false)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when caller is not owner", async () => {
         await expect(
@@ -673,6 +722,23 @@ describe("MUSD", () => {
       )
       expect(await contracts.musd.addMintListInitiated()).to.be.equal(timeNow)
       expect(await contracts.musd.mintList(alice.wallet)).to.equal(false)
+    })
+
+    it("puts multiple accounts to the pending list", async () => {
+      await contracts.musd
+        .connect(deployer.wallet)
+        .startAddMintList([alice.wallet, bob.wallet])
+
+      const timeNow = await getLatestBlockTimestamp()
+      expect(await contracts.musd.pendingAddedMintAddresses(0)).to.be.equal(
+        alice.wallet,
+      )
+      expect(await contracts.musd.pendingAddedMintAddresses(1)).to.be.equal(
+        bob.wallet,
+      )
+      expect(await contracts.musd.addMintListInitiated()).to.be.equal(timeNow)
+      expect(await contracts.musd.mintList(alice.wallet)).to.equal(false)
+      expect(await contracts.musd.mintList(bob.wallet)).to.equal(false)
     })
 
     context("Expected Reverts", () => {
@@ -734,6 +800,22 @@ describe("MUSD", () => {
       expect(await contracts.musd.mintList(alice.wallet)).to.equal(true)
     })
 
+    it("adds multiple accounts to the minting list", async () => {
+      await contracts.musd
+        .connect(deployer.wallet)
+        .startAddMintList([alice.wallet, bob.wallet])
+      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
+
+      await contracts.musd.connect(deployer.wallet).finalizeAddMintList()
+
+      expect(
+        await contracts.musd.getPendingAddedMintAddressesLength(),
+      ).to.equal(0)
+      expect(await contracts.musd.addMintListInitiated()).to.be.equal(0)
+      expect(await contracts.musd.mintList(alice.wallet)).to.equal(true)
+      expect(await contracts.musd.mintList(bob.wallet)).to.equal(true)
+    })
+
     context("Expected Reverts", () => {
       it("reverts when caller is not owner", async () => {
         await expect(
@@ -778,6 +860,33 @@ describe("MUSD", () => {
       expect(
         await contracts.musd.burnList(addresses.borrowerOperations),
       ).to.equal(true)
+    })
+
+    it("puts multiple accounts to the pending list", async () => {
+      await contracts.musd
+        .connect(deployer.wallet)
+        .startRevokeBurnList([
+          addresses.borrowerOperations,
+          addresses.stabilityPool,
+        ])
+
+      const timeNow = await getLatestBlockTimestamp()
+      expect(await contracts.musd.pendingRevokedBurnAddresses(0)).to.be.equal(
+        addresses.borrowerOperations,
+      )
+      expect(await contracts.musd.pendingRevokedBurnAddresses(1)).to.be.equal(
+        addresses.stabilityPool,
+      )
+      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(
+        timeNow,
+      )
+
+      expect(
+        await contracts.musd.burnList(addresses.borrowerOperations),
+      ).to.equal(true)
+      expect(await contracts.musd.burnList(addresses.stabilityPool)).to.equal(
+        true,
+      )
     })
 
     context("Expected Reverts", () => {
@@ -838,7 +947,7 @@ describe("MUSD", () => {
   })
 
   describe("finalizeRevokeBurnList()", () => {
-    it("removes account from minting list", async () => {
+    it("removes account from the burn list", async () => {
       await contracts.musd
         .connect(deployer.wallet)
         .startRevokeBurnList([addresses.borrowerOperations])
@@ -854,6 +963,30 @@ describe("MUSD", () => {
       expect(
         await contracts.musd.burnList(addresses.borrowerOperations),
       ).to.equal(false)
+    })
+
+    it("removes multiple accounts from the burn list", async () => {
+      await contracts.musd
+        .connect(deployer.wallet)
+        .startRevokeBurnList([
+          addresses.borrowerOperations,
+          addresses.stabilityPool,
+        ])
+      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
+
+      await contracts.musd.connect(deployer.wallet).finalizeRevokeBurnList()
+
+      expect(
+        await contracts.musd.getPendingRevokedBurnAddressesLength(),
+      ).to.equal(0)
+      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(0)
+
+      expect(
+        await contracts.musd.burnList(addresses.borrowerOperations),
+      ).to.equal(false)
+      expect(await contracts.musd.burnList(addresses.stabilityPool)).to.equal(
+        false,
+      )
     })
 
     context("Expected Reverts", () => {

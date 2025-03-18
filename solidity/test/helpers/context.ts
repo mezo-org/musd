@@ -220,6 +220,7 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     defaultPool: await contracts.defaultPool.getAddress(),
     gasPool: await contracts.gasPool.getAddress(),
     hintHelpers: await contracts.hintHelpers.getAddress(),
+    interestRateManager: await contracts.interestRateManager.getAddress(),
     mockAggregator: await contracts.mockAggregator.getAddress(),
     mockERC20: await contracts.mockERC20.getAddress(),
     musd: await contracts.musd.getAddress(),

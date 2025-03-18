@@ -28,6 +28,7 @@ export interface TestingAddresses {
   defaultPool: string
   gasPool: string
   hintHelpers: string
+  interestRateManager: string
   mockAggregator: string
   mockERC20: string
   musd: string
