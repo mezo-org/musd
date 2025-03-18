@@ -42,20 +42,15 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
     function latestRoundData()
         external
         view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        )
+        returns (uint80, int256, uint256, uint256, uint80)
     {
         require(precision <= 77, "Decimals too large"); // Prevent overflow
-        updatedAt = blockTime;
+        uint256 updatedAt = blockTime;
         if (updatedAt == 0) {
             updatedAt = block.timestamp;
         }
-        answer = int256(_price);
+        int256 answer = int256(_price);
+        return (0, answer, updatedAt, updatedAt, 0);
     }
 
     function decimals() public view returns (uint8) {
