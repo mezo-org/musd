@@ -3,6 +3,7 @@
 pragma solidity ^0.8.24;
 
 import "./BaseMath.sol";
+import "./InterestRateMath.sol";
 import "./LiquityMath.sol";
 import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPool.sol";
@@ -68,8 +69,21 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     {
         uint256 activeDebt = activePool.getDebt();
         uint256 closedDebt = defaultPool.getDebt();
+        uint256 accruedInterest = interestRateManager.getAccruedInterest();
 
-        return activeDebt + closedDebt;
+        uint256 accruedDefaultPoolInterest = InterestRateMath
+            .calculateInterestOwed(
+                defaultPool.getPrincipal(),
+                interestRateManager.interestRate(),
+                defaultPool.getLastInterestUpdatedTime(),
+                block.timestamp
+            );
+
+        return
+            activeDebt +
+            closedDebt +
+            accruedInterest +
+            accruedDefaultPoolInterest;
     }
 
     function _getTCR(

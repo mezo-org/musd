@@ -210,6 +210,15 @@ contract InterestRateManager is
         emit InterestNumeratorChanged(interestNumerator);
     }
 
+    function getAccruedInterest() public view returns (uint256) {
+        return
+            InterestRateMath.calculateAggregatedInterestOwed(
+                interestNumerator,
+                lastUpdatedTime,
+                block.timestamp
+            );
+    }
+
     function calculateDebtAdjustment(
         uint256 _interestOwed,
         uint256 _payment
