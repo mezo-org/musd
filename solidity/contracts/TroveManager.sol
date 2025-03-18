@@ -420,12 +420,6 @@ contract TroveManager is
         // Calculate the collateral fee
         totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
 
-        // Send the collateral fee to the PCV contract
-        contractsCache.activePool.sendCollateral(
-            address(contractsCache.pcv),
-            totals.collateralFee
-        );
-
         totals.collateralToSendToRedeemer =
             totals.totalCollateralDrawn -
             totals.collateralFee;
@@ -442,6 +436,13 @@ contract TroveManager is
             msg.sender,
             totals.totalPrincipalToRedeem + totals.totalInterestToRedeem
         );
+
+        // Send the collateral fee to the PCV contract
+        contractsCache.activePool.sendCollateral(
+            address(contractsCache.pcv),
+            totals.collateralFee
+        );
+
         // Update Active Pool mUSD, and send collateral to account
         contractsCache.activePool.decreaseDebt(
             totals.totalPrincipalToRedeem,
