@@ -6,6 +6,7 @@ import "./BaseMath.sol";
 import "./LiquityMath.sol";
 import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPool.sol";
+import "../interfaces/IInterestRateManager.sol";
 import "../interfaces/IPriceFeed.sol";
 import "../interfaces/ILiquityBase.sol";
 
@@ -35,6 +36,9 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
 
     // slither-disable-next-line all
     IDefaultPool public defaultPool;
+
+    // slither-disable-next-line all
+    IInterestRateManager public interestRateManager;
 
     // slither-disable-next-line all
     IPriceFeed public override priceFeed;

@@ -165,8 +165,6 @@ contract TroveManager is
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTroves public sortedTroves;
 
-    IInterestRateManager public interestRateManager;
-
     // --- Data structures ---
 
     uint256 public constant REDEMPTION_FEE_FLOOR =
