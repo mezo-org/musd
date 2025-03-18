@@ -918,7 +918,7 @@ contract BorrowerOperations is
         );
 
         // Burn the repaid mUSD from the user's balance
-        musdTokenCached.burn(_borrower, debt - MUSD_GAS_COMPENSATION);
+        musdTokenCached.burn(_caller, debt - MUSD_GAS_COMPENSATION);
 
         // Burn the gas compensation from the gas pool
         _repayMUSD(
