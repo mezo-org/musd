@@ -1673,7 +1673,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(bob.wallet)
-            .restrictedCloseTrove(bob.address, bob.address),
+            .restrictedCloseTrove(bob.address, bob.address, bob.address),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )

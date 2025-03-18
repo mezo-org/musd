@@ -231,6 +231,7 @@ contract BorrowerOperationsSignatures is
 
         borrowerOperations.restrictedCloseTrove(
             closeTroveData.borrower,
+            msg.sender,
             closeTroveData.recipient
         );
     }

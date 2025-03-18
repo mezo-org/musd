@@ -235,7 +235,7 @@ contract BorrowerOperations is
     }
 
     function closeTrove() external override {
-        _closeTrove(msg.sender, msg.sender);
+        _closeTrove(msg.sender, msg.sender, msg.sender);
     }
 
     function refinance() external override {
@@ -393,10 +393,11 @@ contract BorrowerOperations is
 
     function restrictedCloseTrove(
         address _borrower,
+        address _caller,
         address _recipient
     ) external {
         _requireCallerIsBorrowerOperationsSignatures();
-        _closeTrove(_borrower, _recipient);
+        _closeTrove(_borrower, _caller, _recipient);
     }
 
     function restrictedRefinance(address _borrower) external {
@@ -859,7 +860,11 @@ contract BorrowerOperations is
         );
     }
 
-    function _closeTrove(address _borrower, address _recipient) internal {
+    function _closeTrove(
+        address _borrower,
+        address _caller,
+        address _recipient
+    ) internal {
         ITroveManager troveManagerCached = troveManager;
         troveManagerCached.updateSystemAndTroveInterest(_borrower);
 
