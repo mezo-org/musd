@@ -915,7 +915,6 @@ contract TroveManager is
                 uint256 accruedInterestPerUnitStaked
             ) = calculateLInterestIncrease();
 
-            // slither-disable-start divide-before-multiply
             uint256 interestNumerator = accruedInterest *
                 DECIMAL_PRECISION +
                 lastInterestError_Redistribution;
@@ -1497,12 +1496,14 @@ contract TroveManager is
             return (0, 0);
         }
         // solhint-disable not-rely-on-time
+        // slither-disable-start calls-loop
         accruedInterest = InterestRateMath.calculateInterestOwed(
             defaultPool.getPrincipal(),
             interestRateManager.interestRate(),
             defaultPool.getLastInterestUpdatedTime(),
             block.timestamp
         );
+        // slither-disable-end calls-loop
         // solhint-enable not-rely-on-time
 
         // slither-disable-start divide-before-multiply
