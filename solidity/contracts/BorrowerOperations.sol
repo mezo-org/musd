@@ -140,13 +140,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedOpenTrove(
-            msg.sender,
-            msg.sender,
-            _debtAmount,
-            _upperHint,
-            _lowerHint
-        );
+        _openTrove(msg.sender, msg.sender, _debtAmount, _upperHint, _lowerHint);
     }
 
     // Send collateral to a trove
@@ -154,7 +148,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedAdjustTrove(
+        _adjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -173,7 +167,7 @@ contract BorrowerOperations is
         address _lowerHint
     ) external payable override {
         _requireCallerIsStabilityPool();
-        restrictedAdjustTrove(
+        _adjustTrove(
             _borrower,
             _borrower,
             _borrower,
@@ -191,7 +185,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        restrictedAdjustTrove(
+        _adjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -209,7 +203,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        restrictedAdjustTrove(
+        _adjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -227,7 +221,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external override {
-        restrictedAdjustTrove(
+        _adjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -240,11 +234,11 @@ contract BorrowerOperations is
     }
 
     function closeTrove() external override {
-        restrictedCloseTrove(msg.sender, msg.sender);
+        _closeTrove(msg.sender, msg.sender);
     }
 
     function refinance() external override {
-        restrictedRefinance(msg.sender);
+        _refinance(msg.sender);
     }
 
     /*
@@ -261,7 +255,7 @@ contract BorrowerOperations is
         address _upperHint,
         address _lowerHint
     ) external payable override {
-        restrictedAdjustTrove(
+        _adjustTrove(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -275,7 +269,7 @@ contract BorrowerOperations is
 
     // Claim remaining collateral from a redemption or from a liquidation with ICR > MCR in Recovery Mode
     function claimCollateral() external override {
-        restrictedClaimCollateral(msg.sender, msg.sender);
+        _claimCollateral(msg.sender, msg.sender);
     }
 
     function setAddresses(
@@ -349,6 +343,7 @@ contract BorrowerOperations is
             "BorrowerOps: Refinancing fee percentage must be <= 100"
         );
         refinancingFeePercentage = _refinanceFeePercentage;
+        emit RefinancingFeePercentageChanged(_refinanceFeePercentage);
     }
 
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
@@ -379,12 +374,9 @@ contract BorrowerOperations is
     function restrictedClaimCollateral(
         address _borrower,
         address _recipient
-    ) public {
-        _requireCallerIsAuthorized(_borrower);
-        troveManager.updateSystemInterest();
-
-        // send collateral from CollSurplus Pool to owner
-        collSurplusPool.claimColl(_borrower, _recipient);
+    ) external {
+        _requireCallerIsBorrowerOperationsSignatures();
+        _claimCollateral(_borrower, _recipient);
     }
 
     function restrictedOpenTrove(
@@ -393,8 +385,154 @@ contract BorrowerOperations is
         uint256 _debtAmount,
         address _upperHint,
         address _lowerHint
-    ) public payable {
-        _requireCallerIsAuthorized(_borrower);
+    ) external payable {
+        _requireCallerIsBorrowerOperationsSignatures();
+        _openTrove(_borrower, _recipient, _debtAmount, _upperHint, _lowerHint);
+    }
+
+    function restrictedCloseTrove(
+        address _borrower,
+        address _recipient
+    ) external {
+        _requireCallerIsBorrowerOperationsSignatures();
+        _closeTrove(_borrower, _recipient);
+    }
+
+    function restrictedRefinance(address _borrower) external {
+        _requireCallerIsBorrowerOperationsSignatures();
+        _refinance(_borrower);
+    }
+
+    function restrictedAdjustTrove(
+        address _borrower,
+        address _recipient,
+        address _caller,
+        uint256 _collWithdrawal,
+        uint256 _mUSDChange,
+        bool _isDebtIncrease,
+        address _upperHint,
+        address _lowerHint
+    ) external payable {
+        _requireCallerIsBorrowerOperationsSignatures();
+        _adjustTrove(
+            _borrower,
+            _recipient,
+            _caller,
+            _collWithdrawal,
+            _mUSDChange,
+            _isDebtIncrease,
+            _upperHint,
+            _lowerHint
+        );
+    }
+
+    // Burn the specified amount of MUSD from _account and decreases the total active debt
+    function _repayMUSD(
+        IActivePool _activePool,
+        IMUSD _musd,
+        address _account,
+        uint256 _principal,
+        uint256 _interest
+    ) internal {
+        _activePool.decreaseDebt(_principal, _interest);
+        _musd.burn(_account, _principal + _interest);
+    }
+
+    function _moveTokensAndCollateralfromAdjustment(
+        IActivePool _activePool,
+        IMUSD _musd,
+        address _caller,
+        address _recipient,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _principalChange,
+        uint256 _interestChange,
+        bool _isDebtIncrease,
+        uint256 _netDebtChange
+    ) internal {
+        if (_isDebtIncrease) {
+            _withdrawMUSD(
+                _activePool,
+                _musd,
+                _recipient,
+                _principalChange,
+                _netDebtChange
+            );
+        } else {
+            _repayMUSD(
+                _activePool,
+                _musd,
+                _caller,
+                _principalChange,
+                _interestChange
+            );
+        }
+
+        if (_isCollIncrease) {
+            _activePoolAddColl(_activePool, _collChange);
+        } else {
+            _activePool.sendCollateral(_recipient, _collChange);
+        }
+    }
+
+    // Send collateral to Active Pool and increase its recorded collateral balance
+    function _activePoolAddColl(
+        IActivePool _activePool,
+        uint256 _amount
+    ) internal {
+        _sendCollateral(address(_activePool), _amount);
+    }
+
+    // Update trove's coll and debt based on whether they increase or decrease
+    function _updateTroveFromAdjustment(
+        ITroveManager _troveManager,
+        address _borrower,
+        uint256 _collChange,
+        bool _isCollIncrease,
+        uint256 _debtChange,
+        bool _isDebtIncrease
+    )
+        internal
+        returns (uint256 newColl, uint256 newPrincipal, uint256 newInterest)
+    {
+        newColl = (_isCollIncrease)
+            ? _troveManager.increaseTroveColl(_borrower, _collChange)
+            : _troveManager.decreaseTroveColl(_borrower, _collChange);
+
+        if (_isDebtIncrease) {
+            newPrincipal = _troveManager.increaseTroveDebt(
+                _borrower,
+                _debtChange
+            );
+        } else {
+            (newPrincipal, newInterest) = _troveManager.decreaseTroveDebt(
+                _borrower,
+                _debtChange
+            );
+        }
+    }
+
+    // --- Helper functions ---
+
+    function _triggerBorrowingFee(
+        ITroveManager _troveManager,
+        IMUSD _musd,
+        uint256 _amount
+    ) internal returns (uint) {
+        uint256 fee = _troveManager.getBorrowingFee(_amount);
+
+        // Send fee to PCV contract
+        _musd.mint(pcvAddress, fee);
+        return fee;
+    }
+
+    function _openTrove(
+        address _borrower,
+        address _recipient,
+        uint256 _debtAmount,
+        address _upperHint,
+        address _lowerHint
+    ) internal {
         ContractsCache memory contractsCache = ContractsCache(
             troveManager,
             activePool,
@@ -534,130 +672,7 @@ contract BorrowerOperations is
         // slither-disable-end reentrancy-events
     }
 
-    function restrictedCloseTrove(
-        address _borrower,
-        address _recipient
-    ) public {
-        _requireCallerIsAuthorized(_borrower);
-        ITroveManager troveManagerCached = troveManager;
-        troveManagerCached.updateSystemAndTroveInterest(_borrower);
-
-        IActivePool activePoolCached = activePool;
-        IMUSD musdTokenCached = musd;
-        bool canMint = musdTokenCached.mintList(address(this));
-
-        _requireTroveisActive(troveManagerCached, _borrower);
-        uint256 price = priceFeed.fetchPrice();
-        if (canMint) {
-            _requireNotInRecoveryMode(price);
-        }
-
-        troveManagerCached.applyPendingRewards(_borrower);
-
-        uint256 coll = troveManagerCached.getTroveColl(_borrower);
-        uint256 debt = troveManagerCached.getTroveDebt(_borrower);
-        uint256 interestOwed = troveManagerCached.getTroveInterestOwed(
-            _borrower
-        );
-
-        _requireSufficientMUSDBalance(_borrower, debt - MUSD_GAS_COMPENSATION);
-        if (canMint) {
-            uint256 newTCR = _getNewTCRFromTroveChange(
-                coll,
-                false,
-                debt,
-                false,
-                price
-            );
-            _requireNewTCRisAboveCCR(newTCR);
-        }
-
-        troveManagerCached.removeStake(_borrower);
-        troveManagerCached.closeTrove(_borrower);
-
-        // slither-disable-next-line reentrancy-events
-        emit TroveUpdated(
-            _borrower,
-            0,
-            0,
-            0,
-            0,
-            uint8(BorrowerOperation.closeTrove)
-        );
-
-        // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
-        activePoolCached.decreaseDebt(
-            debt - MUSD_GAS_COMPENSATION - interestOwed,
-            interestOwed
-        );
-
-        // Burn the repaid mUSD from the user's balance
-        musdTokenCached.burn(_borrower, debt - MUSD_GAS_COMPENSATION);
-
-        // Burn the gas compensation from the gas pool
-        _repayMUSD(
-            activePoolCached,
-            musdTokenCached,
-            gasPoolAddress,
-            MUSD_GAS_COMPENSATION,
-            0
-        );
-
-        // Send the collateral back to the user
-        activePoolCached.sendCollateral(_recipient, coll);
-    }
-
-    function restrictedRefinance(address _borrower) public {
-        _requireCallerIsAuthorized(_borrower);
-        uint256 price = priceFeed.fetchPrice();
-        ITroveManager troveManagerCached = troveManager;
-        troveManagerCached.updateSystemAndTroveInterest(_borrower);
-
-        _requireNotInRecoveryMode(price);
-        _requireTroveisActive(troveManagerCached, _borrower);
-
-        IInterestRateManager interestRateManagerCached = interestRateManager;
-
-        uint16 oldRate = troveManagerCached.getTroveInterestRate(_borrower);
-        uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
-        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(troveManagerCached, musd, amount);
-        // slither-disable-next-line unused-return
-        troveManagerCached.increaseTroveDebt(_borrower, fee);
-        activePool.increaseDebt(fee, 0);
-        uint256 newICR = LiquityMath._computeCR(
-            troveManagerCached.getTroveColl(_borrower),
-            troveManagerCached.getTroveDebt(_borrower),
-            price
-        );
-        _requireICRisAboveMCR(newICR);
-        _requireNewTCRisAboveCCR(troveManagerCached.getTCR(price));
-
-        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
-
-        interestRateManagerCached.removePrincipal(oldPrincipal, oldRate);
-        uint16 newRate = interestRateManagerCached.interestRate();
-        interestRateManagerCached.addPrincipal(oldPrincipal, newRate);
-
-        troveManagerCached.setTroveInterestRate(
-            _borrower,
-            interestRateManagerCached.interestRate()
-        );
-
-        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
-            troveManagerCached.getTroveColl(_borrower),
-            price
-        );
-        troveManagerCached.setTroveMaxBorrowingCapacity(
-            _borrower,
-            maxBorrowingCapacity
-        );
-
-        // slither-disable-next-line reentrancy-events
-        emit RefinancingFeePaid(_borrower, fee);
-    }
-
-    function restrictedAdjustTrove(
+    function _adjustTrove(
         address _borrower,
         address _recipient,
         address _caller,
@@ -666,8 +681,7 @@ contract BorrowerOperations is
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint
-    ) public payable {
-        _requireCallerIsAuthorized(_borrower);
+    ) internal {
         ContractsCache memory contractsCache = ContractsCache(
             troveManager,
             activePool,
@@ -844,6 +858,124 @@ contract BorrowerOperations is
         );
     }
 
+    function _closeTrove(address _borrower, address _recipient) internal {
+        ITroveManager troveManagerCached = troveManager;
+        troveManagerCached.updateSystemAndTroveInterest(_borrower);
+
+        IActivePool activePoolCached = activePool;
+        IMUSD musdTokenCached = musd;
+        bool canMint = musdTokenCached.mintList(address(this));
+
+        _requireTroveisActive(troveManagerCached, _borrower);
+        uint256 price = priceFeed.fetchPrice();
+        if (canMint) {
+            _requireNotInRecoveryMode(price);
+        }
+
+        troveManagerCached.applyPendingRewards(_borrower);
+
+        uint256 coll = troveManagerCached.getTroveColl(_borrower);
+        uint256 debt = troveManagerCached.getTroveDebt(_borrower);
+        uint256 interestOwed = troveManagerCached.getTroveInterestOwed(
+            _borrower
+        );
+
+        _requireSufficientMUSDBalance(_borrower, debt - MUSD_GAS_COMPENSATION);
+        if (canMint) {
+            uint256 newTCR = _getNewTCRFromTroveChange(
+                coll,
+                false,
+                debt,
+                false,
+                price
+            );
+            _requireNewTCRisAboveCCR(newTCR);
+        }
+
+        troveManagerCached.removeStake(_borrower);
+        troveManagerCached.closeTrove(_borrower);
+
+        // slither-disable-next-line reentrancy-events
+        emit TroveUpdated(
+            _borrower,
+            0,
+            0,
+            0,
+            0,
+            uint8(BorrowerOperation.closeTrove)
+        );
+
+        // Decrease the active pool debt by the principal (subtracting interestOwed from the total debt)
+        activePoolCached.decreaseDebt(
+            debt - MUSD_GAS_COMPENSATION - interestOwed,
+            interestOwed
+        );
+
+        // Burn the repaid mUSD from the user's balance
+        musdTokenCached.burn(_borrower, debt - MUSD_GAS_COMPENSATION);
+
+        // Burn the gas compensation from the gas pool
+        _repayMUSD(
+            activePoolCached,
+            musdTokenCached,
+            gasPoolAddress,
+            MUSD_GAS_COMPENSATION,
+            0
+        );
+
+        // Send the collateral back to the user
+        activePoolCached.sendCollateral(_recipient, coll);
+    }
+
+    function _refinance(address _borrower) internal {
+        uint256 price = priceFeed.fetchPrice();
+        ITroveManager troveManagerCached = troveManager;
+        troveManagerCached.updateSystemAndTroveInterest(_borrower);
+
+        _requireNotInRecoveryMode(price);
+        _requireTroveisActive(troveManagerCached, _borrower);
+
+        IInterestRateManager interestRateManagerCached = interestRateManager;
+
+        uint16 oldRate = troveManagerCached.getTroveInterestRate(_borrower);
+        uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
+        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
+        uint256 fee = _triggerBorrowingFee(troveManagerCached, musd, amount);
+        // slither-disable-next-line unused-return
+        troveManagerCached.increaseTroveDebt(_borrower, fee);
+        activePool.increaseDebt(fee, 0);
+        uint256 newICR = LiquityMath._computeCR(
+            troveManagerCached.getTroveColl(_borrower),
+            troveManagerCached.getTroveDebt(_borrower),
+            price
+        );
+        _requireICRisAboveMCR(newICR);
+        _requireNewTCRisAboveCCR(troveManagerCached.getTCR(price));
+
+        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
+
+        interestRateManagerCached.removePrincipal(oldPrincipal, oldRate);
+        uint16 newRate = interestRateManagerCached.interestRate();
+        interestRateManagerCached.addPrincipal(oldPrincipal, newRate);
+
+        troveManagerCached.setTroveInterestRate(
+            _borrower,
+            interestRateManagerCached.interestRate()
+        );
+
+        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            troveManagerCached.getTroveColl(_borrower),
+            price
+        );
+        troveManagerCached.setTroveMaxBorrowingCapacity(
+            _borrower,
+            maxBorrowingCapacity
+        );
+
+        // slither-disable-next-line reentrancy-events
+        emit RefinancingFeePaid(_borrower, fee);
+    }
+
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
     function _withdrawMUSD(
         IActivePool _activePool,
@@ -856,112 +988,17 @@ contract BorrowerOperations is
         _musd.mint(_account, _debtAmount);
     }
 
-    // Burn the specified amount of MUSD from _account and decreases the total active debt
-    function _repayMUSD(
-        IActivePool _activePool,
-        IMUSD _musd,
-        address _account,
-        uint256 _principal,
-        uint256 _interest
-    ) internal {
-        _activePool.decreaseDebt(_principal, _interest);
-        _musd.burn(_account, _principal + _interest);
+    function _claimCollateral(address _borrower, address _recipient) internal {
+        troveManager.updateSystemInterest();
+
+        // send collateral from CollSurplus Pool to owner
+        collSurplusPool.claimColl(_borrower, _recipient);
     }
 
-    function _moveTokensAndCollateralfromAdjustment(
-        IActivePool _activePool,
-        IMUSD _musd,
-        address _caller,
-        address _recipient,
-        uint256 _collChange,
-        bool _isCollIncrease,
-        uint256 _principalChange,
-        uint256 _interestChange,
-        bool _isDebtIncrease,
-        uint256 _netDebtChange
-    ) internal {
-        if (_isDebtIncrease) {
-            _withdrawMUSD(
-                _activePool,
-                _musd,
-                _recipient,
-                _principalChange,
-                _netDebtChange
-            );
-        } else {
-            _repayMUSD(
-                _activePool,
-                _musd,
-                _caller,
-                _principalChange,
-                _interestChange
-            );
-        }
-
-        if (_isCollIncrease) {
-            _activePoolAddColl(_activePool, _collChange);
-        } else {
-            _activePool.sendCollateral(_recipient, _collChange);
-        }
-    }
-
-    // Send collateral to Active Pool and increase its recorded collateral balance
-    function _activePoolAddColl(
-        IActivePool _activePool,
-        uint256 _amount
-    ) internal {
-        _sendCollateral(address(_activePool), _amount);
-    }
-
-    // Update trove's coll and debt based on whether they increase or decrease
-    function _updateTroveFromAdjustment(
-        ITroveManager _troveManager,
-        address _borrower,
-        uint256 _collChange,
-        bool _isCollIncrease,
-        uint256 _debtChange,
-        bool _isDebtIncrease
-    )
-        internal
-        returns (uint256 newColl, uint256 newPrincipal, uint256 newInterest)
-    {
-        newColl = (_isCollIncrease)
-            ? _troveManager.increaseTroveColl(_borrower, _collChange)
-            : _troveManager.decreaseTroveColl(_borrower, _collChange);
-
-        if (_isDebtIncrease) {
-            newPrincipal = _troveManager.increaseTroveDebt(
-                _borrower,
-                _debtChange
-            );
-        } else {
-            (newPrincipal, newInterest) = _troveManager.decreaseTroveDebt(
-                _borrower,
-                _debtChange
-            );
-        }
-    }
-
-    // --- Helper functions ---
-
-    function _triggerBorrowingFee(
-        ITroveManager _troveManager,
-        IMUSD _musd,
-        uint256 _amount
-    ) internal returns (uint) {
-        uint256 fee = _troveManager.getBorrowingFee(_amount);
-
-        // Send fee to PCV contract
-        _musd.mint(pcvAddress, fee);
-        return fee;
-    }
-
-    function _requireCallerIsAuthorized(address _borrower) internal view {
+    function _requireCallerIsBorrowerOperationsSignatures() internal view {
         require(
-            msg.sender == borrowerOperationsSignaturesAddress ||
-                msg.sender == _borrower ||
-                msg.sender == stabilityPoolAddress,
-            "BorrowerOps: Caller is not authorized to perform this operation"
+            msg.sender == borrowerOperationsSignaturesAddress,
+            "BorrowerOps: Caller is not BorrowerOperationsSignatures"
         );
     }
 

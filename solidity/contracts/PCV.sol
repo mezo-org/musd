@@ -76,46 +76,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     receive() external payable {}
 
-    function payDebt(
-        uint256 _musdToBurn
-    ) external override onlyOwnerOrCouncilOrTreasury {
-        require(
-            debtToPay > 0 || feeRecipient != address(0),
-            "PCV: debt has already paid"
-        );
-        require(
-            _musdToBurn <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-
-        // if the debt has already been paid, the feeRecipient should receive all fees
-        if (debtToPay == 0) {
-            feeSplitPercentage = 100;
-        }
-
-        uint256 feeToRecipient = (_musdToBurn * feeSplitPercentage) / 100;
-        uint256 feeToDebt = _musdToBurn - feeToRecipient;
-
-        if (feeToDebt > debtToPay) {
-            feeToRecipient += feeToDebt - debtToPay;
-            feeToDebt = debtToPay;
-        }
-
-        debtToPay -= feeToDebt;
-
-        if (feeRecipient != address(0) && feeSplitPercentage > 0) {
-            require(
-                musd.transfer(feeRecipient, feeToRecipient),
-                "PCV: sending mUSD failed"
-            );
-        }
-        borrowerOperations.burnDebtFromPCV(feeToDebt);
-
-        // slither-disable-next-line reentrancy-events
-        emit PCVDebtPaid(feeToDebt);
-        emit PCVFeePaid(feeRecipient, feeToRecipient);
-    }
-
     function setAddresses(
         address _borrowerOperations,
         address _musdTokenAddress
@@ -151,20 +111,60 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: Fee recipient cannot be the zero address."
         );
         feeRecipient = _feeRecipient;
+        emit FeeRecipientSet(_feeRecipient);
     }
 
     function setFeeSplit(
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
         require(
-            debtToPay > 0,
-            "PCV: Must have debt in order to set a fee split."
+            feeRecipient != address(0),
+            "PCV must set fee recipient before setFeeSplit"
         );
         require(
-            _feeSplitPercentage <= FEE_SPLIT_MAX,
+            (debtToPay > 0 && _feeSplitPercentage <= FEE_SPLIT_MAX) ||
+                (debtToPay == 0 && _feeSplitPercentage <= 100),
             "PCV: Fee split must be at most 50 while debt remains."
         );
         feeSplitPercentage = _feeSplitPercentage;
+
+        emit FeeSplitSet(_feeSplitPercentage);
+    }
+
+    function distributeMUSD(
+        uint256 _amount
+    ) external override onlyOwnerOrCouncilOrTreasury {
+        require(
+            _amount <= musd.balanceOf(address(this)),
+            "PCV: not enough tokens"
+        );
+
+        uint256 distributedFees = (_amount * feeSplitPercentage) / 100;
+        uint256 protocolLoanRepayment = _amount - distributedFees;
+        uint256 stabilityPoolDeposit = 0;
+
+        // check for excess to deposit into the stability pool
+        if (protocolLoanRepayment > debtToPay) {
+            stabilityPoolDeposit = protocolLoanRepayment - debtToPay;
+            protocolLoanRepayment = debtToPay;
+        }
+
+        _repayDebt(protocolLoanRepayment);
+
+        if (stabilityPoolDeposit > 0) {
+            depositToStabilityPool(stabilityPoolDeposit);
+        }
+
+        // send funds to feeRecipient address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
+        if (feeRecipient != address(0) && distributedFees > 0) {
+            require(
+                musd.transfer(feeRecipient, distributedFees),
+                "PCV: sending mUSD failed"
+            );
+
+            // slither-disable-next-line reentrancy-events
+            emit PCVDistribution(feeRecipient, distributedFees);
+        }
     }
 
     function withdrawMUSD(
@@ -173,8 +173,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     )
         external
         override
-        onlyAfterDebtPaid
         onlyOwnerOrCouncilOrTreasury
+        onlyAfterDebtPaid
         onlyWhitelistedRecipient(_recipient)
     {
         require(
@@ -182,6 +182,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: not enough tokens"
         );
         require(musd.transfer(_recipient, _amount), "PCV: sending mUSD failed");
+
         // slither-disable-next-line reentrancy-events
         emit MUSDWithdraw(_recipient, _amount);
     }
@@ -192,12 +193,13 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     )
         external
         override
-        onlyAfterDebtPaid
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        emit CollateralWithdraw(_recipient, _collateralAmount);
         _sendCollateral(_recipient, _collateralAmount);
+
+        // slither-disable-next-line reentrancy-events
+        emit CollateralWithdraw(_recipient, _collateralAmount);
     }
 
     function addRecipientsToWhitelist(
@@ -301,11 +303,44 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             musd.approve(borrowerOperations.stabilityPoolAddress(), _amount),
             "PCV: Approval failed"
         );
+
         IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
             _amount
         );
 
         // slither-disable-next-line reentrancy-events
-        emit DepositToStabilityPool(_amount);
+        emit PCVDepositSP(msg.sender, _amount);
+    }
+
+    function withdrawFromStabilityPool(
+        uint256 _amount
+    ) public onlyOwnerOrCouncilOrTreasury {
+        uint256 collateralBefore = address(this).balance;
+        uint256 musdBefore = musd.balanceOf(address(this));
+
+        IStabilityPool(borrowerOperations.stabilityPoolAddress())
+            .withdrawFromSP(_amount);
+
+        uint256 collateralChange = address(this).balance - collateralBefore;
+        uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
+
+        _repayDebt(musdChange);
+
+        // slither-disable-next-line reentrancy-events
+        emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
+    }
+
+    function _repayDebt(uint _repayment) internal {
+        if (_repayment > debtToPay) {
+            _repayment = debtToPay;
+        }
+
+        if (_repayment > 0 && debtToPay > 0) {
+            debtToPay -= _repayment;
+            borrowerOperations.burnDebtFromPCV(_repayment);
+
+            // slither-disable-next-line reentrancy-events
+            emit PCVDebtPayment(_repayment);
+        }
     }
 }

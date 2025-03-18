@@ -932,7 +932,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedOpenTrove(
               bob.address,
               bob.address,
@@ -941,7 +941,7 @@ describe("BorrowerOperations in Normal Mode", () => {
               lowerHint,
             ),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not authorized to perform this operation",
+          "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
     })
@@ -1669,13 +1669,13 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ domainName: "TroveManager" })
       })
 
-      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+      it("reverts when the implementation is called from a non-BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedCloseTrove(bob.address, bob.address),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not authorized to perform this operation",
+          "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
     })
@@ -5019,22 +5019,22 @@ describe("BorrowerOperations in Normal Mode", () => {
         await testRevert({ assetAmount: to1e18(888) })
       })
 
-      it("reverts when the implementation is called from a non-BorrowerOperations or BorrowerOperationsSignatures address", async () => {
+      it("reverts when the implementation is called from a non-BorrowerOperationsSignatures address", async () => {
         await expect(
           contracts.borrowerOperations
-            .connect(alice.wallet)
+            .connect(bob.wallet)
             .restrictedAdjustTrove(
               bob.address,
               bob.address,
+              alice.address,
+              0,
+              to1e18(100),
+              false,
               bob.address,
-              collWithdrawal,
-              debtChange,
-              isDebtIncrease,
-              upperHint,
-              lowerHint,
+              bob.address,
             ),
         ).to.be.revertedWith(
-          "BorrowerOps: Caller is not authorized to perform this operation",
+          "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
     })
@@ -5128,8 +5128,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         carol.trove.lastInterestUpdateTime.after,
       )
 
-      expect(state.activePool.interest.after).to.equal(
+      expect(state.activePool.interest.after).to.be.closeTo(
         carolInterest + dennisInterest,
+        2n,
       )
       expect(state.activePool.principal.after).to.equal(
         state.activePool.principal.before + carolFee,

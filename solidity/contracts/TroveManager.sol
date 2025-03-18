@@ -169,7 +169,6 @@ contract TroveManager is
 
     uint256 public constant REDEMPTION_FEE_FLOOR =
         (DECIMAL_PRECISION * 5) / 1000; // 0.5%
-    uint256 public constant MAX_BORROWING_FEE = (DECIMAL_PRECISION * 5) / 100; // 5%
 
     mapping(address => Trove) public Troves;
 
@@ -909,25 +908,27 @@ contract TroveManager is
     }
 
     function _updateDefaultPoolInterest() internal {
-        if (totalStakes > 0) {
-            (
-                uint256 accruedInterest,
-                uint256 accruedInterestPerUnitStaked
-            ) = calculateLInterestIncrease();
-
-            uint256 interestNumerator = accruedInterest *
-                DECIMAL_PRECISION +
-                lastInterestError_Redistribution;
-
-            lastInterestError_Redistribution =
-                interestNumerator -
-                (accruedInterestPerUnitStaked * totalStakes);
-
-            L_Interest += accruedInterestPerUnitStaked;
-
-            defaultPool.increaseDebt(0, accruedInterest);
-            emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
+        if (totalStakes == 0) {
+            return;
         }
+
+        (
+            uint256 accruedInterest,
+            uint256 accruedInterestPerUnitStaked
+        ) = calculateLInterestIncrease();
+
+        uint256 interestNumerator = accruedInterest *
+            DECIMAL_PRECISION +
+            lastInterestError_Redistribution;
+
+        lastInterestError_Redistribution =
+            interestNumerator -
+            (accruedInterestPerUnitStaked * totalStakes);
+
+        L_Interest += accruedInterestPerUnitStaked;
+
+        defaultPool.increaseDebt(0, accruedInterest);
+        emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
@@ -938,8 +939,6 @@ contract TroveManager is
     ) internal {
         Trove storage trove = Troves[_borrower];
         if (hasPendingRewards(_borrower)) {
-            _requireTroveIsActive(_borrower);
-
             // Compute pending rewards
             uint256 pendingCollateral = getPendingCollateral(_borrower);
             (
@@ -1184,7 +1183,8 @@ contract TroveManager is
 
         vars.remainingMUSDInStabPool = _MUSDInStabPool;
 
-        for (vars.i = 0; vars.i < _troveArray.length; vars.i++) {
+        uint troveArrayLength = _troveArray.length;
+        for (vars.i = 0; vars.i < troveArrayLength; vars.i++) {
             vars.user = _troveArray[vars.i];
             vars.ICR = getCurrentICR(vars.user, _price);
 
