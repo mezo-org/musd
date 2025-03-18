@@ -150,11 +150,13 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
                         oldPrincipal +
                         pendingInterest;
 
+                    // slither-disable-start unused-return
                     (uint256 principalAdjustment, ) = InterestRateMath
                         .calculateDebtAdjustment(
                             interestOwed,
                             maxRedeemableMUSD
                         );
+                    // slither-disable-end unused-return
 
                     newPrincipal -= principalAdjustment;
 
