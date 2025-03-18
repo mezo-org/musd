@@ -29,11 +29,11 @@ interface IMUSD is IERC20Metadata, IERC20Permit {
         address _interestRateManagerAddress
     ) external;
 
-    function startAddMintList(address _account) external;
+    function startAddMintList(address[] calldata _accounts) external;
 
-    function startRevokeBurnList(address _account) external;
+    function startRevokeBurnList(address[] calldata _accounts) external;
 
-    function startRevokeMintList(address _account) external;
+    function startRevokeMintList(address[] calldata _accounts) external;
 
     function finalizeAddContracts() external;
 

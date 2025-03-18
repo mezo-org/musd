@@ -20,9 +20,9 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     address public pendingBorrowerOperations;
     address public pendingInterestRateManager;
 
-    address public pendingRevokedMintAddress;
-    address public pendingRevokedBurnAddress;
-    address public pendingAddedMintAddress;
+    address[] public pendingRevokedMintAddresses;
+    address[] public pendingRevokedBurnAddresses;
+    address[] public pendingAddedMintAddresses;
 
     uint256 public revokeMintListInitiated;
     uint256 public revokeBurnListInitiated;
@@ -62,12 +62,17 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
 
     // --- Governance ---
 
-    function startRevokeMintList(address _account) external onlyOwner {
-        require(mintList[_account], "Incorrect address to revoke");
+    function startRevokeMintList(
+        address[] calldata _accounts
+    ) external onlyOwner {
+        uint accountsLength = _accounts.length;
+        for (uint i = 0; i < accountsLength; i++) {
+            require(mintList[_accounts[i]], "Incorrect address to revoke");
+        }
 
         // solhint-disable-next-line not-rely-on-time
         revokeMintListInitiated = block.timestamp;
-        pendingRevokedMintAddress = _account;
+        pendingRevokedMintAddresses = _accounts;
     }
 
     function cancelRevokeMintList() external onlyOwner {
@@ -77,7 +82,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         );
 
         revokeMintListInitiated = 0;
-        pendingRevokedMintAddress = address(0);
+        pendingRevokedMintAddresses = new address[](0);
     }
 
     function finalizeRevokeMintList()
@@ -85,17 +90,23 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         onlyOwner
         onlyAfterGovernanceDelay(revokeMintListInitiated)
     {
-        mintList[pendingRevokedMintAddress] = false;
+        uint accountsLength = pendingRevokedMintAddresses.length;
+        for (uint i = 0; i < accountsLength; i++) {
+            mintList[pendingRevokedMintAddresses[i]] = false;
+        }
         revokeMintListInitiated = 0;
-        pendingRevokedMintAddress = address(0);
+        pendingRevokedMintAddresses = new address[](0);
     }
 
-    function startAddMintList(address _account) external onlyOwner {
-        require(!mintList[_account], "Incorrect address to add");
+    function startAddMintList(address[] calldata _accounts) external onlyOwner {
+        uint accountsLength = _accounts.length;
+        for (uint i = 0; i < accountsLength; i++) {
+            require(!mintList[_accounts[i]], "Incorrect address to add");
+        }
 
         // solhint-disable-next-line not-rely-on-time
         addMintListInitiated = block.timestamp;
-        pendingAddedMintAddress = _account;
+        pendingAddedMintAddresses = _accounts;
     }
 
     function cancelAddMintList() external onlyOwner {
@@ -105,7 +116,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         );
 
         addMintListInitiated = 0;
-        pendingAddedMintAddress = address(0);
+        pendingAddedMintAddresses = new address[](0);
     }
 
     function finalizeAddMintList()
@@ -113,9 +124,12 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         onlyOwner
         onlyAfterGovernanceDelay(addMintListInitiated)
     {
-        mintList[pendingAddedMintAddress] = true;
+        uint accountsLength = pendingAddedMintAddresses.length;
+        for (uint i = 0; i < accountsLength; i++) {
+            mintList[pendingAddedMintAddresses[i]] = true;
+        }
         addMintListInitiated = 0;
-        pendingAddedMintAddress = address(0);
+        pendingAddedMintAddresses = new address[](0);
     }
 
     function startAddContracts(
@@ -172,12 +186,18 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         pendingInterestRateManager = address(0);
     }
 
-    function startRevokeBurnList(address _account) external onlyOwner {
-        require(burnList[_account], "Incorrect address to revoke");
+    function startRevokeBurnList(
+        address[] calldata _accounts
+    ) external onlyOwner {
+        uint accountsLength = _accounts.length;
+        for (uint i = 0; i < accountsLength; i++) {
+            address account = _accounts[i];
 
-        // solhint-disable-next-line not-rely-on-time
+            require(burnList[account], "Incorrect address to revoke");
+        }
+
         revokeBurnListInitiated = block.timestamp;
-        pendingRevokedBurnAddress = _account;
+        pendingRevokedBurnAddresses = _accounts;
     }
 
     function cancelRevokeBurnList() external onlyOwner {
@@ -187,7 +207,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         );
 
         revokeBurnListInitiated = 0;
-        pendingRevokedBurnAddress = address(0);
+        pendingRevokedBurnAddresses = new address[](0);
     }
 
     function finalizeRevokeBurnList()
@@ -195,9 +215,14 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         onlyOwner
         onlyAfterGovernanceDelay(revokeBurnListInitiated)
     {
-        burnList[pendingRevokedBurnAddress] = false;
+        uint accountsLength = pendingRevokedBurnAddresses.length;
+        for (uint i = 0; i < accountsLength; i++) {
+            address account = pendingRevokedBurnAddresses[i];
+
+            burnList[account] = false;
+        }
         revokeBurnListInitiated = 0;
-        pendingRevokedBurnAddress = address(0);
+        pendingRevokedBurnAddresses = new address[](0);
     }
 
     // --- Functions for intra-Liquity calls ---
