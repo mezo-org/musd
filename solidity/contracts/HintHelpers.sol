@@ -129,29 +129,30 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
             uint256 netDebt = _getNetDebt(principal + interest);
 
             if (netDebt > remainingMUSD) {
-                if (netDebt > minNetDebt) {
-                    uint256 maxRedeemableMUSD = LiquityMath._min(
-                        remainingMUSD,
-                        netDebt - minNetDebt
-                    );
-
-                    coll -= ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
-
-                    // slither-disable-start unused-return
-                    (uint256 principalAdjustment, ) = InterestRateMath
-                        .calculateDebtAdjustment(interest, maxRedeemableMUSD);
-                    // slither-disable-end unused-return
-
-                    principal -= principalAdjustment;
-
-                    partialRedemptionHintNICR = LiquityMath._computeNominalCR(
-                        coll,
-                        principal
-                    );
-
-                    remainingMUSD -= maxRedeemableMUSD;
+                if (netDebt <= minNetDebt) {
+                    break;
                 }
-                break;
+
+                uint256 maxRedeemableMUSD = LiquityMath._min(
+                    remainingMUSD,
+                    netDebt - minNetDebt
+                );
+
+                coll -= ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
+
+                // slither-disable-start unused-return
+                (uint256 principalAdjustment, ) = InterestRateMath
+                    .calculateDebtAdjustment(interest, maxRedeemableMUSD);
+                // slither-disable-end unused-return
+
+                principal -= principalAdjustment;
+
+                partialRedemptionHintNICR = LiquityMath._computeNominalCR(
+                    coll,
+                    principal
+                );
+
+                remainingMUSD -= maxRedeemableMUSD;
             } else {
                 remainingMUSD -= netDebt;
             }
