@@ -737,8 +737,9 @@ describe("TroveManager - Redistribution reward calculations", () => {
     )
   })
 
-  it("A, B Open. B Liquidated. A receives B's interest and interest from the default pool.", async () => {
-    await setInterestRate(contracts, council, 1000)
+  it("A, B Open. B Liquidated. A receives B's interest from before liquidation.", async () => {
+    const interestRate = 1000
+    await setInterestRate(contracts, council, interestRate)
     await setupTrove(alice, "8000", "500")
     await setupTrove(bob, "2000", "200")
 
@@ -748,26 +749,25 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await fastForwardTime(365 * 24 * 60 * 60)
 
     await dropPriceAndLiquidate(contracts, deployer, bob)
+    const bobLiquidationTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "before")
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await contracts.troveManager.callUpdateDefaultPoolInterest()
-    const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
 
     expect(alice.pending.interest.after).to.be.closeTo(
       calculateInterestOwed(
         bob.trove.debt.before,
-        1000,
+        interestRate,
         bob.trove.lastInterestUpdateTime.before,
-        endTime,
+        bobLiquidationTime,
       ),
-      1000n,
+      2n,
     )
   })
 
-  it("A, B Open. B Liquidated. A receives interest on B's principal from the default pool at the global rate.", async () => {
+  it("A, B Open. B Liquidated. No interest accrues on default pool debt.", async () => {
     await setupTrove(alice, "8000", "500")
     await setupTrove(bob, "2000", "200")
 
@@ -779,21 +779,15 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await updatePendingSnapshot(contracts, alice, "before")
 
     await setInterestRate(contracts, council, 1000)
-    const startTime = BigInt(await getLatestBlockTimestamp())
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await contracts.troveManager.callUpdateDefaultPoolInterest()
-    const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
 
-    expect(alice.pending.interest.after).to.be.closeTo(
-      calculateInterestOwed(bob.trove.debt.before, 1000, startTime, endTime),
-      1000n,
-    )
+    expect(alice.pending.interest.after).to.equal(0)
   })
 
-  it("A, B, C Open. B Liquidated. A and C receives B's interest and interest from the default pool.", async () => {
+  it("A, B, C Open. B Liquidated. A and C receives B's interest.", async () => {
     const interestRate = 1000
     await setInterestRate(contracts, council, interestRate)
     await setupTrove(alice, "8000", "500")
@@ -806,19 +800,19 @@ describe("TroveManager - Redistribution reward calculations", () => {
     await fastForwardTime(365 * 24 * 60 * 60)
 
     await dropPriceAndLiquidate(contracts, deployer, bob)
+
+    const bobLiquidationTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "before")
 
     await fastForwardTime(365 * 24 * 60 * 60)
 
-    await contracts.troveManager.callUpdateDefaultPoolInterest()
-    const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshots(contracts, [alice, carol], "after")
 
     const accruedInterest = calculateInterestOwed(
       bob.trove.debt.before,
       interestRate,
       bob.trove.lastInterestUpdateTime.before,
-      endTime,
+      bobLiquidationTime,
     )
 
     const totalCollateral =
@@ -826,44 +820,16 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     expect(alice.pending.interest.after).to.be.closeTo(
       (accruedInterest * alice.trove.collateral.before) / totalCollateral,
-      1000n,
+      2n,
     )
 
     expect(carol.pending.interest.after).to.be.closeTo(
       (accruedInterest * carol.trove.collateral.before) / totalCollateral,
-      1000n,
+      2n,
     )
   })
 
-  it("A, B, C Open. B, C Liquidated. Pending interest updates from C's liquidation.", async () => {
-    await setupTrove(carol, "2000", "200")
-    const interestRate = 1000
-    await setInterestRate(contracts, council, interestRate)
-    await setupTrove(alice, "8000", "500")
-    await setupTrove(bob, "2000", "200")
-
-    await updateTroveSnapshots(contracts, [alice, bob, carol], "before")
-
-    await dropPriceAndLiquidate(contracts, deployer, bob)
-
-    await fastForwardTime(365 * 24 * 60 * 60)
-
-    await dropPriceAndLiquidate(contracts, deployer, carol)
-
-    const endTime = BigInt(await getLatestBlockTimestamp())
-    await updatePendingSnapshot(contracts, alice, "after")
-
-    const accruedInterest = calculateInterestOwed(
-      bob.trove.debt.before,
-      interestRate,
-      bob.trove.lastInterestUpdateTime.before,
-      endTime,
-    )
-
-    expect(alice.pending.interest.after).to.be.closeTo(accruedInterest, 1000n)
-  })
-
-  it("A, B, C Open. B, C Liquidated. Pending interest updates from C's liquidation.", async () => {
+  it("A, B, C Open. B, C Liquidated. A recieves B's interest from before liquidation.", async () => {
     await setupTrove(carol, "2000", "300")
     const interestRate = 1000
     await setInterestRate(contracts, council, interestRate)
@@ -874,20 +840,21 @@ describe("TroveManager - Redistribution reward calculations", () => {
 
     await dropPriceAndLiquidate(contracts, deployer, bob)
 
+    const bobLiquidationTime = BigInt(await getLatestBlockTimestamp())
+
     await fastForwardTime(365 * 24 * 60 * 60)
 
     await dropPriceAndLiquidate(contracts, deployer, carol)
 
-    const endTime = BigInt(await getLatestBlockTimestamp())
     await updatePendingSnapshot(contracts, alice, "after")
 
     const accruedInterest = calculateInterestOwed(
       bob.trove.debt.before,
       interestRate,
       bob.trove.lastInterestUpdateTime.before,
-      endTime,
+      bobLiquidationTime,
     )
 
-    expect(alice.pending.interest.after).to.be.closeTo(accruedInterest, 1000n)
+    expect(alice.pending.interest.after).to.be.closeTo(accruedInterest, 2n)
   })
 })

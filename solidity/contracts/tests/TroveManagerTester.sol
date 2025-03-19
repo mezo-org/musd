@@ -8,10 +8,6 @@ import "../TroveManager.sol";
 for testing the parent's internal functions. */
 
 contract TroveManagerTester is TroveManager {
-    function callUpdateDefaultPoolInterest() external {
-        _updateDefaultPoolInterest();
-    }
-
     function getCompositeDebt(uint256 _debt) external pure returns (uint) {
         return _getCompositeDebt(_debt);
     }

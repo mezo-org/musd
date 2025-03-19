@@ -663,7 +663,6 @@ contract TroveManager is
     function updateSystemInterest() public {
         // slither-disable-next-line calls-loop
         interestRateManager.updateSystemInterest();
-        _updateDefaultPoolInterest();
     }
 
     /*
@@ -854,12 +853,8 @@ contract TroveManager is
         uint256 principalSnapshot = rewardSnapshots[_borrower].principal;
         uint256 principalPerUnitStaked = L_Principal - principalSnapshot;
 
-        (, uint256 accruedInterestPerUnitStaked) = calculateLInterestIncrease();
-
         uint256 interestSnapshot = rewardSnapshots[_borrower].interest;
-        uint256 interestPerUnitStaked = L_Interest +
-            accruedInterestPerUnitStaked -
-            interestSnapshot;
+        uint256 interestPerUnitStaked = L_Interest - interestSnapshot;
 
         if (
             principalPerUnitStaked == 0 ||
@@ -908,30 +903,6 @@ contract TroveManager is
         );
         trove.lastInterestUpdateTime = block.timestamp;
         // solhint-enable not-rely-on-time
-    }
-
-    function _updateDefaultPoolInterest() internal {
-        if (totalStakes == 0) {
-            return;
-        }
-
-        (
-            uint256 accruedInterest,
-            uint256 accruedInterestPerUnitStaked
-        ) = calculateLInterestIncrease();
-
-        uint256 interestNumerator = accruedInterest *
-            DECIMAL_PRECISION +
-            lastInterestError_Redistribution;
-
-        lastInterestError_Redistribution =
-            interestNumerator -
-            (accruedInterestPerUnitStaked * totalStakes);
-
-        L_Interest += accruedInterestPerUnitStaked;
-
-        defaultPool.increaseDebt(0, accruedInterest);
-        emit LTermsUpdated(L_Collateral, L_Principal, L_Interest);
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
@@ -1488,34 +1459,6 @@ contract TroveManager is
 
         // slither-disable-next-line costly-loop
         TroveOwners.pop();
-    }
-
-    function calculateLInterestIncrease()
-        internal
-        view
-        returns (uint256 accruedInterest, uint256 accruedInterestPerUnitStaked)
-    {
-        if (totalStakes == 0) {
-            return (0, 0);
-        }
-        // solhint-disable not-rely-on-time
-        // slither-disable-start calls-loop
-        accruedInterest = InterestRateMath.calculateInterestOwed(
-            defaultPool.getPrincipal(),
-            interestRateManager.interestRate(),
-            defaultPool.getLastInterestUpdatedTime(),
-            block.timestamp
-        );
-        // slither-disable-end calls-loop
-        // solhint-enable not-rely-on-time
-
-        // slither-disable-start divide-before-multiply
-        uint256 interestNumerator = accruedInterest *
-            DECIMAL_PRECISION +
-            lastInterestError_Redistribution;
-
-        accruedInterestPerUnitStaked = interestNumerator / totalStakes;
-        // slither-disable-end divide-before-multiply
     }
 
     function _isValidFirstRedemptionHint(

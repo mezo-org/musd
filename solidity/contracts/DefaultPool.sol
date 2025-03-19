@@ -29,7 +29,6 @@ contract DefaultPool is
     uint256 internal collateral; // deposited collateral tracker
     uint256 internal principal;
     uint256 internal interest;
-    uint256 internal lastInterestUpdatedTime;
 
     function initialize() external initializer {
         __Ownable_init(msg.sender);
@@ -74,8 +73,6 @@ contract DefaultPool is
         _requireCallerIsTroveManager();
         principal += _principal;
         interest += _interest;
-        // solhint-disable-next-line not-rely-on-time
-        lastInterestUpdatedTime = block.timestamp;
         emit DefaultPoolDebtUpdated(principal, interest);
     }
 
@@ -86,8 +83,6 @@ contract DefaultPool is
         _requireCallerIsTroveManager();
         principal -= _principal;
         interest -= _interest;
-        // solhint-disable-next-line not-rely-on-time
-        lastInterestUpdatedTime = block.timestamp;
         emit DefaultPoolDebtUpdated(principal, interest);
     }
 
@@ -115,15 +110,6 @@ contract DefaultPool is
 
     function getInterest() external view override returns (uint) {
         return interest;
-    }
-
-    function getLastInterestUpdatedTime()
-        external
-        view
-        override
-        returns (uint)
-    {
-        return lastInterestUpdatedTime;
     }
 
     function _requireCallerIsTroveManager() internal view {
