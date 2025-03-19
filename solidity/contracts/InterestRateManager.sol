@@ -162,24 +162,26 @@ contract InterestRateManager is
     }
 
     function updateSystemInterest() external {
-        if (interestNumerator > 0) {
-            // solhint-disable not-rely-on-time
-            uint256 interest = InterestRateMath.calculateAggregatedInterestOwed(
-                interestNumerator,
-                lastUpdatedTime,
-                block.timestamp
-            );
-            // solhint-enable not-rely-on-time
+        uint256 updatedTimeSnapshot = lastUpdatedTime;
+        lastUpdatedTime = block.timestamp;
 
-            // slither-disable-next-line calls-loop
-            musdToken.mint(address(pcv), interest);
-
-            // slither-disable-next-line calls-loop
-            activePool.increaseDebt(0, interest);
+        if (interestNumerator == 0) {
+            return;
         }
 
-        //slither-disable-next-line reentrancy-no-eth
-        lastUpdatedTime = block.timestamp;
+        // solhint-disable not-rely-on-time
+        uint256 interest = InterestRateMath.calculateAggregatedInterestOwed(
+            interestNumerator,
+            updatedTimeSnapshot,
+            block.timestamp
+        );
+        // solhint-enable not-rely-on-time
+
+        // slither-disable-next-line calls-loop
+        musdToken.mint(address(pcv), interest);
+
+        // slither-disable-next-line calls-loop
+        activePool.increaseDebt(0, interest);
     }
 
     function updateTroveDebt(
@@ -203,6 +205,17 @@ contract InterestRateManager is
     ) public onlyBorrowerOperationsOrTroveManager {
         interestNumerator -= _principal * _rate;
         emit InterestNumeratorChanged(interestNumerator);
+    }
+
+    function getAccruedInterest() public view returns (uint256) {
+        //solhint-disable not-rely-on-time
+        return
+            InterestRateMath.calculateAggregatedInterestOwed(
+                interestNumerator,
+                lastUpdatedTime,
+                block.timestamp
+            );
+        //solhint-enable not-rely-on-time
     }
 
     // slither-disable-start reentrancy-benign

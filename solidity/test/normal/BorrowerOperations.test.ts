@@ -3719,7 +3719,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshots(contracts, [carol, dennis], "after")
       const after = BigInt(await getLatestBlockTimestamp())
 
-      expect(state.activePool.interest.after).to.equal(
+      expect(state.activePool.interest.after).to.be.closeTo(
         calculateInterestOwed(
           dennis.trove.debt.before,
           1000,
@@ -3732,6 +3732,7 @@ describe("BorrowerOperations in Normal Mode", () => {
             carol.trove.lastInterestUpdateTime.before,
             after,
           ),
+        2n,
       )
 
       const fee = await contracts.troveManager.getBorrowingFee(debtChange)

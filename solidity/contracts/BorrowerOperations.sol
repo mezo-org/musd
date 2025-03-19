@@ -87,7 +87,6 @@ contract BorrowerOperations is
     ICollSurplusPool public collSurplusPool;
     IMUSD public musd;
     IPCV public pcv;
-    IInterestRateManager public interestRateManager;
 
     // A doubly linked list of Troves, sorted by their collateral ratios
     ISortedTroves public sortedTroves;

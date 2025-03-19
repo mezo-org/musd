@@ -13,6 +13,7 @@ import {
   checkTroveClosedByLiquidation,
   checkTroveClosedByRedemption,
   checkTroveStatus,
+  collateralToRedistribute,
   dropPrice,
   dropPriceAndLiquidate,
   fastForwardTime,
@@ -1993,6 +1994,82 @@ describe("TroveManager in Normal Mode", () => {
 
       expect(carol.trove.icr.after).to.equal(expectedICR)
     })
+
+    it("reflects pending default pool interest", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: alice.wallet,
+      })
+
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "111",
+        sender: bob.wallet,
+      })
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      await fastForwardTime(30 * 24 * 60 * 60) // 30 days in seconds
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+      await updateTroveSnapshots(contracts, [alice, bob], "after")
+
+      const pendingInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        interestRate,
+        bob.trove.lastInterestUpdateTime.before,
+        endTime,
+      )
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const expectedDebt =
+        alice.trove.debt.before + bob.trove.debt.before + pendingInterest
+
+      const totalCollateral =
+        alice.trove.collateral.before +
+        collateralToRedistribute(bob.trove.collateral.before)
+
+      const expectedICR = (totalCollateral * price) / expectedDebt
+
+      expect(alice.trove.icr.after).to.equal(expectedICR)
+    })
+
+    it("reflects accrued interest", async () => {
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: alice.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      await fastForwardTime(50 * 24 * 60 * 60) // 50 days in seconds
+
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+      const price = await contracts.priceFeed.fetchPrice()
+
+      const expectedDebt =
+        alice.trove.debt.before +
+        calculateInterestOwed(
+          alice.trove.debt.before,
+          interestRate,
+          alice.trove.lastInterestUpdateTime.before,
+          endTime,
+        )
+
+      const expectedICR = (alice.trove.collateral.before * price) / expectedDebt
+
+      expect(alice.trove.icr.after).to.equal(expectedICR)
+    })
   })
 
   describe("getRedemptionHints()", () => {
@@ -3109,10 +3186,64 @@ describe("TroveManager in Normal Mode", () => {
           ),
       )
     })
+
+    it("reflects pending default pool interest", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: alice.wallet,
+      })
+
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "111",
+        sender: bob.wallet,
+      })
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      await fastForwardTime(30 * 24 * 60 * 60) // 30 days in seconds
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+      const [
+        coll,
+        principal,
+        interest,
+        pendingCollateral,
+        pendingPrincipal,
+        pendingInterest,
+      ] = await contracts.troveManager.getEntireDebtAndColl(alice.address)
+
+      const expectedPendingInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        interestRate,
+        bob.trove.lastInterestUpdateTime.before,
+        endTime,
+      )
+
+      const bobsRedistributedCollateral = collateralToRedistribute(
+        bob.trove.collateral.before,
+      )
+
+      expect(coll).to.equal(
+        alice.trove.collateral.before + bobsRedistributedCollateral,
+      )
+      expect(principal).to.equal(
+        alice.trove.debt.before + bob.trove.debt.before,
+      )
+      expect(interest).to.be.closeTo(expectedPendingInterest, 2n)
+      expect(pendingCollateral).to.equal(bobsRedistributedCollateral)
+      expect(pendingPrincipal).to.equal(bob.trove.debt.before)
+      expect(pendingInterest).to.be.closeTo(expectedPendingInterest, 2n)
+    })
   })
 
-  describe("getPendingMUSDDebtReward()", () => {
-    it("returns 0 if there is no pending mUSD reward", async () => {
+  describe("getPendingDebt()", () => {
+    it("returns 0 if there is no pending debt", async () => {
       await setupTroves()
       await openTrove(contracts, {
         musdAmount: "5000",
@@ -3125,9 +3256,45 @@ describe("TroveManager in Normal Mode", () => {
       await updatePendingSnapshot(contracts, alice, "after")
       expect(alice.pending.principal.after).to.equal(0n)
     })
+
+    it("accounts for default pool interest", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: alice.wallet,
+      })
+
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "111",
+        sender: bob.wallet,
+      })
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      await fastForwardTime(30 * 24 * 60 * 60) // 30 days in seconds
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+
+      const pendingInterest = calculateInterestOwed(
+        bob.trove.debt.before,
+        interestRate,
+        bob.trove.lastInterestUpdateTime.before,
+        endTime,
+      )
+
+      await updatePendingSnapshot(contracts, alice, "after")
+
+      expect(alice.pending.principal.after).to.equal(bob.trove.debt.before)
+      expect(alice.pending.interest.after).to.be.closeTo(pendingInterest, 2n)
+    })
   })
 
-  describe("getPendingCollateralReward()", () => {
+  describe("getPendingCollateral()", () => {
     it("returns 0 if there is no pending collateral reward", async () => {
       await setupTroves()
       await openTrove(contracts, {
@@ -3234,6 +3401,36 @@ describe("TroveManager in Normal Mode", () => {
           await contracts.priceFeed.fetchPrice(),
         ),
       ).to.equal(true)
+    })
+
+    it("reflects pending default pool interest", async () => {
+      // Use an extremely specific amount of collateral to just barely trigger
+      // recovery mode after 3000 days of bob's interest
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "204",
+        sender: alice.wallet,
+      })
+
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "111",
+        sender: bob.wallet,
+      })
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      await fastForwardTime(3000 * 24 * 60 * 60) // 3000 days in seconds
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const isRecoveryMode =
+        await contracts.troveManager.checkRecoveryMode(price)
+
+      expect(isRecoveryMode).to.equal(true)
     })
   })
 
@@ -3685,6 +3882,51 @@ describe("TroveManager in Normal Mode", () => {
         state.activePool.interest.before + aliceInterest + bobInterest,
         2n,
       )
+    })
+  })
+
+  describe("getTCR()", async () => {
+    it("reflects pending default pool interest", async () => {
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "400",
+        sender: alice.wallet,
+      })
+
+      const interestRate = 100
+      await setInterestRate(contracts, council, interestRate)
+
+      await openTrove(contracts, {
+        musdAmount: "5000",
+        ICR: "111",
+        sender: bob.wallet,
+      })
+      await updateTroveSnapshots(contracts, [alice, bob], "before")
+
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      await fastForwardTime(30 * 24 * 60 * 60) // 30 days in seconds
+
+      const endTime = BigInt(await getLatestBlockTimestamp())
+      const price = await contracts.priceFeed.fetchPrice()
+      const tcr = await contracts.troveManager.getTCR(price)
+
+      const totalCollateral =
+        alice.trove.collateral.before +
+        collateralToRedistribute(bob.trove.collateral.before)
+
+      const totalDebt =
+        alice.trove.debt.before +
+        bob.trove.debt.before +
+        calculateInterestOwed(
+          bob.trove.debt.before,
+          interestRate,
+          bob.trove.lastInterestUpdateTime.before,
+          endTime,
+        )
+      const expectedTCR = (totalCollateral * price) / totalDebt
+
+      expect(tcr).to.equal(expectedTCR)
     })
   })
 

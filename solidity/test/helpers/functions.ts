@@ -1066,3 +1066,7 @@ export async function testUpdatesSystemInterestOwed(
     5n,
   )
 }
+
+export function collateralToRedistribute(collateral: bigint): bigint {
+  return (collateral * 995n) / 1000n
+}

@@ -3,9 +3,11 @@
 pragma solidity ^0.8.24;
 
 import "./BaseMath.sol";
+import "./InterestRateMath.sol";
 import "./LiquityMath.sol";
 import "../interfaces/IActivePool.sol";
 import "../interfaces/IDefaultPool.sol";
+import "../interfaces/IInterestRateManager.sol";
 import "../interfaces/IPriceFeed.sol";
 import "../interfaces/ILiquityBase.sol";
 
@@ -37,6 +39,9 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     IDefaultPool public defaultPool;
 
     // slither-disable-next-line all
+    IInterestRateManager public interestRateManager;
+
+    // slither-disable-next-line all
     IPriceFeed public override priceFeed;
 
     // slither-disable-next-line unused-state
@@ -64,8 +69,23 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     {
         uint256 activeDebt = activePool.getDebt();
         uint256 closedDebt = defaultPool.getDebt();
+        uint256 accruedInterest = interestRateManager.getAccruedInterest();
 
-        return activeDebt + closedDebt;
+        //solhint-disable not-rely-on-time
+        uint256 accruedDefaultPoolInterest = InterestRateMath
+            .calculateInterestOwed(
+                defaultPool.getPrincipal(),
+                interestRateManager.interestRate(),
+                defaultPool.getLastInterestUpdatedTime(),
+                block.timestamp
+            );
+        //solhint-enable not-rely-on-time
+
+        return
+            activeDebt +
+            closedDebt +
+            accruedInterest +
+            accruedDefaultPoolInterest;
     }
 
     function _getTCR(
