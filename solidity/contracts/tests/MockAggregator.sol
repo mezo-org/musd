@@ -53,6 +53,7 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
         require(precision <= 77, "Decimals too large"); // Prevent overflow
         updatedAt = blockTime;
         if (updatedAt == 0) {
+            // solhint-disable-next-line not-rely-on-time
             updatedAt = block.timestamp;
         }
         answer = int256(_price);

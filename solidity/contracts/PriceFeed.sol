@@ -46,10 +46,14 @@ contract PriceFeed is IPriceFeed, Ownable2StepUpgradeable {
     function fetchPrice() public view virtual returns (uint256) {
         // slither-disable-next-line unused-return
         (, int256 price, , uint256 updatedAt, ) = oracle.latestRoundData();
+
+        // solhint-disable not-rely-on-time
         require(
             block.timestamp - updatedAt <= MAX_PRICE_DELAY,
             "PriceFeed: Oracle is stale."
         );
+        // solhint-enable not-rely-on-time
+
         return _scalePriceByDigits(uint256(price), oracle.decimals());
     }
 

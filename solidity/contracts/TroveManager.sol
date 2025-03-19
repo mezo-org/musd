@@ -807,12 +807,14 @@ contract TroveManager is
         principal = trove.principal;
         interest = trove.interestOwed;
 
+        // solhint-disable not-rely-on-time
         interest += InterestRateMath.calculateInterestOwed(
             principal,
             trove.interestRate,
             trove.lastInterestUpdateTime,
             block.timestamp
         );
+        // solhint-enable not-rely-on-time
 
         pendingCollateral = getPendingCollateral(_borrower);
         (pendingPrincipal, pendingInterest) = getPendingDebt(_borrower);

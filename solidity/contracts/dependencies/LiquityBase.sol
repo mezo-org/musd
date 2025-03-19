@@ -71,6 +71,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         uint256 closedDebt = defaultPool.getDebt();
         uint256 accruedInterest = interestRateManager.getAccruedInterest();
 
+        //solhint-disable not-rely-on-time
         uint256 accruedDefaultPoolInterest = InterestRateMath
             .calculateInterestOwed(
                 defaultPool.getPrincipal(),
@@ -78,6 +79,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
                 defaultPool.getLastInterestUpdatedTime(),
                 block.timestamp
             );
+        //solhint-enable not-rely-on-time
 
         return
             activeDebt +

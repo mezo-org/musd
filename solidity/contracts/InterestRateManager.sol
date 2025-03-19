@@ -179,6 +179,7 @@ contract InterestRateManager is
         }
 
         //slither-disable-next-line reentrancy-no-eth
+        //solhint-disable-next-line not-rely-on-time
         lastUpdatedTime = block.timestamp;
     }
 
@@ -206,12 +207,14 @@ contract InterestRateManager is
     }
 
     function getAccruedInterest() public view returns (uint256) {
+        //solhint-disable not-rely-on-time
         return
             InterestRateMath.calculateAggregatedInterestOwed(
                 interestNumerator,
                 lastUpdatedTime,
                 block.timestamp
             );
+        //solhint-enable not-rely-on-time
     }
 
     // slither-disable-start reentrancy-benign
