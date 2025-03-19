@@ -30,7 +30,7 @@ export async function removeMintlist(
 ) {
   await contracts.musd
     .connect(owner)
-    .startRevokeMintList(await contracts.borrowerOperations.getAddress())
+    .startRevokeMintList([await contracts.borrowerOperations.getAddress()])
   await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
   await contracts.musd.connect(owner).finalizeRevokeMintList()
 }
