@@ -51,12 +51,4 @@ interface IInterestRateManager {
     function getAccruedInterest() external view returns (uint256);
 
     function interestRate() external view returns (uint16);
-
-    function calculateDebtAdjustment(
-        uint256 _interestOwed,
-        uint256 _payment
-    )
-        external
-        pure
-        returns (uint256 principalAdjustment, uint256 interestAdjustment);
 }

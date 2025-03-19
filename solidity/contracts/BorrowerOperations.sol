@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
+import "./dependencies/InterestRateMath.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
@@ -699,8 +700,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        (vars.principalAdjustment, vars.interestAdjustment) = contractsCache
-            .interestRateManager
+        (vars.principalAdjustment, vars.interestAdjustment) = InterestRateMath
             .calculateDebtAdjustment(vars.interestOwed, _mUSDChange);
 
         vars.price = priceFeed.fetchPrice();
