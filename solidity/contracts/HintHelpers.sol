@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
+import "./dependencies/InterestRateMath.sol";
 import "./dependencies/LiquityBase.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ISortedTroves.sol";
@@ -130,11 +131,10 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
                         netDebt - minNetDebt
                     );
 
-                    uint256 collateral = troveManager.getTroveColl(
+                    uint256 newColl = troveManager.getTroveColl(
                         currentTroveuser
-                    ) + troveManager.getPendingCollateral(currentTroveuser);
-
-                    uint256 newColl = collateral -
+                    ) +
+                        troveManager.getPendingCollateral(currentTroveuser) -
                         ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
 
                     uint256 oldPrincipal = troveManager.getTrovePrincipal(
@@ -150,9 +150,15 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
                         oldPrincipal +
                         pendingInterest;
 
-                    if (maxRedeemableMUSD > interestOwed) {
-                        newPrincipal -= maxRedeemableMUSD - interestOwed;
-                    }
+                    // slither-disable-start unused-return
+                    (uint256 principalAdjustment, ) = InterestRateMath
+                        .calculateDebtAdjustment(
+                            interestOwed,
+                            maxRedeemableMUSD
+                        );
+                    // slither-disable-end unused-return
+
+                    newPrincipal -= principalAdjustment;
 
                     partialRedemptionHintNICR = LiquityMath._computeNominalCR(
                         newColl,

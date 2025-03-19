@@ -29,4 +29,21 @@ library InterestRateMath {
         uint256 timeElapsed = _endTime - _startTime;
         return (timeElapsed * _interestNumerator) / (BPS * SECONDS_IN_A_YEAR);
     }
+
+    function calculateDebtAdjustment(
+        uint256 _interestOwed,
+        uint256 _payment
+    )
+        internal
+        pure
+        returns (uint256 principalAdjustment, uint256 interestAdjustment)
+    {
+        if (_payment >= _interestOwed) {
+            principalAdjustment = _payment - _interestOwed;
+            interestAdjustment = _interestOwed;
+        } else {
+            principalAdjustment = 0;
+            interestAdjustment = _payment;
+        }
+    }
 }
