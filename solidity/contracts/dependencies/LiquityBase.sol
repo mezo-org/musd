@@ -71,21 +71,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
         uint256 closedDebt = defaultPool.getDebt();
         uint256 accruedInterest = interestRateManager.getAccruedInterest();
 
-        //solhint-disable not-rely-on-time
-        uint256 accruedDefaultPoolInterest = InterestRateMath
-            .calculateInterestOwed(
-                defaultPool.getPrincipal(),
-                interestRateManager.interestRate(),
-                defaultPool.getLastInterestUpdatedTime(),
-                block.timestamp
-            );
-        //solhint-enable not-rely-on-time
-
-        return
-            activeDebt +
-            closedDebt +
-            accruedInterest +
-            accruedDefaultPoolInterest;
+        return activeDebt + closedDebt + accruedInterest;
     }
 
     function _getTCR(

@@ -12,6 +12,4 @@ interface IDefaultPool is IPool {
 
     // --- Functions ---
     function sendCollateralToActivePool(uint256 _amount) external;
-
-    function getLastInterestUpdatedTime() external view returns (uint);
 }
