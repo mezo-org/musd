@@ -115,59 +115,44 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
         ) {
             _maxIterations--;
 
-            (uint256 pendingPrincipal, uint256 pendingInterest) = troveManager
-                .getPendingDebt(currentTroveuser);
+            // slither-disable-start unused-return
+            (
+                uint256 coll,
+                uint256 principal,
+                uint256 interest,
+                ,
+                ,
 
-            uint256 troveDebt = troveManager.getTroveDebt(currentTroveuser);
+            ) = troveManager.getEntireDebtAndColl(currentTroveuser);
+            // slither-disable-end unused-return
 
-            uint256 netDebt = _getNetDebt(troveDebt) +
-                pendingPrincipal +
-                pendingInterest;
+            uint256 netDebt = _getNetDebt(principal + interest);
 
             if (netDebt > remainingMUSD) {
-                if (netDebt > minNetDebt) {
-                    uint256 maxRedeemableMUSD = LiquityMath._min(
-                        remainingMUSD,
-                        netDebt - minNetDebt
-                    );
-
-                    uint256 newColl = troveManager.getTroveColl(
-                        currentTroveuser
-                    ) +
-                        troveManager.getPendingCollateral(currentTroveuser) -
-                        ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
-
-                    uint256 oldPrincipal = troveManager.getTrovePrincipal(
-                        currentTroveuser
-                    );
-
-                    uint256 newPrincipal = oldPrincipal + pendingPrincipal;
-
-                    // troveDebt is oldPrincipal + oldInterest + accruedInterest
-                    // so we subtract out the oldPrincipal and add pendingInterest to
-                    // get total interest.
-                    uint256 interestOwed = troveDebt -
-                        oldPrincipal +
-                        pendingInterest;
-
-                    // slither-disable-start unused-return
-                    (uint256 principalAdjustment, ) = InterestRateMath
-                        .calculateDebtAdjustment(
-                            interestOwed,
-                            maxRedeemableMUSD
-                        );
-                    // slither-disable-end unused-return
-
-                    newPrincipal -= principalAdjustment;
-
-                    partialRedemptionHintNICR = LiquityMath._computeNominalCR(
-                        newColl,
-                        newPrincipal
-                    );
-
-                    remainingMUSD -= maxRedeemableMUSD;
+                if (netDebt <= minNetDebt) {
+                    break;
                 }
-                break;
+
+                uint256 maxRedeemableMUSD = LiquityMath._min(
+                    remainingMUSD,
+                    netDebt - minNetDebt
+                );
+
+                coll -= ((maxRedeemableMUSD * DECIMAL_PRECISION) / _price);
+
+                // slither-disable-start unused-return
+                (uint256 principalAdjustment, ) = InterestRateMath
+                    .calculateDebtAdjustment(interest, maxRedeemableMUSD);
+                // slither-disable-end unused-return
+
+                principal -= principalAdjustment;
+
+                partialRedemptionHintNICR = LiquityMath._computeNominalCR(
+                    coll,
+                    principal
+                );
+
+                remainingMUSD -= maxRedeemableMUSD;
             } else {
                 remainingMUSD -= netDebt;
             }
