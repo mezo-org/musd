@@ -104,6 +104,7 @@ interface IBorrowerOperations {
 
     function restrictedCloseTrove(
         address _borrower,
+        address _caller,
         address _recipient
     ) external;
 

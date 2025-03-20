@@ -32,6 +32,7 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
+  updateWalletSnapshots,
   User,
 } from "../helpers"
 import { to1e18 } from "../utils"
@@ -1530,6 +1531,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      // grant alice enough tokens to let her close bob's trove
+      await contracts.musd.unprotectedMint(alice.wallet, to1e18("40,000"))
+
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .closeTroveWithSignature(borrower, borrower, signature, deadline)
@@ -1551,6 +1556,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         deadline,
       }
 
+      // grant alice enough tokens to let her close bob's trove
+      await contracts.musd.unprotectedMint(alice.wallet, to1e18("40,000"))
+
       const signature = await bob.wallet.signTypedData(domain, types, value)
 
       await updateWalletSnapshot(contracts, dennis, "before")
@@ -1561,6 +1569,55 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateWalletSnapshot(contracts, dennis, "after")
 
+      expect(dennis.btc.after).to.equal(
+        dennis.btc.before + bob.trove.collateral.before,
+      )
+    })
+
+    it("uses the caller's musd to close the trove", async () => {
+      await updateTroveSnapshot(contracts, bob, "before")
+      const { borrower, domain, deadline, nonce } =
+        await setupSignatureTests(bob)
+
+      const recipient = dennis.wallet.address
+
+      const value = {
+        borrower,
+        recipient,
+        nonce,
+        deadline,
+      }
+
+      const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      // grant alice enough tokens to let her close bob's trove
+      await contracts.musd.unprotectedMint(alice.wallet, to1e18("40,000"))
+
+      await updateWalletSnapshots(contracts, [alice, bob, dennis], "before")
+
+      // Alice pays for Bob's trove to close and send the funds to Dennis
+      await contracts.borrowerOperationsSignatures
+        .connect(alice.wallet)
+        .closeTroveWithSignature(
+          borrower,
+          recipient,
+          signature,
+          deadline,
+          NO_GAS,
+        )
+
+      await updateWalletSnapshots(contracts, [alice, bob, dennis], "after")
+
+      // Alice must pay all of bob's debt except the $200 gas comp
+      expect(alice.musd.after).to.equal(
+        alice.musd.before - bob.trove.debt.before + to1e18(200),
+      )
+      expect(alice.btc.after).to.equal(alice.btc.before)
+
+      expect(bob.musd.after).to.equal(bob.musd.before)
+      expect(bob.btc.after).to.equal(bob.btc.before)
+
+      expect(dennis.musd.after).to.equal(dennis.musd.before)
       expect(dennis.btc.after).to.equal(
         dennis.btc.before + bob.trove.collateral.before,
       )
@@ -1578,6 +1635,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       }
 
       const signature = await bob.wallet.signTypedData(domain, types, value)
+
+      // grant alice enough tokens to let her close bob's trove
+      await contracts.musd.unprotectedMint(alice.wallet, to1e18("40,000"))
+
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
         .closeTroveWithSignature(borrower, borrower, signature, deadline)
@@ -1673,7 +1734,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(bob.wallet)
-            .restrictedCloseTrove(bob.address, bob.address),
+            .restrictedCloseTrove(bob.address, bob.address, bob.address),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
