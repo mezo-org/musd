@@ -17,7 +17,6 @@ interface IInterestRateManager {
 
     event InterestRateProposed(uint16 proposedRate, uint256 proposalTime);
     event InterestRateUpdated(uint16 newInterestRate);
-    event MaxInterestRateUpdated(uint16 newMaxInterestRate);
     event InterestNumeratorChanged(uint256 _newNumerator);
 
     function setAddresses(
@@ -31,8 +30,6 @@ interface IInterestRateManager {
     function proposeInterestRate(uint16 _newProposedInterestRate) external;
 
     function approveInterestRate() external;
-
-    function setMaxInterestRate(uint16 _newMaxInterestRate) external;
 
     function addPrincipal(uint256 _principal, uint16 _rate) external;
 
