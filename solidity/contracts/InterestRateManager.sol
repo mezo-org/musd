@@ -20,15 +20,15 @@ contract InterestRateManager is
     // Current interest rate per year in basis points
     uint16 public interestRate;
 
-    // Maximum interest rate that can be set, defaults to 100% (10000 bps)
-    uint16 public maxInterestRate;
-
     // Proposed interest rate -- must be approved by governance after a minimum delay
     uint16 public proposedInterestRate;
     uint256 public proposalTime;
 
     // Minimum time delay between interest rate proposal and approval
     uint256 public constant MIN_DELAY = 7 days;
+
+    // Maximum interest rate that can be set. Set to 100% (10000 bps)
+    uint16 public constant MAX_INTEREST_RATE = 10_000;
 
     // In order to calculate interest on a trove, we calculate:
     //
@@ -86,8 +86,6 @@ contract InterestRateManager is
 
     function initialize() external initializer {
         __Ownable_init(msg.sender);
-
-        maxInterestRate = 10000;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -127,7 +125,7 @@ contract InterestRateManager is
         uint16 _newProposedInterestRate
     ) external onlyGovernance {
         require(
-            _newProposedInterestRate <= maxInterestRate,
+            _newProposedInterestRate <= MAX_INTEREST_RATE,
             "Interest rate exceeds the maximum interest rate"
         );
         proposedInterestRate = _newProposedInterestRate;
@@ -144,13 +142,6 @@ contract InterestRateManager is
         );
         // solhint-enable not-rely-on-time
         _setInterestRate(proposedInterestRate);
-    }
-
-    function setMaxInterestRate(
-        uint16 _newMaxInterestRate
-    ) external onlyGovernance {
-        maxInterestRate = _newMaxInterestRate;
-        emit MaxInterestRateUpdated(_newMaxInterestRate);
     }
 
     function addPrincipal(
@@ -221,10 +212,6 @@ contract InterestRateManager is
     // slither-disable-start reentrancy-benign
     // slither-disable-start reentrancy-events
     function _setInterestRate(uint16 _newInterestRate) internal {
-        require(
-            _newInterestRate <= maxInterestRate,
-            "Interest rate exceeds the maximum interest rate"
-        );
         troveManager.updateSystemInterest();
         interestRate = _newInterestRate;
         emit InterestRateUpdated(_newInterestRate);

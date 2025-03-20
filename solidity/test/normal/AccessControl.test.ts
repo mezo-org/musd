@@ -125,16 +125,6 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       )
     })
 
-    it("setMaxInterestRate(): reverts when called by account that is not governance", async () => {
-      await expect(
-        contracts.interestRateManager
-          .connect(alice.wallet)
-          .setMaxInterestRate(1000n),
-      ).to.be.revertedWith(
-        "InterestRateManager: Only governance can call this function",
-      )
-    })
-
     it("addPrincipal(): reverts when called by account that is not borrower operations or trove manager", async () => {
       await expect(
         contracts.interestRateManager
