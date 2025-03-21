@@ -535,19 +535,19 @@ contract StabilityPool is
             currentScale = 0;
             emit ScaleUpdated(currentScale);
             newP = DECIMAL_PRECISION;
-        } else if (PBeforeScaleChanges == 1) {
+
             // If multiplying P by the product factor results in exactly one, we
             // need to increment the scale twice.
+        } else if (PBeforeScaleChanges == 1) {
             newP =
                 (currentP * newProductFactor * SCALE_FACTOR * SCALE_FACTOR) /
                 DECIMAL_PRECISION;
             currentScale = currentScaleCached + 2;
             emit ScaleUpdated(currentScale);
-        } else if (
+
             // If multiplying P by a non-zero product factor would reduce P below
             // the scale boundary, increment the scale
-            PBeforeScaleChanges < SCALE_FACTOR
-        ) {
+        } else if (PBeforeScaleChanges < SCALE_FACTOR) {
             newP =
                 (currentP * newProductFactor * SCALE_FACTOR) /
                 DECIMAL_PRECISION;
