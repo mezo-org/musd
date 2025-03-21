@@ -528,26 +528,25 @@ contract StabilityPool is
         uint256 PBeforeScaleChanges = (currentP * newProductFactor) /
             DECIMAL_PRECISION;
 
-        // If the Stability Pool was emptied, increment the epoch, and reset the scale and product P
         if (newProductFactor == 0) {
+            // If the Stability Pool was emptied, increment the epoch, and reset
+            // the scale and product P
             currentEpoch = currentEpochCached + 1;
             emit EpochUpdated(currentEpoch);
             currentScale = 0;
             emit ScaleUpdated(currentScale);
             newP = DECIMAL_PRECISION;
-
+        } else if (PBeforeScaleChanges == 1) {
             // If multiplying P by the product factor results in exactly one, we
             // need to increment the scale twice.
-        } else if (PBeforeScaleChanges == 1) {
             newP =
                 (currentP * newProductFactor * SCALE_FACTOR * SCALE_FACTOR) /
                 DECIMAL_PRECISION;
             currentScale = currentScaleCached + 2;
             emit ScaleUpdated(currentScale);
-
+        } else if (PBeforeScaleChanges < SCALE_FACTOR) {
             // If multiplying P by a non-zero product factor would reduce P below
             // the scale boundary, increment the scale
-        } else if (PBeforeScaleChanges < SCALE_FACTOR) {
             newP =
                 (currentP * newProductFactor * SCALE_FACTOR) /
                 DECIMAL_PRECISION;
