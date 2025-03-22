@@ -525,25 +525,35 @@ contract StabilityPool is
         epochToScaleToSum[currentEpochCached][currentScaleCached] = newS;
         emit SUpdated(newS, currentEpochCached, currentScaleCached);
 
-        // If the Stability Pool was emptied, increment the epoch, and reset the scale and product P
+        uint256 PBeforeScaleChanges = (currentP * newProductFactor) /
+            DECIMAL_PRECISION;
+
         if (newProductFactor == 0) {
+            // If the Stability Pool was emptied, increment the epoch, and reset
+            // the scale and product P
             currentEpoch = currentEpochCached + 1;
             emit EpochUpdated(currentEpoch);
             currentScale = 0;
             emit ScaleUpdated(currentScale);
             newP = DECIMAL_PRECISION;
-
-            // If multiplying P by a non-zero product factor would reduce P below the scale boundary, increment the scale
-        } else if (
-            (currentP * newProductFactor) / DECIMAL_PRECISION < SCALE_FACTOR
-        ) {
+        } else if (PBeforeScaleChanges == 1) {
+            // If multiplying P by the product factor results in exactly one, we
+            // need to increment the scale twice.
+            newP =
+                (currentP * newProductFactor * SCALE_FACTOR * SCALE_FACTOR) /
+                DECIMAL_PRECISION;
+            currentScale = currentScaleCached + 2;
+            emit ScaleUpdated(currentScale);
+        } else if (PBeforeScaleChanges < SCALE_FACTOR) {
+            // If multiplying P by a non-zero product factor would reduce P below
+            // the scale boundary, increment the scale
             newP =
                 (currentP * newProductFactor * SCALE_FACTOR) /
                 DECIMAL_PRECISION;
             currentScale = currentScaleCached + 1;
             emit ScaleUpdated(currentScale);
         } else {
-            newP = (currentP * newProductFactor) / DECIMAL_PRECISION;
+            newP = PBeforeScaleChanges;
         }
 
         assert(newP > 0);

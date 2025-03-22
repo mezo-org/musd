@@ -2022,5 +2022,40 @@ describe("StabilityPool in Normal Mode", () => {
       expect(state.stabilityPool.P.before).to.not.equal(to1e18(1))
       expect(state.stabilityPool.P.after).to.equal(to1e18(1))
     })
+
+    // https://github.com/liquity/dev/security/advisories/GHSA-m9f3-hrx8-x2g3
+    it("Handles the liquity v1 advisory", async () => {
+      const amount = 9799999999999999980001000n / 1005n
+      const nearlyAllThePool = 9999999999999999980000n
+      await openTrove(contracts, {
+        musdAmount: amount,
+        ICR: "111",
+        sender: bob.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, bob, "before")
+      expect(bob.trove.debt.before).to.equal(nearlyAllThePool)
+
+      await provideToSP(contracts, whale, to1e18("10,000"))
+
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      // put us back at $10k
+      await provideToSP(contracts, whale, nearlyAllThePool)
+
+      await openTrove(contracts, {
+        musdAmount: amount,
+        ICR: "111",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, carol, "before")
+      expect(carol.trove.debt.before).to.equal(nearlyAllThePool)
+
+      await dropPriceAndLiquidate(contracts, deployer, carol)
+
+      await updateStabilityPoolSnapshot(contracts, state, "after")
+      expect(state.stabilityPool.P.after).to.be.greaterThanOrEqual(1000000000n)
+    })
   })
 })
