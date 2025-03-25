@@ -1,5 +1,5 @@
 // validate-hints.js
-const { ethers } = require("hardhat")
+const { ethers, network } = require("hardhat")
 
 const { BigNumber } = ethers
 
@@ -60,6 +60,50 @@ async function main() {
 
   console.log("Upper hint:", upperHint)
   console.log("Lower hint:", lowerHint)
+
+  // Get the contract addresses
+  const TROVE_MANAGER_ADDRESS = "0xd374631405613990d62984a08663a28248678975"
+  const SORTED_TROVES_ADDRESS = "0xd54700ad42fc49a829dcd3c377ad7b9ed176656a"
+
+  // Get contract instances
+  const troveManager = await ethers.getContractAt(
+    "TroveManager",
+    TROVE_MANAGER_ADDRESS,
+  )
+  const sortedTroves = await ethers.getContractAt(
+    "SortedTroves",
+    SORTED_TROVES_ADDRESS,
+  )
+
+  // Calculate NICR exactly as openTrove does
+  const maxFeePercentage = decodedInput.args[0]
+  const musdAmount = decodedInput.args[1]
+  const collateral = tx.value // ETH sent with transaction
+
+  // Get the price
+  const priceFeedAddress = await troveManager.priceFeed()
+  const priceFeed = await ethers.getContractAt("PriceFeed", priceFeedAddress)
+  const price = await priceFeed.fetchPrice()
+
+  // Calculate debt (mUSD amount + borrowing fee)
+  const borrowingRate = await troveManager.getBorrowingRateWithDecay()
+  const borrowingFee = musdAmount
+    .mul(borrowingRate)
+    .div(BigNumber.from(10).pow(18))
+  const debt = musdAmount.add(borrowingFee)
+
+  // Calculate NICR
+  const NICR = collateral.mul(BigNumber.from(10).pow(18)).div(debt)
+  console.log("Calculated NICR:", NICR.toString())
+
+  // Check if the hints are valid insert positions
+  const isValid = await sortedTroves.validInsertPosition(
+    NICR,
+    upperHint,
+    lowerHint,
+  )
+
+  console.log("Are hints valid according to validInsertPosition?", isValid)
 }
 
 main()
