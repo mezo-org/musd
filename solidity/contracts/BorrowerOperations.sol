@@ -15,6 +15,7 @@ import "./token/IMUSD.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract BorrowerOperations is
     LiquityBase,
@@ -598,6 +599,18 @@ contract BorrowerOperations is
             _assetAmount,
             vars.compositeDebt
         );
+        string memory message = string(
+            abi.encodePacked(
+                "Asset amount: ",
+                Strings.toString(_assetAmount),
+                ", Composite debt: ",
+                Strings.toString(vars.compositeDebt),
+                ", NICR: ",
+                Strings.toString(vars.NICR)
+            )
+        );
+
+        revert(message);
 
         if (isRecoveryMode) {
             _requireICRisAboveCCR(vars.ICR);
