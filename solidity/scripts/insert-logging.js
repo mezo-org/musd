@@ -22,12 +22,18 @@ async function main() {
   const {
     abi: SortedTrovesABI,
     address: SortedTrovesAddress,
+    bytecode: SortedTrovesBytecode,
   } = require("../deployments/localhost/SortedTroves.json")
 
   const {
-    abi: NewBOABI,
-    address: NewBOAddress,
-  } = require("../deployments/localhost/BorrowerOperations.json")
+    abi: OldSortedTrovesABI,
+    address: OldSortedTrovesAddress,
+  } = require("../deployments/matsnet/SortedTroves.json")
+
+  const {
+    abi: BorrowerOperationsABI,
+    address: BorrowerOperationsAddress,
+  } = require("../deployments/matsnet/BorrowerOperations.json")
 
   // Create a contract instance
   const troveManagerContract = new ethers.Contract(
@@ -36,15 +42,40 @@ async function main() {
     provider,
   )
 
+  const oldSortedTrovesContract = new ethers.Contract(
+    OldSortedTrovesAddress,
+    OldSortedTrovesABI,
+    provider,
+  )
+
+  await provider.send("hardhat_setCode", [
+    OldSortedTrovesAddress,
+    SortedTrovesBytecode,
+  ])
+
   const sortedTrovesContract = new ethers.Contract(
-    SortedTrovesAddress,
+    OldSortedTrovesAddress,
     SortedTrovesABI,
     provider,
   )
 
-  const newBOContract = new ethers.Contract(NewBOAddress, NewBOABI, provider)
+  // const oldSize = await oldSortedTrovesContract.getSize()
+  // console.log("oldSize", oldSize)
+
+  // const data = await oldSortedTrovesContract.data()
+  // await sortedTrovesContract.setData(data)
+
+  // const size = await sortedTrovesContract.getSize()
+  // console.log(`Size: ${size}`)
+
+  // Set SortedTroves trovemanager address
+  // await sortedTrovesContract
+  //   .connect(walletWithProvider)
+  //   .setParams(size, TroveManagerAddress, BorrowerOperationsAddress)
 
   try {
+    const size = await sortedTrovesContract.getSize()
+    console.log(`Size: ${size}`)
     const insertTx = await sortedTrovesContract
       .connect(walletWithProvider)
       .insert(

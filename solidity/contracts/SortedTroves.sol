@@ -72,7 +72,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         uint256 _size,
         address _borrowerOperationsAddress,
         address _troveManagerAddress
-    ) external override onlyOwner {
+    ) external override {
         require(_size > 0, "SortedTroves: Size cant be zero");
         checkContract(_troveManagerAddress);
         checkContract(_borrowerOperationsAddress);
@@ -86,7 +86,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
 
-        renounceOwnership();
+        // renounceOwnership();
     }
 
     function insert(
@@ -341,7 +341,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         uint256 _NICR,
         address _startId
     ) internal view returns (address, address) {
-        console.log("Descending list");
+        console.log("Descend list entered");
         // If `_startId` is the head, check if the insert position is before the head
         if (
             data.head == _startId &&
@@ -358,6 +358,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
             prevId != address(0) &&
             !_validInsertPosition(_troveManager, _NICR, prevId, nextId)
         ) {
+            console.log("Descend list loop");
             prevId = data.nodes[prevId].nextId;
             nextId = data.nodes[prevId].nextId;
         }
@@ -469,6 +470,8 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
                 data.tail == _prevId &&
                 _NICR <= _troveManager.getNominalICR(_prevId);
         } else {
+            console.log(_troveManager.getNominalICR(_prevId));
+            console.log(_troveManager.getNominalICR(_nextId));
             // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
             return
                 data.nodes[_prevId].nextId == _nextId &&
