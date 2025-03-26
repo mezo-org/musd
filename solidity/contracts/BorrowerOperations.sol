@@ -16,6 +16,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "hardhat/console.sol";
 
 contract BorrowerOperations is
     LiquityBase,
@@ -610,7 +611,7 @@ contract BorrowerOperations is
             )
         );
 
-        revert(message);
+        console.log(message);
 
         if (isRecoveryMode) {
             _requireICRisAboveCCR(vars.ICR);

@@ -97,7 +97,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
     ) external override {
         ITroveManager troveManagerCached = troveManager;
 
-        _requireCallerIsBOorTroveM(troveManagerCached);
+        //_requireCallerIsBOorTroveM(troveManagerCached);
         _insert(troveManagerCached, _id, _NICR, _prevId, _nextId);
     }
 

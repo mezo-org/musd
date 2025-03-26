@@ -45,25 +45,15 @@ async function main() {
   const newBOContract = new ethers.Contract(NewBOAddress, NewBOABI, provider)
 
   try {
-    // Call the function
-    const count = await troveManagerContract.getTroveOwnersCount()
-    const gasEstimate = await newBOContract
+    const insertTx = await sortedTrovesContract
       .connect(walletWithProvider)
-      .estimateGas.openTrove(
-        1000000000000000000n,
-        3442000000000000000000n,
-        239989287850000n,
+      .insert(
+        "0xfce90FFA5F7431CAD6a2eE4D601364127a3A8Eb7",
+        6558500000000n,
         "0x3ec5855bd5dd17ef968b8b9fe43cd7548ff53421",
         "0x2136cA89575D19eFF71010B5Ce098D8d773f1cb4",
-        { value: 239989287850000n },
       )
-    console.log("Gas estimate: ", gasEstimate.toString())
-    // const isValid = await sortedTrovesContract.validInsertPosition(
-    //   6558500000000n,
-    //   "0x3ec5855bd5dd17ef968b8b9fe43cd7548ff53421",
-    //   "0x2136cA89575D19eFF71010B5Ce098D8d773f1cb4",
-    // )
-    // console.log("Hints are valid:", isValid)
+    console.log("Trove Inserted")
   } catch (error) {
     console.error("Error calling contract function:", error)
   }
