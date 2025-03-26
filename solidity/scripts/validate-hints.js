@@ -45,24 +45,23 @@ async function main() {
   const newBOContract = new ethers.Contract(NewBOAddress, NewBOABI, provider)
 
   try {
-    // Call the function
-    const count = await troveManagerContract.getTroveOwnersCount()
-    // const openTroveTx = await newBOContract
-    //   .connect(walletWithProvider)
-    //   .openTrove(
-    //     1000000000000000000n,
-    //     3442000000000000000000n,
-    //     239989287850000n,
-    //     "0x3ec5855bd5dd17ef968b8b9fe43cd7548ff53421",
-    //     "0x2136cA89575D19eFF71010B5Ce098D8d773f1cb4",
-    //     { value: 239989287850000n },
-    //   )
-    const isValid = await sortedTrovesContract.validInsertPosition(
-      6558500000000n,
-      "0x3ec5855bd5dd17ef968b8b9fe43cd7548ff53421",
-      "0x2136cA89575D19eFF71010B5Ce098D8d773f1cb4",
-    )
-    console.log("Hints are valid:", isValid)
+    const gasEstimate = await newBOContract
+      .connect(walletWithProvider)
+      .estimateGas.openTrove(
+        1000000000000000000n,
+        3442000000000000000000n,
+        239989287850000n,
+        "0x3ec5855bd5dd17ef968b8b9fe43cd7548ff53421",
+        "0x2136cA89575D19eFF71010B5Ce098D8d773f1cb4",
+        { value: 239989287850000n },
+      )
+    console.log("Gas estimate: ", gasEstimate.toString())
+    // const isValid = await sortedTrovesContract.validInsertPosition(
+    //   6558500000000n,
+    //   "0x3ec5855bd5dd17ef968b8b9fe43cd7548ff53421",
+    //   "0x2136cA89575D19eFF71010B5Ce098D8d773f1cb4",
+    // )
+    // console.log("Hints are valid:", isValid)
   } catch (error) {
     console.error("Error calling contract function:", error)
   }
