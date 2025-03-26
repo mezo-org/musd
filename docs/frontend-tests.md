@@ -9,3 +9,5 @@ call to openTrove.
 For modified contracts, you can use the deployments/localhost artifacts, although keep in mind they will not have the
 same state as the "real" contracts if you are doing any testing that relies on state.  This is mostly useful for pure functions
 like NICR calculations mentioned above.
+
+To estimate gas for opening a trove, run npx node scripts/estimate-gas.js from another console.
