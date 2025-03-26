@@ -25,9 +25,9 @@ async function main() {
   } = require("../deployments/matsnet/SortedTroves.json")
 
   const {
-    abi: NewBOABI,
-    address: NewBOAddress,
-  } = require("../deployments/localhost/BorrowerOperations.json")
+    abi: BorrowerOperationsABI,
+    address: BorrowerOperationsAddress,
+  } = require("../deployments/matsnet/BorrowerOperations.json")
 
   // Create a contract instance
   const troveManagerContract = new ethers.Contract(
@@ -42,14 +42,18 @@ async function main() {
     provider,
   )
 
-  const newBOContract = new ethers.Contract(NewBOAddress, NewBOABI, provider)
+  console.log("BorrowerOperationsABI", BorrowerOperationsABI)
+
+  const borrowerOperationsContract = new ethers.Contract(
+    BorrowerOperationsAddress,
+    BorrowerOperationsABI,
+    provider,
+  )
 
   try {
-    // Call the function
-    const count = await troveManagerContract.getTroveOwnersCount()
-    const gasEstimate = await newBOContract
+    const gasEstimate = await borrowerOperationsContract
       .connect(walletWithProvider)
-      .estimateGas.openTrove(
+      .openTrove.estimateGas(
         1000000000000000000n,
         3442000000000000000000n,
         239989287850000n,

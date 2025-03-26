@@ -22,7 +22,7 @@ async function main() {
   const {
     abi: SortedTrovesABI,
     address: SortedTrovesAddress,
-  } = require("../deployments/matsnet/SortedTroves.json")
+  } = require("../deployments/localhost/SortedTroves.json")
 
   const {
     abi: NewBOABI,

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./dependencies/CheckContract.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
+import "hardhat/console.sol";
 
 /*
  * A sorted doubly linked list with nodes sorted in descending order.
@@ -290,6 +291,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         address nextId = _nextId;
 
         if (!_validInsertPosition(_troveManager, _NICR, prevId, nextId)) {
+            console.log("Invalid insert position");
             // Sender's hint was not a valid insert position
             // Use sender's hint to find a valid insert position
             (prevId, nextId) = _findInsertPosition(
@@ -339,6 +341,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         uint256 _NICR,
         address _startId
     ) internal view returns (address, address) {
+        console.log("Descending list");
         // If `_startId` is the head, check if the insert position is before the head
         if (
             data.head == _startId &&
@@ -373,6 +376,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
         uint256 _NICR,
         address _startId
     ) internal view returns (address, address) {
+        console.log("Ascending list");
         // If `_startId` is the tail, check if the insert position is after the tail
         if (
             data.tail == _startId &&
@@ -410,6 +414,7 @@ contract SortedTroves is Ownable, CheckContract, ISortedTroves {
     ) internal view returns (address, address) {
         address prevId = _prevId;
         address nextId = _nextId;
+        console.log("Finding insert position");
 
         if (prevId != address(0)) {
             if (
