@@ -58,3 +58,50 @@ document is not intended to cover all changes but rather focuses on the changes 
 3. **Asset Amount Parameter**
     - The `_assetAmount` parameter has been removed from functions
     - The contract now uses `msg.value` directly for collateral operations
+
+### TroveManager
+
+#### Function Signature Changes
+
+##### `redeemCollateral`
+```diff
+- function redeemCollateral(uint256 _amount, address _firstRedemptionHint, address _upperPartialRedemptionHint, address _lowerPartialRedemptionHint, uint256 _partialRedemptionHintNICR, uint256 _maxIterations, uint256 _maxFeePercentage) external override
++ function redeemCollateral(uint256 _amount, address _firstRedemptionHint, address _upperPartialRedemptionHint, address _lowerPartialRedemptionHint, uint256 _partialRedemptionHintNICR, uint256 _maxIterations) external override
+```
+- Removed `_maxFeePercentage` parameter (fees are now fixed)
+
+#### `getBorrowingRateWithDecay`
+- Removed (fees are now fixed).  Please use `getBorrowingFee` instead.
+
+#### `MIN_NET_DEBT`
+- Changed to a variable `minNetDebt`.
+
+#### Fee Calculation Changes
+
+##### `getBorrowingFee`
+```diff
+- function getBorrowingFee(uint256 _debt) external view override returns (uint) {
+-     return _calcBorrowingFee(getBorrowingRate(), _debt);
+- }
++ function getBorrowingFee(uint256 _debt) external pure override returns (uint) {
++     return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
++ }
+```
+- Changed from `view` to `pure` function
+- Now uses a fixed fee rate (BORROWING_FEE_FLOOR) instead of a variable rate
+
+#### Integration Notes for Frontend Developers
+
+1. **Fixed Fee Structure**
+   - Borrowing and redemption fees are now fixed rather than variable
+
+2. **Upgradeable Contract Pattern**
+   - Contract addresses remain the same after upgrades
+   - No need to update contract addresses in your frontend
+
+### PriceFeed
+
+#### Integration Notes for Frontend Developers
+
+1.  **Staleness Check**
+   - If the oracle has not been updated in at least 60 seconds, it is stale, and we will revert on a call to `fetchPrice`.
