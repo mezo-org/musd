@@ -45,8 +45,8 @@
     "solhint-config-thesis": "^0.1.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.2",
-    "@openzeppelin/contracts-upgradeable": "^5.0.2",
-    "solidity-coverage": "^0.8.12"
+    "@openzeppelin/contracts": "^5.2.0",
+    "@openzeppelin/contracts-upgradeable": "^5.2.0",
+    "solidity-coverage": "^0.8.14"
   }
 }
