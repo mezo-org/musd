@@ -284,10 +284,10 @@ describe("SortedTroves", () => {
     // NICR. Then, carol opens a trove and gets liquidated, redistributing
     // (different amounts of) debt to alice and bob.
     //
-    // Then, dennis opens a new trove with an extremely specific collateral
-    // ratio that gives him exactly the same NICR as alice and bob (but with no
-    // pending rewards). Carol opens another trove and gets liquidated again, and
-    // we verify that the troves are all still properly sorted.
+    // Then, dennis opens a new trove with exactly the same NICR as alice and
+    // bob (but with no pending rewards). Carol opens another trove and gets
+    // liquidated again, and we verify that the troves are all still properly
+    // sorted.
     it("when redistributing debt", async () => {
       await openTrove(contracts, {
         musdAmount: "50,000",
@@ -309,11 +309,23 @@ describe("SortedTroves", () => {
 
       await dropPriceAndLiquidate(contracts, deployer, carol)
 
-      await openTrove(contracts, {
-        musdAmount: "100,000",
-        ICR: "291.1289974501171",
-        sender: dennis.wallet,
-      })
+      const aliceNICR = await contracts.troveManager.getNominalICR(alice.wallet)
+
+      // Calculate a collateral amount that will give a trove the same NICR as
+      // alice and bob.
+      //
+      // debt = amount + amount * 5 / 1000 + 200e18
+      // coll * 1e20 / debt = NICR
+      // coll * 1e20 / (amount + amount * 5 / 1000 + 200e18) = NICR
+      // coll = NICR * (amount + amount * 5 / 1000 + 200e18) / 1e20
+      const amount = to1e18("100,000")
+      const collateral =
+        (aliceNICR * (amount + (amount * 5n) / 1000n + to1e18(200))) /
+        to1e18(100)
+
+      await contracts.borrowerOperations
+        .connect(dennis.wallet)
+        .openTrove(amount, ZERO_ADDRESS, ZERO_ADDRESS, { value: collateral })
 
       await openTrove(contracts, {
         musdAmount: "10,000",
