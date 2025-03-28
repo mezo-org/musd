@@ -375,7 +375,7 @@ describe("SortedTroves", () => {
         sender: frank.wallet,
       })
 
-      // Put Frank in a state where he isn't liquidatable
+      // Put Frank in a state where he isn't redeemable
       await contracts.mockAggregator
         .connect(deployer.wallet)
         .setPrice((await contracts.priceFeed.fetchPrice()) / 2n)
