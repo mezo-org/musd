@@ -2,11 +2,14 @@ import { expect } from "chai"
 import {
   Contracts,
   User,
+  dropPriceAndLiquidate,
   fastForwardTime,
+  isSortedTrovesSorted,
   openTrove,
   openTroves,
   setInterestRate,
   setupTests,
+  updateTroveSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { MAX_BYTES_32, ZERO_ADDRESS } from "../../helpers/constants"
@@ -18,6 +21,7 @@ describe("SortedTroves", () => {
   let dennis: User
   let deployer: User
   let eric: User
+  let frank: User
   let treasury: User
   let whale: User
   let council: User
@@ -32,6 +36,7 @@ describe("SortedTroves", () => {
       dennis,
       deployer,
       eric,
+      frank,
       treasury,
       whale,
       contracts,
@@ -223,6 +228,186 @@ describe("SortedTroves", () => {
       expect(lowest).to.equal(alice.address)
       expect(middle).to.equal(bob.address)
       expect(highest).to.equal(carol.address)
+    })
+  })
+
+  describe("Maintains Sortedness", () => {
+    it("sorts one trove", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "300",
+        sender: alice.wallet,
+      })
+
+      expect(await isSortedTrovesSorted(contracts)).to.equal(true)
+    })
+
+    it("sorts two troves", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "300",
+        sender: alice.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "305",
+        sender: bob.wallet,
+      })
+
+      expect(await isSortedTrovesSorted(contracts)).to.equal(true)
+    })
+
+    it("sorts three troves", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "300",
+        sender: alice.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "305",
+        sender: bob.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "302",
+        sender: carol.wallet,
+      })
+
+      expect(await isSortedTrovesSorted(contracts)).to.equal(true)
+    })
+
+    // Here, Alice and Bob get set up with different principals but the same
+    // NICR. Then, carol opens a trove and gets liquidated, redistributing
+    // (different amounts of) debt to alice and bob.
+    //
+    // Then, dennis opens a new trove with exactly the same NICR as alice and
+    // bob (but with no pending rewards). Carol opens another trove and gets
+    // liquidated again, and we verify that the troves are all still properly
+    // sorted.
+    it("when redistributing debt", async () => {
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "300",
+        sender: alice.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "250,000",
+        ICR: "300",
+        sender: bob.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "111",
+        sender: carol.wallet,
+      })
+
+      await dropPriceAndLiquidate(contracts, deployer, carol)
+
+      const aliceNICR = await contracts.troveManager.getNominalICR(alice.wallet)
+
+      // Calculate a collateral amount that will give a trove the same NICR as
+      // alice and bob.
+      //
+      // debt = amount + amount * 5 / 1000 + 200e18
+      // coll * 1e20 / debt = NICR
+      // coll * 1e20 / (amount + amount * 5 / 1000 + 200e18) = NICR
+      // coll = NICR * (amount + amount * 5 / 1000 + 200e18) / 1e20
+      const amount = to1e18("100,000")
+      const collateral =
+        (aliceNICR * (amount + (amount * 5n) / 1000n + to1e18(200))) /
+        to1e18(100)
+
+      await contracts.borrowerOperations
+        .connect(dennis.wallet)
+        .openTrove(amount, ZERO_ADDRESS, ZERO_ADDRESS, { value: collateral })
+
+      await openTrove(contracts, {
+        musdAmount: "10,000",
+        ICR: "111",
+        sender: carol.wallet,
+      })
+
+      await dropPriceAndLiquidate(contracts, deployer, carol)
+
+      expect(await isSortedTrovesSorted(contracts)).to.equal(true)
+    })
+
+    it("when passed malicious hints in a full+partial redemption", async () => {
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "350",
+        sender: alice.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "340",
+        sender: bob.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "330",
+        sender: carol.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "320",
+        sender: dennis.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "320",
+        sender: eric.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "100,000",
+        ICR: "110",
+        sender: frank.wallet,
+      })
+
+      // Put Frank in a state where he isn't redeemable
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice((await contracts.priceFeed.fetchPrice()) / 2n)
+
+      await updateTroveSnapshot(contracts, eric, "before")
+
+      // We want to trigger a partial redemption from dennis, so we redeem enough to fully redeem eric, but not dennis
+
+      const redemptionAmount = eric.trove.debt.before + to1e18("30,000")
+
+      const { firstRedemptionHint, partialRedemptionHintNICR } =
+        await contracts.hintHelpers.getRedemptionHints(
+          redemptionAmount,
+          await contracts.priceFeed.fetchPrice(),
+          0,
+        )
+
+      // Give alice enough mUSD to redeem
+      await contracts.musd.unprotectedMint(alice.wallet, redemptionAmount)
+
+      // pass in malicious hints; we *should* be inserting between carol and
+      // frank, not eric and frank.
+      await contracts.troveManager.redeemCollateral(
+        redemptionAmount,
+        firstRedemptionHint,
+        eric.wallet,
+        frank.wallet,
+        partialRedemptionHintNICR,
+        0,
+      )
+
+      expect(await isSortedTrovesSorted(contracts)).to.equal(true)
     })
   })
 })

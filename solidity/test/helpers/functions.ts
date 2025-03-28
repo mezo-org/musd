@@ -1079,3 +1079,31 @@ export async function testUpdatesSystemInterestOwed(
 export function collateralToRedistribute(collateral: bigint): bigint {
   return (collateral * 995n) / 1000n
 }
+
+export async function isSortedTrovesSorted(
+  contracts: Contracts,
+): Promise<boolean> {
+  const { sortedTroves, troveManager } = contracts
+  if (await sortedTroves.isEmpty()) {
+    return true
+  }
+
+  let previousAddress = await sortedTroves.getFirst()
+
+  if ((await sortedTroves.getSize()) === 1n) {
+    return previousAddress !== ZERO_ADDRESS
+  }
+
+  let previousNICR = await troveManager.getNominalICR(previousAddress)
+  let nextAddress = await sortedTroves.getNext(previousAddress)
+  while (nextAddress !== ZERO_ADDRESS) {
+    const nextNICR = await troveManager.getNominalICR(nextAddress)
+    if (nextNICR > previousNICR) {
+      return false
+    }
+    previousNICR = nextNICR
+    previousAddress = nextAddress
+    nextAddress = await sortedTroves.getNext(previousAddress)
+  }
+  return true
+}
