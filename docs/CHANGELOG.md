@@ -105,3 +105,21 @@ document is not intended to cover all changes but rather focuses on the changes 
 
 1.  **Staleness Check**
    - If the oracle has not been updated in at least 60 seconds, it is stale, and we will revert on a call to `fetchPrice`.
+
+## Structural Changes
+
+1. **SortedTroves Ordering**
+   - Removed interest from SortedTroves ordering. The list is now ordered according to the collateral to principal ratio. Previously, this was collateral to total debt (principal + interest).
+   - **Consequences for Frontend**: Trove insertions should be slightly more gas efficient. Additionally, redemptions are now more predictable as the trove that will be redeemed against is based on stable values (principal) instead of dynamically changing values (like interest).
+
+2. **Unified Liquidations**
+   - Liquidations are now the same in recovery mode and normal mode.
+   - **Consequences for Frontend**: Users no longer have to worry about getting liquidated unless they fall below the MCR (110%). Previously, if the system went into recovery mode, it was possible to get liquidated at ICR < CCR (150%).
+   
+3. **BorrowerOperationsSignatures**
+   - Now allows for trove operations to be called on behalf of the borrower using EIP712 signature verification.
+   - **Consequences for Frontend**: This is most likely to be used by the veBTC BorrowLocker contract and likely does not have consequences for the existing frontend.
+   
+4. **OwnableUpgradeable Contracts**
+   - All contracts are now OwnableUpgradeable, meaning contract addresses should remain the same after upgrades.
+   - **Consequences for Frontend**: There will not be a need going forward to update contract addresses. However, the first release will involve different contract addresses, and we still need to spec out how that initial upgrade will happen.
