@@ -1,7 +1,7 @@
 # Changelog for Frontend Developers
 
-This changelog covers the differences from the 0.1.0 release to matsnet (https://github.com/mezo-org/musd/releases/tag/v0.1.0)
-and the current state as of https://github.com/mezo-org/musd/commit/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e.  This
+This changelog covers the differences from the [0.1.0 release to matsnet](https://github.com/mezo-org/musd/releases/tag/v0.1.0)
+and the current state as of [this commit] (https://github.com/mezo-org/musd/commit/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e).  This
 document is not intended to cover all changes but rather focuses on the changes that are relevant to frontend dapp development.
 
 ## API Changes in Core Contracts
@@ -51,11 +51,7 @@ document is not intended to cover all changes but rather focuses on the changes 
     - Remove any UI elements or logic related to setting custom fee percentages
     - Fees are now fixed in the contract and cannot be specified per transaction
 
-2. **Upgradeable Contract Pattern**
-    - Contract addresses remain the same after upgrades
-    - No need to update contract addresses in your frontend
-
-3. **Asset Amount Parameter**
+2. **Asset Amount Parameter**
     - The `_assetAmount` parameter has been removed from functions
     - The contract now uses `msg.value` directly for collateral operations
 
@@ -94,10 +90,6 @@ document is not intended to cover all changes but rather focuses on the changes 
 
 1. **Fixed Fee Structure**
    - Borrowing and redemption fees are now fixed rather than variable
-
-2. **Upgradeable Contract Pattern**
-   - Contract addresses remain the same after upgrades
-   - No need to update contract addresses in your frontend
 
 ### PriceFeed
 
