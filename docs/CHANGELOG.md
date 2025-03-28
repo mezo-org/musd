@@ -86,6 +86,23 @@ document is not intended to cover all changes but rather focuses on the changes 
 - Changed from `view` to `pure` function
 - Now uses a fixed fee rate (BORROWING_FEE_FLOOR) instead of a variable rate
 
+#### Virtual Interest Accrual
+
+Trove-state related `view` functions now virtually accrue interest rather than using stale values from Trove structs.  This means the values they return should always be up to date.
+
+The functions affected include:
+- `getCurrentICR`
+- `getEntireDebtAndColl`
+- `getEntireSystemDebt`
+- `checkRecoveryMode`
+- `getTroveDebt`
+
+One notable exception is `getTroveInterestOwed` which returns the value recorded on the Trove struct but does not virtually accrue interest.
+
+#### Interest Not Used for NICR Calculations
+
+Interest is no longer used in NICR calculations for insertion into SortedTroves.  This should be transparent to the front end, but it is worth noting that functions like `getNominalICR` will now reflect a collateral to principal ratio rather than collateral to total debt.
+
 #### Integration Notes for Frontend Developers
 
 1. **Fixed Fee Structure**
