@@ -1,0 +1,64 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-02T17:15:58.377Z",
+  "network": "matsnet",
+  "config": {
+    "numAccounts": 5,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2000
+  },
+  "results": {
+    "successful": 2,
+    "failed": 3,
+    "gasUsed": "1221881",
+    "averageGas": "610940"
+  },
+  "transactions": [
+    {
+      "account": "0x09ef031b517004BD66D5F0df48e1b18d9b3f00b4",
+      "collateralRatio": 150,
+      "collateralAmount": "0.000165",
+      "debtAmount": 2000,
+      "error": "rpc error: code = Unknown desc = execution reverted: BorrowerOps: An operation that would result in TCR < CCR is not permitted"
+    },
+    {
+      "hash": "0xe985d791c749b1d42019a9cb940ef77c0efd5a1da8d570a5a990de74392487a7",
+      "account": "0xE274C1D3Cd3897c6d32D383e8855fED94f78c67a",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00022",
+      "debtAmount": 2000,
+      "gasUsed": "678997",
+      "duration": 2868
+    },
+    {
+      "account": "0x84e0e42fdEa0f64De28d63a76761eF3230b35078",
+      "collateralRatio": 250,
+      "collateralAmount": "0.000275",
+      "debtAmount": 2000,
+      "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x84e0e42fdEa0f64De28d63a76761eF3230b35078\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xcde65aa220e5f834d2800df9e2dfdd52764c83b3aa81a04fd807bf8dce7ef23b\", \"blockNumber\": 3552470, \"contractAddress\": null, \"cumulativeGasUsed\": \"540085\", \"from\": \"0x84e0e42fdEa0f64De28d63a76761eF3230b35078\", \"gasPrice\": \"7\", \"gasUsed\": \"540085\", \"hash\": \"0x7d9954c2aa646ed0cab486d6cbb0c338e440100f825070cf6e4857f8666d89cf\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+    },
+    {
+      "hash": "0xfcf1acf8fe6f9e33dbd4d0273e97536b0f1a45972d3fac48393186614da17370",
+      "account": "0xBf427a086C29b2c01088AA623A740227FC806448",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00033",
+      "debtAmount": 2000,
+      "gasUsed": "542884",
+      "duration": 5347
+    },
+    {
+      "account": "0x26bb6BBDbeA52f3515d8908bfd5ca0c53AeF7748",
+      "collateralRatio": 350,
+      "collateralAmount": "0.000385",
+      "debtAmount": 2000,
+      "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x26bb6BBDbeA52f3515d8908bfd5ca0c53AeF7748\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x1ed007b3c69f95009f1948d6afd776919556f4e8b94975674e5ad3e2f8a8cfc9\", \"blockNumber\": 3552474, \"contractAddress\": null, \"cumulativeGasUsed\": \"540085\", \"from\": \"0x26bb6BBDbeA52f3515d8908bfd5ca0c53AeF7748\", \"gasPrice\": \"7\", \"gasUsed\": \"540085\", \"hash\": \"0x37616d2ada32754deac7c4b8aa41876cf8b06db1dcb2431be475aec52c19f263\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+    }
+  ]
+}
