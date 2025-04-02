@@ -1,0 +1,23 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-02T15:35:48.430Z",
+  "network": "matsnet",
+  "config": {
+    "numAccounts": 5,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ]
+  },
+  "results": {
+    "successful": 0,
+    "failed": 5,
+    "gasUsed": 0,
+    "transactions": []
+  },
+  "transactions": []
+}

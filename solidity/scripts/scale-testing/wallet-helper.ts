@@ -13,13 +13,8 @@ export class WalletHelper {
     if (password) {
       this.password = password
     } else {
-      const passwordFile = path.join(
-        __dirname,
-        "..",
-        "..",
-        "scale-testing",
-        "password.txt",
-      )
+      const passwordFile = path.join(__dirname, "password.txt")
+      console.log(`Reading password from ${passwordFile}`)
       if (fs.existsSync(passwordFile)) {
         this.password = fs.readFileSync(passwordFile, "utf8").trim()
       } else {
