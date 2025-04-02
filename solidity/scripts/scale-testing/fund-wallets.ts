@@ -1,13 +1,13 @@
-// scripts/scale-testing/fund-wallets-optimized.ts
+// scripts/scale-testing/fund-wallets-robust.ts
 import { ethers } from "hardhat"
 import * as fs from "fs"
 import * as path from "path"
 
 // Configuration
-const BATCH_SIZE = 10 // Number of wallets to fund in parallel
 const ETH_PER_WALLET = "0.001" // Amount of ETH to send to each wallet
 const OUTPUT_DIR = path.join(__dirname, "..", "..", "scale-testing")
 const WALLETS_FILE = path.join(OUTPUT_DIR, "wallets.json")
+const MAX_RETRIES = 5 // Maximum number of retries per wallet
 
 async function main() {
   // Load wallet addresses
@@ -38,118 +38,149 @@ async function main() {
     )
   }
 
-  // Get the current nonce from the network
-  let currentNonce = await ethers.provider.getTransactionCount(funder.address)
-  console.log(`Starting with nonce: ${currentNonce}`)
-
-  // Fund wallets in batches
+  // Fund wallets one by one with smart retry logic
   const ethAmount = ethers.parseEther(ETH_PER_WALLET)
   let fundedCount = 0
-  let fundedWallets = []
+  const fundedWallets = []
 
   console.log(`\nFunding wallets with ${ETH_PER_WALLET} ETH each...`)
 
-  for (let i = 0; i < wallets.length; i += BATCH_SIZE) {
-    // Get the current batch
-    const batch = wallets.slice(i, Math.min(i + BATCH_SIZE, wallets.length))
-    console.log(
-      `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(wallets.length / BATCH_SIZE)} (${batch.length} wallets)...`,
+  // Function to get the current nonce with retry logic
+  async function getCurrentNonce() {
+    // Try multiple times to get a consistent nonce
+    const nonce = await ethers.provider.getTransactionCount(
+      funder.address,
+      "pending",
+    )
+    const confirmedNonce = await ethers.provider.getTransactionCount(
+      funder.address,
+      "latest",
     )
 
-    // Prepare transactions with explicit nonces
-    const txPromises = batch.map((wallet, index) => {
-      const nonce = currentNonce + index
-      console.log(`Preparing tx for ${wallet.address} with nonce ${nonce}`)
+    console.log(`Nonce check - Pending: ${nonce}, Confirmed: ${confirmedNonce}`)
 
-      return funder.sendTransaction({
-        to: wallet.address,
-        value: ethAmount,
-        nonce,
-        gasLimit: 30000, // Explicit gas limit for simple transfers
-      })
-    })
+    // If pending and confirmed nonces differ, use the higher value to be safe
+    return Math.max(nonce, confirmedNonce)
+  }
+
+  // Function to send a transaction with smart retry logic
+  async function sendWithRetry(walletAddress, retryCount = 0) {
+    if (retryCount >= MAX_RETRIES) {
+      console.log(
+        `Maximum retries reached for wallet ${walletAddress}, skipping.`,
+      )
+      return false
+    }
 
     try {
-      // Send all transactions in the batch
-      console.log(`Sending ${batch.length} transactions...`)
-      const txs = await Promise.all(txPromises)
-
-      // Wait for all confirmations
-      console.log("Waiting for confirmations...")
-      const receipts = await Promise.all(txs.map((tx) => tx.wait()))
-
-      // Update nonce and funded count
-      currentNonce += batch.length
-      fundedCount += batch.length
-      fundedWallets = [...fundedWallets, ...batch.map((w) => w.address)]
-
+      // Get current nonce
+      const nonce = await getCurrentNonce()
       console.log(
-        `Batch complete. ${fundedCount}/${wallets.length} wallets funded so far.`,
+        `Attempt ${retryCount + 1}/${MAX_RETRIES}: Sending ${ETH_PER_WALLET} ETH to ${walletAddress} with nonce ${nonce}...`,
       )
 
-      // Add a small delay between batches
-      if (i + BATCH_SIZE < wallets.length) {
-        console.log("Waiting 2 seconds before next batch...")
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      }
+      // Send transaction
+      const tx = await funder.sendTransaction({
+        to: walletAddress,
+        value: ethAmount,
+        nonce,
+        gasLimit: 30000,
+      })
+
+      console.log(`Transaction sent: ${tx.hash}`)
+
+      // Wait for confirmation
+      const receipt = await tx.wait()
+      console.log(`Transaction confirmed in block ${receipt?.blockNumber}`)
+      return true
     } catch (error) {
-      console.error("Error in batch:", error.message)
+      console.error("Error:", error.message)
 
-      // If there's an error, switch to sequential mode for this batch
-      console.log("Switching to sequential mode for this batch...")
+      // If it's a nonce error, try incrementing the nonce
+      if (error.message.includes("invalid nonce")) {
+        // Extract the expected nonce from the error message if possible
+        const match = error.message.match(/expected (\d+)/)
+        let nextNonce
 
-      // Reset nonce
-      currentNonce = await ethers.provider.getTransactionCount(funder.address)
-      console.log(`Current nonce from network: ${currentNonce}`)
+        if (match && match[1]) {
+          // Use the nonce suggested in the error message
+          nextNonce = parseInt(match[1])
+          console.log(`Error suggests using nonce ${nextNonce}`)
+        } else {
+          // If we can't extract it, just increment by 1
+          nextNonce = (await getCurrentNonce()) + 1
+          console.log(`Incrementing to nonce ${nextNonce}`)
+        }
 
-      // Process each wallet in the batch sequentially
-      for (const wallet of batch) {
+        // Force the provider to refresh its nonce tracking
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        // Retry with the new nonce
         try {
-          // Skip already funded wallets
-          if (fundedWallets.includes(wallet.address)) {
-            console.log(`Wallet ${wallet.address} already funded, skipping.`)
-            continue
-          }
-
-          console.log(
-            `Sending ${ETH_PER_WALLET} ETH to ${wallet.address} with nonce ${currentNonce}...`,
-          )
-
+          console.log(`Retrying with explicit nonce ${nextNonce}...`)
           const tx = await funder.sendTransaction({
-            to: wallet.address,
+            to: walletAddress,
             value: ethAmount,
-            nonce: currentNonce,
+            nonce: nextNonce,
             gasLimit: 30000,
           })
 
           console.log(`Transaction sent: ${tx.hash}`)
-          await tx.wait()
-
-          currentNonce++
-          fundedCount++
-          fundedWallets.push(wallet.address)
-
-          console.log(
-            `Success. ${fundedCount}/${wallets.length} wallets funded so far.`,
-          )
-        } catch (walletError) {
-          console.error(
-            `Error funding wallet ${wallet.address}:`,
-            walletError.message,
-          )
-
-          // If it's a nonce error, recover the nonce
-          if (walletError.message.includes("invalid nonce")) {
-            currentNonce = await ethers.provider.getTransactionCount(
-              funder.address,
-            )
-            console.log(`Recovered nonce: ${currentNonce}`)
-          }
+          const receipt = await tx.wait()
+          console.log(`Transaction confirmed in block ${receipt?.blockNumber}`)
+          return true
+        } catch (retryError) {
+          console.error("Retry failed:", retryError.message)
+          // Wait a bit longer before the next retry
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+          // Recursive retry with incremented counter
+          return sendWithRetry(walletAddress, retryCount + 1)
         }
-
-        // Small delay between sequential transactions
-        await new Promise((resolve) => setTimeout(resolve, 500))
+      } else {
+        // For other errors, just retry after a delay
+        console.log("Waiting 2 seconds before retry...")
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        return sendWithRetry(walletAddress, retryCount + 1)
       }
+    }
+  }
+
+  // Process each wallet
+  for (let i = 0; i < wallets.length; i++) {
+    const wallet = wallets[i]
+    console.log(
+      `\nProcessing wallet ${i + 1}/${wallets.length}: ${wallet.address}`,
+    )
+
+    // Check if this wallet already has funds
+    const balance = await ethers.provider.getBalance(wallet.address)
+    if (balance >= ethAmount) {
+      console.log(
+        `Wallet already has ${ethers.formatEther(balance)} ETH, skipping.`,
+      )
+      fundedCount++
+      fundedWallets.push(wallet.address)
+      continue
+    }
+
+    // Try to fund this wallet
+    const success = await sendWithRetry(wallet.address)
+
+    if (success) {
+      fundedCount++
+      fundedWallets.push(wallet.address)
+      console.log(
+        `Successfully funded ${fundedCount}/${wallets.length} wallets so far.`,
+      )
+    } else {
+      console.log(
+        `Failed to fund wallet ${wallet.address} after multiple attempts.`,
+      )
+    }
+
+    // Add a small delay between wallets
+    if (i < wallets.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
   }
 
