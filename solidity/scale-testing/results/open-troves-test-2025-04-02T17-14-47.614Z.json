@@ -1,0 +1,60 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-02T17:14:47.614Z",
+  "network": "matsnet",
+  "config": {
+    "numAccounts": 5,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2000
+  },
+  "results": {
+    "successful": 0,
+    "failed": 5,
+    "gasUsed": "0",
+    "averageGas": "0"
+  },
+  "transactions": [
+    {
+      "account": "0x09ef031b517004BD66D5F0df48e1b18d9b3f00b4",
+      "collateralRatio": 150,
+      "collateralAmount": "0.000165",
+      "debtAmount": 2000,
+      "error": "no matching fragment (operation=\"fragment\", info={ \"args\": [ 0, 2000000000000000000000, \"0x0000000000000000000000000000000000000000\", \"0x0000000000000000000000000000000000000000\", { \"value\": 165000000000000 } ], \"key\": \"openTrove\" }, code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0xE274C1D3Cd3897c6d32D383e8855fED94f78c67a",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00022",
+      "debtAmount": 2000,
+      "error": "no matching fragment (operation=\"fragment\", info={ \"args\": [ 0, 2000000000000000000000, \"0x0000000000000000000000000000000000000000\", \"0x0000000000000000000000000000000000000000\", { \"value\": 220000000000000 } ], \"key\": \"openTrove\" }, code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x84e0e42fdEa0f64De28d63a76761eF3230b35078",
+      "collateralRatio": 250,
+      "collateralAmount": "0.000275",
+      "debtAmount": 2000,
+      "error": "no matching fragment (operation=\"fragment\", info={ \"args\": [ 0, 2000000000000000000000, \"0x0000000000000000000000000000000000000000\", \"0x0000000000000000000000000000000000000000\", { \"value\": 275000000000000 } ], \"key\": \"openTrove\" }, code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0xBf427a086C29b2c01088AA623A740227FC806448",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00033",
+      "debtAmount": 2000,
+      "error": "no matching fragment (operation=\"fragment\", info={ \"args\": [ 0, 2000000000000000000000, \"0x0000000000000000000000000000000000000000\", \"0x0000000000000000000000000000000000000000\", { \"value\": 330000000000000 } ], \"key\": \"openTrove\" }, code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x26bb6BBDbeA52f3515d8908bfd5ca0c53AeF7748",
+      "collateralRatio": 350,
+      "collateralAmount": "0.000385",
+      "debtAmount": 2000,
+      "error": "no matching fragment (operation=\"fragment\", info={ \"args\": [ 0, 2000000000000000000000, \"0x0000000000000000000000000000000000000000\", \"0x0000000000000000000000000000000000000000\", { \"value\": 385000000000000 } ], \"key\": \"openTrove\" }, code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    }
+  ]
+}
