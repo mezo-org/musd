@@ -2,7 +2,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import { ethers } from "hardhat"
-import { AccountState, StateFile } from "./types"
+import { StateFile } from "./types"
 
 export class StateManager {
   private filePath: string

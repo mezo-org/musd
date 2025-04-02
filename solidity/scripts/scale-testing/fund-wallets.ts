@@ -1,10 +1,9 @@
-// scripts/scale-testing/fund-wallets-robust.ts
 import { ethers } from "hardhat"
 import * as fs from "fs"
 import * as path from "path"
 
 // Configuration
-const ETH_PER_WALLET = "0.001" // Amount of ETH to send to each wallet
+const BTC_PER_WALLET = "0.001" // Amount of BTC to send to each wallet
 const OUTPUT_DIR = path.join(__dirname, "..", "..", "scale-testing")
 const WALLETS_FILE = path.join(OUTPUT_DIR, "wallets.json")
 const MAX_RETRIES = 5 // Maximum number of retries per wallet
@@ -27,23 +26,23 @@ async function main() {
   // Check funder balance
   const funderBalance = await ethers.provider.getBalance(funder.address)
   const requiredBalance =
-    ethers.parseEther(ETH_PER_WALLET) * BigInt(wallets.length)
+    ethers.parseEther(BTC_PER_WALLET) * BigInt(wallets.length)
 
-  console.log(`Funder balance: ${ethers.formatEther(funderBalance)} ETH`)
-  console.log(`Required balance: ${ethers.formatEther(requiredBalance)} ETH`)
+  console.log(`Funder balance: ${ethers.formatEther(funderBalance)} BTC`)
+  console.log(`Required balance: ${ethers.formatEther(requiredBalance)} BTC`)
 
   if (funderBalance < requiredBalance) {
     throw new Error(
-      `Insufficient funds. Need ${ethers.formatEther(requiredBalance)} ETH but have ${ethers.formatEther(funderBalance)} ETH`,
+      `Insufficient funds. Need ${ethers.formatEther(requiredBalance)} BTC but have ${ethers.formatEther(funderBalance)} BTC`,
     )
   }
 
   // Fund wallets one by one with smart retry logic
-  const ethAmount = ethers.parseEther(ETH_PER_WALLET)
+  const ethAmount = ethers.parseEther(BTC_PER_WALLET)
   let fundedCount = 0
   const fundedWallets = []
 
-  console.log(`\nFunding wallets with ${ETH_PER_WALLET} ETH each...`)
+  console.log(`\nFunding wallets with ${BTC_PER_WALLET} BTC each...`)
 
   // Function to get the current nonce with retry logic
   async function getCurrentNonce() {
@@ -76,7 +75,7 @@ async function main() {
       // Get current nonce
       const nonce = await getCurrentNonce()
       console.log(
-        `Attempt ${retryCount + 1}/${MAX_RETRIES}: Sending ${ETH_PER_WALLET} ETH to ${walletAddress} with nonce ${nonce}...`,
+        `Attempt ${retryCount + 1}/${MAX_RETRIES}: Sending ${BTC_PER_WALLET} BTC to ${walletAddress} with nonce ${nonce}...`,
       )
 
       // Send transaction
@@ -156,7 +155,7 @@ async function main() {
     const balance = await ethers.provider.getBalance(wallet.address)
     if (balance >= ethAmount) {
       console.log(
-        `Wallet already has ${ethers.formatEther(balance)} ETH, skipping.`,
+        `Wallet already has ${ethers.formatEther(balance)} BTC, skipping.`,
       )
       fundedCount++
       fundedWallets.push(wallet.address)
@@ -185,14 +184,14 @@ async function main() {
   }
 
   console.log(
-    `\nFunding complete. ${fundedCount}/${wallets.length} wallets funded with ${ETH_PER_WALLET} ETH each.`,
+    `\nFunding complete. ${fundedCount}/${wallets.length} wallets funded with ${BTC_PER_WALLET} BTC each.`,
   )
 
   // Update wallet file with funding status
   const updatedWallets = wallets.map((wallet) => ({
     ...wallet,
     funded: fundedWallets.includes(wallet.address),
-    fundedAmount: fundedWallets.includes(wallet.address) ? ETH_PER_WALLET : "0",
+    fundedAmount: fundedWallets.includes(wallet.address) ? BTC_PER_WALLET : "0",
     fundedAt: fundedWallets.includes(wallet.address)
       ? new Date().toISOString()
       : null,

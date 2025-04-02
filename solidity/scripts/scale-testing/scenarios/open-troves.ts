@@ -1,4 +1,3 @@
-// scripts/scale-testing/scenarios/open-troves.ts
 import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
@@ -114,6 +113,7 @@ async function main() {
 
     if (!wallet) {
       console.log(`No wallet found for account ${account.address}, skipping`)
+      // eslint-disable-next-line no-continue
       continue
     }
 
@@ -204,7 +204,9 @@ async function main() {
     // Wait a bit between transactions to avoid network congestion
     if (i < testAccounts.length - 1) {
       console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000)
+      })
     }
   }
 
