@@ -232,17 +232,25 @@ export class StateManager {
         // Get Trove information
         const troveData = await troveManager.Troves(address)
 
-        // Status is at index 3 in the returned struct
-        const status = Number(troveData[3])
+        // Use named properties instead of indices
+        // Status enum: 0 = nonExistent, 1 = active, 2 = closedByOwner, 3 = closedByLiquidation, 4 = closedByRedemption
+        const status = Number(troveData.status)
         account.hasTrove = status === 1 // 1 = active
 
         if (status === 1) {
-          // Debt is at index 0, collateral at index 1
-          account.troveDebt = ethers.formatEther(troveData[0])
-          account.troveCollateral = ethers.formatEther(troveData[1])
+          // Calculate total debt (principal + interest)
+          const totalDebt = troveData.principal + troveData.interestOwed
+
+          account.troveDebt = ethers.formatEther(totalDebt)
+          account.troveCollateral = ethers.formatEther(troveData.coll)
         } else {
           account.troveDebt = "0"
           account.troveCollateral = "0"
+        }
+
+        // Only store troveStatus if it exists in the AccountState type
+        if ("troveStatus" in account) {
+          account.troveStatus = status
         }
 
         account.lastTroveUpdate = new Date().toISOString()

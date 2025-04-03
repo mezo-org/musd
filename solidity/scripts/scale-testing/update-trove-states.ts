@@ -29,6 +29,10 @@ async function main() {
   const updatedMusd = await stateManager.updateMusdBalances(musdAddress)
   console.log(`Updated MUSD balances for ${updatedMusd} accounts`)
 
+  // Update BTC balances
+  const updatedBalances = await stateManager.updateBtcBalances()
+  console.log(`Updated BTC balances for ${updatedBalances} accounts`)
+
   console.log("Trove state update complete!")
 }
 
