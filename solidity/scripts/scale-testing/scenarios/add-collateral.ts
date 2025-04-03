@@ -20,7 +20,7 @@ async function main() {
   // Create state manager
   const stateManager = new StateManager(networkName)
 
-  // Create wallet helper and load wallets
+  // Create wallet helper
   const walletHelper = new WalletHelper()
 
   // Get contract addresses
@@ -41,6 +41,11 @@ async function main() {
     troveManagerAddress,
   )
 
+  // Update trove states before selecting accounts
+  console.log("Updating Trove states for all accounts...")
+  await stateManager.updateTroveStates(troveManagerAddress)
+  console.log("Trove states updated")
+
   // Select accounts for testing - accounts that HAVE troves
   const testAccounts = stateManager.getAccounts({
     hasTrove: true,
@@ -51,6 +56,11 @@ async function main() {
   console.log(
     `Selected ${testAccounts.length} accounts with existing troves for testing`,
   )
+
+  // Load wallets for these accounts
+  const addresses = testAccounts.map((account) => account.address)
+  const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
+  console.log(`Loaded ${loadedWallets} wallets for testing`)
 
   // Initialize results object
   const results = {
@@ -88,22 +98,31 @@ async function main() {
       console.log(`Could not fetch current trove state: ${error.message}`)
     }
 
-    // Get the wallet signer
-    const signer = walletHelper.getSigner(account.address)
+    // Get the wallet
+    const wallet = walletHelper.getWallet(account.address)
+
+    if (!wallet) {
+      console.log(`No wallet found for account ${account.address}, skipping`)
+      results.failed++
+      results.transactions.push({
+        account: account.address,
+        collateralAmount: ethers.formatEther(collateralAmount),
+        error: "No wallet found for account",
+      })
+      continue
+    }
 
     try {
       // Record the start time
       const startTime = Date.now()
 
       // Add collateral transaction
-      const tx = await borrowerOperations.connect(signer).addColl(
-        ethers.ZeroAddress, // Upper hint (use zero address for simplicity)
-        ethers.ZeroAddress, // Lower hint (use zero address for simplicity)
-        {
+      const tx = await borrowerOperations
+        .connect(wallet)
+        .addColl(ethers.ZeroAddress, ethers.ZeroAddress, {
           value: collateralAmount,
           gasLimit: 1000000, // Explicitly set a higher gas limit
-        },
-      )
+        })
 
       console.log(`Transaction sent: ${tx.hash}`)
 
@@ -145,13 +164,15 @@ async function main() {
     // Wait a bit between transactions to avoid network congestion
     if (i < testAccounts.length - 1) {
       console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000)
+      })
     }
   }
 
   // Print summary
   console.log("\n--- Test Summary ---")
-  console.log(`Total accounts: ${testAccounts.length}`)
+  console.log(`Total accounts processed: ${testAccounts.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
   console.log(`Total gas used: ${results.gasUsed}`)
@@ -208,7 +229,7 @@ async function main() {
 
   console.log(`Results saved to ${resultsFile}`)
 
-  // Update all Trove states to ensure data is current
+  // Update all Trove states again to ensure data is current
   console.log("\nUpdating Trove states for all accounts...")
   await stateManager.updateTroveStates(troveManagerAddress)
 
