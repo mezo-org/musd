@@ -1,7 +1,7 @@
 // scripts/scale-testing/state-manager.ts
 import * as fs from "fs"
 import * as path from "path"
-import { ethers } from "hardhat"
+import { ethers, network } from "hardhat"
 import { StateFile } from "./types"
 
 export class StateManager {
@@ -10,8 +10,12 @@ export class StateManager {
   private state: StateFile
 
   constructor(networkName: string) {
+    const mappedNetworkName = StateManager.mapNetworkForState(networkName)
     const outputDir = path.join(__dirname, "..", "..", "scale-testing")
-    this.filePath = path.join(outputDir, `account-state-${networkName}.json`)
+    this.filePath = path.join(
+      outputDir,
+      `account-state-${mappedNetworkName}.json`,
+    )
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(outputDir)) {
@@ -19,7 +23,14 @@ export class StateManager {
     }
 
     // Initialize or load the state file
-    this.loadState(networkName)
+    this.loadState(mappedNetworkName)
+  }
+
+  private static mapNetworkForState(networkName: string): string {
+    if (networkName === "matsnet_fuzz") {
+      return "matsnet" // Use matsnet state files for matsnet_fuzz
+    }
+    return networkName
   }
 
   /**
