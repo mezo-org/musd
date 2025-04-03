@@ -26,7 +26,7 @@ export class StateManager {
     this.loadState(mappedNetworkName)
   }
 
-  private static mapNetworkForState(networkName: string): string {
+  public static mapNetworkForState(networkName: string): string {
     if (networkName === "matsnet_fuzz") {
       return "matsnet" // Use matsnet state files for matsnet_fuzz
     }

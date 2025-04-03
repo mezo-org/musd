@@ -15,7 +15,9 @@ const COLLATERAL_RATIOS = [150, 200, 250, 300, 350]
 async function main() {
   // Get the network name
   const network = await ethers.provider.getNetwork()
-  const networkName = network.name === "unknown" ? "hardhat" : network.name
+  const networkName = StateManager.mapNetworkForState(
+    network.name === "unknown" ? "hardhat" : network.name,
+  )
 
   console.log(`Running Open Troves test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
