@@ -7,7 +7,7 @@ import { getDeploymentAddress } from "../../deployment-helpers"
 const TEST_ID = "open-troves-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use
 const MIN_BTC_BALANCE = "0.0005" // Minimum BTC balance required
-const MUSD_DEBT_AMOUNT = 2000 // Amount of MUSD debt to create
+const MUSD_DEBT_AMOUNT = 2200 // Amount of MUSD debt to create - just over the minimum debt
 
 // Collateral ratios to test (150%, 200%, 250%, 300%, 350%)
 const COLLATERAL_RATIOS = [150, 200, 250, 300, 350]

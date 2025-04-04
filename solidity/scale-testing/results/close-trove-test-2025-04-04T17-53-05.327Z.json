@@ -1,0 +1,54 @@
+{
+  "testId": "close-trove-test",
+  "timestamp": "2025-04-04T17:53:05.327Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5
+  },
+  "results": {
+    "successful": 4,
+    "failed": 1,
+    "gasUsed": "3000000",
+    "averageGas": "750000"
+  },
+  "transactions": [
+    {
+      "account": "0x524c56253C2dEa26b0541cd63c850De346505f63",
+      "error": "Insufficient MUSD to close trove",
+      "requiredMusd": "2210.0",
+      "availableMusd": "102.5"
+    },
+    {
+      "hash": "0x28f88f7c948710b1d9046ac961e4d1cacc48c0b24ee64917ad7c3f2b874bc9bb",
+      "account": "0xA49d5B8f551423Eba70134708A4f4688Ad31b0Bb",
+      "collateralReturned": "0.000385",
+      "debtRepaid": "2210.0",
+      "gasUsed": "750000",
+      "duration": 3491
+    },
+    {
+      "hash": "0x78676d42437af3629a629bf64ca8ed165270c2dcdc024ee5f44f86d6d2e73237",
+      "account": "0x626A33B4c13f31c414f5E7DC67E7008FEa3F8b72",
+      "collateralReturned": "0.000165",
+      "debtRepaid": "2210.0",
+      "gasUsed": "750000",
+      "duration": 3924
+    },
+    {
+      "hash": "0xa4965fb185f0208bede20a36a1cef8836e1ddb70468bd748b94c72fc804a3402",
+      "account": "0x440c4c643E7bB16FB9B929426f2145Ab83d01F5a",
+      "collateralReturned": "0.00022",
+      "debtRepaid": "2210.0",
+      "gasUsed": "750000",
+      "duration": 3761
+    },
+    {
+      "hash": "0x0859e5e3a802feb70465b63a535a39786cb73240d6d83429c384bb354740d958",
+      "account": "0x968921729D709509Cc7690C85A08bBdF19823AC6",
+      "collateralReturned": "0.000275",
+      "debtRepaid": "2210.0",
+      "gasUsed": "750000",
+      "duration": 3813
+    }
+  ]
+}
