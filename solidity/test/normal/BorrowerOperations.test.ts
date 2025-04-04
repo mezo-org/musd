@@ -3351,7 +3351,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
 
       expect(state.activePool.debt.after).to.equal(
-        state.activePool.debt.before - amount + expectedInterest,
+        state.activePool.principal.before + expectedInterest - amount,
       )
     })
 

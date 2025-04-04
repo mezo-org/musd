@@ -69,9 +69,8 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     {
         uint256 activeDebt = activePool.getDebt();
         uint256 closedDebt = defaultPool.getDebt();
-        uint256 accruedInterest = interestRateManager.getAccruedInterest();
 
-        return activeDebt + closedDebt + accruedInterest;
+        return activeDebt + closedDebt;
     }
 
     function _getTCR(
