@@ -2503,6 +2503,11 @@ describe("TroveManager in Normal Mode", () => {
         "before",
         addresses,
       )
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "before",
+      )
       await performRedemption(contracts, dennis, alice, redemptionAmount)
 
       await updateContractsSnapshot(
@@ -2512,13 +2517,29 @@ describe("TroveManager in Normal Mode", () => {
         "after",
         addresses,
       )
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
 
-      await updateTroveSnapshot(contracts, alice, "after")
       const interestAccrued = calculateInterestOwed(
         alice.trove.debt.before,
         1000,
         alice.trove.lastInterestUpdateTime.before,
         alice.trove.lastInterestUpdateTime.after,
+      )
+
+      const totalInterestIncrease = [alice, bob, carol, dennis].reduce(
+        (soFar, user) =>
+          soFar +
+          calculateInterestOwed(
+            user.trove.debt.before,
+            1000,
+            user.trove.lastInterestUpdateTime.before,
+            alice.trove.lastInterestUpdateTime.after,
+          ),
+        0n,
       )
 
       // interest adjustment is the minimum of interest accrued and redemption amount
@@ -2530,17 +2551,7 @@ describe("TroveManager in Normal Mode", () => {
         state.activePool.principal.before - principalAdjustment,
       )
       expect(state.activePool.interest.after).to.equal(
-        state.activePool.interest.before +
-          calculateInterestOwed(
-            alice.trove.debt.before +
-              bob.trove.debt.before +
-              carol.trove.debt.before +
-              dennis.trove.debt.before,
-            1000,
-            dennis.trove.lastInterestUpdateTime.before,
-            alice.trove.lastInterestUpdateTime.after,
-          ) -
-          interestAdjustment,
+        totalInterestIncrease - interestAdjustment,
       )
     })
 
@@ -3212,27 +3223,22 @@ describe("TroveManager in Normal Mode", () => {
       await setupTroveWithInterestRate(1000, 365)
 
       await updatePCVSnapshot(contracts, state, "before")
-      await updateContractsSnapshot(
-        contracts,
-        state,
-        "activePool",
-        "before",
-        addresses,
-      )
+      await updateTroveSnapshot(contracts, alice, "before")
 
       await contracts.troveManager.updateSystemAndTroveInterest(alice.wallet)
 
       await updatePCVSnapshot(contracts, state, "after")
-      await updateContractsSnapshot(
-        contracts,
-        state,
-        "activePool",
-        "after",
-        addresses,
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      const expectedInterest = calculateInterestOwed(
+        alice.trove.debt.before,
+        1000,
+        alice.trove.lastInterestUpdateTime.before,
+        alice.trove.lastInterestUpdateTime.after,
       )
 
       expect(state.pcv.musd.after - state.pcv.musd.before).to.equal(
-        state.activePool.interest.after - state.activePool.interest.before,
+        expectedInterest,
       )
     })
 
@@ -3313,15 +3319,19 @@ describe("TroveManager in Normal Mode", () => {
         "after",
         addresses,
       )
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      expect(await contracts.interestRateManager.lastUpdatedTime()).to.equal(
+        alice.trove.lastInterestUpdateTime.after,
+      )
 
       expect(state.activePool.interest.after).to.equal(
-        state.activePool.interest.before +
-          calculateInterestOwed(
-            to1e18(10250),
-            100,
-            alice.trove.lastInterestUpdateTime.before,
-            BigInt(await getLatestBlockTimestamp()),
-          ),
+        calculateInterestOwed(
+          alice.trove.debt.before,
+          100,
+          alice.trove.lastInterestUpdateTime.before,
+          BigInt(await getLatestBlockTimestamp()),
+        ),
       )
     })
 

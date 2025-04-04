@@ -11,6 +11,7 @@ import "./interfaces/IActivePool.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IDefaultPool.sol";
+import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IStabilityPool.sol";
 
 /*
@@ -29,7 +30,7 @@ contract ActivePool is
     address public borrowerOperationsAddress;
     address public collSurplusPoolAddress;
     address public defaultPoolAddress;
-    address public interestRateManagerAddress;
+    IInterestRateManager public interestRateManager;
     address public stabilityPoolAddress;
     address public troveManagerAddress;
 
@@ -77,7 +78,7 @@ contract ActivePool is
         borrowerOperationsAddress = _borrowerOperationsAddress;
         collSurplusPoolAddress = _collSurplusPoolAddress;
         defaultPoolAddress = _defaultPoolAddress;
-        interestRateManagerAddress = _interestRateManagerAddress;
+        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         stabilityPoolAddress = _stabilityPoolAddress;
         troveManagerAddress = _troveManagerAddress;
         // slither-disable-end missing-zero-check
@@ -131,15 +132,15 @@ contract ActivePool is
     }
 
     function getDebt() external view override returns (uint) {
-        return principal + interest;
+        return principal + getInterest();
     }
 
     function getPrincipal() external view override returns (uint) {
         return principal;
     }
 
-    function getInterest() external view override returns (uint) {
-        return interest;
+    function getInterest() public view override returns (uint) {
+        return interest + interestRateManager.getAccruedInterest();
     }
 
     function _requireCallerIsBorrowerOperationsOrDefaultPool() internal view {
@@ -157,7 +158,7 @@ contract ActivePool is
         require(
             msg.sender == borrowerOperationsAddress ||
                 msg.sender == troveManagerAddress ||
-                msg.sender == interestRateManagerAddress,
+                msg.sender == address(interestRateManager),
             "ActivePool: Caller must be BorrowerOperations, TroveManager, or InterestRateManager"
         );
     }
