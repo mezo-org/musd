@@ -57,7 +57,7 @@ async function main() {
   const testAccounts = stateManager.getAccounts({
     hasTrove: true,
     notUsedInTest: TEST_ID,
-    limit: NUM_ACCOUNTS,
+    limit: NUM_ACCOUNTS * 2, // Get more accounts than needed in case some can't be used
   })
 
   console.log(
@@ -71,7 +71,7 @@ async function main() {
 
   // Get all accounts with MUSD for potential donors
   const allAccountsWithMusd = stateManager.getAccounts({
-    minMusdBalance: "100", // Minimum MUSD balance to be considered as a donor
+    minMusdBalance: "500", // Minimum MUSD balance to be considered as a donor
   })
 
   console.log(
@@ -95,12 +95,20 @@ async function main() {
   const results = {
     successful: 0,
     failed: 0,
+    skipped: 0,
     gasUsed: BigInt(0),
     transactions: [],
   }
 
-  // Process each account
-  for (let i = 0; i < testAccounts.length; i++) {
+  // Counter for successful tests
+  let successfulTests = 0
+
+  // Process each account until we have enough successful tests
+  for (
+    let i = 0;
+    i < testAccounts.length && successfulTests < NUM_ACCOUNTS;
+    i++
+  ) {
     const account = testAccounts[i]
 
     console.log(
@@ -130,11 +138,7 @@ async function main() {
       )
     } catch (error) {
       console.log(`Could not fetch current trove state: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        error: `Could not fetch trove state: ${error.message}`,
-      })
+      results.skipped++
       continue
     }
 
@@ -147,11 +151,7 @@ async function main() {
       )
     } catch (error) {
       console.log(`Could not fetch MUSD balance: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        error: `Could not fetch MUSD balance: ${error.message}`,
-      })
+      results.skipped++
       continue
     }
 
@@ -162,86 +162,95 @@ async function main() {
         `Required: ${ethers.formatEther(troveDebt)} MUSD, Available: ${ethers.formatEther(musdBalance)} MUSD`,
       )
 
-      // Try to get more MUSD for this account
+      // Calculate how much more MUSD is needed
+      const musdNeeded = troveDebt - musdBalance
       console.log("Attempting to get more MUSD for this account...")
+      console.log(
+        `Looking for an account with at least ${ethers.formatEther(musdNeeded)} MUSD (excluding self)`,
+      )
 
+      // Find potential donor accounts (excluding self)
+      const potentialDonors = allAccountsWithMusd.filter(
+        (donor) =>
+          donor.address.toLowerCase() !== account.address.toLowerCase() &&
+          parseFloat(donor.musdBalance) >=
+            parseFloat(ethers.formatEther(musdNeeded)),
+      )
+
+      console.log(`Found ${potentialDonors.length} potential donor accounts`)
+
+      if (potentialDonors.length === 0) {
+        console.log("No suitable donor accounts found. Skipping this account.")
+        results.skipped++
+        continue
+      }
+
+      // Select a donor
+      const donorAccount = potentialDonors[0]
+      console.log(
+        `Selected donor account: ${donorAccount.address} with ${donorAccount.musdBalance} MUSD`,
+      )
+
+      // Verify donor's on-chain balance
+      let donorOnChainBalance
       try {
-        // Find accounts with excess MUSD that are NOT the current account
-        // Manual filtering since notEqual is not available in getAccounts
-        const neededMusd = ethers.formatEther(troveDebt - musdBalance)
+        donorOnChainBalance = await musdToken.balanceOf(donorAccount.address)
         console.log(
-          `Looking for an account with at least ${neededMusd} MUSD (excluding self)`,
+          `Donor MUSD balance (on-chain): ${ethers.formatEther(donorOnChainBalance)} MUSD`,
         )
 
-        const potentialDonors = allAccountsWithMusd.filter((donor) => {
-          // Ensure addresses are compared case-insensitively
-          const isDifferentAccount =
-            donor.address.toLowerCase() !== account.address.toLowerCase()
-          const hasEnoughMusd =
-            parseFloat(donor.musdBalance) >= parseFloat(neededMusd)
-          return isDifferentAccount && hasEnoughMusd
-        })
-
-        console.log(`Found ${potentialDonors.length} potential donor accounts`)
-
-        if (potentialDonors.length > 0) {
-          const donorAccount = potentialDonors[0]
+        if (donorOnChainBalance < musdNeeded) {
           console.log(
-            `Selected donor account: ${donorAccount.address} with ${donorAccount.musdBalance} MUSD`,
+            "Donor doesn't have enough MUSD on-chain. Skipping this account.",
           )
-
-          // Load donor wallet
-          const donorWallet = walletHelper.getWallet(donorAccount.address)
-
-          if (donorWallet) {
-            const donorMusdBalance = await musdToken.balanceOf(
-              donorAccount.address,
-            )
-            const transferAmount = troveDebt - musdBalance
-
-            console.log(
-              `Donor MUSD balance (on-chain): ${ethers.formatEther(donorMusdBalance)} MUSD`,
-            )
-            console.log(
-              `Transferring ${ethers.formatEther(transferAmount)} MUSD from donor to account...`,
-            )
-
-            const transferTx = await musdToken
-              .connect(donorWallet)
-              .transfer(account.address, transferAmount, {
-                gasLimit: 500000,
-              })
-
-            await transferTx.wait()
-            console.log(`Transfer complete! Transaction: ${transferTx.hash}`)
-
-            // Update MUSD balance
-            musdBalance = await musdToken.balanceOf(account.address)
-            console.log(
-              `Updated MUSD balance: ${ethers.formatEther(musdBalance)} MUSD`,
-            )
-          } else {
-            console.log(
-              `Could not load wallet for donor account ${donorAccount.address}, skipping transfer`,
-            )
-          }
-        } else {
-          console.log("No suitable donor accounts found with sufficient MUSD")
+          results.skipped++
+          continue
         }
       } catch (error) {
-        console.log(`Error trying to get more MUSD: ${error.message}`)
+        console.log(
+          `Could not fetch donor's on-chain balance: ${error.message}`,
+        )
+        results.skipped++
+        continue
+      }
+
+      // Get donor wallet
+      const donorWallet = walletHelper.getWallet(donorAccount.address)
+      if (!donorWallet) {
+        console.log(
+          `No wallet found for donor account ${donorAccount.address}. Skipping.`,
+        )
+        results.skipped++
+        continue
+      }
+
+      // Transfer MUSD from donor to account
+      try {
+        console.log(
+          `Transferring ${ethers.formatEther(musdNeeded)} MUSD from donor to account...`,
+        )
+        const transferTx = await musdToken
+          .connect(donorWallet)
+          .transfer(account.address, musdNeeded)
+        console.log(`Transfer transaction sent: ${transferTx.hash}`)
+        await transferTx.wait()
+        console.log(`Transfer complete! Transaction: ${transferTx.hash}`)
+
+        // Update the balance
+        musdBalance = await musdToken.balanceOf(account.address)
+        console.log(
+          `Updated MUSD balance: ${ethers.formatEther(musdBalance)} MUSD`,
+        )
+      } catch (error) {
+        console.log(`Error trying to get more MUSD: ${error}`)
+        results.skipped++
+        continue
       }
 
       // Check again if we have enough MUSD now
       if (musdBalance < troveDebt) {
         console.log("Still not enough MUSD to close the trove. Skipping.")
-        results.failed++
-        results.transactions.push({
-          account: account.address,
-          error: "Insufficient MUSD to close trove",
-          requiredMusd: ethers.formatEther(troveDebt),
-          availableMusd: ethers.formatEther(musdBalance),
-        })
+        results.skipped++
         continue
       }
     }
@@ -251,11 +260,7 @@ async function main() {
 
     if (!wallet) {
       console.log(`No wallet found for account ${account.address}, skipping`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        error: "No wallet found for account",
-      })
+      results.skipped++
       continue
     }
 
@@ -285,6 +290,7 @@ async function main() {
 
       // Update results
       results.successful++
+      successfulTests++
       results.gasUsed += gasUsed
       results.transactions.push({
         hash: tx.hash,
@@ -307,7 +313,7 @@ async function main() {
     }
 
     // Wait a bit between transactions to avoid network congestion
-    if (i < testAccounts.length - 1) {
+    if (i < testAccounts.length - 1 && successfulTests < NUM_ACCOUNTS) {
       console.log("Waiting 2 seconds before next transaction...")
       await new Promise((resolve) => {
         setTimeout(resolve, 2000)
@@ -317,9 +323,12 @@ async function main() {
 
   // Print summary
   console.log("\n--- Test Summary ---")
-  console.log(`Total accounts processed: ${testAccounts.length}`)
+  console.log(
+    `Total accounts processed: ${results.successful + results.failed + results.skipped}`,
+  )
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
+  console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
     `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : BigInt(0)}`,
@@ -358,6 +367,7 @@ async function main() {
         results: {
           successful: results.successful,
           failed: results.failed,
+          skipped: results.skipped,
           gasUsed: results.gasUsed.toString(),
           averageGas:
             results.successful > 0
