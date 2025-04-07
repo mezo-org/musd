@@ -1,0 +1,32 @@
+{
+  "testId": "liquidate-troves-test",
+  "timestamp": "2025-04-07T17:18:20.671Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "targetCRRange": {
+      "min": 115,
+      "max": 150
+    },
+    "mcr": 110,
+    "priceReductionPercentage": "26.85",
+    "originalPrice": "20000000.0",
+    "reducedPrice": "14620000.0"
+  },
+  "results": {
+    "successful": 1,
+    "failed": 0,
+    "gasUsed": "1000000",
+    "averageGas": "1000000"
+  },
+  "transactions": [
+    {
+      "hash": "0x05ba33654725cf4e628967ccc2fd7c7df0ae8e3626b4f43370e009fe7a1e7c6c",
+      "account": "0xE3496d13084380778c442C8465D6F6f62Db2f1A2",
+      "collateralLiquidated": "0.000165",
+      "debtLiquidated": "2210.0",
+      "gasUsed": "1000000",
+      "duration": 1750
+    }
+  ]
+}

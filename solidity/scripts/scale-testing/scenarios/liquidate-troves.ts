@@ -9,7 +9,7 @@ const TEST_ID = "liquidate-troves-test"
 const NUM_ACCOUNTS = 5 // Number of troves to liquidate
 const TARGET_CR_RANGE = {
   min: 115, // Minimum CR to consider (%)
-  max: 130, // Maximum CR to consider (%)
+  max: 150, // Maximum CR to consider (%) - Increased to find more candidates
 }
 const MCR = 110 // Minimum Collateralization Ratio (%)
 
@@ -54,8 +54,16 @@ async function main() {
   console.log("Trove states updated")
 
   // Get the current BTC price from the MockAggregator
-  const originalPrice = await mockAggregator.latestAnswer()
-  console.log(`Current BTC price: ${ethers.formatEther(originalPrice)} USD`)
+  const [, currentPriceInt, , ,] = await mockAggregator.latestRoundData()
+  const originalPrice = BigInt(currentPriceInt.toString())
+
+  // Get the decimals from the aggregator
+  const decimals = await mockAggregator.decimals()
+  const decimalFactor = BigInt(10) ** BigInt(decimals)
+
+  console.log(
+    `Current BTC price: ${ethers.formatUnits(originalPrice, decimals)} USD (raw: ${originalPrice}, decimals: ${decimals})`,
+  )
 
   // Select accounts for testing - accounts that HAVE troves
   // We'll select more than we need to find ones with suitable CRs
@@ -93,16 +101,27 @@ async function main() {
       }
 
       // Calculate current CR: (coll * price) / debt
-      const cr = (coll * originalPrice) / debt
-      const crPercentage = (Number(cr) / 1e18) * 100
+      // Note: We need to adjust for the different decimal places
+      // Trove collateral is in 18 decimals, price is in `decimals` decimals
+
+      // First, adjust the price to 18 decimals if needed
+      const adjustedPrice =
+        decimals === 18n
+          ? originalPrice
+          : originalPrice * BigInt(10) ** (18n - BigInt(decimals))
+
+      // Calculate CR in 18 decimals
+      const cr = (coll * adjustedPrice) / debt
+
+      // Convert to percentage (as a BigInt)
+      const crPercentageBigInt = (cr * 100n) / BigInt(10) ** 18n
+      const crPercentage = Number(crPercentageBigInt)
 
       if (
         crPercentage >= TARGET_CR_RANGE.min &&
         crPercentage <= TARGET_CR_RANGE.max
       ) {
-        console.log(
-          `Account ${account.address} - CR: ${crPercentage.toFixed(2)}%`,
-        )
+        console.log(`Account ${account.address} - CR: ${crPercentage}%`)
         trovesWithCR.push({
           address: account.address,
           collateral: coll,
@@ -138,13 +157,11 @@ async function main() {
 
   // Find the highest CR among the troves to liquidate
   const highestCR = trovesToLiquidate[trovesToLiquidate.length - 1].crPercentage
-  console.log(`Highest CR among selected troves: ${highestCR.toFixed(2)}%`)
+  console.log(`Highest CR among selected troves: ${highestCR}%`)
 
   // Calculate price reduction factor
   // We need to drop the price so that highestCR becomes just below MCR
   // New CR = (coll * newPrice) / debt = MCR - small buffer
-  // newPrice = (debt * (MCR - buffer)) / coll
-  // reduction = 1 - (newPrice / originalPrice)
 
   const targetCR = MCR - 1 // Target CR just below MCR (e.g., 109%)
   const priceReductionFactor = 1 - targetCR / highestCR
@@ -154,12 +171,12 @@ async function main() {
     `Required price reduction: ${priceReductionPercentage.toFixed(2)}%`,
   )
 
-  // Calculate the new price
-  const newPrice =
+  // Calculate the new price (as a uint256 with the correct decimals)
+  const newPriceBigInt =
     (originalPrice * BigInt(Math.floor((1 - priceReductionFactor) * 1000))) /
     BigInt(1000)
   console.log(
-    `New price: ${ethers.formatEther(newPrice)} USD (${priceReductionPercentage.toFixed(2)}% reduction)`,
+    `New price: ${ethers.formatUnits(newPriceBigInt, decimals)} USD (raw: ${newPriceBigInt})`,
   )
 
   // Load wallet for the deployer (for price changes)
@@ -176,13 +193,16 @@ async function main() {
   try {
     // Step 3: Set the new price via MockAggregator
     console.log("\nStep 3: Setting new price via MockAggregator...")
+
+    // Use the setPrice function from the MockAggregator contract
     const setPriceTx = await mockAggregator
       .connect(deployerWallet)
-      .setAnswer(newPrice)
+      .setPrice(newPriceBigInt)
+
     console.log(`Price change transaction sent: ${setPriceTx.hash}`)
     await setPriceTx.wait()
     console.log(
-      `Price successfully changed to ${ethers.formatEther(newPrice)} USD`,
+      `Price successfully changed to ${ethers.formatUnits(newPriceBigInt, decimals)} USD`,
     )
 
     // Wait a moment for price to propagate
@@ -205,12 +225,22 @@ async function main() {
         const debt = troveState.principal + troveState.interestOwed
 
         // Calculate new CR at the reduced price
-        const newCR = (coll * newPrice) / debt
-        const newCRPercentage = (Number(newCR) / 1e18) * 100
+        // First, adjust the price to 18 decimals if needed
+        const adjustedNewPrice =
+          decimals === 18n
+            ? newPriceBigInt
+            : newPriceBigInt * BigInt(10) ** (18n - BigInt(decimals))
+
+        // Calculate CR in 18 decimals
+        const newCR = (coll * adjustedNewPrice) / debt
+
+        // Convert to percentage (as a BigInt)
+        const newCRPercentageBigInt = (newCR * 100n) / BigInt(10) ** 18n
+        const newCRPercentage = Number(newCRPercentageBigInt)
 
         console.log(`Trove collateral: ${ethers.formatEther(coll)} BTC`)
         console.log(`Trove debt: ${ethers.formatEther(debt)} MUSD`)
-        console.log(`New CR at reduced price: ${newCRPercentage.toFixed(2)}%`)
+        console.log(`New CR at reduced price: ${newCRPercentage}%`)
 
         if (newCRPercentage >= MCR) {
           console.log(
@@ -278,11 +308,11 @@ async function main() {
     try {
       const restorePriceTx = await mockAggregator
         .connect(deployerWallet)
-        .setAnswer(originalPrice)
+        .setPrice(originalPrice)
       console.log(`Price restoration transaction sent: ${restorePriceTx.hash}`)
       await restorePriceTx.wait()
       console.log(
-        `Price successfully restored to ${ethers.formatEther(originalPrice)} USD`,
+        `Price successfully restored to ${ethers.formatUnits(originalPrice, decimals)} USD`,
       )
     } catch (error) {
       console.error(`Error restoring price: ${error.message}`)
@@ -331,8 +361,8 @@ async function main() {
           targetCRRange: TARGET_CR_RANGE,
           mcr: MCR,
           priceReductionPercentage: priceReductionPercentage.toFixed(2),
-          originalPrice: ethers.formatEther(originalPrice),
-          reducedPrice: ethers.formatEther(newPrice),
+          originalPrice: ethers.formatUnits(originalPrice, decimals),
+          reducedPrice: ethers.formatUnits(newPriceBigInt, decimals),
         },
         results: {
           successful: results.successful,
