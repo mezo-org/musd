@@ -66,11 +66,22 @@ export async function deployWithSingletonFactory<T extends BaseContract>(
   const contractInstance: T = contractFactory.attach(contractAddress) as T
 
   // Increase gas limit as the estimates are not accurate.
-  const gasEstimate = await singletonFactory.deploy.estimateGas(
-    initCode,
-    opts.salt,
-  )
-  const gasLimit = (gasEstimate * 150n) / 100n
+  // const gasEstimate = await singletonFactory.deploy.estimateGas(
+  //  initCode,
+  //  opts.salt,
+  //)
+
+  // FIXME: There is something off with gas estimation on matsnet and the gas
+  // limit is severely underestimated. This TX was executed with the commented out
+  // code and an estimate of ~360k gas:
+  // https://explorer.test.mezo.org/tx/0x989a34b8b7924549f9d5eb11d39f5a785e7bc83250831f5330f33074b19d9bf6
+  // 
+  // const gasLimit = (gasEstimate * 150n) / 100n
+
+  // FIXME: This transaction was executed with a hardcoded limit of 3M gas - which
+  // was way closer to the expectation - and it succeeded:
+  // https://explorer.test.mezo.org/tx/0x88aec2c7a857a6f0b3b2536bc0029e4c71d8205c6bf5e473e62402f36c9d517f
+  const gasLimit = 3_000_000
 
   // Deploy contract with SingletonFactory.
   const deploymentTransaction = await singletonFactory.deploy(

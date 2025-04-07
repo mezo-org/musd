@@ -22,8 +22,12 @@ import {
   TroveManagerTester,
 } from "../typechain"
 
-function waitConfirmationsNumber(networkName: string): number {
+export function waitConfirmationsNumber(networkName: string): number {
   switch (networkName) {
+    case "matsnet":
+      return 6
+    case "mezo":
+      return 6
     case "sepolia":
       return 6
     default:
