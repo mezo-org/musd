@@ -12,10 +12,11 @@ describe("TokenDeployer", () => {
   let interestRateManagerAddress: string
   const governanceDelay = 86400
 
+  const deployerAddress = "0x123694886DBf5Ac94DDA07135349534536D14cAf"
   const governanceAddress = "0x98D8899c3030741925BE630C710A98B57F397C7a"
 
-  let thirdParty: HardhatEthersSigner
-  let governance: HardhatEthersSigner
+  let thirdPartySigner: HardhatEthersSigner
+  let deployerSigner: HardhatEthersSigner
 
   before(async () => {
     deployer = await (await ethers.getContractFactory("TokenDeployer")).deploy()
@@ -39,9 +40,9 @@ describe("TokenDeployer", () => {
       .getContractFactory("InterestRateManager")
       .then((factory) => factory.deploy())
       .then((contract) => contract.getAddress())
-    ;[thirdParty] = await helpers.signers.getUnnamedSigners()
-    governance = await helpers.account.impersonateAccount(governanceAddress, {
-      from: thirdParty,
+    ;[thirdPartySigner] = await helpers.signers.getUnnamedSigners()
+    deployerSigner = await helpers.account.impersonateAccount(deployerAddress, {
+      from: thirdPartySigner,
       value: 10n,
     })
   })
@@ -57,7 +58,7 @@ describe("TokenDeployer", () => {
             interestRateManagerAddress,
             governanceDelay,
           ),
-        ).to.be.revertedWithCustomError(deployer, "NotGovernance")
+        ).to.be.revertedWithCustomError(deployer, "NotDeployer")
       })
     })
 
@@ -66,7 +67,7 @@ describe("TokenDeployer", () => {
 
       before(async () => {
         await deployer
-          .connect(governance)
+          .connect(deployerSigner)
           .deploy(
             troveManagerAddress,
             stabilityPoolAddress,
