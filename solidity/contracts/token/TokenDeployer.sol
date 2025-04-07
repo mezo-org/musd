@@ -12,7 +12,11 @@ contract TokenDeployer {
     bytes32 public constant SALT =
         keccak256("Bank on yourself. Bring everyday finance to your Bitcoin.");
 
-    /// @notice The governance address eligible for token deployment.
+    /// @notice The deployer address allowed to call the `deploy()` function.
+    address public constant DEPLOYER =
+        0x123694886DBf5Ac94DDA07135349534536D14cAf;
+
+    /// @notice The governance address receiving the control over the token;
     address public constant GOVERNANCE =
         0x98D8899c3030741925BE630C710A98B57F397C7a;
 
@@ -23,7 +27,7 @@ contract TokenDeployer {
     event TokenDeployed(address token);
 
     error Create2Failed();
-    error NotGovernance();
+    error NotDeployer();
 
     /// @notice Deploys the MUSD token to the chain via create2 and initializes
     ///         it with the provided system contract addresses and governance
@@ -35,8 +39,8 @@ contract TokenDeployer {
         address _interestRateManagerAddress,
         uint256 _governanceTimeDelay
     ) external {
-        if (msg.sender != GOVERNANCE) {
-            revert NotGovernance();
+        if (msg.sender != DEPLOYER) {
+            revert NotDeployer();
         }
 
         token = _deploy(abi.encodePacked(type(MUSD).creationCode));
