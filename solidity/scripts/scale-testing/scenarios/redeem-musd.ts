@@ -59,7 +59,7 @@ async function main() {
 
   // Select accounts for testing - accounts with sufficient MUSD balance
   const testAccounts = stateManager.getAccounts({
-    minMusdBalance: "100",
+    minMusdBalance: "2100",
     notUsedInTest: TEST_ID,
     limit: NUM_ACCOUNTS * 2, // Get more accounts than needed in case some can't be used
   })
@@ -158,10 +158,10 @@ async function main() {
       // Record the start time
       const startTime = Date.now()
 
-      // Perform the redemption - using the pattern from other scripts
+      // Perform the redemption
       console.log("Performing redemption...")
       const redemptionTx = await troveManager.connect(wallet).redeemCollateral(
-        REDEMPTION_AMOUNT,
+        truncatedAmount,
         firstRedemptionHint,
         upperPartialRedemptionHint,
         lowerPartialRedemptionHint,
