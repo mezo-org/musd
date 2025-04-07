@@ -5,6 +5,7 @@ import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const {
     deployments,
+    execute,
     getOrDeploy,
     getValidDeployment,
     log,
@@ -32,30 +33,31 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   } else {
     const delay = 90 * 24 * 60 * 60 // 90 days in seconds
 
-    await deploy("MUSD", {
-      contract: "MUSD",
-      args: [
-        "Mezo USD",
-        "MUSD",
-        troveManager.address,
-        stabilityPool.address,
-        borrowerOperations.address,
-        interestRateManager.address,
-        delay,
-      ],
-    })
+    await deploy("MUSD", { contract: "MUSD" })
+
+    await execute(
+      "MUSD",
+      "initialize",
+      troveManager.address,
+      stabilityPool.address,
+      borrowerOperations.address,
+      interestRateManager.address,
+      delay,
+    )
   }
 
   if (isHardhatNetwork) {
-    await getOrDeploy("MUSDTester", {
-      args: [
-        troveManager.address,
-        stabilityPool.address,
-        borrowerOperations.address,
-        interestRateManager.address,
-        10,
-      ],
-    })
+    await getOrDeploy("MUSDTester")
+
+    await execute(
+      "MUSDTester",
+      "initialize",
+      troveManager.address,
+      stabilityPool.address,
+      borrowerOperations.address,
+      interestRateManager.address,
+      10,
+    )
   }
 }
 
