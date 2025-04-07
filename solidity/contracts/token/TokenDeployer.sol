@@ -32,7 +32,7 @@ contract TokenDeployer {
     /// @notice Deploys the MUSD token to the chain via create2 and initializes
     ///         it with the provided system contract addresses and governance
     ///         delay.
-    function deploy(
+    function deployToken(
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,

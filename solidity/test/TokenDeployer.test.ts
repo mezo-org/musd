@@ -47,11 +47,11 @@ describe("TokenDeployer", () => {
     })
   })
 
-  describe("deploy", () => {
+  describe("deployToken", () => {
     context("when called by a third party", () => {
       it("should revert", async () => {
         await expect(
-          deployer.deploy(
+          deployer.deployToken(
             troveManagerAddress,
             stabilityPoolAddress,
             borrowerOperationsAddress,
@@ -68,7 +68,7 @@ describe("TokenDeployer", () => {
       before(async () => {
         await deployer
           .connect(deployerSigner)
-          .deploy(
+          .deployToken(
             troveManagerAddress,
             stabilityPoolAddress,
             borrowerOperationsAddress,
