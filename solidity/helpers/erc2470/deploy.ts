@@ -1,0 +1,125 @@
+/* eslint-disable import/prefer-default-export */
+import { ethers, deployments } from "hardhat"
+import { Signer, BytesLike, BaseContract } from "ethers"
+import type { Deployment } from "hardhat-deploy/dist/types"
+import { ensureSingletonFactory } from "./singleton-factory"
+import { saveDeploymentArtifact } from "../deploy-helpers"
+
+/**
+ * Options for deploying a contract using a singleton factory.
+ * @property {Signer} from - The signer object initiating the contract deployment.
+ * @property {BytesLike} salt - A unique salt value used in the deployment process.
+ * @property {string} [contractName] - Optional. Name of the contract to deploy.
+ * @property {FactoryOptions} [factoryOpts] - Optional. Custom options for the contract factory.
+ * @property {unknown[]} [constructorArgs] - Optional. Arguments for the contract's constructor.
+ */
+type Options = {
+  from: Signer
+  salt: BytesLike
+  contractName?: string
+  constructorArgs?: unknown[]
+  confirmations?: number
+}
+
+/**
+ * Deploys a contract using a singleton factory with optional constructor arguments.
+ * This approach can be used to deploy contracts with deterministic addresses using the CREATE2 opcode.
+ *
+ * @async
+ * @param {string} deploymentName - The name of the deployment.
+ * @param {Options} opts - The deployment options.
+ * @returns {Promise<{ contractInstance: T; deployment: Deployment }>} The deployment
+ * details.
+ * @throws Will throw an error if the deployment fails.
+ */
+export async function deployWithSingletonFactory<T extends BaseContract>(
+  deploymentName: string,
+  opts: Options,
+): Promise<{ contractInstance: T; deployment: Deployment }> {
+  const contractName = opts?.contractName || deploymentName
+
+  const singletonFactory = await ensureSingletonFactory(opts.from)
+
+  const contractFactory = await ethers.getContractFactory(
+    contractName,
+    opts?.from,
+  )
+
+  const creationCode = contractFactory.bytecode
+  const constructorArgs = opts?.constructorArgs
+    ? contractFactory.interface.encodeDeploy(opts.constructorArgs)
+    : ""
+
+  // The initcode is the contract bytecode concatenated with the encoded constructor arguments.
+  const initCode = creationCode + constructorArgs
+
+  // Simulate contract deployment with SingletonFactory.
+  const contractAddress = await singletonFactory.deploy.staticCall(
+    initCode,
+    opts.salt,
+  )
+
+  if (contractAddress === ethers.ZeroAddress) {
+    throw new Error("Deployment simulation failed")
+  }
+
+  const contractInstance: T = contractFactory.attach(contractAddress) as T
+
+  // Increase gas limit as the estimates are not accurate.
+  const gasEstimate = await singletonFactory.deploy.estimateGas(
+    initCode,
+    opts.salt,
+  )
+  const gasLimit = (gasEstimate * 150n) / 100n
+
+  // Deploy contract with SingletonFactory.
+  const deploymentTransaction = await singletonFactory.deploy(
+    initCode,
+    opts.salt,
+    { gasLimit },
+  )
+
+  deployments.log(
+    `Waiting for ${deploymentName} deployment transaction ${deploymentTransaction.hash} confirmations...`,
+  )
+
+  const transactionReceipt = await deploymentTransaction.wait(
+    opts.confirmations || 1,
+  )
+
+  // Check the contract was deployed.
+  const existingRuntimeCode = await opts.from.provider!.getCode(contractAddress)
+  if (
+    typeof existingRuntimeCode === "undefined" ||
+    existingRuntimeCode === null ||
+    existingRuntimeCode === "0x" ||
+    existingRuntimeCode === "0x0"
+  ) {
+    throw new Error(`Deployment at ${contractAddress} failed`)
+  }
+
+  const transactionHash = transactionReceipt?.hash
+
+  if (!transactionReceipt || !transactionHash) {
+    throw new Error(
+      `Could not find transaction receipt for transaction hash: ${transactionHash}`,
+    )
+  }
+
+  deployments.log(
+    `Deployed ${deploymentName} contract (address: ${contractAddress}) ` +
+      `in transaction: ${transactionHash}`,
+  )
+
+  const deployment: Deployment = await saveDeploymentArtifact(
+    deploymentName,
+    contractAddress,
+    deploymentTransaction.hash,
+    {
+      contractName,
+      constructorArgs: opts?.constructorArgs,
+    },
+  )
+
+  return { contractInstance, deployment }
+}

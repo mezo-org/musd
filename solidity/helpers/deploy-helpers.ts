@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { Deployment, DeployOptions } from "hardhat-deploy/types"
 import { UpgradesDeployOptions } from "@keep-network/hardhat-helpers/src/upgrades"
-import { deployments, ethers, helpers } from "hardhat"
+import { artifacts, deployments, ethers, helpers } from "hardhat"
 import type { BaseContract } from "ethers"
 import {
   ActivePool,
@@ -272,4 +272,56 @@ export async function setupDeploymentBoilerplate(
     log,
     network,
   }
+}
+
+/**
+ * Saves the deployment artifact of a deployed contract.
+ * @param {string} deploymentName - The name of the deployment.
+ * @param {string} contractAddress - The deployed contract's address.
+ * @param {string} transactionHash - The hash of the transaction used to deploy the contract.
+ * @param {Object} [opts] - Additional options for the deployment artifact.
+ * @param {string} [opts.contractName] - The name of the contract, used to retrieve the artifact.
+ * Defaults to the deployment name if not specified.
+ * @param {unknown[]} [opts.constructorArgs] - The arguments passed to the contract's
+ * constructor.
+ * @param {string} [opts.implementation] - The address of the contract's implementation,
+ * for proxy-based deployments.
+ * @param {boolean} [opts.log] - If true, logs the details of the saved deployment
+ * artifact.
+ * @returns {Promise<Deployment>} Details of the deployment.
+
+ */
+export async function saveDeploymentArtifact(
+  deploymentName: string,
+  contractAddress: string,
+  transactionHash: string,
+  opts?: {
+    contractName?: string
+    constructorArgs?: unknown[]
+    implementation?: string
+    log?: boolean
+  },
+): Promise<Deployment> {
+  const artifact = await artifacts.readArtifact(
+    opts?.contractName || deploymentName,
+  )
+
+  const deployment: Deployment = {
+    address: contractAddress,
+    abi: artifact.abi,
+    transactionHash,
+    args: opts?.constructorArgs,
+    implementation: opts?.implementation,
+  }
+
+  await deployments.save(deploymentName, deployment)
+
+  if (opts?.log) {
+    deployments.log(
+      `Saved deployment artifact for '${deploymentName}' with address ${contractAddress}` +
+        ` and deployment transaction: ${transactionHash}`,
+    )
+  }
+
+  return deployment
 }
