@@ -49,7 +49,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
     {}
 
     // Initializes token with system contracts outside of the constructor
-    // allowing the token deployer to establish stable address for the contract, 
+    // allowing the token deployer to establish stable address for the contract,
     // irrespective of the system contract addresses. Can only be called by
     // the owner (the deployer before the rights are passed) and only one time.
     function initialize(
