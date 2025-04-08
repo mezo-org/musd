@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-
+import "./dependencies/Ownable2StepUpgradeable.sol";
 import "./interfaces/ChainlinkAggregatorV3Interface.sol";
 import "./interfaces/IPriceFeed.sol";
 

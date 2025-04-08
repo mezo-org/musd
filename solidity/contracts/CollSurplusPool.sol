@@ -2,13 +2,12 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
 import "./dependencies/CheckContract.sol";
+import "./dependencies/OwnableUpgradeable.sol";
 import "./dependencies/SendCollateral.sol";
-import "./interfaces/ICollSurplusPool.sol";
-import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IActivePool.sol";
+import "./interfaces/IBorrowerOperations.sol";
+import "./interfaces/ICollSurplusPool.sol";
 
 contract CollSurplusPool is
     CheckContract,

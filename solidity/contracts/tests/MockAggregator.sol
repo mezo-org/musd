@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../interfaces/ChainlinkAggregatorV3Interface.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../dependencies/Ownable.sol";
 
 contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
     uint256 private _price;
@@ -17,7 +17,7 @@ contract MockAggregator is ChainlinkAggregatorV3Interface, Ownable {
     }
 
     // Manual external price setter.
-    function setPrice(uint256 price) external onlyOwner returns (bool) {
+    function setPrice(uint256 price) external returns (bool) {
         // slither-disable-next-line events-maths
         _price = price;
         return true;

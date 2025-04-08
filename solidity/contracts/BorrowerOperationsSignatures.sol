@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./dependencies/CheckContract.sol";
+import "./dependencies/ECDSA.sol";
+import "./dependencies/EIP712Upgradeable.sol";
+import "./dependencies/OwnableUpgradeable.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/IBorrowerOperationsSignatures.sol";
 import "./interfaces/IInterestRateManager.sol";

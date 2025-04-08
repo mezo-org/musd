@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../dependencies/ERC20Permit.sol";
+import "../dependencies/Ownable.sol";
 
 import "../dependencies/CheckContract.sol";
 import "./IMUSD.sol";

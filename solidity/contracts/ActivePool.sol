@@ -2,10 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import "./dependencies/CheckContract.sol";
+import "./dependencies/IERC20.sol";
+import "./dependencies/OwnableUpgradeable.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IActivePool.sol";
 import "./interfaces/IBorrowerOperations.sol";

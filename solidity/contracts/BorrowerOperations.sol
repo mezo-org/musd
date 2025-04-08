@@ -2,9 +2,8 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
 import "./dependencies/CheckContract.sol";
+import "./dependencies/OwnableUpgradeable.sol";
 import "./dependencies/InterestRateMath.sol";
 import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
@@ -116,6 +115,18 @@ contract BorrowerOperations is
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
+    }
+
+    function getMCR() external pure returns (uint256) {
+        return MCR;
+    }
+
+    function getCCR() external pure returns (uint256) {
+        return CCR;
+    }
+
+    function getGasComp() external pure returns (uint256) {
+        return MUSD_GAS_COMPENSATION;
     }
 
     // Calls on PCV behalf

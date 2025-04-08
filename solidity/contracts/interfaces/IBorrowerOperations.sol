@@ -139,4 +139,10 @@ interface IBorrowerOperations {
     ) external;
 
     function minNetDebt() external view returns (uint256);
+
+    function getMCR() external view returns (uint256);
+
+    function getCCR() external view returns (uint256);
+
+    function getGasComp() external view returns (uint256);
 }

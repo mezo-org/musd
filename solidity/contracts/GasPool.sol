@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
+import "./dependencies/OwnableUpgradeable.sol";
 import "./dependencies/CheckContract.sol";
 import "./interfaces/IGasPool.sol";
 import "./token/MUSD.sol";

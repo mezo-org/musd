@@ -20,4 +20,13 @@ interface IActivePool is IPool {
 
     // --- Functions ---
     function sendCollateral(address _account, uint256 _amount) external;
+
+    function setAddresses(
+        address _borrowerOperationsAddress,
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _interestRateManagerAddress,
+        address _stabilityPoolAddress,
+        address _troveManagerAddress
+    ) external;
 }
