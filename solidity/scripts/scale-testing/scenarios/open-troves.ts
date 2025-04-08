@@ -158,7 +158,7 @@ async function main() {
         ethers.ZeroAddress, // Lower hint (use zero address for simplicity)
         {
           value: collateralAmount,
-          gasLimit: 1000000, // Explicitly set a higher gas limit
+          gasLimit: 1500000, // Explicitly set a higher gas limit
         }, // Send BTC as collateral
       )
 
