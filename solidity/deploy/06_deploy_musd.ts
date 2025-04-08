@@ -57,6 +57,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     return
   }
 
+  // This is the deployer EOA eligible to call the `TokenDeployer.deployToken`
+  // function. It is the same deployer EOA as the one used to deploy all
+  // tBTC v1, tBTC v2, and Mezo contracts across various networks.
   const eligibleDeployer = "0x123694886DBf5Ac94DDA07135349534536D14cAf"
   if (deployer.address !== eligibleDeployer) {
     log(
