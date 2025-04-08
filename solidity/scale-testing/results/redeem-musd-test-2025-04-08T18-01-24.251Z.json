@@ -1,0 +1,52 @@
+{
+  "testId": "redeem-musd-test",
+  "timestamp": "2025-04-08T18:01:24.251Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "redemptionAmount": "10.0"
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "12500000",
+    "averageGas": "2500000"
+  },
+  "transactions": [
+    {
+      "hash": "0x8636a04bf3fb420f4373dcaac0cada306c1f6d59e9bae7ba68f9af83d1e05d56",
+      "account": "0x02CBDc2927af56CF20F08bcC978AC156090Cf8f3",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 4122
+    },
+    {
+      "hash": "0xde73fc6bf43f3fa34a04d11835982b7fa41da41ec8c36a25ba4e411eadb29498",
+      "account": "0x3DeA22D57a1aEdb6c81d93228C20E4824be6a45e",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 5298
+    },
+    {
+      "hash": "0xc475905ee1fb6c935ad6615a674707229bf987f6332e2953594988fcfbeb34a6",
+      "account": "0xf073569902698dBA1f719A520832aF012CB9872e",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 4601
+    },
+    {
+      "hash": "0x500716694752631b08e7349fd4453c4717e26b43ecba5c50ebe12f113b37832c",
+      "account": "0xB54202fFF42c7466B2E560C52b921E383814895B",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 4495
+    },
+    {
+      "hash": "0x1f447bd097d1d5fbe636b3137db8f6a997f7a0d8cc2adced20c21193dda58e1b",
+      "account": "0xDbE811B1012E5177369DbA38F7C4d6A0e6658Ca6",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 5160
+    }
+  ]
+}
