@@ -1,0 +1,31 @@
+{
+  "testId": "redeem-musd-test",
+  "timestamp": "2025-04-07T20:02:57.390Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "redemptionAmount": "10.0"
+  },
+  "results": {
+    "successful": 2,
+    "failed": 0,
+    "gasUsed": "5000000",
+    "averageGas": "2500000"
+  },
+  "transactions": [
+    {
+      "hash": "0x5e36201a821febf38b9c5e70f665eb26d9c57ce3b9737e0ee0ae66da6fde346b",
+      "account": "0xc67D16623b63abcF4CFaF3D88e369fF656AE3C2A",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 2804
+    },
+    {
+      "hash": "0xf77c93eb3ebc0ae515f7d23e76ed804cbe2c5537e55c0c457b637fc3ee1a985f",
+      "account": "0x28700Fbb2980EFEfb47FbC36a7146C70e377Ba22",
+      "redemptionAmount": "10.0",
+      "gasUsed": "2500000",
+      "duration": 5247
+    }
+  ]
+}
