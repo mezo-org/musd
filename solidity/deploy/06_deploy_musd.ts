@@ -3,6 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 import {
   saveDeploymentArtifact,
   setupDeploymentBoilerplate,
+  waitConfirmationsNumber,
 } from "../helpers/deploy-helpers"
 import { TokenDeployer } from "../typechain"
 
@@ -15,6 +16,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log,
     isHardhatNetwork,
     deployer,
+    network,
   } = await setupDeploymentBoilerplate(hre)
   const { helpers } = hre
 
@@ -65,11 +67,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   log("Deploying the MUSD token contract...")
 
-  const tokenDeployer = (await helpers.contracts.getContract(
+  const tx = await deployments.execute(
     "TokenDeployer",
-  )) as unknown as TokenDeployer
-
-  const tx = await tokenDeployer.connect(deployer).deployToken(
+    {
+      from: deployer.address,
+      log: true,
+      waitConfirmations: waitConfirmationsNumber(network.name),
+    },
+    "deployToken",
     troveManager.address,
     stabilityPool.address,
     borrowerOperations.address,
@@ -78,10 +83,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     90 * 24 * 60 * 60, // 90 days in seconds
   )
 
+  const tokenDeployer = (await helpers.contracts.getContract(
+    "TokenDeployer",
+  )) as unknown as TokenDeployer
+
   const tokenDeployment = await saveDeploymentArtifact(
     "MUSD",
     await tokenDeployer.token(),
-    tx.hash,
+    tx.transactionHash,
     {
       contractName: "contracts/token/MUSD.sol:MUSD",
       log: true,
