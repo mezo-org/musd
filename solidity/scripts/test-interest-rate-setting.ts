@@ -16,7 +16,7 @@ async function main() {
 
   // Get current interest rate
   const contract = await ethers.getContractAt(
-    "TestInterestRateManagerNoGov",
+    "InterestRateManagerTester",
     interestRateManagerAddress,
   )
   const currentRate = await contract.interestRate()
