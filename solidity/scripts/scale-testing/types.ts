@@ -13,6 +13,7 @@ export interface AccountState {
   troveCollateral?: string
   troveDebt?: string
   lastTroveUpdate?: string
+  interestRate?: string
 
   // Stability Pool
   stabilityPoolDeposit?: string
