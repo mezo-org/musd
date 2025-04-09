@@ -56,6 +56,7 @@ async function main() {
   // Select accounts for testing - accounts that HAVE troves
   const testAccounts = stateManager.getAccounts({
     hasTrove: true,
+    minInterestRate: "0.01", // Testing specifically accounts with interest
     notUsedInTest: TEST_ID,
     limit: NUM_ACCOUNTS * 2, // Get more accounts than needed in case some can't be used
   })

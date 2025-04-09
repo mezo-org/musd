@@ -286,11 +286,18 @@ export class StateManager {
     hasTrove?: boolean
     minBtcBalance?: string
     minMusdBalance?: string
+    minInterestRate?: string
     notUsedInTest?: string
     limit?: number
   }) {
-    const { hasTrove, minBtcBalance, minMusdBalance, notUsedInTest, limit } =
-      criteria
+    const {
+      hasTrove,
+      minBtcBalance,
+      minMusdBalance,
+      minInterestRate,
+      notUsedInTest,
+      limit,
+    } = criteria
 
     let filteredAccounts = Object.values(this.state.accounts)
 
@@ -316,6 +323,15 @@ export class StateManager {
       filteredAccounts = filteredAccounts.filter((account) => {
         if (!account.musdBalance) return false
         return parseFloat(account.musdBalance) >= minMusd
+      })
+    }
+
+    // Filter by minimum interest rate if specified
+    if (minInterestRate !== undefined) {
+      const minRate = parseFloat(minInterestRate)
+      filteredAccounts = filteredAccounts.filter((account) => {
+        if (!account.interestRate) return false
+        return parseFloat(account.interestRate) >= minRate
       })
     }
 
