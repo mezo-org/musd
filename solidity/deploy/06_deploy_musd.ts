@@ -82,8 +82,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     stabilityPool.address,
     borrowerOperations.address,
     interestRateManager.address,
-    // TODO: Isn't 90 days too much at the beginning???
-    90 * 24 * 60 * 60, // 90 days in seconds
+    // FIXME: Should be updated and made upgradeable
+    24 * 60 * 60, // 24 hours in seconds
   )
 
   const tokenDeployer = (await helpers.contracts.getContract(
