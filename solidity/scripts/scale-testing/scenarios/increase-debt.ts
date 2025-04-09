@@ -1,8 +1,12 @@
 // scripts/scale-testing/scenarios/increase-debt.ts
 import { ethers } from "hardhat"
-import { StateManager } from "../state-manager"
-import { WalletHelper } from "../wallet-helper"
-import { getDeploymentAddress } from "../../deployment-helpers"
+import fs from "fs"
+import path from "path"
+import StateManager from "../state-manager"
+import WalletHelper from "../wallet-helper"
+import getDeploymentAddress from "../../deployment-helpers"
+import getContracts from "../get-contracts"
+import calculateTroveOperationHints from "../hint-helper"
 
 // Configuration
 const TEST_ID = "increase-debt-test"
@@ -23,26 +27,14 @@ async function main() {
   // Create wallet helper
   const walletHelper = new WalletHelper()
 
-  // Get contract addresses
-  const borrowerOperationsAddress =
-    await getDeploymentAddress("BorrowerOperations")
-  const troveManagerAddress = await getDeploymentAddress("TroveManager")
-  const priceFeedAddress = await getDeploymentAddress("PriceFeed")
-
-  console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
-  console.log(`Using TroveManager at: ${troveManagerAddress}`)
-  console.log(`Using PriceFeed at: ${priceFeedAddress}`)
-
-  // Get contract instances
-  const borrowerOperations = await ethers.getContractAt(
-    "BorrowerOperations",
-    borrowerOperationsAddress,
-  )
-  const troveManager = await ethers.getContractAt(
-    "TroveManager",
+  const {
     troveManagerAddress,
-  )
-  const priceFeed = await ethers.getContractAt("PriceFeed", priceFeedAddress)
+    borrowerOperations,
+    priceFeed,
+    troveManager,
+    hintHelpers,
+    sortedTroves,
+  } = await getContracts()
 
   // Get the current BTC price from the price feed
   let currentPrice
@@ -80,7 +72,7 @@ async function main() {
     successful: 0,
     failed: 0,
     gasUsed: 0n,
-    transactions: [] as any[],
+    transactions: [] as never[],
   }
 
   // Process each account
@@ -94,8 +86,9 @@ async function main() {
     console.log(`Borrowing additional ${ethers.formatEther(musdAmount)} MUSD`)
 
     // Get current trove state for reference
+    let troveState
     try {
-      const troveState = await troveManager.Troves(account.address)
+      troveState = await troveManager.Troves(account.address)
       const totalDebt = troveState.principal + troveState.interestOwed
       console.log(
         `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
@@ -158,14 +151,28 @@ async function main() {
     }
 
     try {
+      const { upperHint, lowerHint } = await calculateTroveOperationHints({
+        hintHelpers,
+        sortedTroves,
+        troveManager,
+        collateralAmount: 0n,
+        debtAmount: musdAmount,
+        operation: "adjust",
+        isCollIncrease: false,
+        isDebtIncrease: true,
+        currentCollateral: troveState?.coll,
+        currentDebt:
+          (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
+        verbose: true,
+      })
       // Record the start time
       const startTime = Date.now()
 
       // Increase debt transaction
       const tx = await borrowerOperations.connect(wallet).withdrawMUSD(
         musdAmount,
-        ethers.ZeroAddress, // Upper hint (use zero address for simplicity)
-        ethers.ZeroAddress, // Lower hint (use zero address for simplicity)
+        upperHint, // Upper hint (use zero address for simplicity)
+        lowerHint, // Lower hint (use zero address for simplicity)
         {
           gasLimit: 1000000, // Explicitly set a higher gas limit
         },
@@ -228,8 +235,6 @@ async function main() {
   )
 
   // Save results to file
-  const fs = require("fs")
-  const path = require("path")
   const resultsDir = path.join(
     __dirname,
     "..",

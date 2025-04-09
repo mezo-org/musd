@@ -1,7 +1,7 @@
 // scripts/scale-testing/init-state-tracking.ts
 import { ethers } from "hardhat"
 import * as path from "path"
-import { StateManager } from "./state-manager"
+import StateManager from "./state-manager"
 
 async function main() {
   // Get the network name

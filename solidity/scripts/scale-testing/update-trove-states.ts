@@ -1,7 +1,7 @@
 // scripts/scale-testing/update-trove-states.ts
 import { ethers } from "hardhat"
-import { StateManager } from "./state-manager"
-import { getDeploymentAddress } from "../deployment-helpers"
+import StateManager from "./state-manager"
+import getDeploymentAddress from "../deployment-helpers"
 
 async function main() {
   // Get the network name

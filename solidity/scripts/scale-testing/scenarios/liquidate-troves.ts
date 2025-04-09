@@ -1,8 +1,9 @@
 // scripts/scale-testing/scenarios/liquidate-troves.ts
 import { ethers } from "hardhat"
-import { StateManager } from "../state-manager"
-import { WalletHelper } from "../wallet-helper"
-import { getDeploymentAddress } from "../../deployment-helpers"
+import fs from "fs"
+import path from "path"
+import StateManager from "../state-manager"
+import getDeploymentAddress from "../../deployment-helpers"
 
 // Configuration
 const TEST_ID = "liquidate-troves-test"
@@ -23,9 +24,6 @@ async function main() {
 
   // Create state manager
   const stateManager = new StateManager(networkName)
-
-  // Create wallet helper
-  const walletHelper = new WalletHelper()
 
   // Get contract addresses
   const troveManagerAddress = await getDeploymentAddress("TroveManager")
@@ -59,7 +57,6 @@ async function main() {
 
   // Get the decimals from the aggregator
   const decimals = await mockAggregator.decimals()
-  const decimalFactor = BigInt(10) ** BigInt(decimals)
 
   console.log(
     `Current BTC price: ${ethers.formatUnits(originalPrice, decimals)} USD (raw: ${originalPrice}, decimals: ${decimals})`,
@@ -207,7 +204,9 @@ async function main() {
 
     // Wait a moment for price to propagate
     console.log("Waiting 5 seconds for price change to propagate...")
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+    await new Promise((resolve) => {
+      setTimeout(resolve, 5000)
+    })
 
     // Step 4: Perform liquidations
     console.log("\nStep 4: Liquidating troves...")
@@ -291,7 +290,9 @@ async function main() {
         // Wait a bit between liquidations to avoid network congestion
         if (i < trovesToLiquidate.length - 1) {
           console.log("Waiting 2 seconds before next liquidation...")
-          await new Promise((resolve) => setTimeout(resolve, 2000))
+          await new Promise((resolve) => {
+            setTimeout(resolve, 2000)
+          })
         }
       } catch (error) {
         console.log(`Error liquidating trove: ${error.message}`)
@@ -330,8 +331,6 @@ async function main() {
   )
 
   // Save results to file
-  const fs = require("fs")
-  const path = require("path")
   const resultsDir = path.join(
     __dirname,
     "..",

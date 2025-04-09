@@ -2,14 +2,12 @@
 import * as fs from "fs"
 import * as path from "path"
 import { ethers } from "hardhat"
-import { StateManager } from "./scale-testing/state-manager.ts"
+import StateManager from "./scale-testing/state-manager"
 
 /**
  * Get the deployment address for a contract
  */
-export async function getDeploymentAddress(
-  contractName: string,
-): Promise<string> {
+async function getDeploymentAddress(contractName: string): Promise<string> {
   // Get the network name
   const network = await ethers.provider.getNetwork()
   const networkName = StateManager.mapNetworkForState(
@@ -29,3 +27,5 @@ export async function getDeploymentAddress(
   const deployment = JSON.parse(fs.readFileSync(deploymentFile, "utf8"))
   return deployment.address
 }
+
+export default getDeploymentAddress

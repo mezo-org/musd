@@ -103,7 +103,7 @@ async function main() {
 
         if (match && match[1]) {
           // Use the nonce suggested in the error message
-          nextNonce = parseInt(match[1])
+          nextNonce = parseInt(match[1], 10)
           console.log(`Error suggests using nonce ${nextNonce}`)
         } else {
           // If we can't extract it, just increment by 1
@@ -112,7 +112,9 @@ async function main() {
         }
 
         // Force the provider to refresh its nonce tracking
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1000)
+        })
 
         // Retry with the new nonce
         try {
@@ -131,14 +133,18 @@ async function main() {
         } catch (retryError) {
           console.error("Retry failed:", retryError.message)
           // Wait a bit longer before the next retry
-          await new Promise((resolve) => setTimeout(resolve, 2000))
+          await new Promise((resolve) => {
+            setTimeout(resolve, 2000)
+          })
           // Recursive retry with incremented counter
           return sendWithRetry(walletAddress, retryCount + 1)
         }
       } else {
         // For other errors, just retry after a delay
         console.log("Waiting 2 seconds before retry...")
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000)
+        })
         return sendWithRetry(walletAddress, retryCount + 1)
       }
     }
@@ -179,7 +185,9 @@ async function main() {
 
     // Add a small delay between wallets
     if (i < wallets.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000)
+      })
     }
   }
 
