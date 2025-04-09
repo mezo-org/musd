@@ -47,7 +47,7 @@ contract TokenDeployer {
             revert NotDeployer();
         }
 
-        token = _deploy(abi.encodePacked(type(MUSD).creationCode));
+        token = _deploy(type(MUSD).creationCode);
         emit TokenDeployed(token);
 
         MUSD(token).initialize(
