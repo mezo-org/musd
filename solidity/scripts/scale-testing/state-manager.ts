@@ -231,8 +231,6 @@ export class StateManager {
 
         // Get Trove information
         const troveData = await troveManager.Troves(address)
-        console.log(`Rate: ${ethers.formatUnits(troveData.interestRate, 4)}`)
-        console.log(`Interest Owed: ${troveData.interestOwed}`)
 
         // Use named properties instead of indices
         // Status enum: 0 = nonExistent, 1 = active, 2 = closedByOwner, 3 = closedByLiquidation, 4 = closedByRedemption
