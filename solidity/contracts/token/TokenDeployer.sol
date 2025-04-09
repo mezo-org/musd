@@ -47,6 +47,9 @@ contract TokenDeployer {
             revert NotDeployer();
         }
 
+        // Slither detector yields false positive, it is a bug in Slither.
+        // https://github.com/crytic/slither/issues/1223
+        // slither-disable-next-line too-many-digits
         token = _deploy(type(MUSD).creationCode);
         emit TokenDeployed(token);
 
