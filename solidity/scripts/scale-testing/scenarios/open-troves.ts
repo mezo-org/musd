@@ -2,6 +2,7 @@ import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
 import { getDeploymentAddress } from "../../deployment-helpers"
+import { calculateTroveOperationHints } from "../hint-helper.ts"
 
 // Configuration
 const TEST_ID = "open-troves-test"
@@ -33,10 +34,14 @@ async function main() {
     await getDeploymentAddress("BorrowerOperations")
   const priceFeedAddress = await getDeploymentAddress("PriceFeed")
   const troveManagerAddress = await getDeploymentAddress("TroveManager")
+  const hintHelpersAddress = await getDeploymentAddress("HintHelpers")
+  const sortedTrovesAddress = await getDeploymentAddress("SortedTroves")
 
   console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
   console.log(`Using PriceFeed at: ${priceFeedAddress}`)
   console.log(`Using TroveManager at: ${troveManagerAddress}`)
+  console.log(`Using HintHelpers at: ${hintHelpersAddress}`)
+  console.log(`Using SortedTroves at: ${sortedTrovesAddress}`)
 
   // Get contract instances
   const borrowerOperations = await ethers.getContractAt(
@@ -47,6 +52,14 @@ async function main() {
   const troveManager = await ethers.getContractAt(
     "TroveManager",
     troveManagerAddress,
+  )
+  const hintHelpers = await ethers.getContractAt(
+    "HintHelpers",
+    hintHelpersAddress,
+  )
+  const sortedTroves = await ethers.getContractAt(
+    "SortedTroves",
+    sortedTrovesAddress,
   )
 
   // Get the current BTC price from the price feed
@@ -147,6 +160,16 @@ async function main() {
       `Opening Trove with ${ethers.formatEther(collateralAmount)} BTC collateral and ${MUSD_DEBT_AMOUNT} MUSD debt`,
     )
 
+    const { upperHint, lowerHint } = await calculateTroveOperationHints({
+      hintHelpers,
+      sortedTroves,
+      troveManager,
+      collateralAmount,
+      debtAmount,
+      operation: "open",
+      verbose: true,
+    })
+
     try {
       // Record the start time
       const startTime = Date.now()
@@ -154,8 +177,8 @@ async function main() {
       // Open Trove transaction
       const tx = await borrowerOperations.connect(signer).openTrove(
         debtAmount, // MUSD amount
-        ethers.ZeroAddress, // Upper hint (use zero address for simplicity)
-        ethers.ZeroAddress, // Lower hint (use zero address for simplicity)
+        upperHint,
+        lowerHint,
         {
           value: collateralAmount,
           gasLimit: 1500000, // Explicitly set a higher gas limit
