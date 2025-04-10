@@ -4,7 +4,7 @@ import { getDeploymentAddress } from "./deployment-helpers"
 async function main() {
   // Get the interest rate we want to set (e.g., 400 basis points = 4%)
   const interestRateArg = "400"
-  const interestRateBasis = parseInt(interestRateArg)
+  const interestRateBasis = parseInt(interestRateArg, 10)
 
   console.log(`Setting test interest rate to: ${interestRateBasis / 100}%`)
 

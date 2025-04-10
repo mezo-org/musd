@@ -103,7 +103,7 @@ async function main() {
 
         if (match && match[1]) {
           // Use the nonce suggested in the error message
-          nextNonce = parseInt(match[1])
+          nextNonce = parseInt(match[1], 10)
           console.log(`Error suggests using nonce ${nextNonce}`)
         } else {
           // If we can't extract it, just increment by 1
