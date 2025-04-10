@@ -31,5 +31,4 @@ contract InterestRateManagerTester is InterestRateManager {
     }
     // slither-disable-end reentrancy-benign
     // slither-disable-end reentrancy-events
-
 }
