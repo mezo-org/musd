@@ -222,7 +222,7 @@ async function main() {
       console.log("Withdrawing collateral...")
       const tx = await borrowerOperations
         .connect(wallet)
-        .withdrawColl(withdrawAmount, ethers.ZeroAddress, ethers.ZeroAddress, {
+        .withdrawColl(withdrawAmount, upperHint, lowerHint, {
           gasLimit: 1000000, // Higher gas limit for complex operation
         })
 
