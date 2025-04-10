@@ -2,9 +2,8 @@
 import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
-import { getDeploymentAddress } from "../../deployment-helpers"
-import { getContracts } from "../get-contracts.ts"
-import { calculateTroveOperationHints } from "../hint-helper.ts"
+import { getContracts } from "../get-contracts"
+import { calculateTroveOperationHints } from "../hint-helper"
 
 // Configuration
 const TEST_ID = "withdraw-collateral-test"

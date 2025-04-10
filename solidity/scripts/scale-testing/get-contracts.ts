@@ -1,5 +1,5 @@
 import { ethers } from "hardhat"
-import { getDeploymentAddress } from "../deployment-helpers.ts"
+import { getDeploymentAddress } from "../deployment-helpers"
 
 export async function getContracts() {
   // Get contract addresses

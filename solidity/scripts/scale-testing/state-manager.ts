@@ -1,7 +1,7 @@
 // scripts/scale-testing/state-manager.ts
 import * as fs from "fs"
 import * as path from "path"
-import { ethers, network } from "hardhat"
+import { ethers } from "hardhat"
 import { StateFile } from "./types"
 
 export class StateManager {
