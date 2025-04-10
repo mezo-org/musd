@@ -3,6 +3,8 @@ import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
 import { getDeploymentAddress } from "../../deployment-helpers"
+import { getContracts } from "../get-contracts.ts"
+import { calculateTroveOperationHints } from "../hint-helper.ts"
 
 // Configuration
 const TEST_ID = "add-collateral-test"
@@ -23,23 +25,14 @@ async function main() {
   // Create wallet helper
   const walletHelper = new WalletHelper()
 
-  // Get contract addresses
-  const borrowerOperationsAddress =
-    await getDeploymentAddress("BorrowerOperations")
-  const troveManagerAddress = await getDeploymentAddress("TroveManager")
-
-  console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
-  console.log(`Using TroveManager at: ${troveManagerAddress}`)
-
-  // Get contract instances
-  const borrowerOperations = await ethers.getContractAt(
-    "BorrowerOperations",
-    borrowerOperationsAddress,
-  )
-  const troveManager = await ethers.getContractAt(
-    "TroveManager",
+  const {
     troveManagerAddress,
-  )
+    borrowerOperations,
+    priceFeed,
+    troveManager,
+    hintHelpers,
+    sortedTroves,
+  } = await getContracts()
 
   // Update trove states before selecting accounts
   console.log("Updating Trove states for all accounts...")
@@ -83,8 +76,9 @@ async function main() {
     console.log(`Adding ${ethers.formatEther(collateralAmount)} BTC collateral`)
 
     // Get current trove state for reference
+    let troveState
     try {
-      const troveState = await troveManager.Troves(account.address)
+      troveState = await troveManager.Troves(account.address)
       console.log(
         `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
       )
@@ -92,7 +86,7 @@ async function main() {
         `Current trove principal: ${ethers.formatEther(troveState.principal)} MUSD`,
       )
       console.log(
-        `Current trove interest owned: ${ethers.formatEther(troveState.interestOwed)} MUSD`,
+        `Current trove interest owed: ${ethers.formatEther(troveState.interestOwed)} MUSD`,
       )
     } catch (error) {
       console.log(`Could not fetch current trove state: ${error.message}`)
@@ -116,10 +110,25 @@ async function main() {
       // Record the start time
       const startTime = Date.now()
 
+      const { upperHint, lowerHint } = await calculateTroveOperationHints({
+        hintHelpers,
+        sortedTroves,
+        troveManager,
+        collateralAmount,
+        debtAmount: 0n,
+        operation: "adjust",
+        isCollIncrease: true,
+        isDebtIncrease: false,
+        currentCollateral: troveState?.coll,
+        currentDebt:
+          (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
+        verbose: true,
+      })
+
       // Add collateral transaction
       const tx = await borrowerOperations
         .connect(wallet)
-        .addColl(ethers.ZeroAddress, ethers.ZeroAddress, {
+        .addColl(upperHint, lowerHint, {
           value: collateralAmount,
           gasLimit: 1000000, // Explicitly set a higher gas limit
         })
