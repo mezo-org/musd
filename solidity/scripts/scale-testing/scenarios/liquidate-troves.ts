@@ -209,7 +209,9 @@ async function main() {
 
     // Wait a moment for price to propagate
     console.log("Waiting 5 seconds for price change to propagate...")
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+    await new Promise((resolve) => {
+      setTimeout(resolve, 5000)
+    })
 
     // Step 4: Perform liquidations
     console.log("\nStep 4: Liquidating troves...")
@@ -293,7 +295,9 @@ async function main() {
         // Wait a bit between liquidations to avoid network congestion
         if (i < trovesToLiquidate.length - 1) {
           console.log("Waiting 2 seconds before next liquidation...")
-          await new Promise((resolve) => setTimeout(resolve, 2000))
+          await new Promise((resolve) => {
+            setTimeout(resolve, 2000)
+          })
         }
       } catch (error) {
         console.log(`Error liquidating trove: ${error.message}`)
