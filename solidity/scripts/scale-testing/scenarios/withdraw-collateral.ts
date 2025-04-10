@@ -3,6 +3,8 @@ import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
 import { getDeploymentAddress } from "../../deployment-helpers"
+import { getContracts } from "../get-contracts.ts"
+import { calculateTroveOperationHints } from "../hint-helper.ts"
 
 // Configuration
 const TEST_ID = "withdraw-collateral-test"
@@ -23,26 +25,14 @@ async function main() {
   // Create wallet helper
   const walletHelper = new WalletHelper()
 
-  // Get contract addresses
-  const borrowerOperationsAddress =
-    await getDeploymentAddress("BorrowerOperations")
-  const troveManagerAddress = await getDeploymentAddress("TroveManager")
-  const priceFeedAddress = await getDeploymentAddress("PriceFeed")
-
-  console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
-  console.log(`Using TroveManager at: ${troveManagerAddress}`)
-  console.log(`Using PriceFeed at: ${priceFeedAddress}`)
-
-  // Get contract instances
-  const borrowerOperations = await ethers.getContractAt(
-    "BorrowerOperations",
-    borrowerOperationsAddress,
-  )
-  const troveManager = await ethers.getContractAt(
-    "TroveManager",
+  const {
     troveManagerAddress,
-  )
-  const priceFeed = await ethers.getContractAt("PriceFeed", priceFeedAddress)
+    borrowerOperations,
+    priceFeed,
+    troveManager,
+    hintHelpers,
+    sortedTroves,
+  } = await getContracts()
 
   // Get the current BTC price from the price feed
   let currentPrice
@@ -211,6 +201,19 @@ async function main() {
     }
 
     try {
+      const { upperHint, lowerHint } = await calculateTroveOperationHints({
+        hintHelpers,
+        sortedTroves,
+        troveManager,
+        collateralAmount: withdrawAmount,
+        debtAmount: 0n,
+        operation: "adjust",
+        isCollIncrease: false,
+        isDebtIncrease: false,
+        currentCollateral: troveCollateral,
+        currentDebt: troveDebt,
+        verbose: true,
+      })
       // Record the start time
       const startTime = Date.now()
 

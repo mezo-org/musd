@@ -2,7 +2,6 @@
 import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
-import { getDeploymentAddress } from "../../deployment-helpers"
 import { getContracts } from "../get-contracts.ts"
 import { calculateTroveOperationHints } from "../hint-helper.ts"
 
@@ -28,7 +27,6 @@ async function main() {
   const {
     troveManagerAddress,
     borrowerOperations,
-    priceFeed,
     troveManager,
     hintHelpers,
     sortedTroves,
