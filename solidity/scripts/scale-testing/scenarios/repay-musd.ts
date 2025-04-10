@@ -3,6 +3,8 @@ import { ethers } from "hardhat"
 import { StateManager } from "../state-manager"
 import { WalletHelper } from "../wallet-helper"
 import { getDeploymentAddress } from "../../deployment-helpers"
+import { getContracts } from "../get-contracts.ts"
+import { calculateTroveOperationHints } from "../hint-helper.ts"
 
 // Configuration
 const TEST_ID = "repay-musd-test"
@@ -23,26 +25,15 @@ async function main() {
   // Create wallet helper
   const walletHelper = new WalletHelper()
 
-  // Get contract addresses
-  const borrowerOperationsAddress =
-    await getDeploymentAddress("BorrowerOperations")
-  const troveManagerAddress = await getDeploymentAddress("TroveManager")
-  const musdAddress = await getDeploymentAddress("MUSD")
-
-  console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
-  console.log(`Using TroveManager at: ${troveManagerAddress}`)
-  console.log(`Using MUSD at: ${musdAddress}`)
-
-  // Get contract instances
-  const borrowerOperations = await ethers.getContractAt(
-    "BorrowerOperations",
-    borrowerOperationsAddress,
-  )
-  const troveManager = await ethers.getContractAt(
-    "TroveManager",
+  const {
     troveManagerAddress,
-  )
-  const musdToken = await ethers.getContractAt("MUSD", musdAddress)
+    musdAddress,
+    borrowerOperations,
+    troveManager,
+    hintHelpers,
+    sortedTroves,
+    musdToken,
+  } = await getContracts()
 
   // Update trove states before selecting accounts
   console.log("Updating Trove states for all accounts...")
@@ -98,8 +89,9 @@ async function main() {
 
     // Get current trove state for reference
     let troveDebt = BigInt(0)
+    let troveState
     try {
-      const troveState = await troveManager.Troves(account.address)
+      troveState = await troveManager.Troves(account.address)
       const totalDebt = troveState.principal + troveState.interestOwed
       troveDebt = totalDebt
 
@@ -219,6 +211,20 @@ async function main() {
     }
 
     try {
+      const { upperHint, lowerHint } = await calculateTroveOperationHints({
+        hintHelpers,
+        sortedTroves,
+        troveManager,
+        collateralAmount: 0n,
+        debtAmount: repayAmount,
+        operation: "adjust",
+        isCollIncrease: false,
+        isDebtIncrease: false,
+        currentCollateral: troveState?.coll,
+        currentDebt:
+          (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
+        verbose: true,
+      })
       // Record the start time
       const startTime = Date.now()
 
@@ -226,7 +232,7 @@ async function main() {
       console.log("Repaying MUSD...")
       const tx = await borrowerOperations
         .connect(wallet)
-        .repayMUSD(repayAmount, ethers.ZeroAddress, ethers.ZeroAddress, {
+        .repayMUSD(repayAmount, upperHint, lowerHint, {
           gasLimit: 1000000, // Higher gas limit for complex operation
         })
 

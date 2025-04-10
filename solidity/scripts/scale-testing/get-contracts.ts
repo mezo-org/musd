@@ -9,12 +9,14 @@ export async function getContracts() {
   const troveManagerAddress = await getDeploymentAddress("TroveManager")
   const hintHelpersAddress = await getDeploymentAddress("HintHelpers")
   const sortedTrovesAddress = await getDeploymentAddress("SortedTroves")
+  const musdAddress = await getDeploymentAddress("MUSD")
 
   console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
   console.log(`Using PriceFeed at: ${priceFeedAddress}`)
   console.log(`Using TroveManager at: ${troveManagerAddress}`)
   console.log(`Using HintHelpers at: ${hintHelpersAddress}`)
   console.log(`Using SortedTroves at: ${sortedTrovesAddress}`)
+  console.log(`Using MUSD at: ${musdAddress}`)
 
   // Get contract instances
   const borrowerOperations = await ethers.getContractAt(
@@ -34,6 +36,7 @@ export async function getContracts() {
     "SortedTroves",
     sortedTrovesAddress,
   )
+  const musdToken = await ethers.getContractAt("MUSD", musdAddress)
 
   return {
     borrowerOperationsAddress,
@@ -41,10 +44,12 @@ export async function getContracts() {
     troveManagerAddress,
     hintHelpersAddress,
     sortedTrovesAddress,
+    musdAddress,
     borrowerOperations,
     priceFeed,
     troveManager,
     hintHelpers,
     sortedTroves,
+    musdToken,
   }
 }
