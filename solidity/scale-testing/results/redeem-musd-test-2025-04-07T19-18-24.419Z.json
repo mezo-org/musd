@@ -1,0 +1,57 @@
+{
+  "testId": "redeem-musd-test",
+  "timestamp": "2025-04-07T19:18:24.419Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "redemptionAmount": "100.0"
+  },
+  "results": {
+    "successful": 0,
+    "failed": 10,
+    "gasUsed": "0",
+    "averageGas": "0"
+  },
+  "transactions": [
+    {
+      "account": "0x09ef031b517004BD66D5F0df48e1b18d9b3f00b4",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0xE274C1D3Cd3897c6d32D383e8855fED94f78c67a",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x84e0e42fdEa0f64De28d63a76761eF3230b35078",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0xBf427a086C29b2c01088AA623A740227FC806448",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x26bb6BBDbeA52f3515d8908bfd5ca0c53AeF7748",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x06Af418557C68ADD5353091fb063443Da76dcbE3",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x57D4951A60fEbd1e773Edd80eA52cCeDE226AcDe",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0xB2B6b11a5cD452dB69B06149Fe9901D508020567",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x367Cf526b4358fBF0659B06522486DDC17079978",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    },
+    {
+      "account": "0x524c56253C2dEa26b0541cd63c850De346505f63",
+      "error": "contract runner does not support sending transactions (operation=\"sendTransaction\", code=UNSUPPORTED_OPERATION, version=6.13.2)"
+    }
+  ]
+}

@@ -23,6 +23,14 @@
       "rules": {
         "no-console": "off" // Disable the no-console rule for this file
       }
+    },
+    {
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off",
+        "no-continue": "off", // Lots of loops for scale testing make this useful for readability
+        "no-restricted-syntax": "off" // for loops make scale testing scripts easier to read
+      }
     }
   ]
 }
