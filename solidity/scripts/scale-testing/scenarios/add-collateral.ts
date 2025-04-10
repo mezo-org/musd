@@ -60,7 +60,7 @@ async function main() {
     successful: 0,
     failed: 0,
     gasUsed: 0n,
-    transactions: [] as any[],
+    transactions: [] as never[],
   }
 
   // Process each account

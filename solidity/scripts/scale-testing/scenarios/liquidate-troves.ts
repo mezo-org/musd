@@ -3,7 +3,6 @@ import { ethers } from "hardhat"
 import fs from "fs"
 import path from "path"
 import StateManager from "../state-manager"
-import WalletHelper from "../wallet-helper"
 import getDeploymentAddress from "../../deployment-helpers"
 
 // Configuration
@@ -25,9 +24,6 @@ async function main() {
 
   // Create state manager
   const stateManager = new StateManager(networkName)
-
-  // Create wallet helper
-  const walletHelper = new WalletHelper()
 
   // Get contract addresses
   const troveManagerAddress = await getDeploymentAddress("TroveManager")
@@ -61,7 +57,6 @@ async function main() {
 
   // Get the decimals from the aggregator
   const decimals = await mockAggregator.decimals()
-  const decimalFactor = BigInt(10) ** BigInt(decimals)
 
   console.log(
     `Current BTC price: ${ethers.formatUnits(originalPrice, decimals)} USD (raw: ${originalPrice}, decimals: ${decimals})`,
