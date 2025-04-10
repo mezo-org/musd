@@ -4,7 +4,7 @@ import * as path from "path"
 import { ethers } from "hardhat"
 import { StateFile } from "./types"
 
-export class StateManager {
+export default class StateManager {
   private filePath: string
 
   private state: StateFile

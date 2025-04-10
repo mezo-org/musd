@@ -1,9 +1,11 @@
 // scripts/scale-testing/scenarios/repay-musd.ts
 import { ethers } from "hardhat"
-import { StateManager } from "../state-manager"
-import { WalletHelper } from "../wallet-helper"
+import fs from "fs"
+import path from "path"
+import StateManager from "../state-manager"
+import WalletHelper from "../wallet-helper"
 import { getContracts } from "../get-contracts"
-import { calculateTroveOperationHints } from "../hint-helper"
+import calculateTroveOperationHints from "../hint-helper"
 
 // Configuration
 const TEST_ID = "repay-musd-test"
@@ -294,8 +296,6 @@ async function main() {
   )
 
   // Save results to file
-  const fs = require("fs")
-  const path = require("path")
   const resultsDir = path.join(
     __dirname,
     "..",

@@ -1,8 +1,10 @@
 // scripts/scale-testing/scenarios/redeem-musd.ts
 import { ethers } from "hardhat"
-import { StateManager } from "../state-manager"
-import { WalletHelper } from "../wallet-helper"
-import { getDeploymentAddress } from "../../deployment-helpers"
+import fs from "fs"
+import path from "path"
+import StateManager from "../state-manager"
+import WalletHelper from "../wallet-helper"
+import getDeploymentAddress from "../../deployment-helpers"
 
 // Configuration
 const TEST_ID = "redeem-musd-test"
@@ -231,8 +233,6 @@ async function main() {
   )
 
   // Save results to file
-  const fs = require("fs")
-  const path = require("path")
   const resultsDir = path.join(
     __dirname,
     "..",

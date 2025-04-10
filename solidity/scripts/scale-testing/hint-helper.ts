@@ -4,7 +4,7 @@ import { HintHelpers, SortedTroves, TroveManager } from "../../typechain"
 /**
  * Calculate hints for trove operations
  */
-export async function calculateTroveOperationHints(params: {
+async function calculateTroveOperationHints(params: {
   hintHelpers: HintHelpers
   sortedTroves: SortedTroves
   troveManager: TroveManager
@@ -151,3 +151,5 @@ export async function calculateTroveOperationHints(params: {
     }
   }
 }
+
+export default calculateTroveOperationHints
