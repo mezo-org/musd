@@ -23,6 +23,12 @@
       "rules": {
         "no-console": "off" // Disable the no-console rule for this file
       }
+    },
+    {
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
     }
   ]
 }
