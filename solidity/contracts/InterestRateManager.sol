@@ -154,7 +154,7 @@ contract InterestRateManager is
 
     function updateSystemInterest() external {
         uint256 updatedTimeSnapshot = lastUpdatedTime;
-        // solhint-disable not-rely-on-time
+        // solhint-disable-next-line not-rely-on-time
         lastUpdatedTime = block.timestamp;
 
         if (interestNumerator == 0) {

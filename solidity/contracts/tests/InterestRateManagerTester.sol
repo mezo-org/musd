@@ -13,6 +13,8 @@ contract InterestRateManagerTester is InterestRateManager {
      * @notice Test function to set interest rate immediately without delay
      * @param _newInterestRate The new interest rate to set
      */
+    // slither-disable-start reentrancy-benign
+    // slither-disable-start reentrancy-events
     function setInterestRateForTesting(uint16 _newInterestRate) external {
         require(
             _newInterestRate <= MAX_INTEREST_RATE,
@@ -27,4 +29,6 @@ contract InterestRateManagerTester is InterestRateManager {
 
         emit InterestRateUpdated(_newInterestRate);
     }
+    // slither-disable-end reentrancy-benign
+    // slither-disable-end reentrancy-events
 }
