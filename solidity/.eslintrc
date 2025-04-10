@@ -27,7 +27,8 @@
     {
       "files": ["scripts/**/*.ts"],
       "rules": {
-        "no-console": "off"
+        "no-console": "off",
+        "no-continue": "off" // Lots of loops for scale testing make this useful for readability
       }
     }
   ]
