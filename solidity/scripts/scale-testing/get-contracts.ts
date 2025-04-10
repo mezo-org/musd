@@ -1,7 +1,7 @@
 import { ethers } from "hardhat"
 import getDeploymentAddress from "../deployment-helpers"
 
-export async function getContracts() {
+async function getContracts() {
   // Get contract addresses
   const borrowerOperationsAddress =
     await getDeploymentAddress("BorrowerOperations")
@@ -53,3 +53,5 @@ export async function getContracts() {
     musdToken,
   }
 }
+
+export default getContracts

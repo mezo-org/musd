@@ -5,7 +5,7 @@ import path from "path"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import getDeploymentAddress from "../../deployment-helpers"
-import { getContracts } from "../get-contracts"
+import getContracts from "../get-contracts"
 import calculateTroveOperationHints from "../hint-helper"
 
 // Configuration

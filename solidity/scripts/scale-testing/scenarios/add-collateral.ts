@@ -4,7 +4,7 @@ import fs from "fs"
 import path from "path"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
-import { getContracts } from "../get-contracts"
+import getContracts from "../get-contracts"
 import calculateTroveOperationHints from "../hint-helper"
 
 // Configuration

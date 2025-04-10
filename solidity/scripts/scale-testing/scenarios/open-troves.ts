@@ -4,7 +4,7 @@ import path from "path"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import calculateTroveOperationHints from "../hint-helper"
-import { getContracts } from "../get-contracts"
+import getContracts from "../get-contracts"
 
 // Configuration
 const TEST_ID = "open-troves-test"
