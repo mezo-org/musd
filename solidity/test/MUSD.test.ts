@@ -53,6 +53,22 @@ describe("MUSD", () => {
     await contracts.musd.unprotectedMint(carol.wallet, to1e18(50))
   })
 
+  describe("initialize", () => {
+    it("reverts as already initialized", async () => {
+      await expect(
+        contracts.musd
+          .connect(deployer.wallet)
+          .initialize(
+            newTroveManager,
+            newStabilityPool,
+            newBorrowerOperations,
+            newInterestRateManager,
+            10,
+          ),
+      ).to.be.revertedWith("Already initialized")
+    })
+  })
+
   describe("name()", () => {
     it("returns the token's name", async () => {
       expect(await contracts.musd.name()).to.equal("Mezo USD")

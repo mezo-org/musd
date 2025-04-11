@@ -9,11 +9,13 @@ import "../dependencies/CheckContract.sol";
 import "./IMUSD.sol";
 
 contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
+    bool public initialized;
+
     // --- Addresses ---
     mapping(address => bool) public burnList;
     mapping(address => bool) public mintList;
 
-    uint256 public immutable governanceTimeDelay;
+    uint256 public governanceTimeDelay;
 
     address public pendingTroveManager;
     address public pendingStabilityPool;
@@ -40,24 +42,35 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         _;
     }
 
-    constructor(
-        string memory name,
-        string memory symbol,
+    constructor()
+        Ownable(msg.sender)
+        ERC20("Mezo USD", "MUSD")
+        ERC20Permit("Mezo USD")
+    {}
+
+    // Initializes token with system contracts outside of the constructor
+    // allowing the token deployer to establish stable address for the contract,
+    // irrespective of the system contract addresses. Can only be called by
+    // the owner (the deployer before the rights are passed) and only one time.
+    function initialize(
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
         address _interestRateManagerAddress,
         uint256 _governanceTimeDelay
-    ) Ownable(msg.sender) ERC20(name, symbol) ERC20Permit(name) {
-        // when created its linked to one set of contracts and collateral, other collateral types can be added via governance
+    ) external onlyOwner {
+        require(!initialized, "Already initialized");
+        initialized = true;
+
         _addSystemContracts(
             _troveManagerAddress,
             _stabilityPoolAddress,
             _borrowerOperationsAddress,
             _interestRateManagerAddress
         );
-        governanceTimeDelay = _governanceTimeDelay;
+
         require(governanceTimeDelay <= 30 weeks, "Governance delay is too big");
+        governanceTimeDelay = _governanceTimeDelay;
     }
 
     // --- Governance ---

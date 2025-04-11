@@ -135,7 +135,7 @@ jobs:
 
       - name: Install Slither
         env:
-          SLITHER_VERSION: 0.9.6
+          SLITHER_VERSION: 0.11.0
         run: pip3 install slither-analyzer==$SLITHER_VERSION
 
       - name: Download build artifacts
