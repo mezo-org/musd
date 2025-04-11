@@ -5512,6 +5512,35 @@ describe("BorrowerOperations in Normal Mode", () => {
       expect(await contracts.sortedTroves.getFirst()).to.equal(carol.address)
     })
 
+    context("Emitted Events", () => {
+      it("Emits a TroveUpdated event with the correct collateral and debt", async () => {
+        await setupCarolsTrove()
+
+        const tx = await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
+
+        const coll = await getTroveEntireColl(contracts, carol.wallet)
+        const emittedColl = await getEventArgByName(
+          tx,
+          TROVE_UPDATED_ABI,
+          "TroveUpdated",
+          3,
+        )
+
+        const debt = await getTroveEntireDebt(contracts, carol.wallet)
+        const emittedDebt = await getEventArgByName(
+          tx,
+          TROVE_UPDATED_ABI,
+          "TroveUpdated",
+          1,
+        )
+
+        expect(coll).to.equal(emittedColl)
+        expect(debt).to.equal(emittedDebt)
+      })
+    })
+
     context("Expected Reverts", () => {
       it("should revert if the fee would put the system into recovery mode", async () => {
         await setInterestRate(contracts, council, 500)

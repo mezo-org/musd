@@ -87,7 +87,8 @@ contract BorrowerOperations is
     enum BorrowerOperation {
         openTrove,
         closeTrove,
-        adjustTrove
+        adjustTrove,
+        refinanceTrove
     }
 
     string public constant name = "BorrowerOperations";
@@ -1032,8 +1033,17 @@ contract BorrowerOperations is
         vars.newNICR = LiquityMath._computeNominalCR(newColl, newPrincipal);
         sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
-        // slither-disable-next-line reentrancy-events
+        // slither-disable-start reentrancy-events
         emit RefinancingFeePaid(_borrower, fee);
+        emit TroveUpdated(
+            _borrower,
+            newPrincipal,
+            newInterest,
+            newColl,
+            vars.troveManagerCached.updateStakeAndTotalStakes(_borrower),
+            uint8(BorrowerOperation.refinanceTrove)
+        );
+        // slither-disable-end reentrancy-events
     }
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
