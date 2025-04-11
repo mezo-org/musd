@@ -17,7 +17,7 @@ import {
   updateTroveSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
-import { ZERO_ADDRESS } from "../../helpers/constants.ts"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 
 describe("BorrowerOperations in Recovery Mode", () => {
   let addresses: TestingAddresses

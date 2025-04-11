@@ -43,7 +43,7 @@ import {
   TROVE_UPDATED_ABI,
 } from "../helpers"
 import { to1e18 } from "../utils"
-import { ZERO_ADDRESS } from "../../helpers/constants.ts"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
