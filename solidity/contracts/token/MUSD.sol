@@ -62,8 +62,6 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         require(!initialized, "Already initialized");
         initialized = true;
 
-        // when created its linked to one set of contracts and collateral, other
-        // collateral types can be added via governance
         _addSystemContracts(
             _troveManagerAddress,
             _stabilityPoolAddress,
