@@ -475,7 +475,8 @@ contract BorrowerOperationsSignatures is
         borrowerOperations.restrictedRefinance(
             refinanceData.borrower,
             refinanceData.upperHint,
-            refinanceData.lowerHint);
+            refinanceData.lowerHint
+        );
     }
 
     function claimCollateralWithSignature(

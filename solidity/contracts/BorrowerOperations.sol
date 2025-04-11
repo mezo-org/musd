@@ -253,7 +253,10 @@ contract BorrowerOperations is
         _closeTrove(msg.sender, msg.sender, msg.sender);
     }
 
-    function refinance(address _upperHint, address _lowerHint) external override {
+    function refinance(
+        address _upperHint,
+        address _lowerHint
+    ) external override {
         _refinance(msg.sender, _upperHint, _lowerHint);
     }
 
@@ -415,7 +418,11 @@ contract BorrowerOperations is
         _closeTrove(_borrower, _caller, _recipient);
     }
 
-    function restrictedRefinance(address _borrower, address _upperHint, address _lowerHint) external {
+    function restrictedRefinance(
+        address _borrower,
+        address _upperHint,
+        address _lowerHint
+    ) external {
         _requireCallerIsBorrowerOperationsSignatures();
         _refinance(_borrower, _upperHint, _lowerHint);
     }
@@ -947,7 +954,11 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(_recipient, coll);
     }
 
-    function _refinance(address _borrower, address _upperHint, address _lowerHint) internal {
+    function _refinance(
+        address _borrower,
+        address _upperHint,
+        address _lowerHint
+    ) internal {
         LocalVariables_refinance memory vars;
         vars.price = priceFeed.fetchPrice();
         vars.troveManagerCached = troveManager;
@@ -989,11 +1000,19 @@ contract BorrowerOperations is
         _requireICRisAboveMCR(vars.newICR);
         _requireNewTCRisAboveCCR(vars.troveManagerCached.getTCR(vars.price));
 
-        vars.oldPrincipal = vars.troveManagerCached.getTrovePrincipal(_borrower);
+        vars.oldPrincipal = vars.troveManagerCached.getTrovePrincipal(
+            _borrower
+        );
 
-        vars.interestRateManagerCached.removePrincipal(vars.oldPrincipal, vars.oldRate);
+        vars.interestRateManagerCached.removePrincipal(
+            vars.oldPrincipal,
+            vars.oldRate
+        );
         vars.newRate = vars.interestRateManagerCached.interestRate();
-        vars.interestRateManagerCached.addPrincipal(vars.oldPrincipal, vars.newRate);
+        vars.interestRateManagerCached.addPrincipal(
+            vars.oldPrincipal,
+            vars.newRate
+        );
 
         vars.troveManagerCached.setTroveInterestRate(
             _borrower,
@@ -1016,7 +1035,6 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit RefinancingFeePaid(_borrower, fee);
     }
-
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)
     function _withdrawMUSD(
