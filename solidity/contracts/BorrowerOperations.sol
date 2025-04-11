@@ -62,6 +62,21 @@ contract BorrowerOperations is
         uint256 arrayIndex;
     }
 
+    struct LocalVariables_refinance {
+        uint256 price;
+        ITroveManager troveManagerCached;
+        IInterestRateManager interestRateManagerCached;
+        uint16 oldRate;
+        uint256 oldDebt;
+        uint256 amount;
+        uint256 fee;
+        uint256 newICR;
+        uint256 oldPrincipal;
+        uint16 newRate;
+        uint256 maxBorrowingCapacity;
+        uint256 newNICR;
+    }
+
     struct ContractsCache {
         ITroveManager troveManager;
         IActivePool activePool;
@@ -72,7 +87,8 @@ contract BorrowerOperations is
     enum BorrowerOperation {
         openTrove,
         closeTrove,
-        adjustTrove
+        adjustTrove,
+        refinanceTrove
     }
 
     string public constant name = "BorrowerOperations";
@@ -238,8 +254,11 @@ contract BorrowerOperations is
         _closeTrove(msg.sender, msg.sender, msg.sender);
     }
 
-    function refinance() external override {
-        _refinance(msg.sender);
+    function refinance(
+        address _upperHint,
+        address _lowerHint
+    ) external override {
+        _refinance(msg.sender, _upperHint, _lowerHint);
     }
 
     /*
@@ -400,9 +419,13 @@ contract BorrowerOperations is
         _closeTrove(_borrower, _caller, _recipient);
     }
 
-    function restrictedRefinance(address _borrower) external {
+    function restrictedRefinance(
+        address _borrower,
+        address _upperHint,
+        address _lowerHint
+    ) external {
         _requireCallerIsBorrowerOperationsSignatures();
-        _refinance(_borrower);
+        _refinance(_borrower, _upperHint, _lowerHint);
     }
 
     function restrictedAdjustTrove(
@@ -932,53 +955,96 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(_recipient, coll);
     }
 
-    function _refinance(address _borrower) internal {
-        uint256 price = priceFeed.fetchPrice();
-        ITroveManager troveManagerCached = troveManager;
-        troveManagerCached.updateSystemAndTroveInterest(_borrower);
+    function _refinance(
+        address _borrower,
+        address _upperHint,
+        address _lowerHint
+    ) internal {
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_refinance memory vars;
+        vars.price = priceFeed.fetchPrice();
+        vars.troveManagerCached = troveManager;
+        vars.troveManagerCached.updateSystemAndTroveInterest(_borrower);
 
-        _requireNotInRecoveryMode(price);
-        _requireTroveisActive(troveManagerCached, _borrower);
+        _requireNotInRecoveryMode(vars.price);
+        _requireTroveisActive(vars.troveManagerCached, _borrower);
 
-        IInterestRateManager interestRateManagerCached = interestRateManager;
+        vars.interestRateManagerCached = interestRateManager;
 
-        uint16 oldRate = troveManagerCached.getTroveInterestRate(_borrower);
-        uint256 oldDebt = troveManagerCached.getTroveDebt(_borrower);
-        uint256 amount = (refinancingFeePercentage * oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(troveManagerCached, musd, amount);
+        vars.oldRate = vars.troveManagerCached.getTroveInterestRate(_borrower);
+        vars.oldDebt = vars.troveManagerCached.getTroveDebt(_borrower);
+        vars.amount = (refinancingFeePercentage * vars.oldDebt) / 100;
+        uint256 fee = _triggerBorrowingFee(
+            vars.troveManagerCached,
+            musd,
+            vars.amount
+        );
         // slither-disable-next-line unused-return
-        troveManagerCached.increaseTroveDebt(_borrower, fee);
+        vars.troveManagerCached.increaseTroveDebt(_borrower, fee);
         activePool.increaseDebt(fee, 0);
-        uint256 newICR = LiquityMath._computeCR(
-            troveManagerCached.getTroveColl(_borrower),
-            troveManagerCached.getTroveDebt(_borrower),
-            price
+
+        // slither-disable-start unused-return
+        (
+            uint256 newColl,
+            uint256 newPrincipal,
+            uint256 newInterest,
+            ,
+            ,
+
+        ) = vars.troveManagerCached.getEntireDebtAndColl(_borrower);
+        // slither-disable-end unused-return
+
+        vars.newICR = LiquityMath._computeCR(
+            newColl,
+            newPrincipal + newInterest,
+            vars.price
         );
-        _requireICRisAboveMCR(newICR);
-        _requireNewTCRisAboveCCR(troveManagerCached.getTCR(price));
+        _requireICRisAboveMCR(vars.newICR);
+        _requireNewTCRisAboveCCR(vars.troveManagerCached.getTCR(vars.price));
 
-        uint256 oldPrincipal = troveManagerCached.getTrovePrincipal(_borrower);
+        vars.oldPrincipal = vars.troveManagerCached.getTrovePrincipal(
+            _borrower
+        );
 
-        interestRateManagerCached.removePrincipal(oldPrincipal, oldRate);
-        uint16 newRate = interestRateManagerCached.interestRate();
-        interestRateManagerCached.addPrincipal(oldPrincipal, newRate);
+        vars.interestRateManagerCached.removePrincipal(
+            vars.oldPrincipal,
+            vars.oldRate
+        );
+        vars.newRate = vars.interestRateManagerCached.interestRate();
+        vars.interestRateManagerCached.addPrincipal(
+            vars.oldPrincipal,
+            vars.newRate
+        );
 
-        troveManagerCached.setTroveInterestRate(
+        vars.troveManagerCached.setTroveInterestRate(
             _borrower,
-            interestRateManagerCached.interestRate()
+            vars.interestRateManagerCached.interestRate()
         );
 
-        uint256 maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
-            troveManagerCached.getTroveColl(_borrower),
-            price
+        vars.maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
+            vars.troveManagerCached.getTroveColl(_borrower),
+            vars.price
         );
-        troveManagerCached.setTroveMaxBorrowingCapacity(
+        vars.troveManagerCached.setTroveMaxBorrowingCapacity(
             _borrower,
-            maxBorrowingCapacity
+            vars.maxBorrowingCapacity
         );
 
-        // slither-disable-next-line reentrancy-events
+        // Re-insert trove in to the sorted list
+        vars.newNICR = LiquityMath._computeNominalCR(newColl, newPrincipal);
+        sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
+
+        // slither-disable-start reentrancy-events
         emit RefinancingFeePaid(_borrower, fee);
+        emit TroveUpdated(
+            _borrower,
+            newPrincipal,
+            newInterest,
+            newColl,
+            vars.troveManagerCached.updateStakeAndTotalStakes(_borrower),
+            uint8(BorrowerOperation.refinanceTrove)
+        );
+        // slither-disable-end reentrancy-events
     }
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)

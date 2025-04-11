@@ -5108,7 +5108,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setInterestRate(contracts, council, 1000)
       await updateTroveSnapshot(contracts, carol, "before")
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshot(contracts, carol, "after")
       expect(carol.trove.interestRate.before).to.be.equal(0)
@@ -5122,7 +5124,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       const now = await getLatestBlockTimestamp()
       await updateTroveSnapshot(contracts, carol, "after")
@@ -5164,7 +5168,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
       await updateTroveSnapshots(contracts, [carol, dennis], "before")
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateContractsSnapshot(
         contracts,
@@ -5215,7 +5221,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await setInterestRate(contracts, council, 500)
       await updateTroveSnapshot(contracts, carol, "before")
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       const after = BigInt(await getLatestBlockTimestamp())
       await updateTroveSnapshot(contracts, carol, "after")
@@ -5258,7 +5266,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
 
       await setInterestRate(contracts, council, 500)
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       const after = BigInt(await getLatestBlockTimestamp())
 
@@ -5288,7 +5298,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "before")
       await updatePCVSnapshot(contracts, state, "before")
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshot(contracts, carol, "after")
       await updatePCVSnapshot(contracts, state, "after")
@@ -5303,7 +5315,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setupCarolsTrove()
       await updateTroveSnapshot(contracts, carol, "before")
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -5333,7 +5347,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(council.wallet)
         .setRefinancingFeePercentage(1)
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -5356,7 +5372,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         .connect(council.wallet)
         .setRefinancingFeePercentage(50)
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -5376,7 +5394,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .refinance()
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -5401,7 +5419,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setInterestRate(contracts, council, 500)
       const tx = await contracts.borrowerOperations
         .connect(carol.wallet)
-        .refinance()
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       const emittedFee = await getEventArgByName(
         tx,
@@ -5442,7 +5460,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const price = await dropPrice(contracts, deployer, carol, to1e18("111"))
 
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshot(contracts, carol, "after")
 
@@ -5460,17 +5480,74 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateWalletSnapshot(contracts, carol, "before")
 
       await setInterestRate(contracts, council, 500)
-      await contracts.borrowerOperations.connect(carol.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateWalletSnapshot(contracts, carol, "after")
       expect(carol.musd.after).to.equal(carol.musd.before)
+    })
+
+    it("reinserts the trove into the SortedTroves array", async () => {
+      await openTrove(contracts, {
+        musdAmount: "20,000",
+        ICR: "500",
+        sender: carol.wallet,
+      })
+      await openTrove(contracts, {
+        musdAmount: "20,000",
+        ICR: "500",
+        sender: dennis.wallet,
+      })
+
+      // Dennis has the highest ICR (tied with Carol), so he should be first due to insertion order
+      expect(await contracts.sortedTroves.getFirst()).to.equal(dennis.address)
+
+      await setInterestRate(contracts, council, 1000)
+      await contracts.borrowerOperations
+        .connect(dennis.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
+
+      // Dennis should now have a lower ICR due to the fee from refinancing
+      expect(await contracts.sortedTroves.getFirst()).to.equal(carol.address)
+    })
+
+    context("Emitted Events", () => {
+      it("Emits a TroveUpdated event with the correct collateral and debt", async () => {
+        await setupCarolsTrove()
+
+        const tx = await contracts.borrowerOperations
+          .connect(carol.wallet)
+          .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
+
+        const coll = await getTroveEntireColl(contracts, carol.wallet)
+        const emittedColl = await getEventArgByName(
+          tx,
+          TROVE_UPDATED_ABI,
+          "TroveUpdated",
+          3,
+        )
+
+        const debt = await getTroveEntireDebt(contracts, carol.wallet)
+        const emittedDebt = await getEventArgByName(
+          tx,
+          TROVE_UPDATED_ABI,
+          "TroveUpdated",
+          1,
+        )
+
+        expect(coll).to.equal(emittedColl)
+        expect(debt).to.equal(emittedDebt)
+      })
     })
 
     context("Expected Reverts", () => {
       it("should revert if the fee would put the system into recovery mode", async () => {
         await setInterestRate(contracts, council, 500)
         await expect(
-          contracts.borrowerOperations.connect(alice.wallet).refinance(),
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .refinance(ZERO_ADDRESS, ZERO_ADDRESS),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in TCR < CCR is not permitted",
         )
@@ -5482,7 +5559,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         await setInterestRate(contracts, council, 500)
         await dropPrice(contracts, deployer, alice, to1e18("110"))
         await expect(
-          contracts.borrowerOperations.connect(alice.wallet).refinance(),
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .refinance(ZERO_ADDRESS, ZERO_ADDRESS),
         ).to.be.revertedWith(
           "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
         )
@@ -5523,7 +5602,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await bob.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
-        .refinanceWithSignature(borrower, signature, deadline)
+        .refinanceWithSignature(
+          alice.address,
+          alice.address,
+          borrower,
+          signature,
+          deadline,
+        )
 
       await updateTroveSnapshot(contracts, bob, "after")
       expect(bob.trove.interestRate.after).to.equal(newRate)
@@ -5546,7 +5631,13 @@ describe("BorrowerOperations in Normal Mode", () => {
       const signature = await bob.wallet.signTypedData(domain, types, value)
       await contracts.borrowerOperationsSignatures
         .connect(alice.wallet)
-        .refinanceWithSignature(borrower, signature, deadline)
+        .refinanceWithSignature(
+          alice.address,
+          alice.address,
+          borrower,
+          signature,
+          deadline,
+        )
 
       const newNonce =
         await contracts.borrowerOperationsSignatures.getNonce(borrower)
@@ -5600,6 +5691,8 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperationsSignatures
             .connect(overriddenData.caller)
             .refinanceWithSignature(
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
               overriddenData.borrower,
               signature,
               overriddenData.deadline,

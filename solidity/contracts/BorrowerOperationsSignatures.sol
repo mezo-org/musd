@@ -78,6 +78,8 @@ contract BorrowerOperationsSignatures is
     }
 
     struct Refinance {
+        address upperHint;
+        address lowerHint;
         address borrower;
         uint256 deadline;
     }
@@ -446,11 +448,15 @@ contract BorrowerOperationsSignatures is
     }
 
     function refinanceWithSignature(
+        address _upperHint,
+        address _lowerHint,
         address _borrower,
         bytes memory _signature,
         uint256 _deadline
     ) external {
         Refinance memory refinanceData = Refinance({
+            upperHint: _upperHint,
+            lowerHint: _lowerHint,
             borrower: _borrower,
             deadline: _deadline
         });
@@ -466,7 +472,11 @@ contract BorrowerOperationsSignatures is
             _deadline
         );
 
-        borrowerOperations.restrictedRefinance(refinanceData.borrower);
+        borrowerOperations.restrictedRefinance(
+            refinanceData.borrower,
+            refinanceData.upperHint,
+            refinanceData.lowerHint
+        );
     }
 
     function claimCollateralWithSignature(
