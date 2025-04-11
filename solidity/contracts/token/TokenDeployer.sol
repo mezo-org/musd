@@ -24,6 +24,9 @@ contract TokenDeployer {
     address public constant GOVERNANCE =
         0x98D8899c3030741925BE630C710A98B57F397C7a;
 
+    uint256 public constant MEZO_CHAIN_ID = 31612;
+    uint256 public constant ETHEREUM_CHAIN_ID = 1;
+
     /// @notice The address of the deployed MUSD token contract.
     /// @dev Zero address before the contract is deployed.
     address public token;
@@ -32,6 +35,7 @@ contract TokenDeployer {
 
     error Create2Failed();
     error NotDeployer();
+    error NotGovernance();
 
     /// @notice Deploys the MUSD token to the chain via create2 and initializes
     ///         it with the provided system contract addresses and governance
@@ -43,8 +47,16 @@ contract TokenDeployer {
         address _interestRateManagerAddress,
         uint256 _governanceTimeDelay
     ) external {
-        if (msg.sender != DEPLOYER) {
-            revert NotDeployer();
+        if (
+            block.chainid == MEZO_CHAIN_ID || block.chainid == ETHEREUM_CHAIN_ID
+        ) {
+            if (msg.sender != DEPLOYER) {
+                revert NotDeployer();
+            }
+        } else {
+            if (msg.sender != GOVERNANCE) {
+                revert NotGovernance();
+            }
         }
 
         // Slither detector yields false positive, it is a bug in Slither.
