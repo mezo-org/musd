@@ -82,6 +82,8 @@ interface IBorrowerOperationsSignatures {
     ) external;
 
     function refinanceWithSignature(
+        address _upperHint,
+        address _lowerHint,
         address _borrower,
         bytes memory _signature,
         uint256 _deadline

@@ -108,9 +108,9 @@ interface IBorrowerOperations {
         address _recipient
     ) external;
 
-    function refinance() external;
+    function refinance(address _upperHint, address _lowerHint) external;
 
-    function restrictedRefinance(address _borrower) external;
+    function restrictedRefinance(address _borrower, address _upperHint, address _lowerHint) external;
 
     function adjustTrove(
         uint256 _collWithdrawal,

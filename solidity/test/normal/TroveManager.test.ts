@@ -43,6 +43,7 @@ import {
   TROVE_UPDATED_ABI,
 } from "../helpers"
 import { to1e18 } from "../utils"
+import { ZERO_ADDRESS } from "../../helpers/constants.ts"
 
 describe("TroveManager in Normal Mode", () => {
   let addresses: TestingAddresses
@@ -2553,7 +2554,9 @@ describe("TroveManager in Normal Mode", () => {
 
       // stop interest from accruing to make calculations easier
       await setInterestRate(contracts, council, 0)
-      await contracts.borrowerOperations.connect(alice.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       await updateTroveSnapshots(
         contracts,
@@ -2612,8 +2615,12 @@ describe("TroveManager in Normal Mode", () => {
       // stop interest from accruing to make calculations easier
       await setInterestRate(contracts, council, 0)
 
-      await contracts.borrowerOperations.connect(alice.wallet).refinance()
-      await contracts.borrowerOperations.connect(bob.wallet).refinance()
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
+      await contracts.borrowerOperations
+        .connect(bob.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
 
       const aliceDebt = await contracts.troveManager.getTroveDebt(alice.address)
       const redemptionAmount = aliceDebt + to1e18("400")
