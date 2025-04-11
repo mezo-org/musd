@@ -49,6 +49,7 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       initialBaseFeePerGas: 0,
+      chainId: 31612, // simulate Mezo mainnet chain ID for TokenDeployer tests
       allowUnlimitedContractSize: true, // Allow larger contracts for testing
       gas: 12000000,
       blockGasLimit: 0x1fffffffffffff,
