@@ -10,9 +10,7 @@ import StateManager from "./scale-testing/state-manager"
 async function getDeploymentAddress(contractName: string): Promise<string> {
   // Get the network name
   const network = await ethers.provider.getNetwork()
-  const networkName = StateManager.mapNetworkForState(
-    network.name === "unknown" ? "hardhat" : network.name,
-  )
+  const networkName = network.name === "unknown" ? "hardhat" : network.name
 
   // Path to deployment file
   const deploymentDir = path.join(__dirname, "..", "deployments", networkName)

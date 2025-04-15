@@ -10,12 +10,8 @@ export default class StateManager {
   private state: StateFile
 
   constructor(networkName: string) {
-    const mappedNetworkName = StateManager.mapNetworkForState(networkName)
     const outputDir = path.join(__dirname, "..", "..", "scale-testing")
-    this.filePath = path.join(
-      outputDir,
-      `account-state-${mappedNetworkName}.json`,
-    )
+    this.filePath = path.join(outputDir, `account-state-${networkName}.json`)
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(outputDir)) {
@@ -23,14 +19,7 @@ export default class StateManager {
     }
 
     // Initialize or load the state file
-    this.loadState(mappedNetworkName)
-  }
-
-  public static mapNetworkForState(networkName: string): string {
-    if (networkName === "matsnet_fuzz") {
-      return "matsnet" // Use matsnet state files for matsnet_fuzz
-    }
-    return networkName
+    this.loadState(networkName)
   }
 
   /**
