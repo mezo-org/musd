@@ -1,0 +1,70 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-15T17:00:47.944Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2200
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "3750000",
+    "averageGas": "750000"
+  },
+  "transactions": [
+    {
+      "hash": "0x6e00227337077fb8e7ccf689218f8a83bd7ae557afdff6ad8c4f483ad3b77dcf",
+      "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2486
+    },
+    {
+      "hash": "0x6215062f95f1f0bd935e3535c8728b9d9153feed6f1301083707a16aa1b584fd",
+      "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4691
+    },
+    {
+      "hash": "0xbb651eb4c43e0ccf4e000e782665b307e1a1d72f6360854bd42544cbcf815002",
+      "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4776
+    },
+    {
+      "hash": "0x546a3d3ec8b0031ae8e6bc81c99d54ed3c00c73e9241e1a248cc879a28eccc83",
+      "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4703
+    },
+    {
+      "hash": "0x06c96e0b63600c21663e3adba5ca4c0183093794a5176dd709d2ad124ab4c46a",
+      "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 5143
+    }
+  ]
+}

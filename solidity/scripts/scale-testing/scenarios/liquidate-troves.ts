@@ -10,7 +10,7 @@ const TEST_ID = "liquidate-troves-test"
 const NUM_ACCOUNTS = 5 // Number of troves to liquidate
 const TARGET_CR_RANGE = {
   min: 115, // Minimum CR to consider (%)
-  max: 150, // Maximum CR to consider (%) - Increased to find more candidates
+  max: 250, // Maximum CR to consider (%) - Increased to find more candidates
 }
 const MCR = 110 // Minimum Collateralization Ratio (%)
 
@@ -107,8 +107,10 @@ async function main() {
           ? originalPrice
           : originalPrice * BigInt(10) ** (18n - BigInt(decimals))
 
-      // Calculate CR in 18 decimals
-      const cr = (coll * adjustedPrice) / debt
+      const cr = await troveManager.getCurrentICR(
+        account.address,
+        adjustedPrice,
+      )
 
       // Convert to percentage (as a BigInt)
       const crPercentageBigInt = (cr * 100n) / BigInt(10) ** 18n
