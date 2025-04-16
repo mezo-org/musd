@@ -69,6 +69,7 @@ contract EchidnaTest {
 
     uint private numberOfTroves;
 
+    // Mimic the hardhat deploy process
     constructor() payable {
         address admin = address(new ProxyAdmin(msg.sender));
 
@@ -302,12 +303,12 @@ contract EchidnaTest {
         CCR = borrowerOperations.getCCR();
         MUSD_GAS_COMPENSATION = borrowerOperations.getGasComp();
 
+        // Set all of the admin permissions to the test contract
         pcv.initializeDebt();
         pcv.setFeeRecipient(msg.sender);
         pcv.setFeeSplit(50);
         pcv.startChangingRoles(address(this), address(this));
         pcv.finalizeChangingRoles();
-        pcv.addRecipientToWhitelist(msg.sender);
         pcv.addRecipientToWhitelist(address(this));
     }
 
@@ -319,14 +320,7 @@ contract EchidnaTest {
         echidnaProxies[actor].liquidatePrx(address(echidnaProxies[debtor]));
     }
 
-    // function batchLiquidateTrovesExt(
-    //     uint _i,
-    //     address[] calldata _troveArray
-    // ) external {
-    //     uint actor = _i % NUMBER_OF_ACTORS;
-    //     echidnaProxies[actor].batchLiquidateTrovesPrx(_troveArray);
-    // }
-
+    // Raw method for fuzz testing
     function redeemCollateralExt(
         uint _i,
         uint _MUSDAmount,
@@ -346,6 +340,8 @@ contract EchidnaTest {
         );
     }
 
+    // Reliable method, otherwise hitting the correct NICR doesn't happen in a
+    // normal amount of runs and the normal redemption flow is not tested.
     function redeemCollateralSafeExt(uint _i, uint _MUSDAmount) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
@@ -370,6 +366,8 @@ contract EchidnaTest {
         );
     }
 
+    // Reliable method to use an actor's whole balance for redemption. Makes
+    // testing mutli-redemptions much more probable.
     function redeemCollateralSafeEverythingExt(uint _i) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
@@ -442,6 +440,8 @@ contract EchidnaTest {
         assert(numberOfTroves > 0);
     }
 
+    // Reliable method to open a trove. Takes out a loan of [1800, 101800] MUSD
+    // with a [110, 1100] collateral ratio.
     function openTroveSafeExt(
         uint _i,
         uint _extraMUSD,
@@ -536,6 +536,8 @@ contract EchidnaTest {
         echidnaProxies[actor].closeTrovePrx();
     }
 
+    // Reliable method to close a trove. Loops through actors until one of them
+    // can send the payer enough money to close their trove.
     function closeTroveSafeExt(uint _i) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy closer = echidnaProxies[actor];
@@ -566,6 +568,7 @@ contract EchidnaTest {
         closer.closeTrovePrx();
     }
 
+    // Reliable method to successfully adjust troves.
     function adjustTroveExt(
         uint _i,
         uint _BTC,
