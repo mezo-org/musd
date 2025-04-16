@@ -131,7 +131,7 @@ contract EchidnaProxy {
     }
 
     function refinancePrx() external {
-        borrowerOperations.refinance();
+        borrowerOperations.refinance(address(0), address(0));
     }
 
     function claimCollateralPrx() external {

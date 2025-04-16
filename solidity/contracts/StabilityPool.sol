@@ -562,7 +562,7 @@ contract StabilityPool is
         emit PUpdated(newP);
     }
 
-    function _requireNoUnderCollateralizedTroves() internal {
+    function _requireNoUnderCollateralizedTroves() internal view {
         uint256 price = priceFeed.fetchPrice();
         address lowestTrove = sortedTroves.getLast();
         uint256 ICR = troveManager.getCurrentICR(lowestTrove, price);

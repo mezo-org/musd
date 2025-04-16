@@ -87,7 +87,8 @@ contract BorrowerOperations is
     enum BorrowerOperation {
         openTrove,
         closeTrove,
-        adjustTrove
+        adjustTrove,
+        refinanceTrove
     }
 
     string public constant name = "BorrowerOperations";
@@ -253,8 +254,11 @@ contract BorrowerOperations is
         _closeTrove(msg.sender, msg.sender, msg.sender);
     }
 
-    function refinance() external override {
-        _refinance(msg.sender);
+    function refinance(
+        address _upperHint,
+        address _lowerHint
+    ) external override {
+        _refinance(msg.sender, _upperHint, _lowerHint);
     }
 
     /*
@@ -415,9 +419,13 @@ contract BorrowerOperations is
         _closeTrove(_borrower, _caller, _recipient);
     }
 
-    function restrictedRefinance(address _borrower) external {
+    function restrictedRefinance(
+        address _borrower,
+        address _upperHint,
+        address _lowerHint
+    ) external {
         _requireCallerIsBorrowerOperationsSignatures();
-        _refinance(_borrower);
+        _refinance(_borrower, _upperHint, _lowerHint);
     }
 
     function restrictedAdjustTrove(
@@ -947,7 +955,11 @@ contract BorrowerOperations is
         activePoolCached.sendCollateral(_recipient, coll);
     }
 
-    function _refinance(address _borrower) internal {
+    function _refinance(
+        address _borrower,
+        address _upperHint,
+        address _lowerHint
+    ) internal {
         // slither-disable-next-line uninitialized-local
         LocalVariables_refinance memory vars;
         vars.price = priceFeed.fetchPrice();
@@ -1020,10 +1032,19 @@ contract BorrowerOperations is
 
         // Re-insert trove in to the sorted list
         vars.newNICR = LiquityMath._computeNominalCR(newColl, newPrincipal);
-        sortedTroves.reInsert(_borrower, vars.newNICR, address(0), address(0));
+        sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
-        // slither-disable-next-line reentrancy-events
+        // slither-disable-start reentrancy-events
         emit RefinancingFeePaid(_borrower, fee);
+        emit TroveUpdated(
+            _borrower,
+            newPrincipal,
+            newInterest,
+            newColl,
+            vars.troveManagerCached.updateStakeAndTotalStakes(_borrower),
+            uint8(BorrowerOperation.refinanceTrove)
+        );
+        // slither-disable-end reentrancy-events
     }
 
     // Issue the specified amount of mUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a MUSDFee)

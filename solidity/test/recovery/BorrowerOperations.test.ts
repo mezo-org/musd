@@ -17,6 +17,7 @@ import {
   updateTroveSnapshot,
 } from "../helpers"
 import { to1e18 } from "../utils"
+import { ZERO_ADDRESS } from "../../helpers/constants"
 
 describe("BorrowerOperations in Recovery Mode", () => {
   let addresses: TestingAddresses
@@ -424,7 +425,9 @@ describe("BorrowerOperations in Recovery Mode", () => {
     context("Expected Reverts", () => {
       it("reverts when system is in Recovery Mode", async () => {
         await expect(
-          contracts.borrowerOperations.connect(bob.wallet).refinance(),
+          contracts.borrowerOperations
+            .connect(bob.wallet)
+            .refinance(ZERO_ADDRESS, ZERO_ADDRESS),
         ).to.be.revertedWith(
           "BorrowerOps: Operation not permitted during Recovery Mode",
         )
