@@ -46,8 +46,9 @@ async function main() {
   }
 
   // Load existing wallets if available
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let wallets: any[] = []
-  let encryptedKeys: any[] = []
+  let encryptedKeys: never[] = []
   let nextIndex = 0
 
   if (walletsExist && encryptedKeysExist) {

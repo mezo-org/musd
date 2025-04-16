@@ -2,7 +2,6 @@
 import * as fs from "fs"
 import * as path from "path"
 import { ethers } from "hardhat"
-import StateManager from "./scale-testing/state-manager"
 
 /**
  * Get the deployment address for a contract

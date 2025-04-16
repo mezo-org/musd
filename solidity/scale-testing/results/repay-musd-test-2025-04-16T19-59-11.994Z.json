@@ -1,0 +1,57 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-04-16T19:59:11.994Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "repaymentPercentages": [10, 20, 30, 40, 50]
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "2500000",
+    "averageGas": "500000"
+  },
+  "transactions": [
+    {
+      "hash": "0x04a01eb2ebe1fffad726deb9ce15118490471ca3ddafb1d750366fa02fc06428",
+      "account": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+      "repaymentPercentage": 10,
+      "repayAmount": "236.085196148414697874",
+      "gasUsed": "500000",
+      "duration": 3947
+    },
+    {
+      "hash": "0x543d842822e1f7da9da91425df12ccc29430e7eec5bfbff4e60d8c157b8c31b7",
+      "account": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+      "repaymentPercentage": 20,
+      "repayAmount": "290.601806821208730191",
+      "gasUsed": "500000",
+      "duration": 4601
+    },
+    {
+      "hash": "0x254ea0d28a7353b7987a44728e8c65faa98b6648be5ec3127a3e6d891d828542",
+      "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+      "repaymentPercentage": 30,
+      "repayAmount": "301.500798897577099057",
+      "gasUsed": "500000",
+      "duration": 5273
+    },
+    {
+      "hash": "0xef1a22d70efa2339d10588353a68c8cc6d1b310bfb15d179767ea69d656569d8",
+      "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+      "repaymentPercentage": 40,
+      "repayAmount": "402.000815191440607157",
+      "gasUsed": "500000",
+      "duration": 3968
+    },
+    {
+      "hash": "0x1faae277c22df8b4b7f9fd03c118ec9a41cb5ab196e8d8a22cf7caaf3005bce1",
+      "account": "0x934733526AE32a19DA271b0cA5d868eC7dd33F5f",
+      "repaymentPercentage": 50,
+      "repayAmount": "502.500788541662746282",
+      "gasUsed": "500000",
+      "duration": 5300
+    }
+  ]
+}

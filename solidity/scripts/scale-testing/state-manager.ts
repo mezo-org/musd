@@ -286,6 +286,9 @@ export default class StateManager {
       limit,
     } = criteria
 
+    // Check if we're in loop mode (from environment variable)
+    const isLoopMode = process.env.LOOP_MODE === "true"
+
     let filteredAccounts = Object.values(this.state.accounts)
 
     // Filter by Trove status if specified
@@ -323,7 +326,7 @@ export default class StateManager {
     }
 
     // Filter by test participation if specified
-    if (notUsedInTest !== undefined) {
+    if (notUsedInTest !== undefined && !isLoopMode) {
       filteredAccounts = filteredAccounts.filter(
         (account) => !account.usedInTests.includes(notUsedInTest),
       )

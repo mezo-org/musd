@@ -4,13 +4,7 @@
   "network": "matsnet_fuzz",
   "config": {
     "numAccounts": 5,
-    "withdrawalPercentages": [
-      5,
-      10,
-      15,
-      20,
-      25
-    ]
+    "withdrawalPercentages": [5, 10, 15, 20, 25]
   },
   "results": {
     "successful": 5,

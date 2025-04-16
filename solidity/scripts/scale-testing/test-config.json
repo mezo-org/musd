@@ -1,0 +1,86 @@
+{
+  "network": "matsnet_fuzz",
+  "setupScripts": [
+    {
+      "name": "Generate Wallets",
+      "path": "generate-wallets.ts",
+      "enabled": false
+    },
+    {
+      "name": "Fund Wallets",
+      "path": "fund-wallets.ts",
+      "enabled": false
+    },
+    {
+      "name": "Initialize State",
+      "path": "init-state-tracking.ts",
+      "enabled": false
+    },
+    {
+      "name": "Open Troves",
+      "path": "scenarios/open-troves.ts",
+      "enabled": true
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Add Collateral",
+      "path": "scenarios/add-collateral.ts",
+      "enabled": true
+    },
+    {
+      "name": "Increase Debt",
+      "path": "scenarios/increase-debt.ts",
+      "enabled": true
+    },
+    {
+      "name": "Repay MUSD",
+      "path": "scenarios/repay-musd.ts",
+      "enabled": true
+    },
+    {
+      "name": "Withdraw Collateral",
+      "path": "scenarios/withdraw-collateral.ts",
+      "enabled": true
+    },
+    {
+      "name": "Send MUSD",
+      "path": "scenarios/send-musd.ts",
+      "enabled": true
+    },
+    {
+      "name": "Redeem MUSD",
+      "path": "scenarios/redeem-musd.ts",
+      "enabled": false
+    },
+    {
+      "name": "Liquidate Troves",
+      "path": "scenarios/liquidate-troves.ts",
+      "enabled": false
+    },
+    {
+      "name": "Close Trove",
+      "path": "scenarios/close-trove.ts",
+      "enabled": false
+    }
+  ],
+  "scenarioLoops": [
+    {
+      "name": "Basic Trove Operations Loop",
+      "enabled": true,
+      "scenarios": [
+        "scenarios/add-collateral.ts",
+        "scenarios/increase-debt.ts",
+        "scenarios/repay-musd.ts",
+        "scenarios/withdraw-collateral.ts"
+      ],
+      "iterations": 2
+    },
+    {
+      "name": "MUSD Usage Loop",
+      "enabled": false,
+      "scenarios": ["scenarios/send-musd.ts", "scenarios/redeem-musd.ts"],
+      "iterations": 2
+    }
+  ]
+}
