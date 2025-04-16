@@ -24,4 +24,4 @@ tmp/
 **/coverage/
 
 # Scale testing
-solidity/scripts/scale-testing/password.txt
+**/password.txt
