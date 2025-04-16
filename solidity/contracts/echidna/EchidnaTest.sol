@@ -295,8 +295,8 @@ contract EchidnaTest {
             require(success, "proxy funding must work");
         }
         // slither-disable-end calls-loop
-        // slither-disable-end arbitrary-send-eth
         // slither-disable-end low-level-calls
+        // slither-disable-end arbitrary-send-eth
 
         MCR = borrowerOperations.getMCR();
         CCR = borrowerOperations.getCCR();
@@ -426,23 +426,20 @@ contract EchidnaTest {
     }
 
     // solhint-disable-next-line ordering
-    function openTroveExt(uint _i, uint _BTC, uint _MUSDAmount) public payable {
+    function openTroveExt(uint _i, uint _BTC, uint _MUSDAmount) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
         uint actorBalance = address(echidnaProxy).balance;
 
         // we pass in CCR instead of MCR in case it’s the first one
-        // uint BTC = getAdjustedBTC(actorBalance, _BTC, CCR);
-        // uint MUSDAmount = getAdjustedMUSD(BTC, _MUSDAmount, CCR);
-
         uint BTC = getAdjustedBTC(actorBalance, _BTC, CCR);
         uint MUSDAmount = getAdjustedMUSD(BTC, _MUSDAmount, CCR);
 
         echidnaProxy.openTrovePrx(BTC, MUSDAmount, address(0), address(0));
 
+        // slither-disable-next-line reentrancy-benign
         numberOfTroves = troveManager.getTroveOwnersCount();
         assert(numberOfTroves > 0);
-        // slither-disable-end reentrancy-benign
     }
 
     function openTroveSafeExt(
@@ -452,7 +449,7 @@ contract EchidnaTest {
     ) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
-        uint addedMUSD = (_extraMUSD % 100000) * 1e18;
+        uint addedMUSD = (_extraMUSD % 100_000) * 1e18;
         uint musdAmount = 1800e18 + addedMUSD;
         uint collatRatio = 110 + (_collatRatio % 1000);
         uint price = priceFeed.fetchPrice();
@@ -541,27 +538,32 @@ contract EchidnaTest {
 
     function closeTroveSafeExt(uint _i) external {
         uint actor = _i % NUMBER_OF_ACTORS;
-        EchidnaProxy p = echidnaProxies[actor];
-        uint256 debt = troveManager.getTroveDebt(address(p));
+        EchidnaProxy closer = echidnaProxies[actor];
+        uint256 debt = troveManager.getTroveDebt(address(closer));
         if (debt == 0) {
             return;
         }
-        if (musd.balanceOf(address(p)) < debt + 10) {
-            uint256 need = debt + 10 - musd.balanceOf(address(p));
+        if (musd.balanceOf(address(closer)) < debt + 10) {
+            uint256 need = debt + 10 - musd.balanceOf(address(closer));
             uint count = 0;
             uint payerIndex = (_i + 1) % NUMBER_OF_ACTORS;
             address payer = address(echidnaProxies[payerIndex]);
+            // slither-disable-start calls-loop
             while (musd.balanceOf(payer) < need && count < NUMBER_OF_ACTORS) {
                 payerIndex++;
                 payer = address(echidnaProxies[payerIndex]);
                 count++;
             }
+            // slither-disable-end calls-loop
+
+            // slither-disable-next-line unused-return
             echidnaProxies[payerIndex].transferPrx(
                 address(echidnaProxies[actor]),
                 need
             );
         }
-        echidnaProxies[actor].closeTrovePrx();
+
+        closer.closeTrovePrx();
     }
 
     function adjustTroveExt(
@@ -570,7 +572,7 @@ contract EchidnaTest {
         uint _collWithdrawal,
         uint _debtChange,
         bool _isDebtIncrease
-    ) external payable {
+    ) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         EchidnaProxy echidnaProxy = echidnaProxies[actor];
         uint actorBalance = address(echidnaProxy).balance;
@@ -578,10 +580,8 @@ contract EchidnaTest {
         uint BTC = getAdjustedBTC(actorBalance, _BTC, MCR);
         uint debtChange = _debtChange;
         if (_isDebtIncrease) {
-            // TODO: add current amount already withdrawn:
             debtChange = getAdjustedMUSD(BTC, uint(_debtChange), MCR);
         }
-        // TODO: collWithdrawal, debtChange
         echidnaProxy.adjustTrovePrx(
             BTC,
             _collWithdrawal,
@@ -600,7 +600,7 @@ contract EchidnaTest {
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint
-    ) external payable {
+    ) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         echidnaProxies[actor].adjustTrovePrx(
             _BTC,
@@ -753,6 +753,7 @@ contract EchidnaTest {
 
         uint i = 0;
         EchidnaProxy actor = echidnaProxies[i];
+        // slither-disable-start calls-loop
         while (
             i < NUMBER_OF_ACTORS &&
             troveManager.getTroveDebt(address(actor)) > 0
@@ -760,6 +761,7 @@ contract EchidnaTest {
             i++;
             actor = echidnaProxies[i];
         }
+        // slither-disable-end calls-loop
 
         uint price = priceFeed.fetchPrice();
 
@@ -767,6 +769,7 @@ contract EchidnaTest {
 
         actor.openTrovePrx(BTC, musdAmount, address(0), address(0));
 
+        // slither-disable-next-line unused-return
         actor.transferPrx(address(pcv), musdAmount);
     }
 
@@ -782,18 +785,13 @@ contract EchidnaTest {
     )
         external
         view
-        returns (
-            uint256 coll,
-            uint256 principal,
-            uint256 interest,
-            uint256 pendingCollateral,
-            uint256 pendingPrincipal,
-            uint256 pendingInterest
-        )
+        returns (uint256, uint256, uint256, uint256, uint256, uint256)
     {
         uint actor = _i % NUMBER_OF_ACTORS;
+        // slither-disable-start unused-return
         return
             troveManager.getEntireDebtAndColl(address(echidnaProxies[actor]));
+        // slither-disable-end unused-return
     }
 
     function getEntireSystemColl() external view returns (uint256) {
@@ -894,6 +892,7 @@ contract EchidnaTest {
 
             currentTrove = sortedTroves.getNext(currentTrove);
         }
+        // slither-disable-end calls-loop
 
         uint256 systemDebt = troveManager.viewGetEntireSystemDebt();
         systemDebt -=

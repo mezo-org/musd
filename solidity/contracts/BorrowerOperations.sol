@@ -948,6 +948,7 @@ contract BorrowerOperations is
     }
 
     function _refinance(address _borrower) internal {
+        // slither-disable-next-line uninitialized-local
         LocalVariables_refinance memory vars;
         vars.price = priceFeed.fetchPrice();
         vars.troveManagerCached = troveManager;

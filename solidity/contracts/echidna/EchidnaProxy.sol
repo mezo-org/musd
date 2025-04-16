@@ -118,7 +118,7 @@ contract EchidnaProxy {
         bool _isDebtIncrease,
         address _upperHint,
         address _lowerHint
-    ) external payable {
+    ) external {
         // slither-disable-start arbitrary-send-eth
         borrowerOperations.adjustTrove{value: _BTC}(
             _collWithdrawal,
@@ -140,6 +140,7 @@ contract EchidnaProxy {
 
     // Pool Manager
     function provideToSPPrx(uint _amount) external {
+        // slither-disable-next-line unused-return
         musd.approve(address(stabilityPool), _amount);
         stabilityPool.provideToSP(_amount);
     }
