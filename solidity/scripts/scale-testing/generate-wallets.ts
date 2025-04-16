@@ -9,6 +9,7 @@ const WALLET_COUNT = 100 // Number of wallets to generate
 const OUTPUT_DIR = path.join(__dirname, "..", "..", "scripts", "scale-testing")
 const WALLETS_FILE = path.join(OUTPUT_DIR, "wallets.json")
 const ENCRYPTED_KEYS_FILE = path.join(OUTPUT_DIR, "encrypted-keys.json")
+const PASSWORD_FILE = path.join(OUTPUT_DIR, "password.txt")
 
 // Generate a secure password for encryption (or provide your own)
 function generateSecurePassword(): string {
@@ -21,54 +22,92 @@ async function main() {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true })
   }
 
-  console.log(`Generating ${WALLET_COUNT} wallets...`)
+  // Check for existing wallet files and password
+  const passwordExists = fs.existsSync(PASSWORD_FILE)
+  const walletsExist = fs.existsSync(WALLETS_FILE)
+  const encryptedKeysExist = fs.existsSync(ENCRYPTED_KEYS_FILE)
 
-  // Generate wallets
-  const wallets = []
-  const encryptedKeys = []
-  const password = generateSecurePassword()
+  // Get existing password or generate a new one
+  let password: string
+  if (passwordExists) {
+    password = fs.readFileSync(PASSWORD_FILE, "utf8").trim()
+    console.log("Using existing password from password.txt")
+  } else {
+    password = generateSecurePassword()
 
-  // Save password to a separate file with restricted permissions
-  const passwordFile = path.join(OUTPUT_DIR, "password.txt")
-  fs.writeFileSync(passwordFile, password)
-  fs.chmodSync(passwordFile, 0o600) // Only owner can read/write
+    // Save new password to file
+    fs.writeFileSync(PASSWORD_FILE, password)
+    fs.chmodSync(PASSWORD_FILE, 0o600) // Only owner can read/write
 
-  console.log(`Password saved to ${passwordFile}`)
-  console.log(
-    "IMPORTANT: Keep this password secure and don't commit it to version control!",
-  )
+    console.log(`Generated new password and saved to ${PASSWORD_FILE}`)
+    console.log(
+      "IMPORTANT: Keep this password secure and don't commit it to version control!",
+    )
+  }
 
-  for (let i = 0; i < WALLET_COUNT; i++) {
-    // Create a new random wallet
-    const wallet = ethers.Wallet.createRandom()
+  // Load existing wallets if available
+  let wallets: any[] = []
+  let encryptedKeys: any[] = []
+  let nextIndex = 0
 
-    // Encrypt the private key
-    const encryptedKey = await wallet.encrypt(password)
+  if (walletsExist && encryptedKeysExist) {
+    wallets = JSON.parse(fs.readFileSync(WALLETS_FILE, "utf8"))
+    encryptedKeys = JSON.parse(fs.readFileSync(ENCRYPTED_KEYS_FILE, "utf8"))
+    console.log(`Loaded ${wallets.length} existing wallets`)
 
-    // Store wallet info and encrypted key
-    wallets.push({
-      address: wallet.address,
-      index: i,
-    })
-
-    encryptedKeys.push({
-      address: wallet.address,
-      encryptedKey,
-    })
-
-    if ((i + 1) % 10 === 0 || i === WALLET_COUNT - 1) {
-      console.log(`Generated ${i + 1}/${WALLET_COUNT} wallets`)
+    // Find the highest index to continue from there
+    if (wallets.length > 0) {
+      nextIndex = Math.max(...wallets.map((w) => w.index)) + 1
     }
   }
 
-  // Save wallet addresses (public info)
-  fs.writeFileSync(WALLETS_FILE, JSON.stringify(wallets, null, 2))
-  console.log(`Wallet addresses saved to ${WALLETS_FILE}`)
+  // Determine how many more wallets we need
+  const walletsNeeded = Math.max(0, WALLET_COUNT - wallets.length)
 
-  // Save encrypted private keys
-  fs.writeFileSync(ENCRYPTED_KEYS_FILE, JSON.stringify(encryptedKeys, null, 2))
-  fs.chmodSync(ENCRYPTED_KEYS_FILE, 0o600) // Only owner can read/write
-  console.log(`Encrypted private keys saved to ${ENCRYPTED_KEYS_FILE}`)
+  if (walletsNeeded <= 0) {
+    console.log(
+      `Already have ${wallets.length} wallets, no need to generate more.`,
+    )
+  } else {
+    console.log(`Generating ${walletsNeeded} additional wallets...`)
+
+    for (let i = 0; i < walletsNeeded; i++) {
+      // Create a new random wallet
+      const wallet = ethers.Wallet.createRandom()
+
+      // Encrypt the private key
+      const encryptedKey = await wallet.encrypt(password)
+
+      // Store wallet info and encrypted key
+      wallets.push({
+        address: wallet.address,
+        index: nextIndex + i,
+      })
+
+      encryptedKeys.push({
+        address: wallet.address,
+        encryptedKey,
+      })
+
+      if ((i + 1) % 10 === 0 || i === walletsNeeded - 1) {
+        console.log(`Generated ${i + 1}/${walletsNeeded} wallets`)
+      }
+    }
+
+    // Save wallet addresses (public info)
+    fs.writeFileSync(WALLETS_FILE, JSON.stringify(wallets, null, 2))
+    console.log(`Wallet addresses saved to ${WALLETS_FILE}`)
+
+    // Save encrypted private keys
+    fs.writeFileSync(
+      ENCRYPTED_KEYS_FILE,
+      JSON.stringify(encryptedKeys, null, 2),
+    )
+    fs.chmodSync(ENCRYPTED_KEYS_FILE, 0o600) // Only owner can read/write
+    console.log(`Encrypted private keys saved to ${ENCRYPTED_KEYS_FILE}`)
+  }
+
+  console.log(`Total wallets available: ${wallets.length}`)
 }
 
 main()
