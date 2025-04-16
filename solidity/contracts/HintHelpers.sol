@@ -10,8 +10,14 @@ import "./dependencies/LiquityBase.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
+import "./interfaces/IHintHelpers.sol";
 
-contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
+contract HintHelpers is
+    CheckContract,
+    IHintHelpers,
+    LiquityBase,
+    OwnableUpgradeable
+{
     string public constant NAME = "HintHelpers";
 
     IBorrowerOperations public borrowerOperations;
@@ -19,10 +25,6 @@ contract HintHelpers is CheckContract, LiquityBase, OwnableUpgradeable {
     ITroveManager public troveManager;
 
     // --- Events ---
-
-    event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
-    event SortedTrovesAddressChanged(address _sortedTrovesAddress);
-    event TroveManagerAddressChanged(address _troveManagerAddress);
 
     function initialize() external initializer {
         __Ownable_init(msg.sender);

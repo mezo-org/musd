@@ -9,4 +9,9 @@ interface IGasPool {
 
     // --- Functions ---
     function sendMUSD(address _account, uint256 _amount) external;
+
+    function setAddresses(
+        address _musdTokenAddress,
+        address _troveManagerAddress
+    ) external;
 }

@@ -12,4 +12,9 @@ interface IDefaultPool is IPool {
 
     // --- Functions ---
     function sendCollateralToActivePool(uint256 _amount) external;
+
+    function setAddresses(
+        address _activePoolAddress,
+        address _troveManagerAddress
+    ) external;
 }

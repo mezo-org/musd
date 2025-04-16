@@ -66,6 +66,10 @@ interface IPCV {
 
     function finalizeChangingRoles() external;
 
+    function depositToStabilityPool(uint256 _amount) external;
+
+    function withdrawFromStabilityPool(uint256 _amount) external;
+
     function musd() external view returns (IMUSD);
 
     function council() external view returns (address);

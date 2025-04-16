@@ -1,0 +1,15 @@
+testLimit: 500000
+deployer: "0x30000"
+sender:
+  [
+    "0x10000",
+    "0x2000000000000000000000000000000000000000",
+    "0x3000000000000000000000000000000000000000",
+    "0x4000000000000000000000000000000000000000",
+  ]
+balanceAddr: 0xffffffffffffffffffffffff
+balanceContract: 0xffffffffffffffffffffffff
+solcArgs: via-ir
+maxTimeDelay: 31449600
+corpusDir: "./echidna-corpus"
+seqLen: 200
