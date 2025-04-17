@@ -750,8 +750,6 @@ contract BorrowerOperations is
                 msg.sender == borrowerOperationsSignaturesAddress
         );
 
-        contractsCache.troveManager.applyPendingRewards(_borrower);
-
         // Get the collChange based on whether or not collateral was sent in the transaction
         (vars.collChange, vars.isCollIncrease) = _getCollChange(
             msg.value,
@@ -899,8 +897,6 @@ contract BorrowerOperations is
         if (canMint) {
             _requireNotInRecoveryMode(price);
         }
-
-        troveManagerCached.applyPendingRewards(_borrower);
 
         uint256 coll = troveManagerCached.getTroveColl(_borrower);
         uint256 debt = troveManagerCached.getTroveDebt(_borrower);
