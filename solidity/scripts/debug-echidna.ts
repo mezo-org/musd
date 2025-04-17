@@ -42,27 +42,26 @@ async function deploy(name: string) {
 async function main() {
   fs.rmSync("./deployments/hardhat", { recursive: true, force: true })
 
-  await deploy("Test")
-  const e: EchidnaTest = await getDeployedContract("Test")
+  await deploy("EchidnaTest")
+  const e: EchidnaTest = await getDeployedContract("EchidnaTest")
 
-  await e.openTroveSafeExt(
-    1n,
-    223478111365515423146270160733109607639557547638n,
-    1897713471227427268030450876316543086270n,
+  await e.payDebtExt()
+  await e.payDebtExt()
+  await e.setPriceExt(0)
+  await e.liquidateExt(
+    43093724108198014017605941667590544986780162n,
+    739999144148240526457498301358303937927126984106732904420385826191n,
   )
-  await e.withdrawFromStabilityPoolExt(100373600501007488180017485n)
-  await e.setPriceExt(3408210373507613n)
-  await e.openTroveSafeExt(
-    3n,
-    0n,
-    31227190436216627548675938150669192438394419243727846152862511911515059n,
+  await e.setPriceExt(37964111267508330424779n)
+  await e.refinanceExt(
+    76609358920546818668946999372476761706292127312159036359400n,
   )
-  await e.liquidateExt(2n, 1n)
+
+  console.log(await e.echidna_sum_of_debt())
 
   fs.rmSync("./deployments/hardhat", { recursive: true, force: true })
 }
 
-main().catch(() => {
-  // console.error(_error)
-  process.exitCode = 1
-})
+;(async () => {
+  await main()
+})()
