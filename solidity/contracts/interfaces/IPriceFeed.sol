@@ -9,7 +9,7 @@ interface IPriceFeed {
     event NewOracleRegistered(address _oracle);
 
     // --- Function ---
-    function fetchPrice() external returns (uint);
-
     function setOracle(address _oracle) external;
+
+    function fetchPrice() external view returns (uint);
 }
