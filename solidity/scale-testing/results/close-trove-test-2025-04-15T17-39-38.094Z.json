@@ -1,0 +1,49 @@
+{
+  "testId": "close-trove-test",
+  "timestamp": "2025-04-15T17:39:38.094Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5
+  },
+  "results": {
+    "successful": 4,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "3000000",
+    "averageGas": "750000"
+  },
+  "transactions": [
+    {
+      "hash": "0x72911d9d266591d03839437d3393f0d1c2f134b878e812f29eebe0c8c3f548c9",
+      "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+      "collateralReturned": "0.000396",
+      "debtRepaid": "2089.603710791168965773",
+      "gasUsed": "750000",
+      "duration": 3373
+    },
+    {
+      "hash": "0x0ea8a5898a4a38cab2cb3265f58c836b0d2192c2f8c70e0ddceebf2768d762aa",
+      "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+      "collateralReturned": "0.00051",
+      "debtRepaid": "2000.000586257545157773",
+      "gasUsed": "750000",
+      "duration": 3502
+    },
+    {
+      "hash": "0xa0cafeda7035e2b0c4e636a38e162d8c6fc81ebd9e5d42c76e4242fefc57a924",
+      "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+      "collateralReturned": "0.000608",
+      "debtRepaid": "2000.000601682990548624",
+      "gasUsed": "750000",
+      "duration": 3233
+    },
+    {
+      "hash": "0x9e3c5fd18ecc08e72fe3ada718673015f99698a82b3efb218634ca490ae0f7a1",
+      "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+      "collateralReturned": "0.00069",
+      "debtRepaid": "2000.000612512301102896",
+      "gasUsed": "750000",
+      "duration": 3013
+    }
+  ]
+}

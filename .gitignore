@@ -22,3 +22,6 @@ tmp/
 
 # Code Coverage
 **/coverage/
+
+# Scale testing
+**/password.txt

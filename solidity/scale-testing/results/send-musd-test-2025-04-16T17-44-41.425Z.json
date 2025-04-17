@@ -1,0 +1,57 @@
+{
+  "testId": "send-musd-test",
+  "timestamp": "2025-04-16T17:44:41.425Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numSenderAccounts": 5,
+    "musdAmounts": ["50", "75", "100", "125", "150"]
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "1250000",
+    "averageGas": "250000"
+  },
+  "transactions": [
+    {
+      "hash": "0x3102d79a2db1ccc94b87ed59ef4d50e5e0ffd00c1cdb58a4c0b48527d5b1ca26",
+      "sender": "0x92c668261aEDB5c8C7Cc30D924F7b99e8B340046",
+      "receiver": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+      "musdAmount": "50.0",
+      "gasUsed": "250000",
+      "duration": 4229
+    },
+    {
+      "hash": "0xce9918c02e0871c221a0b6ff2cdc6597693bdc9dd31633c215aef6dc6191cdf8",
+      "sender": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+      "receiver": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+      "musdAmount": "75.0",
+      "gasUsed": "250000",
+      "duration": 4590
+    },
+    {
+      "hash": "0xf4d5044c58772dd190ae2e2978ac470a4b1e245c738c5a301a5f6fa11e850168",
+      "sender": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+      "receiver": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+      "musdAmount": "100.0",
+      "gasUsed": "250000",
+      "duration": 5471
+    },
+    {
+      "hash": "0xf830dc7be16214f400e68af3db402e0e3a10f48e067e148978c2c585856c3bae",
+      "sender": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+      "receiver": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+      "musdAmount": "125.0",
+      "gasUsed": "250000",
+      "duration": 5259
+    },
+    {
+      "hash": "0x5764d9c5273c74d60f355d69d79afaef81f40141760c3f9db3fc916dfaf17435",
+      "sender": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+      "receiver": "0x89B09Afe54deA782160939cb0863c2727E8C8FBC",
+      "musdAmount": "150.0",
+      "gasUsed": "250000",
+      "duration": 4596
+    }
+  ]
+}

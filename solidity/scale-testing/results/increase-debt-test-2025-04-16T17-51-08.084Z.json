@@ -1,0 +1,52 @@
+{
+  "testId": "increase-debt-test",
+  "timestamp": "2025-04-16T17:51:08.084Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "musdAmounts": ["100", "200", "300", "400", "500"]
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "2500000",
+    "averageGas": "500000"
+  },
+  "transactions": [
+    {
+      "hash": "0x5bd3b862552250b54e366b3f25dbf9ac0fd7b513dd2b63f3030c14dc6524afd7",
+      "account": "0xc1A2A19d34E238Cf51D7e403E3b758206eeFBA4a",
+      "musdAmount": "100.0",
+      "gasUsed": "500000",
+      "duration": 4627
+    },
+    {
+      "hash": "0xf69f61d43985b66a33228440ca38f7a554f1dd8c4d775ec73b3345c80e5681b4",
+      "account": "0x43B0AAc4F57c39ab3FAAfc2b6181F328d7308857",
+      "musdAmount": "200.0",
+      "gasUsed": "500000",
+      "duration": 4489
+    },
+    {
+      "hash": "0xc9c5229d53dca889105c2af1bdaf5c945dfaeea33574f417dd7b8a2a703f0727",
+      "account": "0x934733526AE32a19DA271b0cA5d868eC7dd33F5f",
+      "musdAmount": "300.0",
+      "gasUsed": "500000",
+      "duration": 5163
+    },
+    {
+      "hash": "0xa01cf9856fc03565866ff77c6a61ebca9ca8fa7017a873908ef7c94aece8d1e3",
+      "account": "0x61C959142AD5e2365ECca25b1f954a5eCc50caE7",
+      "musdAmount": "400.0",
+      "gasUsed": "500000",
+      "duration": 5172
+    },
+    {
+      "hash": "0x576feb7688d571c0c18a3b6e46f07c5b812bdca0671c9112c2dd1887c012164b",
+      "account": "0x1c8d31e1e2103454b79D0D72B4Cab5574d8fFdae",
+      "musdAmount": "500.0",
+      "gasUsed": "500000",
+      "duration": 4466
+    }
+  ]
+}

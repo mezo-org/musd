@@ -1,0 +1,16 @@
+{
+  "testId": "add-collateral-test",
+  "timestamp": "2025-04-16T17:54:20.063Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "collateralAmounts": ["0.0001", "0.0002", "0.0003", "0.0004", "0.0005"]
+  },
+  "results": {
+    "successful": 0,
+    "failed": 0,
+    "gasUsed": "0",
+    "averageGas": "0"
+  },
+  "transactions": []
+}

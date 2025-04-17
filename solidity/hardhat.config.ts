@@ -41,6 +41,12 @@ const config: HardhatUserConfig = {
       accounts: MATSNET_PRIVATE_KEY,
       tags: ["allowStubs", "etherscan"],
     },
+    matsnet_fuzz: {
+      url: "https://rpc.test.mezo.org",
+      chainId: 31611,
+      accounts: MATSNET_PRIVATE_KEY,
+      tags: ["allowStubs", "etherscan"],
+    },
     hardhat: {
       initialBaseFeePerGas: 0,
       allowUnlimitedContractSize: true, // Allow larger contracts for testing
