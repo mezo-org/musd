@@ -6,6 +6,7 @@ import {
   calculateInterestOwed,
   createLiquidationEvent,
   dropPrice,
+  dropPriceAndLiquidate,
   fastForwardTime,
   getEventArgByName,
   getLatestBlockTimestamp,
@@ -5510,6 +5511,32 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // Dennis should now have a lower ICR due to the fee from refinancing
       expect(await contracts.sortedTroves.getFirst()).to.equal(carol.address)
+    })
+
+    it("applies pending rewards before calculating the fee", async () => {
+      await updateTroveSnapshot(contracts, bob, "before")
+      await dropPriceAndLiquidate(contracts, deployer, bob)
+
+      await contracts.mockAggregator
+        .connect(deployer.wallet)
+        .setPrice(to1e18("100,000"))
+
+      await updateTroveSnapshot(contracts, alice, "before")
+
+      await contracts.borrowerOperations
+        .connect(alice.wallet)
+        .refinance(ZERO_ADDRESS, ZERO_ADDRESS)
+
+      await updateTroveSnapshot(contracts, alice, "after")
+
+      const expectedDebt = alice.trove.debt.before + bob.trove.debt.before
+      const fee =
+        (expectedDebt *
+          (await contracts.borrowerOperations.refinancingFeePercentage()) *
+          (await contracts.troveManager.BORROWING_FEE_FLOOR())) /
+        to1e18(100)
+
+      expect(alice.trove.debt.after).to.be.closeTo(expectedDebt + fee, 10n)
     })
 
     context("Emitted Events", () => {

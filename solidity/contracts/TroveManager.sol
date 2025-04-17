@@ -380,12 +380,6 @@ contract TroveManager is
                 currentBorrower
             );
 
-            _applyPendingRewards(
-                contractsCache.activePool,
-                contractsCache.defaultPool,
-                currentBorrower
-            );
-
             SingleRedemptionValues
                 memory singleRedemption = _redeemCollateralFromTrove(
                     contractsCache,
@@ -903,6 +897,8 @@ contract TroveManager is
         );
         trove.lastInterestUpdateTime = block.timestamp;
         // solhint-enable not-rely-on-time
+
+        _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
     // Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
