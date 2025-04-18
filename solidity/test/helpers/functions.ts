@@ -43,7 +43,7 @@ export async function getOpenTroveTotalDebt(
   contracts: Contracts,
   musdAmount: bigint,
 ) {
-  const fee = await contracts.troveManager.getBorrowingFee(musdAmount)
+  const fee = await contracts.borrowerOperations.getBorrowingFee(musdAmount)
   const price = await contracts.priceFeed.fetchPrice()
   const recoveryMode = await contracts.troveManager.checkRecoveryMode(price)
   const compositeDebt =

@@ -16,13 +16,17 @@ interface IBorrowerOperations {
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event MinNetDebtChanged(uint256 _minNetDebt);
     event MinNetDebtProposed(uint256 _minNetDebt, uint256 _proposalTime);
+    event OriginationFeeChanged(uint256 originationFee);
+    event OriginationFeeProposed(
+        uint256 proposedOriginationFee,
+        uint256 proposedOriginationFeeTime
+    );
     event PCVAddressChanged(address _pcvAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event RefinancingFeePercentageChanged(uint8 _refinanceFeePercentage);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event StabilityPoolAddressChanged(address _stabilityPoolAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
-
     event TroveCreated(address indexed _borrower, uint256 arrayIndex);
     event TroveUpdated(
         address indexed _borrower,
@@ -141,6 +145,8 @@ interface IBorrowerOperations {
         address _borrower,
         address _recipient
     ) external;
+
+    function getBorrowingFee(uint256 _debt) external view returns (uint);
 
     function minNetDebt() external view returns (uint256);
 }

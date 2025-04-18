@@ -236,6 +236,4 @@ interface ITroveManager {
     ) external view returns (uint256);
 
     function checkRecoveryMode(uint256 _price) external view returns (bool);
-
-    function getBorrowingFee(uint256 _debt) external pure returns (uint);
 }

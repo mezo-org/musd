@@ -240,7 +240,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       // Get the expected debt based on the mUSD request (adding fee and liq. reserve on top)
       const expectedDebt =
         minNetDebt +
-        (await contracts.troveManager.getBorrowingFee(minNetDebt)) +
+        (await contracts.borrowerOperations.getBorrowingFee(minNetDebt)) +
         MUSD_GAS_COMPENSATION
 
       await updateTroveSnapshot(contracts, carol, "after")
@@ -1058,6 +1058,121 @@ describe("BorrowerOperations in Normal Mode", () => {
           contracts.borrowerOperations
             .connect(alice.wallet)
             .approveMinNetDebt(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Only governance can call this function",
+        )
+      })
+    })
+  })
+
+  describe("proposeOriginationFee()", () => {
+    it("sets the proposed origination fee", async () => {
+      const newOriginationFee = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeOriginationFee(newOriginationFee)
+
+      expect(
+        await contracts.borrowerOperations.proposedOriginationFee(),
+      ).to.equal(newOriginationFee)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the proposed fee is too high", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .proposeOriginationFee(to1e18(1.01)), // 101%
+        ).to.be.revertedWith("Origination Fee must be at most 100%.")
+      })
+    })
+  })
+
+  describe("approveOriginationFee()", () => {
+    it("requires two transactions and a 7 day time delay to change the origination fee", async () => {
+      const newOriginationFee = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeOriginationFee(newOriginationFee)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveOriginationFee()
+
+      expect(await contracts.borrowerOperations.originationFee()).to.equal(
+        newOriginationFee,
+      )
+    })
+
+    it("changes the minimum net debt for users to open troves", async () => {
+      const newOriginationFee = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeOriginationFee(newOriginationFee)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveOriginationFee()
+
+      await openTrove(contracts, {
+        musdAmount: "3000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const loanedAmount = to1e18("3,000")
+      const originationFee = to1e18("1,500")
+      const gasComp = to1e18(200)
+
+      expect(carol.trove.debt.after).to.equal(
+        loanedAmount + originationFee + gasComp,
+      )
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the time delay has not finished", async () => {
+        const newOriginationFee = to1e18(0.5) // 50%
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeOriginationFee(newOriginationFee)
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .approveOriginationFee(),
+        ).to.be.revertedWith(
+          "Must wait at least 7 days before approving a change to Origination Fee",
+        )
+      })
+
+      it("reverts if called by a non-governance address", async () => {
+        const newOriginationFee = to1e18(0.5) // 50%
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeOriginationFee(newOriginationFee)
+
+        // Simulate 8 days passing
+        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .approveOriginationFee(),
         ).to.be.revertedWith(
           "BorrowerOps: Only governance can call this function",
         )
@@ -2705,7 +2820,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
 
       const expectedDebt =
-        amount + (await contracts.troveManager.getBorrowingFee(amount))
+        amount + (await contracts.borrowerOperations.getBorrowingFee(amount))
 
       await contracts.borrowerOperations
         .connect(carol.wallet)
@@ -3797,7 +3912,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         2n,
       )
 
-      const fee = await contracts.troveManager.getBorrowingFee(debtChange)
+      const fee = await contracts.borrowerOperations.getBorrowingFee(debtChange)
 
       expect(state.activePool.principal.after).to.equal(
         state.activePool.principal.before + debtChange + fee,
