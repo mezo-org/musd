@@ -196,6 +196,7 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
             require(burnList[account], "Incorrect address to revoke");
         }
 
+        // solhint-disable-next-line not-rely-on-time
         revokeBurnListInitiated = block.timestamp;
         pendingRevokedBurnAddresses = _accounts;
     }
