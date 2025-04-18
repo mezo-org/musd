@@ -525,10 +525,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         1,
       )
 
-      const BORROWING_FEE_FLOOR =
-        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
-      const expectedFee =
-        (BORROWING_FEE_FLOOR * minNetDebt) / 1000000000000000000n
+      const originationFee = await contracts.borrowerOperations.originationFee()
+
+      const expectedFee = (originationFee * minNetDebt) / 1000000000000000000n
       expect(expectedFee).to.equal(emittedFee)
     })
 
@@ -2727,7 +2726,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("increases the Trove's mUSD debt by the correct amount", async () => {
       const amount = to1e18(1)
-      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
+      const borrowingRate = await contracts.borrowerOperations.originationFee()
       await setupCarolsTrove()
 
       await updateTroveSnapshot(contracts, carol, "before")
@@ -3025,7 +3024,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           signature,
           deadline,
         )
-      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
+      const borrowingRate = await contracts.borrowerOperations.originationFee()
       await updateTroveSnapshot(contracts, bob, "after")
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
@@ -4866,7 +4865,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // Note this test only covers a debt increase, but the trove adjustment logic is shared with `adjustTrove`
       await updateTroveSnapshot(contracts, bob, "after")
-      const borrowingRate = await contracts.troveManager.BORROWING_FEE_FLOOR()
+      const borrowingRate = await contracts.borrowerOperations.originationFee()
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
           (debtChange * (to1e18(1) + borrowingRate)) / to1e18(1),
@@ -5437,12 +5436,11 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const BORROWING_FEE_FLOOR =
-        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+      const originationFee = await contracts.borrowerOperations.originationFee()
 
       // default fee percentage is 20% or 1/5
       const expectedFee =
-        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("5")
+        (originationFee * carol.trove.debt.before) / to1e18("5")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5469,11 +5467,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const BORROWING_FEE_FLOOR =
-        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+      const originationFee = await contracts.borrowerOperations.originationFee()
 
       const expectedFee =
-        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("100")
+        (originationFee * carol.trove.debt.before) / to1e18("100")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5494,10 +5491,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const BORROWING_FEE_FLOOR =
-        await contracts.borrowerOperations.BORROWING_FEE_FLOOR()
+      const originationFee = await contracts.borrowerOperations.originationFee()
       const expectedFee =
-        (BORROWING_FEE_FLOOR * carol.trove.debt.before) / to1e18("2")
+        (originationFee * carol.trove.debt.before) / to1e18("2")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5648,7 +5644,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const fee =
         (expectedDebt *
           (await contracts.borrowerOperations.refinancingFeePercentage()) *
-          (await contracts.troveManager.BORROWING_FEE_FLOOR())) /
+          (await contracts.borrowerOperations.originationFee())) /
         to1e18(100)
 
       expect(alice.trove.debt.after).to.be.closeTo(expectedDebt + fee, 10n)
