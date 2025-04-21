@@ -4,13 +4,7 @@
   "network": "matsnet_fuzz",
   "config": {
     "numAccounts": 5,
-    "musdAmounts": [
-      "100",
-      "200",
-      "300",
-      "400",
-      "500"
-    ]
+    "musdAmounts": ["100", "200", "300", "400", "500"]
   },
   "results": {
     "successful": 5,
