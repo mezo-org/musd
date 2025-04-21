@@ -1,0 +1,476 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-21T17:36:14.505Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 50,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2200,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 50,
+    "failed": 0,
+    "gasUsed": "37500000",
+    "averageGas": "750000"
+  },
+  "transactions": [
+    {
+      "hash": "0x46cf1b06832b6eae75c21fa16c9e733aeedcb983c559c7156797b82126346f44",
+      "account": "0xF8A37291BFf423fCDCb814B1720471cb45091709",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4784
+    },
+    {
+      "hash": "0xcf5375a63c29f31d1b54de3a35d60557a179d6cc0d02e157ab7eb7704ecc00c2",
+      "account": "0x89FaEC9d2917A191446341B88F0afFfE19A74b69",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4953
+    },
+    {
+      "hash": "0xe5e83296d309355eb8154441cf67b3a0df354815b8cc50c3981b0131430ca200",
+      "account": "0xd09A838E84A053E3127a7F484C3426b9c0a48b67",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4955
+    },
+    {
+      "hash": "0x658e0298f4e78ce5ead2fa9b26ee9bb4f576ed59a3ea32c29e0cab46d70c998b",
+      "account": "0x534f8624B77B669F4eA368941E73a5DcE01d2A87",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4968
+    },
+    {
+      "hash": "0x2faa006cfa997ae9ef8d4dc5735b88a865dd99b2043108db90c4e3513e2e4100",
+      "account": "0xdcED35BCb388017662539d4EF23e70566D6DcCfd",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 4675
+    },
+    {
+      "hash": "0x067ea2da5fefb04a94b6c7c2a40f8a9417c1b6b94403ddf9ddf4b4a9b4d15e61",
+      "account": "0xcb6CbEA358B546213523e788353C6509C44251bd",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2627
+    },
+    {
+      "hash": "0x1f42f279760a4b5036ba9f7764955d47fcc702f982495808e022f01c067909a2",
+      "account": "0x4C2Ee99fFdE2d22822E05030288A7599F681Aa8c",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2765
+    },
+    {
+      "hash": "0x8f6234e5cfd9401885dd55c2454c3d10debbd6e7e90e30d85706aad9d0695155",
+      "account": "0xbD5592F127A0BacEb04D82d214cC1777fA91E2E7",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2682
+    },
+    {
+      "hash": "0xcb3fda837fa91b65365b355866a96c924fadf94b4390052bbdf8674b8b15dff9",
+      "account": "0xe2096BBcE9Bf34D71d4A976dc6CFBda7E5bb46a2",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2835
+    },
+    {
+      "hash": "0x560b9e2ebc7157947f7a4beecc850f6464fb838e40312c808f9417b1692bd228",
+      "account": "0xa8C3847193cdB7Db21eaBad11c6a67d633158942",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2998
+    },
+    {
+      "hash": "0x5a34254504fef51d4e0cffee149a00bc2f7159c1759cfac7869bc3a56e19326e",
+      "account": "0x4fcC30Ce37474B168F71D090eCBa69D2A4F2c77f",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2432
+    },
+    {
+      "hash": "0xab918230c8b46dc3cf6c93143e008370801ddc6ee3e062f7a843d2ff40551bc4",
+      "account": "0x8e88172c2dE460c176C12Ed72895F83231CC7c8A",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2486
+    },
+    {
+      "hash": "0xd46c0355ba9f2aaafa87c006725b2a5461844edaa0ee4c0b62dfd171b370cf0c",
+      "account": "0x2f245351E8A8c7d38830D462D1890831e597D023",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2733
+    },
+    {
+      "hash": "0x678f6f971f90bcb8767ece82564285f4dc6a11a171790f6d6fc5be3225e04df6",
+      "account": "0x95E78043C6EC5b82B5E67fd1364CBFDd647C0628",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2506
+    },
+    {
+      "hash": "0xffb53f34df5570109967006f931168267fa30f4f1b183bb3f656321fe90ea19d",
+      "account": "0x5e0bB5eCA15042bAA3ab0609557D96C04CBbDb2a",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3360
+    },
+    {
+      "hash": "0x1d2075aacff7b1ace55a5f1ca545d7997ca5d69fd7bcdd64695190b3205b4bb3",
+      "account": "0x9f875E11e215d8C6D6cd19B314CE1A6398f95B47",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2617
+    },
+    {
+      "hash": "0x0a3a141b8509ede1b1009408195d1fd2d5a07f514a4e6eac3c4eba9a29c471c3",
+      "account": "0x0C9416bDE37ddf51811179Afb07526877D51EEaf",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2694
+    },
+    {
+      "hash": "0xc19d1159116ba31b4c6db2df07735f38ce8a572346e2d9b17ddf49f2def1aeeb",
+      "account": "0x8cb5f9d9C760D781722FC14F4f0813ba714a7216",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2795
+    },
+    {
+      "hash": "0x3968f5ee51dda4dcbd3225de1bbb41846fd8d839ce63adc6943de4ee41ed2bc9",
+      "account": "0x0Af690ed0d2DA13D1761c357f2C40E2116259387",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3012
+    },
+    {
+      "hash": "0x0394d9f123c64cf9a3746833ecceb29f7825c4aaf4274a835ba9812a30ea3ae2",
+      "account": "0xaB0F48e983D575C7435893F1F474C586Af4c78f0",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3069
+    },
+    {
+      "hash": "0xcb2a5958135e103e2910db74137306929dc3265b73f79bb2776b5d7abfdd919a",
+      "account": "0x664eEAF1204524737c1476291CE09d3Bf3278a79",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2257
+    },
+    {
+      "hash": "0x884cafe05a2e081edd87fa71cd3b1ad4439f0d2e90d9fcfb192b6a29d6e04b6a",
+      "account": "0x1AA2C45528C64FB94745c2453071003165e79Ed0",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2376
+    },
+    {
+      "hash": "0x94d11583c1b6a618f32d7d92a6813ea8fb172b8fd13a66d78a2aa192cd9929c9",
+      "account": "0x5f500274Bf695c065f3a76C168A0C2C14fAe64e2",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2533
+    },
+    {
+      "hash": "0x5d3bd9c0e84d541b1051e18ded95fe1c914ff375e5550fa2d2be8f6f8641899f",
+      "account": "0x30208aa0472c94929d112620c2d71532dd72c1E1",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2511
+    },
+    {
+      "hash": "0x0396da60ecf195bca60be9172696a860e89b85a88aa3f0d1a3501db1f7796e43",
+      "account": "0xED32A8753A560c301f7f4C2Cdc2Df2CfDA41765E",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2643
+    },
+    {
+      "hash": "0xceb85402d70aa27b44c90ec1a5db0e776cf5e523222ecf3b6b2aa5311f0b51c0",
+      "account": "0xe869d86C8673b26a6D031416aC3ef8c7bd29a03F",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2575
+    },
+    {
+      "hash": "0x2b67c3075d0effce1d11b0bde49901464649aa96f44c1c66492b138e41676295",
+      "account": "0x702c3c6993700aa7F9B6e4F655AbD2fE217d4598",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3355
+    },
+    {
+      "hash": "0x66cb2393e5469494ab628b359eebf19c46cd34f78d20f8ac3f23e78507e1b633",
+      "account": "0x5F210A82946C6e917F12FbbA5d8107179da59173",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3485
+    },
+    {
+      "hash": "0xd02c65db1a1cd91c7f6aa127d77b497d980f6d43b9184c56ba36c64a92ba8ffb",
+      "account": "0x220011aB36cBd1383Cd0f1Dda341b53294E79787",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3532
+    },
+    {
+      "hash": "0x8238facfe56cb6b794ac44d29c9a9e3aa5501c6dea94c7971b582a852c54e80e",
+      "account": "0x7B08EA129e5091eA035D4d40edE7566874D07D99",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3570
+    },
+    {
+      "hash": "0xdecef21ddb1753a9f40e145cbf914bf1500f3739f40b61cd4287c11f038d7b2f",
+      "account": "0x89C1E0a8EfC5C69260Ab7014d858A7926c69Db0A",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 1910
+    },
+    {
+      "hash": "0xe6caf0801d954f0e17ee54aea6b7308acde1bae5e89097c983bc72f60d004516",
+      "account": "0x83D6E63860FF6BBB35Ae4BdD3Bb6DD091fde918D",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2610
+    },
+    {
+      "hash": "0xa9ea6a111a75d3af19bb54090a00ed79393baa273cc4f9c23eef37524c46609f",
+      "account": "0x442D484fea14aCdF89046909981Ce625399fC9E5",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2662
+    },
+    {
+      "hash": "0x713f0f85e36474108882bd14f6ff3ed08045fefbd9729bff61dc45fd70d60c0a",
+      "account": "0x4876422eDF02E356bA353f370310b6E99c05f2a4",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2916
+    },
+    {
+      "hash": "0xf1a6234bf5864c77da084012228ad68b33a67d347264278fd129fe41b1a82f15",
+      "account": "0x6416261f69a276229a484c7f5eD4Fb295F156C38",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2991
+    },
+    {
+      "hash": "0x0386c689b932ee32eeb58918f69437d6439f972aa7c534a09dc36160268b3cc8",
+      "account": "0x96cf23d29f20aCB7505DE3A8AB9F723386Bb93e2",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2285
+    },
+    {
+      "hash": "0x234640d6989a0fa43b3dfb8dc7a439b8301403aeca2ac09afe189ae321c3b95e",
+      "account": "0x5EeF6c60BF0C4b5C7C3c5EC842C1C62b33BDf9De",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2416
+    },
+    {
+      "hash": "0x2b6955d9e7c08f6a16e3450a86d036720d9fceb379c4dbe8da027ca7ffc2d1be",
+      "account": "0x14a28F3B22036E1116f863682b27105A452c3b52",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2594
+    },
+    {
+      "hash": "0x39833c88cc2b52000ea83e02b19c5b20e6bcaf515b646ca02b83f8b09b060445",
+      "account": "0xD6eFBcC6Ae5AD11742bA1f5763631c8136B8175c",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2707
+    },
+    {
+      "hash": "0x2ca98a74cd5cf31a311e21b42601e789fa9f13a005f817c5dace4c4693deff19",
+      "account": "0x499EbD95dbD9701eE025d6E04027850E2Cf45AD2",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2698
+    },
+    {
+      "hash": "0x8ce14440acbb62c15fac0162dafda27e71a58e5cca4c1a91b43c33e5fb077165",
+      "account": "0x354821Fc389F743263cdb3C28DAfb65777cFF441",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2522
+    },
+    {
+      "hash": "0x53b4c96abf7f6fc0314b5c885dc4ad7aecc995878cd3cada77421cd50c156524",
+      "account": "0x77AD65AF10C589355d50B6031331e0eB7728181E",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2628
+    },
+    {
+      "hash": "0x29bad274ee9bc5c0cf9b2478e04f01fd6548b1c05858142c9e1c0a46d0f0d2eb",
+      "account": "0x7aBDF491c7Ce953499Da8cc460092A967d572747",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2776
+    },
+    {
+      "hash": "0xc83aef03e2879043f13c85a10f5534b4bf33125cdc4abce31ad1fb1562a3cf18",
+      "account": "0x4240621A45255cbd4b5cD33c0Ffbb3bb3d030829",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3453
+    },
+    {
+      "hash": "0x466f27130355a9841b2894b79b7f4cbac69a66ba54fafe00b064ab67c84e31db",
+      "account": "0x70f0Eec39ec0Dc1CcbED1AF0f0E45853926a8403",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 3554
+    },
+    {
+      "hash": "0xb254f6de4c8fc8375d9472fd8425f972a457b223bde83d1de609a14ff8fcec29",
+      "account": "0xF5E21218D73EBd76FdcafB5Af0c70d0a1eCF6bb3",
+      "collateralRatio": 200,
+      "collateralAmount": "0.00024",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2237
+    },
+    {
+      "hash": "0xe715b484e8eedec31dff200e8e7ce8b48cdaa1480305494301779f33df50c104",
+      "account": "0xFbe73E78cddfbf6EBae0656baEDD5C0B3883BF9D",
+      "collateralRatio": 250,
+      "collateralAmount": "0.0003",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2320
+    },
+    {
+      "hash": "0x09798ff48640d0b7817b3b68ca4e8aee4fc9581939b3c9d3556d44a5faad5ec8",
+      "account": "0x41133120Ce5BCcF9e9bd105E9d2FfB3d80378DC4",
+      "collateralRatio": 300,
+      "collateralAmount": "0.00036",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2566
+    },
+    {
+      "hash": "0x954dfa9fb0bd9135935a62441b0b92fd2ecde7a348dacdcc428e1daf17ddf0f0",
+      "account": "0xD0c96533018fe5139Eae4F9da787Cd679C08E741",
+      "collateralRatio": 350,
+      "collateralAmount": "0.00042",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2526
+    },
+    {
+      "hash": "0xcdfe0ed273882a64ef7605031202242788f02981da826c0d4cbc24b1e2616874",
+      "account": "0x88E6f4d54bFf0f620388E0863F4b5f51859848Fd",
+      "collateralRatio": 150,
+      "collateralAmount": "0.00018",
+      "debtAmount": 2200,
+      "gasUsed": "750000",
+      "duration": 2785
+    }
+  ]
+}
