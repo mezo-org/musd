@@ -1107,7 +1107,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it("changes the minimum net debt for users to open troves", async () => {
+    it("changes the origination fee for users to open troves", async () => {
       const newOriginationFee = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
