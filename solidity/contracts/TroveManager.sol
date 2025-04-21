@@ -167,9 +167,6 @@ contract TroveManager is
 
     // --- Data structures ---
 
-    uint256 public constant REDEMPTION_FEE_FLOOR =
-        (DECIMAL_PRECISION * 5) / 1000; // 0.5%
-
     mapping(address => Trove) public Troves;
 
     uint256 public totalStakes;
@@ -410,7 +407,9 @@ contract TroveManager is
         );
 
         // Calculate the collateral fee
-        totals.collateralFee = _getRedemptionFee(totals.totalCollateralDrawn);
+        totals.collateralFee = borrowerOperations.getRedemptionFee(
+            totals.totalCollateralDrawn
+        );
 
         totals.collateralToSendToRedeemer =
             totals.totalCollateralDrawn -
@@ -1558,18 +1557,6 @@ contract TroveManager is
             Troves[_borrower].status == Status.active,
             "TroveManager: Trove does not exist or is closed"
         );
-    }
-
-    function _getRedemptionFee(
-        uint256 _collateralDrawn
-    ) internal pure returns (uint) {
-        uint256 redemptionFee = (REDEMPTION_FEE_FLOOR * _collateralDrawn) /
-            DECIMAL_PRECISION;
-        require(
-            redemptionFee < _collateralDrawn,
-            "TroveManager: Fee would eat up all returned collateral"
-        );
-        return redemptionFee;
     }
 
     /* In a full liquidation, returns the values for a trove's coll and debt to be offset, and coll and debt to be

@@ -1179,6 +1179,117 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
+  describe("proposeRedemptionFee()", () => {
+    it("sets the proposed redemption fee", async () => {
+      const newRedemptionFee = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeRedemptionFee(newRedemptionFee)
+
+      expect(
+        await contracts.borrowerOperations.proposedRedemptionFee(),
+      ).to.equal(newRedemptionFee)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the proposed fee is too high", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .proposeRedemptionFee(to1e18(1.01)), // 101%
+        ).to.be.revertedWith("Redemption Fee must be at most 100%.")
+      })
+    })
+  })
+
+  describe("approveRedemptionFee()", () => {
+    it("requires two transactions and a 7 day time delay to change the redemption fee", async () => {
+      const newRedemptionFee = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeRedemptionFee(newRedemptionFee)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveRedemptionFee()
+
+      expect(await contracts.borrowerOperations.redemptionFee()).to.equal(
+        newRedemptionFee,
+      )
+    })
+
+    it("changes the redemption fee", async () => {
+      const newRedemptionFee = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeRedemptionFee(newRedemptionFee)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveRedemptionFee()
+
+      await updateWalletSnapshot(contracts, alice, "before")
+
+      const amount = to1e18(500)
+
+      await performRedemption(contracts, alice, bob, amount)
+
+      await updateWalletSnapshot(contracts, alice, "after")
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const expectedBTC = (amount * to1e18(1)) / (price * 2n)
+      expect(alice.btc.after).to.equal(alice.btc.before + expectedBTC)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the time delay has not finished", async () => {
+        const newRedemptionFee = to1e18(0.5) // 50%
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeRedemptionFee(newRedemptionFee)
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .approveRedemptionFee(),
+        ).to.be.revertedWith(
+          "Must wait at least 7 days before approving a change to Redemption Fee",
+        )
+      })
+
+      it("reverts if called by a non-governance address", async () => {
+        const newRedemptionFee = to1e18(0.5) // 50%
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeRedemptionFee(newRedemptionFee)
+
+        // Simulate 8 days passing
+        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .approveRedemptionFee(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Only governance can call this function",
+        )
+      })
+    })
+  })
+
   describe("closeTrove", () => {
     it("no mintlist, succeeds when it would lower the TCR below CCR", async () => {
       await openTrove(contracts, {

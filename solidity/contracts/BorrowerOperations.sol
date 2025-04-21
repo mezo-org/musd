@@ -110,7 +110,7 @@ contract BorrowerOperations is
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage;
 
-    // Goveranble Variables
+    // Governable Variables
 
     // Minimum amount of net mUSD debt a trove must have
     uint256 public minNetDebt;
@@ -121,6 +121,11 @@ contract BorrowerOperations is
     uint256 public originationFee; // Measured as a percentage of 1e18
     uint256 public proposedOriginationFee;
     uint256 public proposedOriginationFeeTime;
+
+    // Redemption Fee
+    uint256 public redemptionFee; // Measured as a percentage of 1e18
+    uint256 public proposedRedemptionFee;
+    uint256 public proposedRedemptionFeeTime;
 
     modifier onlyGovernance() {
         require(
@@ -138,6 +143,10 @@ contract BorrowerOperations is
         originationFee = DECIMAL_PRECISION / 200; // 0.5%
         proposedOriginationFee = originationFee;
         proposedOriginationFeeTime = block.timestamp;
+
+        redemptionFee = DECIMAL_PRECISION / 200; // 0.5%
+        proposedRedemptionFee = redemptionFee;
+        proposedRedemptionFeeTime = block.timestamp;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -422,6 +431,26 @@ contract BorrowerOperations is
         emit OriginationFeeChanged(originationFee);
     }
 
+    function proposeRedemptionFee(uint256 _fee) external onlyGovernance {
+        require(_fee <= 1e18, "Redemption Fee must be at most 100%.");
+        proposedRedemptionFee = _fee;
+        proposedRedemptionFeeTime = block.timestamp;
+        emit RedemptionFeeProposed(
+            proposedRedemptionFee,
+            proposedRedemptionFeeTime
+        );
+    }
+
+    function approveRedemptionFee() external onlyGovernance {
+        // solhint-disable not-rely-on-time
+        require(
+            block.timestamp >= proposedRedemptionFeeTime + 7 days,
+            "Must wait at least 7 days before approving a change to Redemption Fee"
+        );
+        redemptionFee = proposedRedemptionFee;
+        emit RedemptionFeeChanged(redemptionFee);
+    }
+
     function restrictedClaimCollateral(
         address _borrower,
         address _recipient
@@ -484,6 +513,17 @@ contract BorrowerOperations is
 
     function getBorrowingFee(uint256 _debt) public view returns (uint) {
         return (_debt * originationFee) / DECIMAL_PRECISION;
+    }
+
+    function getRedemptionFee(
+        uint256 _collateralDrawn
+    ) external view returns (uint256) {
+        uint256 fee = (redemptionFee * _collateralDrawn) / DECIMAL_PRECISION;
+        require(
+            fee < _collateralDrawn,
+            "BorrowerOperations: Fee would eat up all returned collateral"
+        );
+        return fee;
     }
 
     // Burn the specified amount of MUSD from _account and decreases the total active debt
