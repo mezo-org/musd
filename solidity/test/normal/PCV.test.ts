@@ -3,6 +3,8 @@ import { ethers } from "hardhat"
 import {
   Contracts,
   ContractsState,
+  TestingAddresses,
+  User,
   createLiquidationEvent,
   fastForwardTime,
   getEmittedPCVtoSPDepositValues,
@@ -10,12 +12,11 @@ import {
   getEmittedWithdrawCollateralValues,
   getLatestBlockTimestamp,
   openTrove,
+  setDefaultFees,
   setupTests,
-  TestingAddresses,
   updatePCVSnapshot,
   updateStabilityPoolSnapshot,
   updateWalletSnapshot,
-  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
@@ -64,7 +65,11 @@ describe("PCV", () => {
     await contracts.pcv
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
+
     await PCVDeployer.finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
+
     await contracts.pcv
       .connect(deployer.wallet)
       .addRecipientsToWhitelist([

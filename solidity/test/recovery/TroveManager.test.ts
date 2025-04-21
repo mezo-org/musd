@@ -16,6 +16,7 @@ import {
   getTroveEntireColl,
   openTrove,
   provideToSP,
+  setDefaultFees,
   setInterestRate,
   setupTests,
   updateContractsSnapshot,
@@ -64,6 +65,8 @@ describe("TroveManager in Recovery Mode", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {

@@ -140,11 +140,11 @@ contract BorrowerOperations is
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
 
-        originationFee = DECIMAL_PRECISION / 200; // 0.5%
+        originationFee = 0;
         proposedOriginationFee = originationFee;
         proposedOriginationFeeTime = block.timestamp;
 
-        redemptionFee = DECIMAL_PRECISION / 200; // 0.5%
+        redemptionFee = (DECIMAL_PRECISION * 75) / 10000; // 0.75%
         proposedRedemptionFee = redemptionFee;
         proposedRedemptionFeeTime = block.timestamp;
     }

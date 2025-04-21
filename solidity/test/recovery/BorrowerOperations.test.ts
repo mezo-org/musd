@@ -10,6 +10,7 @@ import {
   getEventArgByName,
   openTrove,
   removeMintlist,
+  setDefaultFees,
   setupTests,
   updatePendingSnapshot,
   updateRewardSnapshot,
@@ -24,7 +25,9 @@ describe("BorrowerOperations in Recovery Mode", () => {
   let alice: User
   let bob: User
   let carol: User
+  let council: User
   let deployer: User
+  let treasury: User
   let contracts: Contracts
   let state: ContractsState
 
@@ -60,8 +63,24 @@ describe("BorrowerOperations in Recovery Mode", () => {
   }
 
   beforeEach(async () => {
-    ;({ alice, bob, carol, deployer, contracts, state, addresses } =
-      await setupTests())
+    ;({
+      alice,
+      bob,
+      carol,
+      council,
+      deployer,
+      treasury,
+      contracts,
+      state,
+      addresses,
+    } = await setupTests())
+
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
 
     await recoveryModeSetup()
   })

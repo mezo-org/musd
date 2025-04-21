@@ -990,6 +990,31 @@ export async function setInterestRate(
     .approveInterestRate()
 }
 
+export async function setDefaultFees(contracts: Contracts, sender: User) {
+  await contracts.borrowerOperations
+    .connect(sender.wallet)
+    .proposeOriginationFee((to1e18(1) * 50n) / 10000n)
+  await contracts.borrowerOperations
+    .connect(sender.wallet)
+    .proposeRedemptionFee((to1e18(1) * 50n) / 10000n)
+  await contracts.interestRateManager
+    .connect(sender.wallet)
+    .proposeInterestRate(0)
+
+  const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+  await fastForwardTime(timeToIncrease)
+
+  await contracts.borrowerOperations
+    .connect(sender.wallet)
+    .approveOriginationFee()
+  await contracts.borrowerOperations
+    .connect(sender.wallet)
+    .approveRedemptionFee()
+  await contracts.interestRateManager
+    .connect(sender.wallet)
+    .approveInterestRate()
+}
+
 export async function testUpdatesInterestOwed(
   contracts: Contracts,
   user: User,

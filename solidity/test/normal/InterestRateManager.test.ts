@@ -4,6 +4,7 @@ import {
   User,
   fastForwardTime,
   getLatestBlockTimestamp,
+  setDefaultFees,
   setupTests,
 } from "../helpers"
 
@@ -22,6 +23,8 @@ describe("InterestRateManager", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
   })
 
   describe("proposeInterestRate()", () => {
@@ -35,9 +38,9 @@ describe("InterestRateManager", () => {
       expect(
         await contracts.interestRateManager.proposedInterestRate(),
       ).to.equal(100)
-      expect(await contracts.interestRateManager.proposalTime()).to.equal(
-        blockTime,
-      )
+      expect(
+        await contracts.interestRateManager.proposedInterestRateTime(),
+      ).to.equal(blockTime)
     })
     context("Expected Reverts", () => {
       it("reverts if the proposed rate exceeds the maximum interest rate", async () => {
