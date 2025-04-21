@@ -1,0 +1,63 @@
+{
+  "testId": "withdraw-collateral-test",
+  "timestamp": "2025-04-18T20:12:07.548Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "withdrawalPercentages": [
+      5,
+      10,
+      15,
+      20,
+      25
+    ]
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "2500000",
+    "averageGas": "500000"
+  },
+  "transactions": [
+    {
+      "hash": "0xcd5510f3af1729e0b4927c5c4c3a849645bf3ca374b51326ea7c71bb6f276752",
+      "account": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+      "withdrawalPercentage": 5,
+      "withdrawAmount": "0.000033454839375",
+      "gasUsed": "500000",
+      "duration": 4148
+    },
+    {
+      "hash": "0x9a6935c5454c8a5f3ec898baac51e67aee7f0dd9c64a025b1d8831320d87fdb9",
+      "account": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+      "withdrawalPercentage": 10,
+      "withdrawAmount": "0.00010788356",
+      "gasUsed": "500000",
+      "duration": 5055
+    },
+    {
+      "hash": "0x218aecc79e9ae39c449dd25fe4ea6db14927f2feebe195fb366d36f3fcd4c8f4",
+      "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+      "withdrawalPercentage": 15,
+      "withdrawAmount": "0.000229404010908358",
+      "gasUsed": "500000",
+      "duration": 5042
+    },
+    {
+      "hash": "0xeb2bbb0bc576ff2526fad2f7ead76faf02b1b0354bce08ce93c41c75300bb4ad",
+      "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+      "withdrawalPercentage": 20,
+      "withdrawAmount": "0.000342689883918876",
+      "gasUsed": "500000",
+      "duration": 5081
+    },
+    {
+      "hash": "0xe738ef04c648e4940139857badae38893a1af3fdd3d73a6bb3241c3b594a9b7f",
+      "account": "0x934733526AE32a19DA271b0cA5d868eC7dd33F5f",
+      "withdrawalPercentage": 25,
+      "withdrawAmount": "0.000359648335814871",
+      "gasUsed": "500000",
+      "duration": 4507
+    }
+  ]
+}

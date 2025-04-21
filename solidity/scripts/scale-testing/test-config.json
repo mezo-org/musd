@@ -4,12 +4,12 @@
     {
       "name": "Generate Wallets",
       "path": "generate-wallets.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Fund Wallets",
       "path": "fund-wallets.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Initialize State",

@@ -5,7 +5,7 @@ import * as path from "path"
 import * as crypto from "crypto"
 
 // Configuration
-const WALLET_COUNT = 100 // Number of wallets to generate
+const WALLET_COUNT = 500 // Number of wallets to generate
 const OUTPUT_DIR = path.join(__dirname, "..", "..", "scale-testing")
 const WALLETS_FILE = path.join(OUTPUT_DIR, "wallets.json")
 const ENCRYPTED_KEYS_FILE = path.join(OUTPUT_DIR, "encrypted-keys.json")
