@@ -127,3 +127,45 @@ export async function processBatchTransactions<T>(
 
   return results
 }
+
+// Add this function to your batch-transactions.ts file
+
+/**
+ * Prepare results for JSON serialization by converting BigInt values to strings
+ * @param results The batch results to prepare for serialization
+ * @returns A copy of results with all BigInt values converted to strings
+ */
+export function prepareResultsForSerialization(
+  results: BatchResults,
+): Record<string, unknown> {
+  // Create a deep copy with BigInt values converted to strings
+  return {
+    successful: results.successful,
+    failed: results.failed,
+    skipped: results.skipped,
+    gasUsed: results.gasUsed.toString(),
+    transactions: results.transactions.map((tx) => ({
+      ...tx,
+      gasUsed: tx.gasUsed ? tx.gasUsed.toString() : undefined,
+      // Convert any other BigInt properties that might be present
+      ...Object.fromEntries(
+        Object.entries(tx)
+          .filter(
+            ([key]) =>
+              ![
+                "success",
+                "hash",
+                "account",
+                "gasUsed",
+                "duration",
+                "error",
+              ].includes(key),
+          )
+          .map(([key, value]) => [
+            key,
+            typeof value === "bigint" ? value.toString() : value,
+          ]),
+      ),
+    })),
+  }
+}

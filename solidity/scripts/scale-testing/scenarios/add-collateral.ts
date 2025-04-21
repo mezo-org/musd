@@ -6,11 +6,16 @@ import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import getContracts from "../get-contracts"
 import calculateTroveOperationHints from "../hint-helper"
+import {
+  processBatchTransactions,
+  prepareResultsForSerialization,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "add-collateral-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use
 const COLLATERAL_AMOUNTS = ["0.0001", "0.0002", "0.0003", "0.0004", "0.0005"] // BTC amounts to add
+const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {
   // Get the network name
@@ -19,6 +24,7 @@ async function main() {
 
   console.log(`Running Add Collateral test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
 
   // Create state manager
   const stateManager = new StateManager(networkName)
@@ -55,135 +61,123 @@ async function main() {
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
   console.log(`Loaded ${loadedWallets} wallets for testing`)
 
-  // Initialize results object
-  const results = {
-    successful: 0,
-    failed: 0,
-    gasUsed: 0n,
-    transactions: [] as never[],
-  }
+  // Process accounts in batches using our utility
+  const results = await processBatchTransactions(
+    testAccounts,
+    async (account, index) => {
+      const collateralAmount = ethers.parseEther(
+        COLLATERAL_AMOUNTS[index % COLLATERAL_AMOUNTS.length],
+      )
 
-  // Process each account
-  for (let i = 0; i < testAccounts.length; i++) {
-    const account = testAccounts[i]
-    const collateralAmount = ethers.parseEther(
-      COLLATERAL_AMOUNTS[i % COLLATERAL_AMOUNTS.length],
-    )
-
-    console.log(
-      `\nProcessing account ${i + 1}/${testAccounts.length}: ${account.address}`,
-    )
-    console.log(`Adding ${ethers.formatEther(collateralAmount)} BTC collateral`)
-
-    // Get current trove state for reference
-    let troveState
-    try {
-      troveState = await troveManager.Troves(account.address)
       console.log(
-        `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
+        `Processing account ${index + 1}/${testAccounts.length}: ${account.address}`,
       )
       console.log(
-        `Current trove principal: ${ethers.formatEther(troveState.principal)} MUSD`,
+        `Adding ${ethers.formatEther(collateralAmount)} BTC collateral`,
       )
-      console.log(
-        `Current trove interest owed: ${ethers.formatEther(troveState.interestOwed)} MUSD`,
-      )
-    } catch (error) {
-      console.log(`Could not fetch current trove state: ${error.message}`)
-    }
 
-    // Get the wallet
-    const wallet = walletHelper.getWallet(account.address)
+      // Get current trove state for reference
+      let troveState
+      try {
+        troveState = await troveManager.Troves(account.address)
+        console.log(
+          `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
+        )
+        console.log(
+          `Current trove principal: ${ethers.formatEther(troveState.principal)} MUSD`,
+        )
+        console.log(
+          `Current trove interest owed: ${ethers.formatEther(troveState.interestOwed)} MUSD`,
+        )
+      } catch (error) {
+        console.log(`Could not fetch current trove state: ${error.message}`)
+      }
 
-    if (!wallet) {
-      console.log(`No wallet found for account ${account.address}, skipping`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        collateralAmount: ethers.formatEther(collateralAmount),
-        error: "No wallet found for account",
-      })
-      continue
-    }
+      // Get the wallet
+      const wallet = walletHelper.getWallet(account.address)
 
-    try {
-      // Record the start time
-      const startTime = Date.now()
+      if (!wallet) {
+        console.log(`No wallet found for account ${account.address}, skipping`)
+        return {
+          success: false,
+          account: account.address,
+          collateralAmount: ethers.formatEther(collateralAmount),
+          error: "No wallet found for account",
+        }
+      }
 
-      const { upperHint, lowerHint } = await calculateTroveOperationHints({
-        hintHelpers,
-        sortedTroves,
-        troveManager,
-        collateralAmount,
-        debtAmount: 0n,
-        operation: "adjust",
-        isCollIncrease: true,
-        isDebtIncrease: false,
-        currentCollateral: troveState?.coll,
-        currentDebt:
-          (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
-        verbose: true,
-      })
+      try {
+        // Record the start time
+        const startTime = Date.now()
 
-      // Add collateral transaction
-      const tx = await borrowerOperations
-        .connect(wallet)
-        .addColl(upperHint, lowerHint, {
-          value: collateralAmount,
-          gasLimit: 1000000, // Explicitly set a higher gas limit
+        const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          hintHelpers,
+          sortedTroves,
+          troveManager,
+          collateralAmount,
+          debtAmount: 0n,
+          operation: "adjust",
+          isCollIncrease: true,
+          isDebtIncrease: false,
+          currentCollateral: troveState?.coll,
+          currentDebt:
+            (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
+          verbose: true,
         })
 
-      console.log(`Transaction sent: ${tx.hash}`)
+        // Add collateral transaction
+        const tx = await borrowerOperations
+          .connect(wallet)
+          .addColl(upperHint, lowerHint, {
+            value: collateralAmount,
+            gasLimit: 1000000, // Explicitly set a higher gas limit
+          })
 
-      // Wait for transaction to be mined
-      const receipt = await tx.wait()
+        console.log(`Transaction sent: ${tx.hash}`)
 
-      // Calculate metrics
-      const endTime = Date.now()
-      const duration = endTime - startTime
-      const gasUsed = receipt ? receipt.gasUsed : 0n
+        // Wait for transaction to be mined
+        const receipt = await tx.wait()
 
-      console.log(
-        `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
-      )
+        // Calculate metrics
+        const endTime = Date.now()
+        const duration = endTime - startTime
+        const gasUsed = receipt ? receipt.gasUsed : 0n
 
-      // Update results
-      results.successful++
-      results.gasUsed += gasUsed
-      results.transactions.push({
-        hash: tx.hash,
-        account: account.address,
-        collateralAmount: ethers.formatEther(collateralAmount),
-        gasUsed: gasUsed.toString(),
-        duration,
-      })
+        console.log(
+          `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        )
 
-      // Record the action in the state manager
-      stateManager.recordAction(account.address, "addCollateral", TEST_ID)
-    } catch (error) {
-      console.log(`Error adding collateral: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        collateralAmount: ethers.formatEther(collateralAmount),
-        error: error.message,
-      })
-    }
+        // Record the action in the state manager
+        stateManager.recordAction(account.address, "addCollateral", TEST_ID)
 
-    // Wait a bit between transactions to avoid network congestion
-    if (i < testAccounts.length - 1) {
-      console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2000)
-      })
-    }
-  }
+        return {
+          success: true,
+          hash: tx.hash,
+          account: account.address,
+          collateralAmount: ethers.formatEther(collateralAmount),
+          gasUsed,
+          duration,
+        }
+      } catch (error) {
+        console.log(`Error adding collateral: ${error.message}`)
+
+        return {
+          success: false,
+          account: account.address,
+          collateralAmount: ethers.formatEther(collateralAmount),
+          error: error.message,
+        }
+      }
+    },
+    { testId: TEST_ID, batchSize: BATCH_SIZE },
+  )
 
   // Print summary
   console.log("\n--- Test Summary ---")
   console.log(`Total accounts processed: ${testAccounts.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
+  console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
     `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : 0n}`,
@@ -217,17 +211,9 @@ async function main() {
         config: {
           numAccounts: NUM_ACCOUNTS,
           collateralAmounts: COLLATERAL_AMOUNTS,
+          batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions,
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,

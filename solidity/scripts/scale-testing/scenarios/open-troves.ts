@@ -6,7 +6,10 @@ import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import calculateTroveOperationHints from "../hint-helper"
 import getContracts from "../get-contracts"
-import { processBatchTransactions } from "../batch-transactions"
+import {
+  prepareResultsForSerialization,
+  processBatchTransactions,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "open-troves-test"
@@ -252,20 +255,7 @@ async function main() {
           musdDebtAmount: MUSD_DEBT_AMOUNT,
           batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          skipped: results.skipped,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions.map((tx) => ({
-          ...tx,
-          gasUsed: tx.gasUsed ? tx.gasUsed.toString() : undefined,
-        })),
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,
