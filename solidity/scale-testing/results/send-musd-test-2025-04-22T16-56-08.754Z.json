@@ -4,13 +4,7 @@
   "network": "matsnet_fuzz",
   "config": {
     "numSenderAccounts": 5,
-    "musdAmounts": [
-      "50",
-      "75",
-      "100",
-      "125",
-      "150"
-    ],
+    "musdAmounts": ["50", "75", "100", "125", "150"],
     "batchSize": 5
   },
   "results": {

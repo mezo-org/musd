@@ -4,13 +4,7 @@
   "network": "matsnet_fuzz",
   "config": {
     "numAccounts": 10,
-    "collateralAmounts": [
-      "0.0001",
-      "0.0002",
-      "0.0003",
-      "0.0004",
-      "0.0005"
-    ],
+    "collateralAmounts": ["0.0001", "0.0002", "0.0003", "0.0004", "0.0005"],
     "batchSize": 5
   },
   "results": {

@@ -1,0 +1,69 @@
+{
+  "testId": "withdraw-collateral-test",
+  "timestamp": "2025-04-22T17:01:21.487Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "withdrawalPercentages": [
+      5,
+      10,
+      15,
+      20,
+      25
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x6b4ee2d6ff12ff3d77df0225ef217b3e8f88a7cd0f4cd0b3939bc01a1ad011c9",
+        "account": "0x46Db16c0fA004F597410A212710ce0Ea60ddd2BA",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.00023",
+        "gasUsed": "500000",
+        "duration": 2947
+      },
+      {
+        "success": true,
+        "hash": "0xfa225e9c6c3b59da471f7de4097f1432aa0234bf6d15cde4b7252c42cb940540",
+        "account": "0x269Df9cB54eE572356683698e99Cb017C3813F21",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.00009",
+        "gasUsed": "500000",
+        "duration": 3112
+      },
+      {
+        "success": true,
+        "hash": "0xfe1a978a7120e9a1a6bbb544aaa44fe84e078df4cee84ab522269a93795ca1a5",
+        "account": "0x110523617Bb8882eaD1B5276aB7999c3dC901b93",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.000014",
+        "gasUsed": "500000",
+        "duration": 3201
+      },
+      {
+        "success": true,
+        "hash": "0x8ba84a6256acbd5cda22aab2dd56a65733e6538c67f98d960c945ed543f6bbc2",
+        "account": "0xE8a5DAaB642979d504250eb2Dd8C2d8D5c78924f",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.000044",
+        "gasUsed": "500000",
+        "duration": 3394
+      },
+      {
+        "success": true,
+        "hash": "0x4220c0c2ef5a46350862e642c84a671da9bb5813f3d24ce81e6ef278552325e6",
+        "account": "0xf23A8d2EEbF24a04bdaEB45d253B3C1211fe3B24",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.000152",
+        "gasUsed": "500000",
+        "duration": 3478
+      }
+    ]
+  }
+}

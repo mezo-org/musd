@@ -215,7 +215,7 @@ export default class StateManager {
    * @param batchSize Size of batches to process in parallel
    * @returns Number of successfully processed accounts
    */
-  private async processBatchedAccounts<T>(
+  private async processBatchedAccounts(
     accountsToUpdate: string[],
     processFn: (address: string) => Promise<string | null>,
     batchSize: number = 20,
