@@ -122,6 +122,11 @@ contract BorrowerOperations is
     uint256 public proposedBorrowingRate;
     uint256 public proposedBorrowingRateTime;
 
+    // Redemption Rate
+    uint256 public redemptionRate; // expressed as a percentage in 1e18 precision
+    uint256 public proposedRedemptionRate;
+    uint256 public proposedRedemptionRateTime;
+
     modifier onlyGovernance() {
         require(
             msg.sender == pcv.council() || msg.sender == pcv.treasury(),
@@ -139,6 +144,11 @@ contract BorrowerOperations is
         proposedBorrowingRate = borrowingRate;
         // solhint-disable-next-line not-rely-on-time
         proposedBorrowingRateTime = block.timestamp;
+
+        redemptionRate = DECIMAL_PRECISION / 200; // 0.5%
+        proposedRedemptionRate = redemptionRate;
+        // solhint-disable-next-line not-rely-on-time
+        proposedRedemptionRateTime = block.timestamp;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -423,6 +433,26 @@ contract BorrowerOperations is
         emit BorrowingRateChanged(borrowingRate);
     }
 
+    function proposeRedemptionRate(uint256 _rate) external onlyGovernance {
+        require(_rate <= 1e18, "Redemption Rate must be at most 100%.");
+        proposedRedemptionRate = _rate;
+        proposedRedemptionRateTime = block.timestamp;
+        emit RedemptionRateProposed(
+            proposedRedemptionRate,
+            proposedRedemptionRateTime
+        );
+    }
+
+    function approveRedemptionRate() external onlyGovernance {
+        // solhint-disable not-rely-on-time
+        require(
+            block.timestamp >= proposedRedemptionRateTime + 7 days,
+            "Must wait at least 7 days before approving a change to Redemption Rate"
+        );
+        redemptionRate = proposedRedemptionRate;
+        emit RedemptionRateChanged(redemptionRate);
+    }
+
     function restrictedClaimCollateral(
         address _borrower,
         address _recipient
@@ -481,6 +511,17 @@ contract BorrowerOperations is
             _upperHint,
             _lowerHint
         );
+    }
+
+    function getRedemptionRate(
+        uint256 _collateralDrawn
+    ) external view returns (uint256) {
+        uint256 fee = (redemptionRate * _collateralDrawn) / DECIMAL_PRECISION;
+        require(
+            fee < _collateralDrawn,
+            "BorrowerOperations: Fee would eat up all returned collateral"
+        );
+        return fee;
     }
 
     function getBorrowingFee(uint256 _debt) public view returns (uint) {

@@ -1179,6 +1179,117 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
+  describe("proposeRedemptionRate()", () => {
+    it("sets the proposed redemption rate", async () => {
+      const newRedemptionRate = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeRedemptionRate(newRedemptionRate)
+
+      expect(
+        await contracts.borrowerOperations.proposedRedemptionRate(),
+      ).to.equal(newRedemptionRate)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the proposed fee is too high", async () => {
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .proposeRedemptionRate(to1e18(1.01)), // 101%
+        ).to.be.revertedWith("Redemption Rate must be at most 100%.")
+      })
+    })
+  })
+
+  describe("approveRedemptionRate()", () => {
+    it("requires two transactions and a 7 day time delay to change the redemption rate", async () => {
+      const newRedemptionRate = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeRedemptionRate(newRedemptionRate)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveRedemptionRate()
+
+      expect(await contracts.borrowerOperations.redemptionRate()).to.equal(
+        newRedemptionRate,
+      )
+    })
+
+    it("changes the redemption rate", async () => {
+      const newRedemptionRate = to1e18(0.5) // 50%
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeRedemptionRate(newRedemptionRate)
+
+      // Simulate 7 days passing
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveRedemptionRate()
+
+      await updateWalletSnapshot(contracts, alice, "before")
+
+      const amount = to1e18(500)
+
+      await performRedemption(contracts, alice, bob, amount)
+
+      await updateWalletSnapshot(contracts, alice, "after")
+
+      const price = await contracts.priceFeed.fetchPrice()
+      const expectedBTC = (amount * to1e18(1)) / (price * 2n)
+      expect(alice.btc.after).to.equal(alice.btc.before + expectedBTC)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts if the time delay has not finished", async () => {
+        const newRedemptionRate = to1e18(0.5) // 50%
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeRedemptionRate(newRedemptionRate)
+
+        // Simulate 6 days passing
+        const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(council.wallet)
+            .approveRedemptionRate(),
+        ).to.be.revertedWith(
+          "Must wait at least 7 days before approving a change to Redemption Rate",
+        )
+      })
+
+      it("reverts if called by a non-governance address", async () => {
+        const newRedemptionRate = to1e18(0.5) // 50%
+        await contracts.borrowerOperations
+          .connect(council.wallet)
+          .proposeRedemptionRate(newRedemptionRate)
+
+        // Simulate 8 days passing
+        const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
+        await fastForwardTime(timeToIncrease)
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .approveRedemptionRate(),
+        ).to.be.revertedWith(
+          "BorrowerOps: Only governance can call this function",
+        )
+      })
+    })
+  })
+
   describe("closeTrove", () => {
     it("no mintlist, succeeds when it would lower the TCR below CCR", async () => {
       await openTrove(contracts, {

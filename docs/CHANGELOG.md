@@ -122,7 +122,7 @@ Interest is no longer used in NICR calculations for insertion into SortedTroves.
 #### Integration Notes for Frontend Developers
 
 1. **Fixed Fee Structure**
-   - Borrowing and redemption fees are now fixed rather than variable
+   - Borrowing and redemption rates are now fixed rather than variable
 
 ### PriceFeed
 
@@ -140,11 +140,15 @@ Interest is no longer used in NICR calculations for insertion into SortedTroves.
    - **Consequences for Frontend**: Trove insertions should be slightly more gas efficient. Additionally, redemptions are now more predictable as the trove that will be redeemed against is based on stable values (principal) instead of dynamically changing values (like interest).
 
 2. **Unified Liquidations**
+
    - Liquidations are now the same in recovery mode and normal mode.
    - **Consequences for Frontend**: Users no longer have to worry about getting liquidated unless they fall below the MCR (110%). Previously, if the system went into recovery mode, it was possible to get liquidated at ICR < CCR (150%).
+
 3. **BorrowerOperationsSignatures**
+
    - Now allows for trove operations to be called on behalf of the borrower using EIP712 signature verification.
    - **Consequences for Frontend**: This is most likely to be used by the veBTC BorrowLocker contract and likely does not have consequences for the existing frontend.
+
 4. **OwnableUpgradeable Contracts**
    - All contracts are now OwnableUpgradeable, meaning contract addresses should remain the same after upgrades.
    - **Consequences for Frontend**: There will not be a need going forward to update contract addresses. However, the first release will involve different contract addresses, and we still need to spec out how that initial upgrade will happen.
