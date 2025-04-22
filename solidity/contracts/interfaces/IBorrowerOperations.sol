@@ -7,6 +7,11 @@ interface IBorrowerOperations {
     // --- Events ---
 
     event ActivePoolAddressChanged(address _activePoolAddress);
+    event BorrowingRateChanged(uint256 borrowingRate);
+    event BorrowingRateProposed(
+        uint256 proposedBorrowingRate,
+        uint256 proposedBorrowingRateTime
+    );
     event BorrowerOperationsSignaturesAddressChanged(
         address _borrowerOperationsSignaturesAddress
     );
@@ -22,7 +27,6 @@ interface IBorrowerOperations {
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
     event StabilityPoolAddressChanged(address _stabilityPoolAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
-
     event TroveCreated(address indexed _borrower, uint256 arrayIndex);
     event TroveUpdated(
         address indexed _borrower,
@@ -141,6 +145,8 @@ interface IBorrowerOperations {
         address _borrower,
         address _recipient
     ) external;
+
+    function getBorrowingFee(uint256 _debt) external view returns (uint);
 
     function minNetDebt() external view returns (uint256);
 }

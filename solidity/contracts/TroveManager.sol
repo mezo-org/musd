@@ -643,12 +643,6 @@ contract TroveManager is
         return _checkRecoveryMode(_price);
     }
 
-    function getBorrowingFee(
-        uint256 _debt
-    ) external pure override returns (uint) {
-        return (_debt * BORROWING_FEE_FLOOR) / DECIMAL_PRECISION;
-    }
-
     function updateSystemAndTroveInterest(address _borrower) public {
         updateSystemInterest();
         _updateTroveInterest(_borrower);

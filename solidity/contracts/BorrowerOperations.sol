@@ -110,10 +110,17 @@ contract BorrowerOperations is
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage;
 
+    // Governable Variables
+
     // Minimum amount of net mUSD debt a trove must have
     uint256 public minNetDebt;
     uint256 public proposedMinNetDebt;
     uint256 public proposedMinNetDebtTime;
+
+    // Borrowering Rate
+    uint256 public borrowingRate; // expressed as a percentage in 1e18 precision
+    uint256 public proposedBorrowingRate;
+    uint256 public proposedBorrowingRateTime;
 
     modifier onlyGovernance() {
         require(
@@ -127,6 +134,11 @@ contract BorrowerOperations is
         __Ownable_init(msg.sender);
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
+
+        borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
+        proposedBorrowingRate = borrowingRate;
+        // solhint-disable-next-line not-rely-on-time
+        proposedBorrowingRateTime = block.timestamp;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -391,6 +403,26 @@ contract BorrowerOperations is
         emit MinNetDebtChanged(minNetDebt);
     }
 
+    function proposeBorrowingRate(uint256 _fee) external onlyGovernance {
+        require(_fee <= 1e18, "Origination Fee must be at most 100%.");
+        proposedBorrowingRate = _fee;
+        proposedBorrowingRateTime = block.timestamp;
+        emit BorrowingRateProposed(
+            proposedBorrowingRate,
+            proposedBorrowingRateTime
+        );
+    }
+
+    function approveBorrowingRate() external onlyGovernance {
+        // solhint-disable not-rely-on-time
+        require(
+            block.timestamp >= proposedBorrowingRateTime + 7 days,
+            "Must wait at least 7 days before approving a change to Origination Fee"
+        );
+        borrowingRate = proposedBorrowingRate;
+        emit BorrowingRateChanged(borrowingRate);
+    }
+
     function restrictedClaimCollateral(
         address _borrower,
         address _recipient
@@ -449,6 +481,10 @@ contract BorrowerOperations is
             _upperHint,
             _lowerHint
         );
+    }
+
+    function getBorrowingFee(uint256 _debt) public view returns (uint) {
+        return (_debt * borrowingRate) / DECIMAL_PRECISION;
     }
 
     // Burn the specified amount of MUSD from _account and decreases the total active debt
@@ -540,11 +576,10 @@ contract BorrowerOperations is
     // --- Helper functions ---
 
     function _triggerBorrowingFee(
-        ITroveManager _troveManager,
         IMUSD _musd,
         uint256 _amount
     ) internal returns (uint) {
-        uint256 fee = _troveManager.getBorrowingFee(_amount);
+        uint256 fee = getBorrowingFee(_amount);
 
         // Send fee to PCV contract
         _musd.mint(pcvAddress, fee);
@@ -577,11 +612,7 @@ contract BorrowerOperations is
         vars.netDebt = _debtAmount;
 
         if (!isRecoveryMode) {
-            vars.fee = _triggerBorrowingFee(
-                contractsCache.troveManager,
-                contractsCache.musd,
-                _debtAmount
-            );
+            vars.fee = _triggerBorrowingFee(contractsCache.musd, _debtAmount);
             vars.netDebt += vars.fee;
         }
 
@@ -760,11 +791,7 @@ contract BorrowerOperations is
 
         // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
-            vars.fee = _triggerBorrowingFee(
-                contractsCache.troveManager,
-                contractsCache.musd,
-                _mUSDChange
-            );
+            vars.fee = _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
             vars.netDebtChange += vars.fee; // The raw debt change includes the fee
         }
 
@@ -970,11 +997,7 @@ contract BorrowerOperations is
         vars.oldRate = vars.troveManagerCached.getTroveInterestRate(_borrower);
         vars.oldDebt = vars.troveManagerCached.getTroveDebt(_borrower);
         vars.amount = (refinancingFeePercentage * vars.oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(
-            vars.troveManagerCached,
-            musd,
-            vars.amount
-        );
+        uint256 fee = _triggerBorrowingFee(musd, vars.amount);
         // slither-disable-next-line unused-return
         vars.troveManagerCached.increaseTroveDebt(_borrower, fee);
         activePool.increaseDebt(fee, 0);

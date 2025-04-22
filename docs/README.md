@@ -47,9 +47,9 @@ The arbitrageur started with $100k and ended with $109k (ignoring fees). This tr
 
 The protocol collects fees in four places:
 
-- An origination fee of 0.5% (governable), which is added as debt to a trove but minted to governance.
-- A redemption fee of 0.5% (governable), which is taken whenever a user redeems mUSD for BTC. For example, at 0.5%, whenever $100 of mUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
-- A refinancing fee, which operates like the origination fee.
+- A borrowing rate of 0.5% (governable), which is added as debt to a trove but minted to governance.
+- A redemption rate of 0.5% (governable), which is taken whenever a user redeems mUSD for BTC. For example, at 0.5%, whenever $100 of mUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
+- A refinancing rate, which operates like the borrowing rate.
 - [Simple](https://www.investopedia.com/terms/s/simple_interest.asp), [fixed](https://www.creditkarma.com/credit/i/fixed-interest-rate) interest on the principal of the loan.
 
 There is a global, governable interest rate that all new troves use when they are opened but after that, changes to the global interest rate do not impact any existing troves. At any time, a user is allowed to refinance to the global rate.
@@ -163,7 +163,7 @@ When a trove is liquidated, the whole debt (including the $200 gas compensation)
 
 In other situations (redemption, closing a trove, repaying debt), the last $200 of debt of a trove is paid by the Gas Pool.
 
-For example, say that Alice wants to mint $2000 mUSD with $3000 of BTC as collateral. Alice will receive $2000, $200 will be sent to the Gas Pool, and a origination fee of $10 (0.5%) is sent to the protocol.
+For example, say that Alice wants to mint $2000 mUSD with $3000 of BTC as collateral. Alice will receive $2000, $200 will be sent to the Gas Pool, and a borrowing fee of $10 (0.5%) is sent to the protocol.
 
 Alice's total debt, for liquidations or calculating collateral ratios, is $2210.
 
@@ -180,7 +180,7 @@ If the Total Collateral Ratio (TCR), the value of all of the collateral divided 
 In Recovery Mode...
 
 - We require that newly opened troves have at least 150% (the CCR) collateral, rather than the normal 110%.
-- We do not charge an origination fee.
+- We do not charge an borrowing rate.
 - We do not allow users to close troves.
 - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves _and_ is above 150%.
 - Users cannot refinance their trove.

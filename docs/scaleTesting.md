@@ -36,7 +36,7 @@ npx hardhat run scripts/scale-testing/generate-wallets.ts --network matsnet_fuzz
 
 This creates wallet accounts and stores their encrypted private keys. A `password.txt` file will be generated for decryption.
 
-> **Note**: If using existing wallets, you'll need to create the `password.txt` file yourself.  If you are part of the MUSD team, this should be visible in 1Password.
+> **Note**: If using existing wallets, you'll need to create the `password.txt` file yourself. If you are part of the MUSD team, this should be visible in 1Password.
 
 ### 3. Fund Test Wallets
 
@@ -140,8 +140,8 @@ This enables targeted testing of accounts with specific characteristics, such as
 const accounts = stateManager.getAccounts({
   minMusdBalance: "1000",
   hasTrove: true,
-  notUsedInTest: "redemption-test"
-});
+  notUsedInTest: "redemption-test",
+})
 ```
 
 ## Network Configuration

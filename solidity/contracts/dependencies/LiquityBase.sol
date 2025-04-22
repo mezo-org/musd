@@ -29,9 +29,6 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
 
     uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 
-    uint256 public constant BORROWING_FEE_FLOOR = ((DECIMAL_PRECISION * 5) /
-        1000); // 0.5%
-
     // slither-disable-next-line all
     IActivePool public activePool;
 
