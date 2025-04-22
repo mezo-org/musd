@@ -7,11 +7,16 @@ import WalletHelper from "../wallet-helper"
 import getDeploymentAddress from "../../deployment-helpers"
 import getContracts from "../get-contracts"
 import calculateTroveOperationHints from "../hint-helper"
+import {
+  processBatchTransactions,
+  prepareResultsForSerialization,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "increase-debt-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use
 const MUSD_AMOUNTS = ["100", "200", "300", "400", "500"] // MUSD amounts to borrow
+const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {
   // Get the network name
@@ -20,6 +25,7 @@ async function main() {
 
   console.log(`Running Increase Debt test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
 
   // Create state manager
   const stateManager = new StateManager(networkName)
@@ -67,168 +73,161 @@ async function main() {
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
   console.log(`Loaded ${loadedWallets} wallets for testing`)
 
-  // Initialize results object
-  const results = {
-    successful: 0,
-    failed: 0,
-    gasUsed: 0n,
-    transactions: [] as never[],
-  }
-
-  // Process each account
-  for (let i = 0; i < testAccounts.length; i++) {
-    const account = testAccounts[i]
-    const musdAmount = ethers.parseEther(MUSD_AMOUNTS[i % MUSD_AMOUNTS.length])
-
-    console.log(
-      `\nProcessing account ${i + 1}/${testAccounts.length}: ${account.address}`,
-    )
-    console.log(`Borrowing additional ${ethers.formatEther(musdAmount)} MUSD`)
-
-    // Get current trove state for reference
-    let troveState
-    try {
-      troveState = await troveManager.Troves(account.address)
-      const totalDebt = troveState.principal + troveState.interestOwed
-      console.log(
-        `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
-      )
-      console.log(`Current trove debt: ${ethers.formatEther(totalDebt)} MUSD`)
-
-      // Calculate current ICR
-      const icr = (troveState.coll * currentPrice * 100n) / totalDebt
-      console.log(`Current ICR: ${icr / 100n}.${icr % 100n}%`)
-
-      // Calculate new ICR after borrowing
-      const newTotalDebt = totalDebt + musdAmount
-      const newIcr = (troveState.coll * currentPrice * 100n) / newTotalDebt
-      console.log(
-        `Projected ICR after borrowing: ${newIcr / 100n}.${newIcr % 100n}%`,
+  // Process accounts in batches using our utility
+  const results = await processBatchTransactions(
+    testAccounts,
+    async (account, index) => {
+      const musdAmount = ethers.parseEther(
+        MUSD_AMOUNTS[index % MUSD_AMOUNTS.length],
       )
 
-      // Check if new ICR would be too low (below 110%)
-      if (newIcr < 11000n) {
+      console.log(
+        `Processing account ${index + 1}/${testAccounts.length}: ${account.address}`,
+      )
+      console.log(`Borrowing additional ${ethers.formatEther(musdAmount)} MUSD`)
+
+      // Get current trove state for reference
+      let troveState
+      let adjustedMusdAmount = musdAmount
+
+      try {
+        troveState = await troveManager.Troves(account.address)
+        const totalDebt = troveState.principal + troveState.interestOwed
         console.log(
-          "Warning: New ICR would be too low. Reducing borrow amount.",
+          `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
         )
-        // Calculate a safer amount to borrow (targeting 120% ICR)
-        const saferDebt = (troveState.coll * currentPrice * 100n) / 12000n
-        const saferBorrowAmount =
-          saferDebt > totalDebt ? saferDebt - totalDebt : 0n
+        console.log(`Current trove debt: ${ethers.formatEther(totalDebt)} MUSD`)
 
-        if (saferBorrowAmount > 0n) {
+        // Calculate current ICR
+        const icr = (troveState.coll * currentPrice * 100n) / totalDebt
+        console.log(`Current ICR: ${icr / 100n}.${icr % 100n}%`)
+
+        // Calculate new ICR after borrowing
+        const newTotalDebt = totalDebt + adjustedMusdAmount
+        const newIcr = (troveState.coll * currentPrice * 100n) / newTotalDebt
+        console.log(
+          `Projected ICR after borrowing: ${newIcr / 100n}.${newIcr % 100n}%`,
+        )
+
+        // Check if new ICR would be too low (below 110%)
+        if (newIcr < 11000n) {
           console.log(
-            `Adjusted borrow amount to ${ethers.formatEther(saferBorrowAmount)} MUSD`,
+            "Warning: New ICR would be too low. Reducing borrow amount.",
           )
-          musdAmount = saferBorrowAmount
-        } else {
-          console.log("Cannot safely borrow more. Skipping this account.")
-          results.failed++
-          results.transactions.push({
-            account: account.address,
-            musdAmount: ethers.formatEther(musdAmount),
-            error: "ICR would be too low",
-          })
-          continue
+          // Calculate a safer amount to borrow (targeting 120% ICR)
+          const saferDebt = (troveState.coll * currentPrice * 100n) / 12000n
+          const saferBorrowAmount =
+            saferDebt > totalDebt ? saferDebt - totalDebt : 0n
+
+          if (saferBorrowAmount > 0n) {
+            console.log(
+              `Adjusted borrow amount to ${ethers.formatEther(saferBorrowAmount)} MUSD`,
+            )
+            adjustedMusdAmount = saferBorrowAmount
+          } else {
+            console.log("Cannot safely borrow more. Skipping this account.")
+            return {
+              success: false,
+              account: account.address,
+              musdAmount: ethers.formatEther(musdAmount),
+              error: "ICR would be too low",
+            }
+          }
+        }
+      } catch (error) {
+        console.log(`Could not fetch current trove state: ${error.message}`)
+        return {
+          success: false,
+          account: account.address,
+          musdAmount: ethers.formatEther(musdAmount),
+          error: `Could not fetch trove state: ${error.message}`,
         }
       }
-    } catch (error) {
-      console.log(`Could not fetch current trove state: ${error.message}`)
-    }
 
-    // Get the wallet
-    const wallet = walletHelper.getWallet(account.address)
+      // Get the wallet
+      const wallet = walletHelper.getWallet(account.address)
 
-    if (!wallet) {
-      console.log(`No wallet found for account ${account.address}, skipping`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        musdAmount: ethers.formatEther(musdAmount),
-        error: "No wallet found for account",
-      })
-      continue
-    }
+      if (!wallet) {
+        console.log(`No wallet found for account ${account.address}, skipping`)
+        return {
+          success: false,
+          account: account.address,
+          musdAmount: ethers.formatEther(adjustedMusdAmount),
+          error: "No wallet found for account",
+        }
+      }
 
-    try {
-      const { upperHint, lowerHint } = await calculateTroveOperationHints({
-        hintHelpers,
-        sortedTroves,
-        troveManager,
-        collateralAmount: 0n,
-        debtAmount: musdAmount,
-        operation: "adjust",
-        isCollIncrease: false,
-        isDebtIncrease: true,
-        currentCollateral: troveState?.coll,
-        currentDebt:
-          (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
-        verbose: true,
-      })
-      // Record the start time
-      const startTime = Date.now()
+      try {
+        const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          hintHelpers,
+          sortedTroves,
+          troveManager,
+          collateralAmount: 0n,
+          debtAmount: adjustedMusdAmount,
+          operation: "adjust",
+          isCollIncrease: false,
+          isDebtIncrease: true,
+          currentCollateral: troveState?.coll,
+          currentDebt:
+            (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
+          verbose: true,
+        })
 
-      // Increase debt transaction
-      const tx = await borrowerOperations.connect(wallet).withdrawMUSD(
-        musdAmount,
-        upperHint, // Upper hint (use zero address for simplicity)
-        lowerHint, // Lower hint (use zero address for simplicity)
-        {
-          gasLimit: 1000000, // Explicitly set a higher gas limit
-        },
-      )
+        // Record the start time
+        const startTime = Date.now()
 
-      console.log(`Transaction sent: ${tx.hash}`)
+        // Increase debt transaction
+        const tx = await borrowerOperations
+          .connect(wallet)
+          .withdrawMUSD(adjustedMusdAmount, upperHint, lowerHint, {
+            gasLimit: 1000000, // Explicitly set a higher gas limit
+          })
 
-      // Wait for transaction to be mined
-      const receipt = await tx.wait()
+        console.log(`Transaction sent: ${tx.hash}`)
 
-      // Calculate metrics
-      const endTime = Date.now()
-      const duration = endTime - startTime
-      const gasUsed = receipt ? receipt.gasUsed : 0n
+        // Wait for transaction to be mined
+        const receipt = await tx.wait()
 
-      console.log(
-        `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
-      )
+        // Calculate metrics
+        const endTime = Date.now()
+        const duration = endTime - startTime
+        const gasUsed = receipt ? receipt.gasUsed : 0n
 
-      // Update results
-      results.successful++
-      results.gasUsed += gasUsed
-      results.transactions.push({
-        hash: tx.hash,
-        account: account.address,
-        musdAmount: ethers.formatEther(musdAmount),
-        gasUsed: gasUsed.toString(),
-        duration,
-      })
+        console.log(
+          `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        )
 
-      // Record the action in the state manager
-      stateManager.recordAction(account.address, "increaseDebt", TEST_ID)
-    } catch (error) {
-      console.log(`Error increasing debt: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        musdAmount: ethers.formatEther(musdAmount),
-        error: error.message,
-      })
-    }
+        // Record the action in the state manager
+        stateManager.recordAction(account.address, "increaseDebt", TEST_ID)
 
-    // Wait a bit between transactions to avoid network congestion
-    if (i < testAccounts.length - 1) {
-      console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2000)
-      })
-    }
-  }
+        return {
+          success: true,
+          hash: tx.hash,
+          account: account.address,
+          musdAmount: ethers.formatEther(adjustedMusdAmount),
+          gasUsed,
+          duration,
+        }
+      } catch (error) {
+        console.log(`Error increasing debt: ${error.message}`)
+
+        return {
+          success: false,
+          account: account.address,
+          musdAmount: ethers.formatEther(adjustedMusdAmount),
+          error: error.message,
+        }
+      }
+    },
+    { testId: TEST_ID, batchSize: BATCH_SIZE },
+  )
 
   // Print summary
   console.log("\n--- Test Summary ---")
   console.log(`Total accounts processed: ${testAccounts.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
+  console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
     `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : 0n}`,
@@ -262,17 +261,9 @@ async function main() {
         config: {
           numAccounts: NUM_ACCOUNTS,
           musdAmounts: MUSD_AMOUNTS,
+          batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions,
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,
