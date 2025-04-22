@@ -510,7 +510,7 @@ export async function adjustTroveToICR(
   // Calculate the debt required to reach the target ICR
   const targetDebt = (coll * price) / targetICR
   const increasedTotalDebt = targetDebt - debt
-  const borrowingRate = await contracts.borrowerOperations.originationFee()
+  const borrowingRate = await contracts.borrowerOperations.borrowingRate()
 
   /* Total increase in debt after the call = targetDebt - debt
    * Requested increase in debt factors in the borrow fee, note you must multiply by to1e18(1) before the division to avoid rounding errors
@@ -993,10 +993,10 @@ export async function setInterestRate(
 export async function setDefaultFees(contracts: Contracts, sender: User) {
   await contracts.borrowerOperations
     .connect(sender.wallet)
-    .proposeOriginationFee((to1e18(1) * 50n) / 10000n)
+    .proposeBorrowingRate((to1e18(1) * 50n) / 10000n)
   await contracts.borrowerOperations
     .connect(sender.wallet)
-    .proposeRedemptionFee((to1e18(1) * 50n) / 10000n)
+    .proposeRedemptionRate((to1e18(1) * 50n) / 10000n)
   await contracts.interestRateManager
     .connect(sender.wallet)
     .proposeInterestRate(0)
@@ -1006,10 +1006,10 @@ export async function setDefaultFees(contracts: Contracts, sender: User) {
 
   await contracts.borrowerOperations
     .connect(sender.wallet)
-    .approveOriginationFee()
+    .approveBorrowingRate()
   await contracts.borrowerOperations
     .connect(sender.wallet)
-    .approveRedemptionFee()
+    .approveRedemptionRate()
   await contracts.interestRateManager
     .connect(sender.wallet)
     .approveInterestRate()
