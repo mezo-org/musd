@@ -110,7 +110,7 @@ contract BorrowerOperations is
     // refinancing fee is always a percentage of the borrowing (issuance) fee
     uint8 public refinancingFeePercentage;
 
-    // Goveranble Variables
+    // Governable Variables
 
     // Minimum amount of net mUSD debt a trove must have
     uint256 public minNetDebt;
