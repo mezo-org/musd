@@ -6,10 +6,13 @@ import {
 } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork, isFuzzTestingNetwork } =
+    await setupDeploymentBoilerplate(hre)
 
-  const { activePool, troveManager } =
-    await fetchAllDeployedContracts(isHardhatNetwork)
+  const { activePool, troveManager } = await fetchAllDeployedContracts(
+    isHardhatNetwork,
+    isFuzzTestingNetwork,
+  )
 
   await execute(
     "DefaultPool",

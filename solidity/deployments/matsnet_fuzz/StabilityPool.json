@@ -1,5 +1,5 @@
 {
-  "address": "0xCfdb903cD2Dc14E24e78130A63b20Ba65107262A",
+  "address": "0x993dC3E58132240B745F8815eF4Fa0E6625b52CD",
   "abi": [
     {
       "inputs": [],
@@ -338,19 +338,6 @@
       ],
       "name": "UserDepositChanged",
       "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "BORROWING_FEE_FLOOR",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
     },
     {
       "inputs": [],
@@ -929,8 +916,8 @@
       "type": "receive"
     }
   ],
-  "transactionHash": "0xc2ad35d6652ee2d9c41b99a8fc308188fd8d76bf31b8f50761b94d1a85554a89",
+  "transactionHash": "0xe723ab7d79ebe7be97b6674723bf50f42319f5f099c0d2ca036b9b1c52c7af33",
   "numDeployments": 1,
-  "implementation": "0x10549008ED1f3Ee99cDa2A1cFC982c078820b404",
+  "implementation": "0x8f0cA419bB1D54AF4Bf6A644f605cC247d6d3E19",
   "devdoc": "Contract deployed as upgradable proxy"
 }

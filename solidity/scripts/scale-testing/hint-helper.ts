@@ -1,10 +1,16 @@
 import { ethers } from "hardhat"
-import { HintHelpers, SortedTroves, TroveManager } from "../../typechain"
+import {
+  BorrowerOperations,
+  HintHelpers,
+  SortedTroves,
+  TroveManager,
+} from "../../typechain"
 
 /**
  * Calculate hints for trove operations
  */
 async function calculateTroveOperationHints(params: {
+  borrowerOperations: BorrowerOperations
   hintHelpers: HintHelpers
   sortedTroves: SortedTroves
   troveManager: TroveManager
@@ -18,6 +24,7 @@ async function calculateTroveOperationHints(params: {
   verbose?: boolean
 }) {
   const {
+    borrowerOperations,
     hintHelpers,
     sortedTroves,
     troveManager,
@@ -37,7 +44,8 @@ async function calculateTroveOperationHints(params: {
     if (operation === "open") {
       // Calculate expected total debt for an open operation
       const gasCompensation = await troveManager.MUSD_GAS_COMPENSATION()
-      const borrowingFee = await troveManager.getBorrowingFee(debtAmount)
+      const borrowingFee = await borrowerOperations.getBorrowingFee(debtAmount)
+
       const totalDebt = debtAmount + borrowingFee + gasCompensation
 
       if (verbose) {
@@ -68,7 +76,7 @@ async function calculateTroveOperationHints(params: {
       if (isDebtIncrease) {
         // For debt increase, need to account for borrowing fee
         const borrowingFee = isDebtIncrease
-          ? await troveManager.getBorrowingFee(debtAmount)
+          ? await borrowerOperations.getBorrowingFee(debtAmount)
           : 0n
         finalDebt += debtAmount + borrowingFee
       } else {
@@ -141,7 +149,7 @@ async function calculateTroveOperationHints(params: {
       success: true,
     }
   } catch (error) {
-    console.error(`Error calculating hints: ${error.message}`)
+    console.error(`Error calculating hints: ${error}`)
     return {
       upperHint: ethers.ZeroAddress,
       lowerHint: ethers.ZeroAddress,

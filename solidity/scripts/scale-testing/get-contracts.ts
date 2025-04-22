@@ -10,6 +10,7 @@ async function getContracts() {
   const hintHelpersAddress = await getDeploymentAddress("HintHelpers")
   const sortedTrovesAddress = await getDeploymentAddress("SortedTroves")
   const musdAddress = await getDeploymentAddress("MUSD")
+  const mockAggregatorAddress = await getDeploymentAddress("MockAggregator")
 
   console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
   console.log(`Using PriceFeed at: ${priceFeedAddress}`)
@@ -17,6 +18,7 @@ async function getContracts() {
   console.log(`Using HintHelpers at: ${hintHelpersAddress}`)
   console.log(`Using SortedTroves at: ${sortedTrovesAddress}`)
   console.log(`Using MUSD at: ${musdAddress}`)
+  console.log(`Using MockAggregator at: ${mockAggregatorAddress}`)
 
   // Get contract instances
   const borrowerOperations = await ethers.getContractAt(
@@ -37,6 +39,10 @@ async function getContracts() {
     sortedTrovesAddress,
   )
   const musdToken = await ethers.getContractAt("MUSD", musdAddress)
+  const mockAggregator = await ethers.getContractAt(
+    "MockAggregator",
+    mockAggregatorAddress,
+  )
 
   return {
     borrowerOperationsAddress,
@@ -51,6 +57,7 @@ async function getContracts() {
     hintHelpers,
     sortedTroves,
     musdToken,
+    mockAggregator,
   }
 }
 

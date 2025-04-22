@@ -1,5 +1,5 @@
 {
-  "address": "0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba",
+  "address": "0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90",
   "abi": [
     {
       "inputs": [],
@@ -81,6 +81,38 @@
         }
       ],
       "name": "BorrowingFeePaid",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "borrowingRate",
+          "type": "uint256"
+        }
+      ],
+      "name": "BorrowingRateChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposedBorrowingRate",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposedBorrowingRateTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "BorrowingRateProposed",
       "type": "event"
     },
     {
@@ -229,6 +261,38 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redemptionRate",
+          "type": "uint256"
+        }
+      ],
+      "name": "RedemptionRateChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposedRedemptionRate",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposedRedemptionRateTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "RedemptionRateProposed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": true,
           "internalType": "address",
           "name": "_borrower",
@@ -357,19 +421,6 @@
       ],
       "name": "TroveUpdated",
       "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "BORROWING_FEE_FLOOR",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
     },
     {
       "inputs": [],
@@ -528,7 +579,21 @@
     },
     {
       "inputs": [],
+      "name": "approveBorrowingRate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "approveMinNetDebt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "approveRedemptionRate",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -541,6 +606,19 @@
           "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "borrowingRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -613,6 +691,25 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        }
+      ],
+      "name": "getBorrowingFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "getEntireSystemColl",
       "outputs": [
@@ -632,6 +729,25 @@
         {
           "internalType": "uint256",
           "name": "entireSystemDebt",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_collateralDrawn",
+          "type": "uint256"
+        }
+      ],
+      "name": "getRedemptionRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
           "type": "uint256"
         }
       ],
@@ -812,6 +928,19 @@
       "inputs": [
         {
           "internalType": "uint256",
+          "name": "_fee",
+          "type": "uint256"
+        }
+      ],
+      "name": "proposeBorrowingRate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
           "name": "_minNetDebt",
           "type": "uint256"
         }
@@ -819,6 +948,45 @@
       "name": "proposeMinNetDebt",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_rate",
+          "type": "uint256"
+        }
+      ],
+      "name": "proposeRedemptionRate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proposedBorrowingRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proposedBorrowingRateTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -849,6 +1017,56 @@
     },
     {
       "inputs": [],
+      "name": "proposedRedemptionRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proposedRedemptionRateTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "redemptionRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        }
+      ],
       "name": "refinance",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -1024,6 +1242,16 @@
         {
           "internalType": "address",
           "name": "_borrower",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
           "type": "address"
         }
       ],
@@ -1212,8 +1440,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x642b07851e2f8f457c8aef164ba44aa1a4688dc27e91bf8a2fab3d351665c327",
+  "transactionHash": "0x4e20c4db908af5afd9a97808294f00b05c28d115c60cc4b2bc91ffb3df797617",
   "numDeployments": 1,
-  "implementation": "0xC05266CDbf6deEc68539CcDef88A94B64a1e1E10",
+  "implementation": "0xBb632Fe7a098E0c5b2760F5c93D89804Ee2a7675",
   "devdoc": "Contract deployed as upgradable proxy"
 }

@@ -43,14 +43,25 @@ async function main() {
     troveManager,
     hintHelpers,
     sortedTroves,
+    mockAggregator,
   } = await getContracts()
 
   // Get the current BTC price from the price feed
   let currentPrice
   try {
     currentPrice = await priceFeed.fetchPrice()
+    // Set the current price to 20M if it has not been set already
+    if (currentPrice < ethers.parseEther("20000000")) {
+      const [deployer] = await ethers.getSigners()
+      await mockAggregator
+        .connect(deployer)
+        .setPrice(ethers.parseEther("20000000"))
+      currentPrice = await priceFeed.fetchPrice()
+      console.log("Mock price set to $20,000,000")
+    }
     console.log(`Current BTC price: $${ethers.formatEther(currentPrice)}`)
   } catch (error) {
+    console.log(error)
     console.log(
       "Could not fetch price from price feed, using default: $20000000",
     )
@@ -142,6 +153,7 @@ async function main() {
       try {
         // Get hints for this transaction
         const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          borrowerOperations,
           hintHelpers,
           sortedTroves,
           troveManager,

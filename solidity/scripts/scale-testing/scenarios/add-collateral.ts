@@ -111,6 +111,7 @@ async function main() {
         const startTime = Date.now()
 
         const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          borrowerOperations,
           hintHelpers,
           sortedTroves,
           troveManager,

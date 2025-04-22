@@ -1,0 +1,180 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-22T19:57:29.375Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 20,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [150, 200, 250, 300, 350],
+    "musdDebtAmount": 2200,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 0,
+    "failed": 20,
+    "skipped": 0,
+    "gasUsed": "0",
+    "transactions": [
+      {
+        "success": false,
+        "account": "0x2FDC91333684AaFcD1F00Ae1C44B0831c20a6b56",
+        "collateralRatio": 300,
+        "collateralAmount": "0.144",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999888767312 < 144000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+        "collateralRatio": 150,
+        "collateralAmount": "0.072",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (3031295926322769 < 72000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0xEB932870E3cc98d354d6dd977f2cb9531b12E6f9",
+        "collateralRatio": 250,
+        "collateralAmount": "0.12",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999888766101 < 120000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x3c92209c5640234eea3Ac62fBE7ecCc06c868290",
+        "collateralRatio": 350,
+        "collateralAmount": "0.168",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (579999963633349 < 168000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+        "collateralRatio": 200,
+        "collateralAmount": "0.096",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (3035516790476060 < 96000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA",
+        "collateralRatio": 300,
+        "collateralAmount": "0.144",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999947993660 < 144000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1",
+        "collateralRatio": 350,
+        "collateralAmount": "0.168",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (579999953308585 < 168000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0xFfBDA321CA56317988A9F6c4CFf943749D4f1717",
+        "collateralRatio": 250,
+        "collateralAmount": "0.12",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999947993660 < 120000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7",
+        "collateralRatio": 200,
+        "collateralAmount": "0.096",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (579999969199834 < 96000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0xda7488DFd50E52E6980e211f0950C39B0a872d0A",
+        "collateralRatio": 150,
+        "collateralAmount": "0.072",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (579999919767711 < 72000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0xDcE91B87A4A94ba02E583947aB4D9393D2954542",
+        "collateralRatio": 150,
+        "collateralAmount": "0.072",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999953776448 < 72000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x73eF952EC94808FB47Bf72d25AB16ffE099140C0",
+        "collateralRatio": 350,
+        "collateralAmount": "0.168",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999984110654 < 168000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x938fE9eC09Df8877b6Af13B7B801526F4E5d96CE",
+        "collateralRatio": 250,
+        "collateralAmount": "0.12",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999969665794 < 120000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0xF7A994986290038b1AB1C7EA92FD0CB1B0eAdd13",
+        "collateralRatio": 300,
+        "collateralAmount": "0.144",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999969663891 < 144000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x6af2a89085815E28401d0Db10f137D94e1203C59",
+        "collateralRatio": 200,
+        "collateralAmount": "0.096",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999969663891 < 96000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x2B2cC974cff8C978335b14cEb598b5c05A8c9E08",
+        "collateralRatio": 300,
+        "collateralAmount": "0.144",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (1000000000000000 < 144000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x66C86CBE0eEA8cFa1C4644E0152dd06528B31609",
+        "collateralRatio": 350,
+        "collateralAmount": "0.168",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (1000000000000000 < 168000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x95531c560bbB441c2793E6F5E4363E518415c177",
+        "collateralRatio": 200,
+        "collateralAmount": "0.096",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999984108751 < 96000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x780F6F284154E86A6eBc7FA4A4C467A37FFeAcDC",
+        "collateralRatio": 150,
+        "collateralAmount": "0.072",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999984108751 < 72000000021000000): insufficient funds: insufficient funds"
+      },
+      {
+        "success": false,
+        "account": "0x336282Fb344d3c0cED5BEd5AD358d8eBDbf3A6f2",
+        "collateralRatio": 250,
+        "collateralAmount": "0.12",
+        "debtAmount": 2200,
+        "error": "failed to check sender balance: sender balance < tx cost (999999984108751 < 120000000021000000): insufficient funds: insufficient funds"
+      }
+    ]
+  }
+}

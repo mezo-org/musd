@@ -201,6 +201,7 @@ async function main() {
 
       try {
         const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          borrowerOperations,
           hintHelpers,
           sortedTroves,
           troveManager,

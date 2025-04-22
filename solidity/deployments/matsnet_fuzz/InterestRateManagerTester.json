@@ -1,11 +1,6 @@
 {
-  "address": "0x25D5267a70Ee9a4801BcBDBABe513034926a8559",
+  "address": "0x622083d6205c53f59B4bcb32F024bD8c3a88c763",
   "abi": [
-    {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
     {
       "inputs": [],
       "name": "InvalidInitialization",
@@ -343,19 +338,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "proposalTime",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "uint16",
@@ -376,6 +358,19 @@
           "internalType": "uint16",
           "name": "",
           "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proposedInterestRateTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -442,6 +437,19 @@
     {
       "inputs": [
         {
+          "internalType": "uint16",
+          "name": "_newInterestRate",
+          "type": "uint16"
+        }
+      ],
+      "name": "setInterestRateForTesting",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "newOwner",
           "type": "address"
@@ -494,8 +502,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0xb0cd79a38768c2cbe338e74c8a41247cfbd488c47df61d6de34d264161969998",
+  "transactionHash": "0x42309bcc2eed590b828f5e1b014af4f5dd25972688b345ea86aba0e69cce9cef",
   "numDeployments": 1,
-  "implementation": "0xd03d27C46f372Ed3f5a071b1548c1a300Cf663F4",
+  "implementation": "0x30d17eF13450c298a219FB427903A3581ef2F038",
   "devdoc": "Contract deployed as upgradable proxy"
 }

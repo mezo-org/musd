@@ -1,5 +1,5 @@
 {
-  "address": "0x7FE0A5a7EeBD88530c58824475edEae33424671F",
+  "address": "0x01D85e662EEDEDC00DB4eB80da21AF42778ab375",
   "abi": [
     {
       "inputs": [],
@@ -471,19 +471,6 @@
     },
     {
       "inputs": [],
-      "name": "BORROWING_FEE_FLOOR",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "CCR",
       "outputs": [
         {
@@ -576,19 +563,6 @@
     {
       "inputs": [],
       "name": "PERCENT_DIVISOR",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "REDEMPTION_FEE_FLOOR",
       "outputs": [
         {
           "internalType": "uint256",
@@ -883,25 +857,6 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_debt",
-          "type": "uint256"
-        }
-      ],
-      "name": "getBorrowingFee",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -1826,8 +1781,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0xa51698027030d2969dd6301ebf77512d5c4baef36bd738320da277f034309afe",
+  "transactionHash": "0x1ad66d1a611d6c83d74320c7863f7924d1e35121935e4ff3d6cc1278c4956ebe",
   "numDeployments": 1,
-  "implementation": "0xD2B5ac38589Af3FDceAA37E3Ef718A39e9f94da9",
+  "implementation": "0x732810fAF35B3C0E22f153C96d96703AB4EfE46D",
   "devdoc": "Contract deployed as upgradable proxy"
 }
