@@ -407,7 +407,7 @@ contract TroveManager is
         );
 
         // Calculate the collateral fee
-        totals.collateralFee = borrowerOperations.getRedemptionFee(
+        totals.collateralFee = borrowerOperations.getRedemptionRate(
             totals.totalCollateralDrawn
         );
 

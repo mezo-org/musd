@@ -1179,16 +1179,16 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("proposeRedemptionFee()", () => {
-    it("sets the proposed redemption fee", async () => {
-      const newRedemptionFee = to1e18(0.5) // 50%
+  describe("proposeRedemptionRate()", () => {
+    it("sets the proposed redemption rate", async () => {
+      const newRedemptionRate = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeRedemptionFee(newRedemptionFee)
+        .proposeRedemptionRate(newRedemptionRate)
 
       expect(
-        await contracts.borrowerOperations.proposedRedemptionFee(),
-      ).to.equal(newRedemptionFee)
+        await contracts.borrowerOperations.proposedRedemptionRate(),
+      ).to.equal(newRedemptionRate)
     })
 
     context("Expected Reverts", () => {
@@ -1196,18 +1196,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(council.wallet)
-            .proposeRedemptionFee(to1e18(1.01)), // 101%
-        ).to.be.revertedWith("Redemption Fee must be at most 100%.")
+            .proposeRedemptionRate(to1e18(1.01)), // 101%
+        ).to.be.revertedWith("Redemption Rate must be at most 100%.")
       })
     })
   })
 
-  describe("approveRedemptionFee()", () => {
-    it("requires two transactions and a 7 day time delay to change the redemption fee", async () => {
-      const newRedemptionFee = to1e18(0.5) // 50%
+  describe("approveRedemptionRate()", () => {
+    it("requires two transactions and a 7 day time delay to change the redemption rate", async () => {
+      const newRedemptionRate = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeRedemptionFee(newRedemptionFee)
+        .proposeRedemptionRate(newRedemptionRate)
 
       // Simulate 7 days passing
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -1215,18 +1215,18 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .approveRedemptionFee()
+        .approveRedemptionRate()
 
-      expect(await contracts.borrowerOperations.redemptionFee()).to.equal(
-        newRedemptionFee,
+      expect(await contracts.borrowerOperations.redemptionRate()).to.equal(
+        newRedemptionRate,
       )
     })
 
-    it("changes the redemption fee", async () => {
-      const newRedemptionFee = to1e18(0.5) // 50%
+    it("changes the redemption rate", async () => {
+      const newRedemptionRate = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeRedemptionFee(newRedemptionFee)
+        .proposeRedemptionRate(newRedemptionRate)
 
       // Simulate 7 days passing
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -1234,7 +1234,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .approveRedemptionFee()
+        .approveRedemptionRate()
 
       await updateWalletSnapshot(contracts, alice, "before")
 
@@ -1251,10 +1251,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     context("Expected Reverts", () => {
       it("reverts if the time delay has not finished", async () => {
-        const newRedemptionFee = to1e18(0.5) // 50%
+        const newRedemptionRate = to1e18(0.5) // 50%
         await contracts.borrowerOperations
           .connect(council.wallet)
-          .proposeRedemptionFee(newRedemptionFee)
+          .proposeRedemptionRate(newRedemptionRate)
 
         // Simulate 6 days passing
         const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
@@ -1263,17 +1263,17 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(council.wallet)
-            .approveRedemptionFee(),
+            .approveRedemptionRate(),
         ).to.be.revertedWith(
-          "Must wait at least 7 days before approving a change to Redemption Fee",
+          "Must wait at least 7 days before approving a change to Redemption Rate",
         )
       })
 
       it("reverts if called by a non-governance address", async () => {
-        const newRedemptionFee = to1e18(0.5) // 50%
+        const newRedemptionRate = to1e18(0.5) // 50%
         await contracts.borrowerOperations
           .connect(council.wallet)
-          .proposeRedemptionFee(newRedemptionFee)
+          .proposeRedemptionRate(newRedemptionRate)
 
         // Simulate 8 days passing
         const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
@@ -1282,7 +1282,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .approveRedemptionFee(),
+            .approveRedemptionRate(),
         ).to.be.revertedWith(
           "BorrowerOps: Only governance can call this function",
         )

@@ -23,10 +23,10 @@ interface IBorrowerOperations {
     );
     event PCVAddressChanged(address _pcvAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event RedemptionFeeChanged(uint256 redemptionFee);
-    event RedemptionFeeProposed(
-        uint256 proposedRedemptionFee,
-        uint256 proposedRedemptionFeeTime
+    event RedemptionRateChanged(uint256 redemptionRate);
+    event RedemptionRateProposed(
+        uint256 proposedRedemptionRate,
+        uint256 proposedRedemptionRateTime
     );
     event RefinancingFeePercentageChanged(uint8 _refinanceFeePercentage);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
@@ -153,7 +153,7 @@ interface IBorrowerOperations {
 
     function getBorrowingFee(uint256 _debt) external view returns (uint);
 
-    function getRedemptionFee(
+    function getRedemptionRate(
         uint256 _collateralDrawn
     ) external view returns (uint256);
 
