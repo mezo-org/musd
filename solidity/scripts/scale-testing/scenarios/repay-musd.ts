@@ -6,11 +6,16 @@ import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import getContracts from "../get-contracts"
 import calculateTroveOperationHints from "../hint-helper"
+import {
+  processBatchTransactions,
+  prepareResultsForSerialization,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "repay-musd-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use
 const REPAYMENT_PERCENTAGES = [10, 20, 30, 40, 50] // Percentage of debt to repay
+const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {
   // Get the network name
@@ -19,6 +24,7 @@ async function main() {
 
   console.log(`Running Repay MUSD test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
 
   // Create state manager
   const stateManager = new StateManager(networkName)
@@ -70,229 +76,212 @@ async function main() {
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
   console.log(`Loaded ${loadedWallets} wallets for testing`)
 
-  // Initialize results object
-  const results = {
-    successful: 0,
-    failed: 0,
-    gasUsed: BigInt(0),
-    transactions: [],
-  }
-
-  // Process each account
-  for (let i = 0; i < testAccounts.length; i++) {
-    const account = testAccounts[i]
-    const repaymentPercentage =
-      REPAYMENT_PERCENTAGES[i % REPAYMENT_PERCENTAGES.length]
-
-    console.log(
-      `\nProcessing account ${i + 1}/${testAccounts.length}: ${account.address}`,
-    )
-
-    // Get current trove state for reference
-    let troveDebt = BigInt(0)
-    let troveState
-    try {
-      troveState = await troveManager.Troves(account.address)
-      const totalDebt = troveState.principal + troveState.interestOwed
-      troveDebt = totalDebt
+  // Process accounts in batches
+  const results = await processBatchTransactions(
+    testAccounts,
+    async (account, index) => {
+      const repaymentPercentage =
+        REPAYMENT_PERCENTAGES[index % REPAYMENT_PERCENTAGES.length]
 
       console.log(
-        `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
+        `Processing account ${index + 1}/${testAccounts.length}: ${account.address}`,
       )
-      console.log(
-        `Current trove principal: ${ethers.formatEther(troveState.principal)} MUSD`,
-      )
-      console.log(
-        `Current trove interest owed: ${ethers.formatEther(troveState.interestOwed)} MUSD`,
-      )
-      console.log(
-        `Current trove total debt: ${ethers.formatEther(totalDebt)} MUSD`,
-      )
-    } catch (error) {
-      console.log(`Could not fetch current trove state: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        repaymentPercentage,
-        error: `Could not fetch trove state: ${error.message}`,
-      })
-      continue
-    }
 
-    // Get current MUSD balance
-    let musdBalance = BigInt(0)
-    try {
-      musdBalance = await musdToken.balanceOf(account.address)
-      console.log(
-        `Current MUSD balance: ${ethers.formatEther(musdBalance)} MUSD`,
-      )
-    } catch (error) {
-      console.log(`Could not fetch MUSD balance: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        repaymentPercentage,
-        error: `Could not fetch MUSD balance: ${error.message}`,
-      })
-      continue
-    }
+      // Get current trove state for reference
+      let troveDebt = BigInt(0)
+      let troveState
+      try {
+        troveState = await troveManager.Troves(account.address)
+        const totalDebt = troveState.principal + troveState.interestOwed
+        troveDebt = totalDebt
 
-    // Calculate repayment amount (percentage of debt)
-    let repayAmount = (troveDebt * BigInt(repaymentPercentage)) / BigInt(100)
-    console.log(
-      `Target repayment amount (${repaymentPercentage}% of debt): ${ethers.formatEther(repayAmount)} MUSD`,
-    )
-
-    // Check if account has enough MUSD to repay
-    if (musdBalance < repayAmount) {
-      console.log(
-        `Account doesn't have enough MUSD to repay ${repaymentPercentage}% of debt`,
-      )
-      console.log(
-        `Adjusting repayment to available balance: ${ethers.formatEther(musdBalance)} MUSD`,
-      )
-      repayAmount = musdBalance
-    }
-
-    // Ensure repayment doesn't leave less than minimum debt (2000 MUSD)
-    const minDebt = ethers.parseEther("2000")
-    const remainingDebt = troveDebt - repayAmount
-
-    if (remainingDebt < minDebt && remainingDebt > 0) {
-      console.log("Repayment would leave less than minimum debt. Adjusting...")
-      // Either repay fully or leave at least minimum debt
-      if (troveDebt - minDebt > 0) {
-        repayAmount = troveDebt - minDebt
         console.log(
-          `Adjusted repayment to: ${ethers.formatEther(repayAmount)} MUSD (leaving minimum debt)`,
+          `Current trove collateral: ${ethers.formatEther(troveState.coll)} BTC`,
         )
-      } else {
         console.log(
-          "Cannot adjust repayment to maintain minimum debt. Skipping.",
+          `Current trove principal: ${ethers.formatEther(troveState.principal)} MUSD`,
         )
-        results.failed++
-        results.transactions.push({
+        console.log(
+          `Current trove interest owed: ${ethers.formatEther(troveState.interestOwed)} MUSD`,
+        )
+        console.log(
+          `Current trove total debt: ${ethers.formatEther(totalDebt)} MUSD`,
+        )
+      } catch (error) {
+        console.log(`Could not fetch current trove state: ${error.message}`)
+        return {
+          success: false,
           account: account.address,
           repaymentPercentage,
-          error: "Cannot maintain minimum debt requirement",
-        })
-        continue
+          error: `Could not fetch trove state: ${error.message}`,
+        }
       }
-    }
 
-    // Skip if repayment amount is too small
-    if (repayAmount <= 0) {
-      console.log("Repayment amount is zero or negative. Skipping.")
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        repaymentPercentage,
-        error: "Repayment amount is zero or negative",
-      })
-      continue
-    }
+      // Get current MUSD balance
+      let musdBalance = BigInt(0)
+      try {
+        musdBalance = await musdToken.balanceOf(account.address)
+        console.log(
+          `Current MUSD balance: ${ethers.formatEther(musdBalance)} MUSD`,
+        )
+      } catch (error) {
+        console.log(`Could not fetch MUSD balance: ${error.message}`)
+        return {
+          success: false,
+          account: account.address,
+          repaymentPercentage,
+          error: `Could not fetch MUSD balance: ${error.message}`,
+        }
+      }
 
-    console.log(
-      `Final repayment amount: ${ethers.formatEther(repayAmount)} MUSD`,
-    )
-
-    // Get the wallet
-    const wallet = walletHelper.getWallet(account.address)
-
-    if (!wallet) {
-      console.log(`No wallet found for account ${account.address}, skipping`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        repaymentPercentage,
-        repayAmount: ethers.formatEther(repayAmount),
-        error: "No wallet found for account",
-      })
-      continue
-    }
-
-    try {
-      const { upperHint, lowerHint } = await calculateTroveOperationHints({
-        hintHelpers,
-        sortedTroves,
-        troveManager,
-        collateralAmount: 0n,
-        debtAmount: repayAmount,
-        operation: "adjust",
-        isCollIncrease: false,
-        isDebtIncrease: false,
-        currentCollateral: troveState?.coll,
-        currentDebt:
-          (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
-        verbose: true,
-      })
-      // Record the start time
-      const startTime = Date.now()
-
-      // Repay MUSD
-      console.log("Repaying MUSD...")
-      const tx = await borrowerOperations
-        .connect(wallet)
-        .repayMUSD(repayAmount, upperHint, lowerHint, {
-          gasLimit: 1000000, // Higher gas limit for complex operation
-        })
-
-      console.log(`Transaction sent: ${tx.hash}`)
-
-      // Wait for transaction to be mined
-      const receipt = await tx.wait()
-
-      // Calculate metrics
-      const endTime = Date.now()
-      const duration = endTime - startTime
-      const gasUsed = receipt ? receipt.gasUsed : BigInt(0)
-
+      // Calculate repayment amount (percentage of debt)
+      let repayAmount = (troveDebt * BigInt(repaymentPercentage)) / BigInt(100)
       console.log(
-        `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        `Target repayment amount (${repaymentPercentage}% of debt): ${ethers.formatEther(repayAmount)} MUSD`,
       )
 
-      // Update results
-      results.successful++
-      results.gasUsed += gasUsed
-      results.transactions.push({
-        hash: tx.hash,
-        account: account.address,
-        repaymentPercentage,
-        repayAmount: ethers.formatEther(repayAmount),
-        gasUsed: gasUsed.toString(),
-        duration,
-      })
+      // Check if account has enough MUSD to repay
+      if (musdBalance < repayAmount) {
+        console.log(
+          `Account doesn't have enough MUSD to repay ${repaymentPercentage}% of debt`,
+        )
+        console.log(
+          `Adjusting repayment to available balance: ${ethers.formatEther(musdBalance)} MUSD`,
+        )
+        repayAmount = musdBalance
+      }
 
-      // Record the action in the state manager
-      stateManager.recordAction(account.address, "repayMusd", TEST_ID)
-    } catch (error) {
-      console.log(`Error repaying MUSD: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        repaymentPercentage,
-        repayAmount: ethers.formatEther(repayAmount),
-        error: error.message,
-      })
-    }
+      // Ensure repayment doesn't leave less than minimum debt (2000 MUSD)
+      const minDebt = ethers.parseEther("2000")
+      const remainingDebt = troveDebt - repayAmount
 
-    // Wait a bit between transactions to avoid network congestion
-    if (i < testAccounts.length - 1) {
-      console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2000)
-      })
-    }
-  }
+      if (remainingDebt < minDebt && remainingDebt > 0) {
+        console.log(
+          "Repayment would leave less than minimum debt. Adjusting...",
+        )
+        // Either repay fully or leave at least minimum debt
+        if (troveDebt - minDebt > 0) {
+          repayAmount = troveDebt - minDebt
+          console.log(
+            `Adjusted repayment to: ${ethers.formatEther(repayAmount)} MUSD (leaving minimum debt)`,
+          )
+        } else {
+          console.log(
+            "Cannot adjust repayment to maintain minimum debt. Skipping.",
+          )
+          return {
+            success: false,
+            account: account.address,
+            repaymentPercentage,
+            error: "Cannot maintain minimum debt requirement",
+          }
+        }
+      }
+
+      // Skip if repayment amount is too small
+      if (repayAmount <= 0) {
+        console.log("Repayment amount is zero or negative. Skipping.")
+        return {
+          success: false,
+          account: account.address,
+          repaymentPercentage,
+          error: "Repayment amount is zero or negative",
+        }
+      }
+
+      console.log(
+        `Final repayment amount: ${ethers.formatEther(repayAmount)} MUSD`,
+      )
+
+      // Get the wallet
+      const wallet = walletHelper.getWallet(account.address)
+
+      if (!wallet) {
+        console.log(`No wallet found for account ${account.address}, skipping`)
+        return {
+          success: false,
+          account: account.address,
+          repaymentPercentage,
+          repayAmount: ethers.formatEther(repayAmount),
+          error: "No wallet found for account",
+        }
+      }
+
+      try {
+        const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          hintHelpers,
+          sortedTroves,
+          troveManager,
+          collateralAmount: 0n,
+          debtAmount: repayAmount,
+          operation: "adjust",
+          isCollIncrease: false,
+          isDebtIncrease: false,
+          currentCollateral: troveState?.coll,
+          currentDebt:
+            (troveState?.principal ?? 0n) + (troveState?.interestOwed ?? 0n),
+          verbose: true,
+        })
+        // Record the start time
+        const startTime = Date.now()
+
+        // Repay MUSD
+        console.log("Repaying MUSD...")
+        const tx = await borrowerOperations
+          .connect(wallet)
+          .repayMUSD(repayAmount, upperHint, lowerHint, {
+            gasLimit: 1000000, // Higher gas limit for complex operation
+          })
+
+        console.log(`Transaction sent: ${tx.hash}`)
+
+        // Wait for transaction to be mined
+        const receipt = await tx.wait()
+
+        // Calculate metrics
+        const endTime = Date.now()
+        const duration = endTime - startTime
+        const gasUsed = receipt ? receipt.gasUsed : BigInt(0)
+
+        console.log(
+          `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        )
+
+        // Record the action in the state manager
+        stateManager.recordAction(account.address, "repayMusd", TEST_ID)
+
+        return {
+          success: true,
+          hash: tx.hash,
+          account: account.address,
+          repaymentPercentage,
+          repayAmount: ethers.formatEther(repayAmount),
+          gasUsed,
+          duration,
+        }
+      } catch (error) {
+        console.log(`Error repaying MUSD: ${error.message}`)
+        return {
+          success: false,
+          account: account.address,
+          repaymentPercentage,
+          repayAmount: ethers.formatEther(repayAmount),
+          error: error.message,
+        }
+      }
+    },
+    { testId: TEST_ID, batchSize: BATCH_SIZE },
+  )
 
   // Print summary
   console.log("\n--- Test Summary ---")
   console.log(`Total accounts processed: ${testAccounts.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
+  console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
-    `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : BigInt(0)}`,
+    `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : 0n}`,
   )
 
   // Save results to file
@@ -323,17 +312,9 @@ async function main() {
         config: {
           numAccounts: NUM_ACCOUNTS,
           repaymentPercentages: REPAYMENT_PERCENTAGES,
+          batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions,
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,
