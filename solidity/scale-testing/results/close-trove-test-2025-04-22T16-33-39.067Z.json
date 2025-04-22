@@ -1,0 +1,62 @@
+{
+  "testId": "close-trove-test",
+  "timestamp": "2025-04-22T16:33:39.067Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "3750000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xcc1f854e902396bd6bc515218fde3f40e203670724cd6a38e2d19c56f91b871d",
+        "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+        "collateralReturned": "0.001370759535675506",
+        "debtRepaid": "2000.000442341886316292",
+        "gasUsed": "750000",
+        "duration": 3281
+      },
+      {
+        "success": true,
+        "hash": "0x67914ace0f715494fdb1f170ccfa842d8f7e4d89f73e0f6dbafab6e5f980230d",
+        "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+        "collateralReturned": "0.001299956061814031",
+        "debtRepaid": "2000.000428723964967374",
+        "gasUsed": "750000",
+        "duration": 3318
+      },
+      {
+        "success": true,
+        "hash": "0x246b4e3af126b68857a8009f543c33f44b07ee93673d80a178aa9162b02dc421",
+        "account": "0x66D84F828F3E0C5BE2b5F4b3FAD8Ce9534378751",
+        "collateralReturned": "0.000323",
+        "debtRepaid": "2260.350721658142513707",
+        "gasUsed": "750000",
+        "duration": 3422
+      },
+      {
+        "success": true,
+        "hash": "0xf23e70ae054c1264539da365bc96aee4bd499a464b88fd241f6952ff409ad5bb",
+        "account": "0x61C959142AD5e2365ECca25b1f954a5eCc50caE7",
+        "collateralReturned": "0.000622824498464311",
+        "debtRepaid": "2000.000513549711831154",
+        "gasUsed": "750000",
+        "duration": 3594
+      },
+      {
+        "success": true,
+        "hash": "0x802650ec8bc8a9739b4d5df1c58da1a24234058a6df07515927b1f96dc8ca0da",
+        "account": "0x934733526AE32a19DA271b0cA5d868eC7dd33F5f",
+        "collateralReturned": "0.001078945007444615",
+        "debtRepaid": "2000.000454061651512867",
+        "gasUsed": "750000",
+        "duration": 3721
+      }
+    ]
+  }
+}
