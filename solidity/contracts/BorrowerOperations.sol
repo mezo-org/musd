@@ -137,6 +137,7 @@ contract BorrowerOperations is
 
         borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
         proposedBorrowingRate = borrowingRate;
+        // solhint-disable-next-line not-rely-on-time
         proposedBorrowingRateTime = block.timestamp;
     }
 
