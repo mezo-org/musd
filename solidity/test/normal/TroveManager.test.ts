@@ -26,6 +26,7 @@ import {
   openTrove,
   performRedemption,
   provideToSP,
+  setDefaultFees,
   setupTests,
   transferMUSD,
   updateContractsSnapshot,
@@ -242,6 +243,8 @@ describe("TroveManager in Normal Mode", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
   })
 
   describe("liquidate()", () => {

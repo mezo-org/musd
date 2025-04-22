@@ -13,6 +13,7 @@ import {
   getTroveEntireColl,
   getTroveEntireDebt,
   openTrove,
+  setDefaultFees,
   setInterestRate,
   setupTests,
   updatePendingSnapshot,
@@ -55,6 +56,8 @@ describe("TroveManager - Redistribution reward calculations", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
   })
 
   async function setupTrove(user: User, musdAmount: string, ICR: string) {

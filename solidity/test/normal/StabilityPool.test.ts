@@ -4,18 +4,20 @@ import {
   CheckPoint,
   Contracts,
   ContractsState,
+  NO_GAS,
+  TestingAddresses,
+  User,
   createLiquidationEvent,
   dropPrice,
   dropPriceAndLiquidate,
   getEmittedLiquidationValues,
-  NO_GAS,
   openTrove,
   openTroveAndProvideStability,
   openTroves,
   openTrovesAndProvideStability,
   provideToSP,
+  setDefaultFees,
   setupTests,
-  TestingAddresses,
   testUpdatesInterestOwed,
   testUpdatesSystemInterestOwed,
   transferMUSD,
@@ -29,7 +31,6 @@ import {
   updateTroveSnapshot,
   updateTroveSnapshots,
   updateWalletSnapshot,
-  User,
   withdrawCollateralGainToTrove,
   withdrawCollateralGainToTroves,
 } from "../helpers"
@@ -73,6 +74,8 @@ describe("StabilityPool in Normal Mode", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
 
     await openTrove(contracts, {
       musdAmount: "5,000",

@@ -8,6 +8,7 @@ import {
   User,
   openTrove,
   performRedemption,
+  setDefaultFees,
   setupTests,
   updateCollSurplusPoolUserSnapshot,
   updateCollSurplusSnapshot,
@@ -20,12 +21,24 @@ describe("CollSurplusPool in Normal Mode", () => {
 
   let alice: User
   let bob: User
+  let council: User
+  let deployer: User
+  let treasury: User
   let whale: User
 
   let state: ContractsState
 
   beforeEach(async () => {
-    ;({ alice, bob, whale, state, contracts } = await setupTests())
+    ;({ alice, bob, council, deployer, treasury, whale, state, contracts } =
+      await setupTests())
+
+    // Setup PCV governance addresses
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .startChangingRoles(council.address, treasury.address)
+    await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
   })
 
   describe("accountSurplus()", () => {

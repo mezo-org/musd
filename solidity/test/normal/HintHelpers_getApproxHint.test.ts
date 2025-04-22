@@ -4,6 +4,7 @@ import {
   User,
   fastForwardTime,
   openTrove,
+  setDefaultFees,
   setInterestRate,
   setupTests,
   updateTroveSnapshot,
@@ -46,6 +47,8 @@ describe("HintHelpers", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
   })
 
   async function setupTroves() {

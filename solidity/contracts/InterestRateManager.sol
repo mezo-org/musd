@@ -22,7 +22,7 @@ contract InterestRateManager is
 
     // Proposed interest rate -- must be approved by governance after a minimum delay
     uint16 public proposedInterestRate;
-    uint256 public proposalTime;
+    uint256 public proposedInterestRateTime;
 
     // Minimum time delay between interest rate proposal and approval
     uint256 public constant MIN_DELAY = 7 days;
@@ -85,6 +85,9 @@ contract InterestRateManager is
     }
 
     function initialize() external initializer {
+        interestRate = 100; // 1%
+        proposedInterestRate = interestRate;
+        proposedInterestRateTime = block.timestamp;
         __Ownable_init(msg.sender);
     }
 
@@ -130,14 +133,17 @@ contract InterestRateManager is
         );
         proposedInterestRate = _newProposedInterestRate;
         // solhint-disable-next-line not-rely-on-time
-        proposalTime = block.timestamp;
-        emit InterestRateProposed(proposedInterestRate, proposalTime);
+        proposedInterestRateTime = block.timestamp;
+        emit InterestRateProposed(
+            proposedInterestRate,
+            proposedInterestRateTime
+        );
     }
 
     function approveInterestRate() external onlyGovernance {
         // solhint-disable not-rely-on-time
         require(
-            block.timestamp >= proposalTime + MIN_DELAY,
+            block.timestamp >= proposedInterestRateTime + MIN_DELAY,
             "Proposal delay not met"
         );
         // solhint-enable not-rely-on-time

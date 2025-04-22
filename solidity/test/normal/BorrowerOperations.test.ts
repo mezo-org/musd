@@ -19,6 +19,7 @@ import {
   performRedemption,
   REFINANCING_FEE_PAID,
   removeMintlist,
+  setDefaultFees,
   setInterestRate,
   setupTests,
   TestingAddresses,
@@ -133,7 +134,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       chainId: (await ethers.provider.getNetwork()).chainId,
       verifyingContract: contractAddress,
     }
-    const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+    const deadline = BigInt(await getLatestBlockTimestamp()) + 3600n // 1 hour from now
     const interestRate = await contracts.interestRateManager.interestRate()
 
     return {
@@ -171,6 +172,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       .connect(deployer.wallet)
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
+
+    await setDefaultFees(contracts, council)
 
     await defaultTrovesSetup()
   })
@@ -896,7 +899,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -2244,7 +2247,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -2767,7 +2770,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -3328,7 +3331,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -3873,7 +3876,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -5266,7 +5269,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -5838,8 +5841,9 @@ describe("BorrowerOperations in Normal Mode", () => {
       await setupCarolsTrove()
 
       // account for governance delay in setting interest rate
-      const timeToNewRate = 7 * 24 * 60 * 60 // 7 days in seconds
-      const deadline = Math.floor(Date.now() / 1000) + 3600 + timeToNewRate // 1 hour from interest rate change approval
+      const timeToNewRate = BigInt(7 * 24 * 60 * 60) // 7 days in seconds
+      const deadline =
+        BigInt(await getLatestBlockTimestamp()) + 3600n + timeToNewRate // 1 hour from interest rate change approval
 
       const value = {
         borrower,
@@ -5958,7 +5962,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
@@ -6149,7 +6153,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the deadline has passed", async () => {
-        const deadline = Math.floor(Date.now() / 1000) - 1 // 1 second ago
+        const deadline = BigInt(await getLatestBlockTimestamp()) - 1n // 1 second ago
         await testRevert({ deadline }, "Signature expired")
       })
 
