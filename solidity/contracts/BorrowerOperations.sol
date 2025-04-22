@@ -117,10 +117,10 @@ contract BorrowerOperations is
     uint256 public proposedMinNetDebt;
     uint256 public proposedMinNetDebtTime;
 
-    // Origination Fee
-    uint256 public originationFee; // Measured as a percentage of 1e18
-    uint256 public proposedOriginationFee;
-    uint256 public proposedOriginationFeeTime;
+    // Borrowering Rate
+    uint256 public borrowingRate; // expressed as a percentage in 1e18 precision
+    uint256 public proposedBorrowingRate;
+    uint256 public proposedBorrowingRateTime;
 
     // Redemption Rate
     uint256 public redemptionRate; // expressed as a percentage in 1e18 precision
@@ -140,10 +140,10 @@ contract BorrowerOperations is
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
 
-        originationFee = DECIMAL_PRECISION / 200; // 0.5%
-        proposedOriginationFee = originationFee;
+        borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
+        proposedBorrowingRate = borrowingRate;
         // solhint-disable-next-line not-rely-on-time
-        proposedOriginationFeeTime = block.timestamp;
+        proposedBorrowingRateTime = block.timestamp;
 
         redemptionRate = DECIMAL_PRECISION / 200; // 0.5%
         proposedRedemptionRate = redemptionRate;
@@ -413,24 +413,24 @@ contract BorrowerOperations is
         emit MinNetDebtChanged(minNetDebt);
     }
 
-    function proposeOriginationFee(uint256 _fee) external onlyGovernance {
+    function proposeBorrowingRate(uint256 _fee) external onlyGovernance {
         require(_fee <= 1e18, "Origination Fee must be at most 100%.");
-        proposedOriginationFee = _fee;
-        proposedOriginationFeeTime = block.timestamp;
-        emit OriginationFeeProposed(
-            proposedOriginationFee,
-            proposedOriginationFeeTime
+        proposedBorrowingRate = _fee;
+        proposedBorrowingRateTime = block.timestamp;
+        emit BorrowingRateProposed(
+            proposedBorrowingRate,
+            proposedBorrowingRateTime
         );
     }
 
-    function approveOriginationFee() external onlyGovernance {
+    function approveBorrowingRate() external onlyGovernance {
         // solhint-disable not-rely-on-time
         require(
-            block.timestamp >= proposedOriginationFeeTime + 7 days,
+            block.timestamp >= proposedBorrowingRateTime + 7 days,
             "Must wait at least 7 days before approving a change to Origination Fee"
         );
-        originationFee = proposedOriginationFee;
-        emit OriginationFeeChanged(originationFee);
+        borrowingRate = proposedBorrowingRate;
+        emit BorrowingRateChanged(borrowingRate);
     }
 
     function proposeRedemptionRate(uint256 _rate) external onlyGovernance {
@@ -525,7 +525,7 @@ contract BorrowerOperations is
     }
 
     function getBorrowingFee(uint256 _debt) public view returns (uint) {
-        return (_debt * originationFee) / DECIMAL_PRECISION;
+        return (_debt * borrowingRate) / DECIMAL_PRECISION;
     }
 
     // Burn the specified amount of MUSD from _account and decreases the total active debt
