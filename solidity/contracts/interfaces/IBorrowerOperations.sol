@@ -7,6 +7,11 @@ interface IBorrowerOperations {
     // --- Events ---
 
     event ActivePoolAddressChanged(address _activePoolAddress);
+    event BorrowingRateChanged(uint256 borrowingRate);
+    event BorrowingRateProposed(
+        uint256 proposedBorrowingRate,
+        uint256 proposedBorrowingRateTime
+    );
     event BorrowerOperationsSignaturesAddressChanged(
         address _borrowerOperationsSignaturesAddress
     );
@@ -16,11 +21,6 @@ interface IBorrowerOperations {
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event MinNetDebtChanged(uint256 _minNetDebt);
     event MinNetDebtProposed(uint256 _minNetDebt, uint256 _proposalTime);
-    event OriginationFeeChanged(uint256 originationFee);
-    event OriginationFeeProposed(
-        uint256 proposedOriginationFee,
-        uint256 proposedOriginationFeeTime
-    );
     event PCVAddressChanged(address _pcvAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event RefinancingFeePercentageChanged(uint8 _refinanceFeePercentage);

@@ -525,9 +525,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         1,
       )
 
-      const originationFee = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
 
-      const expectedFee = (originationFee * minNetDebt) / 1000000000000000000n
+      const expectedFee = (borrowingRate * minNetDebt) / 1000000000000000000n
       expect(expectedFee).to.equal(emittedFee)
     })
 
@@ -1064,16 +1064,16 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe("proposeOriginationFee()", () => {
-    it("sets the proposed origination fee", async () => {
-      const newOriginationFee = to1e18(0.5) // 50%
+  describe("proposeBorrowingRate()", () => {
+    it("sets the proposed borrowing rate", async () => {
+      const newBorrowingRate = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeOriginationFee(newOriginationFee)
+        .proposeBorrowingRate(newBorrowingRate)
 
       expect(
-        await contracts.borrowerOperations.proposedOriginationFee(),
-      ).to.equal(newOriginationFee)
+        await contracts.borrowerOperations.proposedBorrowingRate(),
+      ).to.equal(newBorrowingRate)
     })
 
     context("Expected Reverts", () => {
@@ -1081,18 +1081,18 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(council.wallet)
-            .proposeOriginationFee(to1e18(1.01)), // 101%
+            .proposeBorrowingRate(to1e18(1.01)), // 101%
         ).to.be.revertedWith("Origination Fee must be at most 100%.")
       })
     })
   })
 
-  describe("approveOriginationFee()", () => {
-    it("requires two transactions and a 7 day time delay to change the origination fee", async () => {
-      const newOriginationFee = to1e18(0.5) // 50%
+  describe("approveBorrowingRate()", () => {
+    it("requires two transactions and a 7 day time delay to change the borrowing rate", async () => {
+      const newBorrowingRate = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeOriginationFee(newOriginationFee)
+        .proposeBorrowingRate(newBorrowingRate)
 
       // Simulate 7 days passing
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -1100,18 +1100,18 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .approveOriginationFee()
+        .approveBorrowingRate()
 
-      expect(await contracts.borrowerOperations.originationFee()).to.equal(
-        newOriginationFee,
+      expect(await contracts.borrowerOperations.borrowingRate()).to.equal(
+        newBorrowingRate,
       )
     })
 
-    it("changes the origination fee for users to open troves", async () => {
-      const newOriginationFee = to1e18(0.5) // 50%
+    it("changes the borrowingRate for users to open troves", async () => {
+      const newBorrowingRate = to1e18(0.5) // 50%
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeOriginationFee(newOriginationFee)
+        .proposeBorrowingRate(newBorrowingRate)
 
       // Simulate 7 days passing
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -1119,7 +1119,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .approveOriginationFee()
+        .approveBorrowingRate()
 
       await openTrove(contracts, {
         musdAmount: "3000",
@@ -1130,20 +1130,20 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "after")
 
       const loanedAmount = to1e18("3,000")
-      const originationFee = to1e18("1,500")
+      const borrowingFee = to1e18("1,500")
       const gasComp = to1e18(200)
 
       expect(carol.trove.debt.after).to.equal(
-        loanedAmount + originationFee + gasComp,
+        loanedAmount + borrowingFee + gasComp,
       )
     })
 
     context("Expected Reverts", () => {
       it("reverts if the time delay has not finished", async () => {
-        const newOriginationFee = to1e18(0.5) // 50%
+        const newBorrowingRate = to1e18(0.5) // 50%
         await contracts.borrowerOperations
           .connect(council.wallet)
-          .proposeOriginationFee(newOriginationFee)
+          .proposeBorrowingRate(newBorrowingRate)
 
         // Simulate 6 days passing
         const timeToIncrease = 6 * 24 * 60 * 60 // 6 days in seconds
@@ -1152,17 +1152,17 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(council.wallet)
-            .approveOriginationFee(),
+            .approveBorrowingRate(),
         ).to.be.revertedWith(
           "Must wait at least 7 days before approving a change to Origination Fee",
         )
       })
 
       it("reverts if called by a non-governance address", async () => {
-        const newOriginationFee = to1e18(0.5) // 50%
+        const newBorrowingRate = to1e18(0.5) // 50%
         await contracts.borrowerOperations
           .connect(council.wallet)
-          .proposeOriginationFee(newOriginationFee)
+          .proposeBorrowingRate(newBorrowingRate)
 
         // Simulate 8 days passing
         const timeToIncrease = 8 * 24 * 60 * 60 // 8 days in seconds
@@ -1171,7 +1171,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         await expect(
           contracts.borrowerOperations
             .connect(alice.wallet)
-            .approveOriginationFee(),
+            .approveBorrowingRate(),
         ).to.be.revertedWith(
           "BorrowerOps: Only governance can call this function",
         )
@@ -2726,7 +2726,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
     it("increases the Trove's mUSD debt by the correct amount", async () => {
       const amount = to1e18(1)
-      const borrowingRate = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
       await setupCarolsTrove()
 
       await updateTroveSnapshot(contracts, carol, "before")
@@ -3024,7 +3024,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           signature,
           deadline,
         )
-      const borrowingRate = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
       await updateTroveSnapshot(contracts, bob, "after")
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
@@ -4865,7 +4865,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       // Note this test only covers a debt increase, but the trove adjustment logic is shared with `adjustTrove`
       await updateTroveSnapshot(contracts, bob, "after")
-      const borrowingRate = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
       expect(bob.trove.debt.after).to.equal(
         bob.trove.debt.before +
           (debtChange * (to1e18(1) + borrowingRate)) / to1e18(1),
@@ -5436,11 +5436,11 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const originationFee = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
 
       // default fee percentage is 20% or 1/5
       const expectedFee =
-        (originationFee * carol.trove.debt.before) / to1e18("5")
+        (borrowingRate * carol.trove.debt.before) / to1e18("5")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5467,10 +5467,10 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const originationFee = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
 
       const expectedFee =
-        (originationFee * carol.trove.debt.before) / to1e18("100")
+        (borrowingRate * carol.trove.debt.before) / to1e18("100")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5491,9 +5491,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, carol, "after")
 
-      const originationFee = await contracts.borrowerOperations.originationFee()
+      const borrowingRate = await contracts.borrowerOperations.borrowingRate()
       const expectedFee =
-        (originationFee * carol.trove.debt.before) / to1e18("2")
+        (borrowingRate * carol.trove.debt.before) / to1e18("2")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5644,7 +5644,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       const fee =
         (expectedDebt *
           (await contracts.borrowerOperations.refinancingFeePercentage()) *
-          (await contracts.borrowerOperations.originationFee())) /
+          (await contracts.borrowerOperations.borrowingRate())) /
         to1e18(100)
 
       expect(alice.trove.debt.after).to.be.closeTo(expectedDebt + fee, 10n)
