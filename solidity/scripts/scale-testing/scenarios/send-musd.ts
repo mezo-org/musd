@@ -5,11 +5,16 @@ import path from "path"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import getDeploymentAddress from "../../deployment-helpers"
+import {
+  processBatchTransactions,
+  prepareResultsForSerialization,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "send-musd-test"
 const NUM_SENDER_ACCOUNTS = 5 // Number of accounts to use as senders
 const MUSD_AMOUNTS = ["50", "75", "100", "125", "150"] // MUSD amounts to send
+const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {
   // Get the network name
@@ -18,6 +23,7 @@ async function main() {
 
   console.log(`Running Send MUSD test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
 
   // Create state manager
   const stateManager = new StateManager(networkName)
@@ -102,150 +108,149 @@ async function main() {
   )
   console.log(`Loaded ${loadedSenderWallets} sender wallets for testing`)
 
-  // Initialize results object
-  const results = {
-    successful: 0,
-    failed: 0,
-    gasUsed: BigInt(0),
-    transactions: [],
-  }
-
-  // Process each transfer
-  for (let i = 0; i < transfers.length; i++) {
-    const senderAccount = transfers[i].sender
-    const receiverAccount = transfers[i].receiver
-
-    let musdAmount = ethers.parseEther(MUSD_AMOUNTS[i % MUSD_AMOUNTS.length])
-
-    console.log(`\nProcessing transfer ${i + 1}/${transfers.length}`)
-    console.log(`Sender: ${senderAccount.address}`)
-    console.log(`Receiver: ${receiverAccount.address}`)
-    console.log(`Amount: ${ethers.formatEther(musdAmount)} MUSD`)
-
-    // Get current MUSD balances for reference
-    try {
-      const senderBalance = await musdToken.balanceOf(senderAccount.address)
-      const receiverBalance = await musdToken.balanceOf(receiverAccount.address)
-
-      console.log(
-        `Sender MUSD balance: ${ethers.formatEther(senderBalance)} MUSD`,
-      )
-      console.log(
-        `Receiver MUSD balance: ${ethers.formatEther(receiverBalance)} MUSD`,
+  // Process transfers in batches
+  const results = await processBatchTransactions(
+    transfers,
+    async (transfer, index) => {
+      const senderAccount = transfer.sender
+      const receiverAccount = transfer.receiver
+      let musdAmount = ethers.parseEther(
+        MUSD_AMOUNTS[index % MUSD_AMOUNTS.length],
       )
 
-      // Check if sender has enough MUSD
-      if (senderBalance < musdAmount) {
-        console.log("Sender doesn't have enough MUSD. Adjusting amount...")
-        // Use 90% of available balance if not enough
-        if (senderBalance > 0) {
-          const adjustedAmount = (senderBalance * 90n) / 100n
-          console.log(
-            `Adjusted amount: ${ethers.formatEther(adjustedAmount)} MUSD`,
-          )
-          // Update the amount to use
-          musdAmount = adjustedAmount
-        } else {
-          console.log("Sender has no MUSD, skipping")
-          results.failed++
-          results.transactions.push({
-            sender: senderAccount.address,
-            receiver: receiverAccount.address,
-            musdAmount: ethers.formatEther(musdAmount),
-            error: "Sender has no MUSD",
-          })
-          continue
+      console.log(`Processing transfer ${index + 1}/${transfers.length}`)
+      console.log(`Sender: ${senderAccount.address}`)
+      console.log(`Receiver: ${receiverAccount.address}`)
+      console.log(`Amount: ${ethers.formatEther(musdAmount)} MUSD`)
+
+      // Get current MUSD balances for reference
+      try {
+        const senderBalance = await musdToken.balanceOf(senderAccount.address)
+        const receiverBalance = await musdToken.balanceOf(
+          receiverAccount.address,
+        )
+
+        console.log(
+          `Sender MUSD balance: ${ethers.formatEther(senderBalance)} MUSD`,
+        )
+        console.log(
+          `Receiver MUSD balance: ${ethers.formatEther(receiverBalance)} MUSD`,
+        )
+
+        // Check if sender has enough MUSD
+        if (senderBalance < musdAmount) {
+          console.log("Sender doesn't have enough MUSD. Adjusting amount...")
+          // Use 90% of available balance if not enough
+          if (senderBalance > 0) {
+            const adjustedAmount = (senderBalance * 90n) / 100n
+            console.log(
+              `Adjusted amount: ${ethers.formatEther(adjustedAmount)} MUSD`,
+            )
+            // Update the amount to use
+            musdAmount = adjustedAmount
+          } else {
+            console.log("Sender has no MUSD, skipping")
+            return {
+              success: false,
+              sender: senderAccount.address,
+              receiver: receiverAccount.address,
+              musdAmount: ethers.formatEther(musdAmount),
+              error: "Sender has no MUSD",
+            }
+          }
+        }
+      } catch (error) {
+        console.log(`Error checking balances: ${error.message}`)
+        return {
+          success: false,
+          sender: senderAccount.address,
+          receiver: receiverAccount.address,
+          musdAmount: ethers.formatEther(musdAmount),
+          error: `Error checking balances: ${error.message}`,
         }
       }
-    } catch (error) {
-      console.log(`Error checking balances: ${error.message}`)
-    }
 
-    // Get the wallet for sender
-    const senderWallet = walletHelper.getWallet(senderAccount.address)
+      // Get the wallet for sender
+      const senderWallet = walletHelper.getWallet(senderAccount.address)
 
-    if (!senderWallet) {
-      console.log(
-        `No wallet found for sender ${senderAccount.address}, skipping`,
-      )
-      results.failed++
-      results.transactions.push({
-        sender: senderAccount.address,
-        receiver: receiverAccount.address,
-        musdAmount: ethers.formatEther(musdAmount),
-        error: "No wallet found for sender",
-      })
-      continue
-    }
+      if (!senderWallet) {
+        console.log(
+          `No wallet found for sender ${senderAccount.address}, skipping`,
+        )
+        return {
+          success: false,
+          sender: senderAccount.address,
+          receiver: receiverAccount.address,
+          musdAmount: ethers.formatEther(musdAmount),
+          error: "No wallet found for sender",
+        }
+      }
 
-    try {
-      // Record the start time
-      const startTime = Date.now()
+      try {
+        // Record the start time
+        const startTime = Date.now()
 
-      // Send MUSD transaction
-      const tx = await musdToken
-        .connect(senderWallet)
-        .transfer(receiverAccount.address, musdAmount, {
-          gasLimit: 500000, // Explicitly set a gas limit
-        })
+        // Send MUSD transaction
+        const tx = await musdToken
+          .connect(senderWallet)
+          .transfer(receiverAccount.address, musdAmount, {
+            gasLimit: 500000, // Explicitly set a gas limit
+          })
 
-      console.log(`Transaction sent: ${tx.hash}`)
+        console.log(`Transaction sent: ${tx.hash}`)
 
-      // Wait for transaction to be mined
-      const receipt = await tx.wait()
+        // Wait for transaction to be mined
+        const receipt = await tx.wait()
 
-      // Calculate metrics
-      const endTime = Date.now()
-      const duration = endTime - startTime
-      const gasUsed = receipt ? receipt.gasUsed : BigInt(0)
+        // Calculate metrics
+        const endTime = Date.now()
+        const duration = endTime - startTime
+        const gasUsed = receipt ? receipt.gasUsed : BigInt(0)
 
-      console.log(
-        `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
-      )
+        console.log(
+          `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        )
 
-      // Update results
-      results.successful++
-      results.gasUsed += gasUsed
-      results.transactions.push({
-        hash: tx.hash,
-        sender: senderAccount.address,
-        receiver: receiverAccount.address,
-        musdAmount: ethers.formatEther(musdAmount),
-        gasUsed: gasUsed.toString(),
-        duration,
-      })
+        // Record the action in the state manager for both accounts
+        stateManager.recordAction(senderAccount.address, "sendMusd", TEST_ID)
+        stateManager.recordAction(
+          receiverAccount.address,
+          "receiveMusd",
+          TEST_ID,
+        )
 
-      // Record the action in the state manager for both accounts
-      stateManager.recordAction(senderAccount.address, "sendMusd", TEST_ID)
-      stateManager.recordAction(receiverAccount.address, "receiveMusd", TEST_ID)
-    } catch (error) {
-      console.log(`Error sending MUSD: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        sender: senderAccount.address,
-        receiver: receiverAccount.address,
-        musdAmount: ethers.formatEther(musdAmount),
-        error: error.message,
-      })
-    }
-
-    // Wait a bit between transactions to avoid network congestion
-    if (i < transfers.length - 1) {
-      console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2000)
-      })
-    }
-  }
+        return {
+          success: true,
+          hash: tx.hash,
+          sender: senderAccount.address,
+          receiver: receiverAccount.address,
+          musdAmount: ethers.formatEther(musdAmount),
+          gasUsed,
+          duration,
+        }
+      } catch (error) {
+        console.log(`Error sending MUSD: ${error.message}`)
+        return {
+          success: false,
+          sender: senderAccount.address,
+          receiver: receiverAccount.address,
+          musdAmount: ethers.formatEther(musdAmount),
+          error: error.message,
+        }
+      }
+    },
+    { testId: TEST_ID, batchSize: BATCH_SIZE },
+  )
 
   // Print summary
   console.log("\n--- Test Summary ---")
   console.log(`Total transfers attempted: ${transfers.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
+  console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
-    `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : BigInt(0)}`,
+    `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : 0n}`,
   )
 
   // Save results to file
@@ -276,17 +281,9 @@ async function main() {
         config: {
           numSenderAccounts: NUM_SENDER_ACCOUNTS,
           musdAmounts: MUSD_AMOUNTS,
+          batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions,
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,
