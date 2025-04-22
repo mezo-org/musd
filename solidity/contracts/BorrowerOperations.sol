@@ -118,7 +118,7 @@ contract BorrowerOperations is
     uint256 public proposedMinNetDebtTime;
 
     // Origination Fee
-    uint256 public originationFee; // Measured as a percentage of 1e18
+    uint256 public originationFee; // expressed as a percentage in 1e18 precision
     uint256 public proposedOriginationFee;
     uint256 public proposedOriginationFeeTime;
 
