@@ -123,7 +123,7 @@ contract BorrowerOperations is
     uint256 public proposedOriginationFeeTime;
 
     // Redemption Rate
-    uint256 public redemptionRate; // Measured as a percentage of 1e18
+    uint256 public redemptionRate; // expressed as a percentage in 1e18 precision
     uint256 public proposedRedemptionRate;
     uint256 public proposedRedemptionRateTime;
 
