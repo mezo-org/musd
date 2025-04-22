@@ -100,173 +100,6 @@ export default class StateManager {
   }
 
   /**
-   * Update BTC balances for accounts
-   */
-  public async updateBtcBalances(addresses: string[] = []) {
-    const accountsToUpdate =
-      addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
-
-    console.log(
-      `Updating BTC balances for ${accountsToUpdate.length} accounts...`,
-    )
-
-    let updated = 0
-
-    for (const address of accountsToUpdate) {
-      try {
-        const account = this.state.accounts[address]
-        if (!account) continue
-
-        // Get BTC balance
-        const btcBalance = await ethers.provider.getBalance(address)
-        account.btcBalance = ethers.formatEther(btcBalance)
-        account.lastBalanceUpdate = new Date().toISOString()
-        updated++
-
-        // Save periodically to avoid losing data if the process crashes
-        if (updated % 20 === 0) {
-          this.saveState()
-          console.log(
-            `Updated ${updated}/${accountsToUpdate.length} accounts so far...`,
-          )
-        }
-      } catch (error) {
-        console.error(
-          `Error updating BTC balance for ${address}: ${error.message}`,
-        )
-      }
-    }
-
-    console.log(`Updated BTC balances for ${updated} accounts`)
-    this.saveState()
-    return updated
-  }
-
-  /**
-   * Update MUSD balances for accounts
-   */
-  public async updateMusdBalances(
-    musdAddress: string,
-    addresses: string[] = [],
-  ) {
-    const accountsToUpdate =
-      addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
-
-    console.log(
-      `Updating MUSD balances for ${accountsToUpdate.length} accounts...`,
-    )
-
-    let updated = 0
-
-    // Get MUSD contract
-    const musdContract = await ethers.getContractAt("MUSD", musdAddress)
-
-    for (const address of accountsToUpdate) {
-      try {
-        const account = this.state.accounts[address]
-        if (!account) continue
-
-        // Get MUSD balance
-        const musdBalance = await musdContract.balanceOf(address)
-        account.musdBalance = ethers.formatEther(musdBalance)
-        account.lastBalanceUpdate = new Date().toISOString()
-        updated++
-
-        // Save periodically
-        if (updated % 20 === 0) {
-          this.saveState()
-          console.log(
-            `Updated ${updated}/${accountsToUpdate.length} accounts so far...`,
-          )
-        }
-      } catch (error) {
-        console.error(
-          `Error updating MUSD balance for ${address}: ${error.message}`,
-        )
-      }
-    }
-
-    console.log(`Updated MUSD balances for ${updated} accounts`)
-    this.saveState()
-    return updated
-  }
-
-  /**
-   * Update Trove information for accounts
-   */
-  public async updateTroveStates(
-    troveManagerAddress: string,
-    addresses: string[] = [],
-  ) {
-    const accountsToUpdate =
-      addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
-
-    console.log(
-      `Updating Trove states for ${accountsToUpdate.length} accounts...`,
-    )
-
-    let updated = 0
-
-    // Get TroveManager contract
-    const troveManager = await ethers.getContractAt(
-      "TroveManager",
-      troveManagerAddress,
-    )
-
-    for (const address of accountsToUpdate) {
-      try {
-        const account = this.state.accounts[address]
-        if (!account) continue
-
-        // Get Trove information
-        const troveData = await troveManager.Troves(address)
-
-        // Use named properties instead of indices
-        // Status enum: 0 = nonExistent, 1 = active, 2 = closedByOwner, 3 = closedByLiquidation, 4 = closedByRedemption
-        const status = Number(troveData.status)
-        account.hasTrove = status === 1 // 1 = active
-
-        if (status === 1) {
-          // Calculate total debt (principal + interest)
-          const totalDebt = troveData.principal + troveData.interestOwed
-
-          account.troveDebt = ethers.formatEther(totalDebt)
-          account.troveCollateral = ethers.formatEther(troveData.coll)
-        } else {
-          account.troveDebt = "0"
-          account.troveCollateral = "0"
-        }
-
-        account.interestRate = ethers.formatUnits(troveData.interestRate, 4)
-
-        // Only store troveStatus if it exists in the AccountState type
-        if ("troveStatus" in account) {
-          account.troveStatus = status
-        }
-
-        account.lastTroveUpdate = new Date().toISOString()
-        updated++
-
-        // Save periodically
-        if (updated % 20 === 0) {
-          this.saveState()
-          console.log(
-            `Updated ${updated}/${accountsToUpdate.length} accounts so far...`,
-          )
-        }
-      } catch (error) {
-        console.error(
-          `Error updating Trove state for ${address}: ${error.message}`,
-        )
-      }
-    }
-
-    console.log(`Updated Trove states for ${updated} accounts`)
-    this.saveState()
-    return updated
-  }
-
-  /**
    * Get accounts that match specific criteria
    */
   public getAccounts(criteria: {
@@ -373,5 +206,206 @@ export default class StateManager {
    */
   public getAccount(address: string) {
     return this.state.accounts[address]
+  }
+
+  /**
+   * Generic batch processing helper for updating account states
+   * @param accountsToUpdate List of account addresses to process
+   * @param processFn Function to process a single account and return address if successful, null if failed
+   * @param batchSize Size of batches to process in parallel
+   * @returns Number of successfully processed accounts
+   */
+  private async processBatchedAccounts<T>(
+    accountsToUpdate: string[],
+    processFn: (address: string) => Promise<string | null>,
+    batchSize: number = 20,
+  ): Promise<number> {
+    let updated = 0
+
+    // Process in batches
+    for (let i = 0; i < accountsToUpdate.length; i += batchSize) {
+      const batch = accountsToUpdate.slice(i, i + batchSize)
+      console.log(
+        `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(accountsToUpdate.length / batchSize)}...`,
+      )
+
+      // Process batch in parallel
+      const batchPromises = batch.map((address) => processFn(address))
+
+      // Wait for all promises in the batch to resolve
+      const batchResults = await Promise.all(batchPromises)
+
+      // Count successful updates
+      const batchUpdated = batchResults.filter(
+        (result) => result !== null,
+      ).length
+      updated += batchUpdated
+
+      console.log(
+        `Batch completed. Updated ${batchUpdated}/${batch.length} accounts in this batch.`,
+      )
+
+      // Save state after each batch
+      this.saveState()
+      console.log(
+        `Updated ${updated}/${accountsToUpdate.length} accounts so far...`,
+      )
+    }
+
+    this.saveState()
+    return updated
+  }
+
+  /**
+   * Update Trove information for accounts in parallel batches
+   */
+  public async updateTroveStates(
+    troveManagerAddress: string,
+    addresses: string[] = [],
+    batchSize: number = 20,
+  ) {
+    const accountsToUpdate =
+      addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
+
+    console.log(
+      `Updating Trove states for ${accountsToUpdate.length} accounts using batch size ${batchSize}...`,
+    )
+
+    // Get TroveManager contract
+    const troveManager = await ethers.getContractAt(
+      "TroveManager",
+      troveManagerAddress,
+    )
+
+    const updated = await this.processBatchedAccounts(
+      accountsToUpdate,
+      async (address) => {
+        try {
+          const account = this.state.accounts[address]
+          if (!account) return null
+
+          // Get Trove information
+          const troveData = await troveManager.Troves(address)
+
+          // Status enum: 0 = nonExistent, 1 = active, 2 = closedByOwner, 3 = closedByLiquidation, 4 = closedByRedemption
+          const status = Number(troveData.status)
+          account.hasTrove = status === 1 // 1 = active
+
+          if (status === 1) {
+            // Calculate total debt (principal + interest)
+            const totalDebt = troveData.principal + troveData.interestOwed
+
+            account.troveDebt = ethers.formatEther(totalDebt)
+            account.troveCollateral = ethers.formatEther(troveData.coll)
+          } else {
+            account.troveDebt = "0"
+            account.troveCollateral = "0"
+          }
+
+          account.interestRate = ethers.formatUnits(troveData.interestRate, 4)
+
+          // Only store troveStatus if it exists in the AccountState type
+          if ("troveStatus" in account) {
+            account.troveStatus = status
+          }
+
+          account.lastTroveUpdate = new Date().toISOString()
+          return address
+        } catch (error) {
+          console.error(
+            `Error updating Trove state for ${address}: ${error.message}`,
+          )
+          return null
+        }
+      },
+      batchSize,
+    )
+
+    console.log(`Updated Trove states for ${updated} accounts`)
+    return updated
+  }
+
+  /**
+   * Update MUSD balances for accounts in parallel batches
+   */
+  public async updateMusdBalances(
+    musdAddress: string,
+    addresses: string[] = [],
+    batchSize: number = 20,
+  ) {
+    const accountsToUpdate =
+      addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
+
+    console.log(
+      `Updating MUSD balances for ${accountsToUpdate.length} accounts using batch size ${batchSize}...`,
+    )
+
+    // Get MUSD contract
+    const musdContract = await ethers.getContractAt("MUSD", musdAddress)
+
+    const updated = await this.processBatchedAccounts(
+      accountsToUpdate,
+      async (address) => {
+        try {
+          const account = this.state.accounts[address]
+          if (!account) return null
+
+          // Get MUSD balance
+          const musdBalance = await musdContract.balanceOf(address)
+          account.musdBalance = ethers.formatEther(musdBalance)
+          account.lastBalanceUpdate = new Date().toISOString()
+          return address
+        } catch (error) {
+          console.error(
+            `Error updating MUSD balance for ${address}: ${error.message}`,
+          )
+          return null
+        }
+      },
+      batchSize,
+    )
+
+    console.log(`Updated MUSD balances for ${updated} accounts`)
+    return updated
+  }
+
+  /**
+   * Update BTC balances for accounts in parallel batches
+   */
+  public async updateBtcBalances(
+    addresses: string[] = [],
+    batchSize: number = 20,
+  ) {
+    const accountsToUpdate =
+      addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
+
+    console.log(
+      `Updating BTC balances for ${accountsToUpdate.length} accounts using batch size ${batchSize}...`,
+    )
+
+    const updated = await this.processBatchedAccounts(
+      accountsToUpdate,
+      async (address) => {
+        try {
+          const account = this.state.accounts[address]
+          if (!account) return null
+
+          // Get BTC balance
+          const btcBalance = await ethers.provider.getBalance(address)
+          account.btcBalance = ethers.formatEther(btcBalance)
+          account.lastBalanceUpdate = new Date().toISOString()
+          return address
+        } catch (error) {
+          console.error(
+            `Error updating BTC balance for ${address}: ${error.message}`,
+          )
+          return null
+        }
+      },
+      batchSize,
+    )
+
+    console.log(`Updated BTC balances for ${updated} accounts`)
+    return updated
   }
 }
