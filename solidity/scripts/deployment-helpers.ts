@@ -11,13 +11,9 @@ async function getDeploymentAddress(contractName: string): Promise<string> {
   const network = await ethers.provider.getNetwork()
   const networkName = network.name === "unknown" ? "hardhat" : network.name
 
-  console.log(networkName)
-
   // Path to deployment file
   const deploymentDir = path.join(__dirname, "..", "deployments", networkName)
   const deploymentFile = path.join(deploymentDir, `${contractName}.json`)
-
-  console.log(deploymentFile)
 
   if (!fs.existsSync(deploymentFile)) {
     throw new Error(
