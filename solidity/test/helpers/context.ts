@@ -17,6 +17,7 @@ import {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  GovernableVariables,
   HintHelpers,
   InterestRateManager,
   MockAggregator,
@@ -41,6 +42,9 @@ export async function deployment() {
     await getDeployedContract("CollSurplusPool")
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
+  const governableVariables: GovernableVariables = await getDeployedContract(
+    "GovernableVariables",
+  )
   const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
   const interestRateManager: InterestRateManager = await getDeployedContract(
     "InterestRateManager",
@@ -64,6 +68,7 @@ export async function deployment() {
     collSurplusPool,
     defaultPool,
     gasPool,
+    governableVariables,
     hintHelpers,
     interestRateManager,
     mockAggregator,

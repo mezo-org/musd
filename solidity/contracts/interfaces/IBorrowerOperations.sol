@@ -18,6 +18,12 @@ interface IBorrowerOperations {
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event GasPoolAddressChanged(address _gasPoolAddress);
+    event GovernableVariablesAddressChanged(
+        address _governableVariablesAddress
+    );
+    event InterestRateManagerAddressChanged(
+        address _interestRateManagerAddress
+    );
     event MUSDTokenAddressChanged(address _musdTokenAddress);
     event MinNetDebtChanged(uint256 _minNetDebt);
     event MinNetDebtProposed(uint256 _minNetDebt, uint256 _proposalTime);
@@ -46,20 +52,7 @@ interface IBorrowerOperations {
 
     // --- Functions ---
 
-    function setAddresses(
-        address _activePoolAddress,
-        address _borrowerOperationsSignaturesAddress,
-        address _collSurplusPoolAddress,
-        address _defaultPoolAddress,
-        address _gasPoolAddress,
-        address _interestRateManagerAddress,
-        address _musdTokenAddress,
-        address _pcvAddress,
-        address _priceFeedAddress,
-        address _sortedTrovesAddress,
-        address _stabilityPoolAddress,
-        address _troveManagerAddress
-    ) external;
+    function setAddresses(address[13] memory addresses) external;
 
     function setRefinancingFeePercentage(
         uint8 _refinanceFeePercentage

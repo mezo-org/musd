@@ -31,6 +31,8 @@ import "../SortedTroves.sol";
 import "../interfaces/ISortedTroves.sol";
 import "../GasPool.sol";
 import "../interfaces/IGasPool.sol";
+import "../GovernableVariables.sol";
+import "../interfaces/IGovernableVariables.sol";
 import "../PriceFeed.sol";
 import "../interfaces/IPriceFeed.sol";
 import "../HintHelpers.sol";
@@ -55,6 +57,7 @@ contract EchidnaTest {
     IPCV private immutable pcv;
     ISortedTroves private immutable sortedTroves;
     IGasPool private immutable gasPool;
+    IGovernableVariables private immutable governableVariables;
     IPriceFeed private immutable priceFeed;
     IHintHelpers private immutable hintHelpers;
 
@@ -190,6 +193,18 @@ contract EchidnaTest {
                 )
             )
         );
+        governableVariables = IGovernableVariables(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(new GovernableVariables()),
+                    admin,
+                    abi.encodeWithSelector(
+                        GovernableVariables.initialize.selector,
+                        7200
+                    )
+                )
+            )
+        );
         priceFeed = IPriceFeed(
             address(
                 new TransparentUpgradeableProxy(
@@ -241,18 +256,21 @@ contract EchidnaTest {
             address(troveManager)
         );
         borrowerOperations.setAddresses(
-            address(activePool),
-            address(borrowerOperationsSignatures),
-            address(collSurplusPool),
-            address(defaultPool),
-            address(gasPool),
-            address(interestRateManager),
-            address(musd),
-            address(pcv),
-            address(priceFeed),
-            address(sortedTroves),
-            address(stabilityPool),
-            address(troveManager)
+            [
+                address(activePool),
+                address(borrowerOperationsSignatures),
+                address(collSurplusPool),
+                address(defaultPool),
+                address(gasPool),
+                address(governableVariables),
+                address(interestRateManager),
+                address(musd),
+                address(pcv),
+                address(priceFeed),
+                address(sortedTroves),
+                address(stabilityPool),
+                address(troveManager)
+            ]
         );
         collSurplusPool.setAddresses(
             address(activePool),
@@ -265,6 +283,7 @@ contract EchidnaTest {
             address(collSurplusPool),
             address(defaultPool),
             address(gasPool),
+            address(governableVariables),
             address(interestRateManager),
             address(musd),
             address(pcv),

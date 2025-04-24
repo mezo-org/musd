@@ -10,6 +10,7 @@ import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
+import "./interfaces/IGovernableVariables.sol";
 import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
@@ -93,10 +94,12 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
     uint256 public constant MIN_NET_DEBT_MIN = 50e18;
+    bool private setAddresses1Set;
 
     // Connected contract declarations
     ITroveManager public troveManager;
     address public gasPoolAddress;
+    IGovernableVariables public governableVariables;
     address public pcvAddress;
     address public stabilityPoolAddress;
     address public borrowerOperationsSignaturesAddress;
@@ -139,6 +142,7 @@ contract BorrowerOperations is
         __Ownable_init(msg.sender);
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
+        setAddresses1Set = false;
 
         borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
         proposedBorrowingRate = borrowingRate;
@@ -314,65 +318,45 @@ contract BorrowerOperations is
         _claimCollateral(msg.sender, msg.sender);
     }
 
-    function setAddresses(
-        address _activePoolAddress,
-        address _borrowerOperationsSignaturesAddress,
-        address _collSurplusPoolAddress,
-        address _defaultPoolAddress,
-        address _gasPoolAddress,
-        address _interestRateManagerAddress,
-        address _musdTokenAddress,
-        address _pcvAddress,
-        address _priceFeedAddress,
-        address _sortedTrovesAddress,
-        address _stabilityPoolAddress,
-        address _troveManagerAddress
-    ) external override onlyOwner {
+    function setAddresses(address[13] memory _addresses) external onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
         assert(minNetDebt > 0);
 
-        checkContract(_activePoolAddress);
-        checkContract(_borrowerOperationsSignaturesAddress);
-        checkContract(_collSurplusPoolAddress);
-        checkContract(_defaultPoolAddress);
-        checkContract(_gasPoolAddress);
-        checkContract(_interestRateManagerAddress);
-        checkContract(_musdTokenAddress);
-        checkContract(_pcvAddress);
-        checkContract(_priceFeedAddress);
-        checkContract(_sortedTrovesAddress);
-        checkContract(_stabilityPoolAddress);
-        checkContract(_troveManagerAddress);
+        uint addressLength = _addresses.length;
+        for (uint i = 0; i < addressLength; i++) {
+            checkContract(_addresses[i]);
+        }
 
         // slither-disable-start missing-zero-check
-        activePool = IActivePool(_activePoolAddress);
-        borrowerOperationsSignaturesAddress = _borrowerOperationsSignaturesAddress;
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
-        gasPoolAddress = _gasPoolAddress;
-        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
-        musd = IMUSD(_musdTokenAddress);
-        pcv = IPCV(_pcvAddress);
-        pcvAddress = _pcvAddress;
-        priceFeed = IPriceFeed(_priceFeedAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        stabilityPoolAddress = _stabilityPoolAddress;
-        troveManager = ITroveManager(_troveManagerAddress);
+        activePool = IActivePool(_addresses[0]);
+        borrowerOperationsSignaturesAddress = _addresses[1];
+        collSurplusPool = ICollSurplusPool(_addresses[2]);
+        defaultPool = IDefaultPool(_addresses[3]);
+        gasPoolAddress = _addresses[4];
+        governableVariables = IGovernableVariables(_addresses[5]);
+        interestRateManager = IInterestRateManager(_addresses[6]);
+        musd = IMUSD(_addresses[7]);
+        pcv = IPCV(_addresses[8]);
+        pcvAddress = _addresses[8];
+        priceFeed = IPriceFeed(_addresses[9]);
+        sortedTroves = ISortedTroves(_addresses[10]);
+        stabilityPoolAddress = _addresses[11];
+        troveManager = ITroveManager(_addresses[12]);
         // slither-disable-end missing-zero-check
 
-        emit ActivePoolAddressChanged(_activePoolAddress);
-        emit BorrowerOperationsSignaturesAddressChanged(
-            _borrowerOperationsSignaturesAddress
-        );
-        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
-        emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
-        emit MUSDTokenAddressChanged(_musdTokenAddress);
-        emit PCVAddressChanged(_pcvAddress);
-        emit PriceFeedAddressChanged(_priceFeedAddress);
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
-        emit TroveManagerAddressChanged(_troveManagerAddress);
+        emit ActivePoolAddressChanged(_addresses[0]);
+        emit BorrowerOperationsSignaturesAddressChanged(_addresses[1]);
+        emit CollSurplusPoolAddressChanged(_addresses[2]);
+        emit DefaultPoolAddressChanged(_addresses[3]);
+        emit GasPoolAddressChanged(_addresses[4]);
+        emit GovernableVariablesAddressChanged(_addresses[5]);
+        emit InterestRateManagerAddressChanged(_addresses[6]);
+        emit MUSDTokenAddressChanged(_addresses[7]);
+        emit PCVAddressChanged(_addresses[8]);
+        emit PriceFeedAddressChanged(_addresses[9]);
+        emit SortedTrovesAddressChanged(_addresses[10]);
+        emit StabilityPoolAddressChanged(_addresses[11]);
+        emit TroveManagerAddressChanged(_addresses[12]);
 
         renounceOwnership();
     }
@@ -649,10 +633,12 @@ contract BorrowerOperations is
 
         _requireTroveisNotActive(contractsCache.troveManager, _borrower);
 
-        vars.fee;
         vars.netDebt = _debtAmount;
 
-        if (!isRecoveryMode) {
+        if (
+            !isRecoveryMode &&
+            !governableVariables.isAccountFeeExempt(_borrower)
+        ) {
             vars.fee = _triggerBorrowingFee(contractsCache.musd, _debtAmount);
             vars.netDebt += vars.fee;
         }
@@ -1038,10 +1024,14 @@ contract BorrowerOperations is
         vars.oldRate = vars.troveManagerCached.getTroveInterestRate(_borrower);
         vars.oldDebt = vars.troveManagerCached.getTroveDebt(_borrower);
         vars.amount = (refinancingFeePercentage * vars.oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(musd, vars.amount);
+        uint256 fee = governableVariables.isAccountFeeExempt(_borrower)
+            ? 0
+            : _triggerBorrowingFee(musd, vars.amount);
         // slither-disable-next-line unused-return
         vars.troveManagerCached.increaseTroveDebt(_borrower, fee);
-        activePool.increaseDebt(fee, 0);
+        if (fee > 0) {
+            activePool.increaseDebt(fee, 0);
+        }
 
         // slither-disable-start unused-return
         (

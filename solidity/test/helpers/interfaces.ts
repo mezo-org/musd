@@ -8,6 +8,7 @@ import {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  GovernableVariables,
   HintHelpers,
   InterestRateManager,
   MockAggregator,
@@ -105,6 +106,7 @@ export interface Contracts {
   collSurplusPool: CollSurplusPool
   defaultPool: DefaultPool
   gasPool: GasPool
+  governableVariables: GovernableVariables
   hintHelpers: HintHelpers
   interestRateManager: InterestRateManager
   mockAggregator: MockAggregator

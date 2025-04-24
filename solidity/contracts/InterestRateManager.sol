@@ -87,6 +87,8 @@ contract InterestRateManager is
     function initialize() external initializer {
         interestRate = 100; // 1%
         proposedInterestRate = interestRate;
+
+        // solhint-disable-next-line not-rely-on-time
         proposedInterestRateTime = block.timestamp;
         __Ownable_init(msg.sender);
     }

@@ -10,6 +10,7 @@ import {
   CollSurplusPool,
   DefaultPool,
   GasPool,
+  GovernableVariables,
   HintHelpers,
   InterestRateManager,
   MockAggregator,
@@ -101,6 +102,9 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
 
   const defaultPool: DefaultPool = await getDeployedContract("DefaultPool")
   const gasPool: GasPool = await getDeployedContract("GasPool")
+  const governableVariables: GovernableVariables = await getDeployedContract(
+    "GovernableVariables",
+  )
   const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
 
   const interestRateManager: InterestRateManager = await getDeployedContract(
@@ -134,6 +138,7 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
     collSurplusPool,
     defaultPool,
     gasPool,
+    governableVariables,
     hintHelpers,
     interestRateManager,
     mockAggregator,
