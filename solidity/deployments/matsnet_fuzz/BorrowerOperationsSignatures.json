@@ -1,5 +1,5 @@
 {
-  "address": "0x8Dd40e5367e59852361DEc859e63A555B2106264",
+  "address": "0x4288307B2f834c408c6b267952BBde245fAa78f6",
   "abi": [
     {
       "inputs": [],
@@ -426,6 +426,16 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "_upperHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_lowerHint",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
           "name": "_borrower",
           "type": "address"
         },
@@ -608,8 +618,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x82100602a6718e47c22c97f758dfd7c45c12a1a36fc36dd4dfd80181be49ae20",
+  "transactionHash": "0x5752691a3172a75feeeaf7180a8ff15fcabf19e8a61f50ee1bcc2325dce3e03e",
   "numDeployments": 1,
-  "implementation": "0xd7E4B1f71DfA549fA79539ccA74fB98ac78545c6",
+  "implementation": "0xEB73EC11A645DdC058a0F8e493F09f86F6c435Ac",
   "devdoc": "Contract deployed as upgradable proxy"
 }

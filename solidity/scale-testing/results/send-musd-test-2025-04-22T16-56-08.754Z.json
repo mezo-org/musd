@@ -1,0 +1,63 @@
+{
+  "testId": "send-musd-test",
+  "timestamp": "2025-04-22T16:56:08.754Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numSenderAccounts": 5,
+    "musdAmounts": ["50", "75", "100", "125", "150"],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "1250000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x918027f8078440f1ad417114c8863652f6121ca716f6d7a502b37d200615f67f",
+        "sender": "0x21C24a02e21e38154814EB3c315a21d28dfb19e6",
+        "receiver": "0x266dFefF280933F75Af9e14b057dE6A8Da9851E9",
+        "musdAmount": "150.0",
+        "gasUsed": "250000",
+        "duration": 4967
+      },
+      {
+        "success": true,
+        "hash": "0x440e7d38205a5c9d3e5b68a601da5adefcfdd6de72fcf54f4e7b61fe22ac78fb",
+        "sender": "0x3666FaD321F45687CB336284a0CA9aD703341281",
+        "receiver": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+        "musdAmount": "75.0",
+        "gasUsed": "250000",
+        "duration": 5059
+      },
+      {
+        "success": true,
+        "hash": "0x2cea4eb773af2550739a34d15b90e5219bafeb00bc686574f174bcd6ba208dab",
+        "sender": "0x6A05cd49c91fC6e06E2C91731c1AE8089590746e",
+        "receiver": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+        "musdAmount": "50.0",
+        "gasUsed": "250000",
+        "duration": 5144
+      },
+      {
+        "success": true,
+        "hash": "0xd46436c696f055417bda5f20522abeadc2c2bb9cbc07927ff0e7e06c4e288d97",
+        "sender": "0x8Dc9eb294F124B46531145312f088DAfaD5b74ec",
+        "receiver": "0x23d1F5C6503b75003abc5605fCA0EE55E080e266",
+        "musdAmount": "125.0",
+        "gasUsed": "250000",
+        "duration": 5230
+      },
+      {
+        "success": true,
+        "hash": "0x3430f1b3c857d3d7c9fcf78ace7c4cf1dd2cb45317705bedcc44ed540ee20446",
+        "sender": "0x1F007518ED5493bCCa914BC627faA63D33c47f89",
+        "receiver": "0x1c8d31e1e2103454b79D0D72B4Cab5574d8fFdae",
+        "musdAmount": "100.0",
+        "gasUsed": "250000",
+        "duration": 5823
+      }
+    ]
+  }
+}

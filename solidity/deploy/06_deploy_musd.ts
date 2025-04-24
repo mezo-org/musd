@@ -13,7 +13,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   } = await setupDeploymentBoilerplate(hre)
 
   const borrowerOperations = await deployments.get("BorrowerOperations")
-  const interestRateManager = await deployments.get("InterestRateManager")
+
+  const isFuzzTestingNetwork = hre.network.name === "matsnet_fuzz"
+
+  const interestRateManagerName = isFuzzTestingNetwork
+    ? "InterestRateManagerTester"
+    : "InterestRateManager"
+
+  const interestRateManager = await deployments.get(interestRateManagerName)
   const troveManager = await deployments.get(
     isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
   )

@@ -88,7 +88,10 @@ export async function getDeployedContract<T extends BaseContract>(
   return new ethers.BaseContract(address, abi, defaultSigner) as T
 }
 
-export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
+export async function fetchAllDeployedContracts(
+  isHardhatNetwork: boolean,
+  isFuzzTestingNetwork: boolean,
+) {
   const activePool: ActivePool = await getDeployedContract("ActivePool")
 
   const borrowerOperations: BorrowerOperations =
@@ -108,7 +111,7 @@ export async function fetchAllDeployedContracts(isHardhatNetwork: boolean) {
   const hintHelpers: HintHelpers = await getDeployedContract("HintHelpers")
 
   const interestRateManager: InterestRateManager = await getDeployedContract(
-    "InterestRateManager",
+    isFuzzTestingNetwork ? "InterestRateManagerTester" : "InterestRateManager",
   )
 
   // TODO: replace with a real aggregator
@@ -265,6 +268,7 @@ export async function setupDeploymentBoilerplate(
     getOrDeployProxy,
     getValidDeployment,
     isHardhatNetwork: network.name === "hardhat",
+    isFuzzTestingNetwork: network.name === "matsnet_fuzz",
     log,
     network,
   }

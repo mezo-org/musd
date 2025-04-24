@@ -1,3 +1,4 @@
+// scripts/scale-testing/scenarios/open-troves.ts
 import { ethers } from "hardhat"
 import fs from "fs"
 import path from "path"
@@ -5,12 +6,17 @@ import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import calculateTroveOperationHints from "../hint-helper"
 import getContracts from "../get-contracts"
+import {
+  prepareResultsForSerialization,
+  processBatchTransactions,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "open-troves-test"
-const NUM_ACCOUNTS = 5 // Number of accounts to use
+const NUM_ACCOUNTS = 20 // Number of accounts to use
 const MIN_BTC_BALANCE = "0.0005" // Minimum BTC balance required
 const MUSD_DEBT_AMOUNT = 2200 // Amount of MUSD debt to create - just over the minimum debt
+const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 // Collateral ratios to test (150%, 200%, 250%, 300%, 350%)
 const COLLATERAL_RATIOS = [150, 200, 250, 300, 350]
@@ -22,6 +28,7 @@ async function main() {
 
   console.log(`Running Open Troves test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
 
   // Create state manager
   const stateManager = new StateManager(networkName)
@@ -36,14 +43,25 @@ async function main() {
     troveManager,
     hintHelpers,
     sortedTroves,
+    mockAggregator,
   } = await getContracts()
 
   // Get the current BTC price from the price feed
   let currentPrice
   try {
     currentPrice = await priceFeed.fetchPrice()
+    // Set the current price to 20M if it has not been set already
+    if (currentPrice < ethers.parseEther("20000000")) {
+      const [deployer] = await ethers.getSigners()
+      await mockAggregator
+        .connect(deployer)
+        .setPrice(ethers.parseEther("20000000"))
+      currentPrice = await priceFeed.fetchPrice()
+      console.log("Mock price set to $20,000,000")
+    }
     console.log(`Current BTC price: $${ethers.formatEther(currentPrice)}`)
   } catch (error) {
+    console.log(error)
     console.log(
       "Could not fetch price from price feed, using default: $20000000",
     )
@@ -89,133 +107,129 @@ async function main() {
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
   console.log(`Loaded ${loadedWallets} wallets for testing`)
 
-  // Track results
-  const results = {
-    successful: 0,
-    failed: 0,
-    gasUsed: 0n,
-    transactions: [],
-  }
+  // Process accounts in batches using our utility
+  const results = await processBatchTransactions(
+    testAccounts,
+    async (account, index) => {
+      const wallet = walletHelper.getWallet(account.address)
 
-  // Process each account
-  for (let i = 0; i < testAccounts.length; i++) {
-    const account = testAccounts[i]
-    const wallet = walletHelper.getWallet(account.address)
+      if (!wallet) {
+        console.log(`No wallet found for account ${account.address}, skipping`)
+        return {
+          success: false,
+          account: account.address,
+          error: "wallet not found - skipped",
+        }
+      }
 
-    if (!wallet) {
-      console.log(`No wallet found for account ${account.address}, skipping`)
-      // eslint-disable-next-line no-continue
-      continue
-    }
+      const signer = wallet
 
-    const signer = wallet
-
-    // Get the target collateral ratio for this account
-    const collateralRatio = COLLATERAL_RATIOS[i % COLLATERAL_RATIOS.length]
-
-    console.log(
-      `\nProcessing account ${i + 1}/${testAccounts.length}: ${account.address}`,
-    )
-    console.log(`Target collateral ratio: ${collateralRatio}%`)
-
-    // Calculate the collateral needed for the desired debt and collateral ratio
-    // Formula: collateral = (debt * collateralRatio) / price
-    const debtAmount = ethers.parseEther(MUSD_DEBT_AMOUNT.toString())
-    const totalDebt = debtAmount + gasCompensation // Add gas compensation to the debt
-
-    // Convert collateral ratio from percentage to decimal (e.g., 150% -> 1.5)
-    const collateralRatioDecimal = ethers.parseEther(
-      (collateralRatio / 100).toString(),
-    )
-
-    // Calculate required collateral in BTC
-    // (totalDebt * collateralRatioDecimal) / price
-    const collateralAmount = (totalDebt * collateralRatioDecimal) / currentPrice
-
-    console.log(
-      `Opening Trove with ${ethers.formatEther(collateralAmount)} BTC collateral and ${MUSD_DEBT_AMOUNT} MUSD debt`,
-    )
-
-    const { upperHint, lowerHint } = await calculateTroveOperationHints({
-      hintHelpers,
-      sortedTroves,
-      troveManager,
-      collateralAmount,
-      debtAmount,
-      operation: "open",
-      verbose: true,
-    })
-
-    try {
-      // Record the start time
-      const startTime = Date.now()
-
-      // Open Trove transaction
-      const tx = await borrowerOperations.connect(signer).openTrove(
-        debtAmount, // MUSD amount
-        upperHint,
-        lowerHint,
-        {
-          value: collateralAmount,
-          gasLimit: 1500000, // Explicitly set a higher gas limit
-        }, // Send BTC as collateral
-      )
-
-      console.log(`Transaction sent: ${tx.hash}`)
-
-      // Wait for transaction to be mined
-      const receipt = await tx.wait()
-
-      // Calculate metrics
-      const endTime = Date.now()
-      const duration = endTime - startTime
-      const gasUsed = receipt ? receipt.gasUsed : 0n
+      // Get the target collateral ratio for this account
+      const collateralRatio =
+        COLLATERAL_RATIOS[index % COLLATERAL_RATIOS.length]
 
       console.log(
-        `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        `Preparing transaction for account ${index + 1}/${testAccounts.length}: ${account.address}`,
+      )
+      console.log(`Target collateral ratio: ${collateralRatio}%`)
+
+      // Calculate the collateral needed for the desired debt and collateral ratio
+      const debtAmount = ethers.parseEther(MUSD_DEBT_AMOUNT.toString())
+      const totalDebt = debtAmount + gasCompensation // Add gas compensation to the debt
+
+      // Convert collateral ratio from percentage to decimal (e.g., 150% -> 1.5)
+      const collateralRatioDecimal = ethers.parseEther(
+        (collateralRatio / 100).toString(),
       )
 
-      // Update results
-      results.successful++
-      results.gasUsed += gasUsed
-      results.transactions.push({
-        hash: tx.hash,
-        account: account.address,
-        collateralRatio,
-        collateralAmount: ethers.formatEther(collateralAmount),
-        debtAmount: MUSD_DEBT_AMOUNT,
-        gasUsed: gasUsed.toString(),
-        duration,
-      })
+      // Calculate required collateral in BTC
+      const collateralAmount =
+        (totalDebt * collateralRatioDecimal) / currentPrice
 
-      // Record the action in the state manager
-      stateManager.recordAction(account.address, "openTrove", TEST_ID)
-    } catch (error) {
-      console.log(`Error opening Trove: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        collateralRatio,
-        collateralAmount: ethers.formatEther(collateralAmount),
-        debtAmount: MUSD_DEBT_AMOUNT,
-        error: error.message,
-      })
-    }
+      console.log(
+        `Opening Trove with ${ethers.formatEther(collateralAmount)} BTC collateral and ${MUSD_DEBT_AMOUNT} MUSD debt`,
+      )
 
-    // Wait a bit between transactions to avoid network congestion
-    if (i < testAccounts.length - 1) {
-      console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2000)
-      })
-    }
-  }
+      try {
+        // Get hints for this transaction
+        const { upperHint, lowerHint } = await calculateTroveOperationHints({
+          borrowerOperations,
+          hintHelpers,
+          sortedTroves,
+          troveManager,
+          collateralAmount,
+          debtAmount,
+          operation: "open",
+          verbose: true,
+        })
+
+        // Record the start time
+        const startTime = Date.now()
+
+        // Open Trove transaction
+        const tx = await borrowerOperations.connect(signer).openTrove(
+          debtAmount, // MUSD amount
+          upperHint,
+          lowerHint,
+          {
+            value: collateralAmount,
+            gasLimit: 1500000, // Explicitly set a higher gas limit
+          }, // Send BTC as collateral
+        )
+
+        console.log(
+          `Transaction sent: ${tx.hash} for account ${account.address}`,
+        )
+
+        // Wait for transaction to be mined
+        const receipt = await tx.wait()
+
+        // Calculate metrics
+        const endTime = Date.now()
+        const duration = endTime - startTime
+        const gasUsed = receipt ? receipt.gasUsed : 0n
+
+        console.log(
+          `Transaction confirmed for ${account.address}! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        )
+
+        // Record the action in the state manager
+        stateManager.recordAction(account.address, "openTrove", TEST_ID)
+
+        return {
+          success: true,
+          hash: tx.hash,
+          account: account.address,
+          collateralRatio,
+          collateralAmount: ethers.formatEther(collateralAmount),
+          debtAmount: MUSD_DEBT_AMOUNT,
+          gasUsed,
+          duration,
+        }
+      } catch (error) {
+        console.log(
+          `Error opening Trove for ${account.address}: ${error.message}`,
+        )
+
+        return {
+          success: false,
+          account: account.address,
+          collateralRatio,
+          collateralAmount: ethers.formatEther(collateralAmount),
+          debtAmount: MUSD_DEBT_AMOUNT,
+          error: error.message,
+        }
+      }
+    },
+    { testId: TEST_ID, batchSize: BATCH_SIZE },
+  )
 
   // Print summary
   console.log("\n--- Test Summary ---")
   console.log(`Total accounts: ${testAccounts.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
+  console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
     `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : 0n}`,
@@ -251,17 +265,9 @@ async function main() {
           minBtcBalance: MIN_BTC_BALANCE,
           collateralRatios: COLLATERAL_RATIOS,
           musdDebtAmount: MUSD_DEBT_AMOUNT,
+          batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions,
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,

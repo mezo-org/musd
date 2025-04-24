@@ -1,5 +1,5 @@
 {
-  "address": "0x8ed65f0Df4B1145f8E6D298735d0F77bFb5f0136",
+  "address": "0x2336571c89Cc06e4322C8cA7777808680d1F8A4E",
   "abi": [
     {
       "inputs": [],
@@ -108,19 +108,6 @@
       ],
       "name": "TroveManagerAddressChanged",
       "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "BORROWING_FEE_FLOOR",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
     },
     {
       "inputs": [],
@@ -525,8 +512,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x5ff1fd9a2355bb362b6255398cc275426b216f57e8cd5124f51dd225a3d33257",
+  "transactionHash": "0xd53974ed319eb055c5a227560f81ad9cc8c157ebd3b857eae0f6450efd2b96a9",
   "numDeployments": 1,
-  "implementation": "0x84a3D3eEd24d34e30Cd7C2b8c6e20e24d7AF1a71",
+  "implementation": "0xf42602085F7895eb654E7FC04d4Ee3ebFf180fd4",
   "devdoc": "Contract deployed as upgradable proxy"
 }

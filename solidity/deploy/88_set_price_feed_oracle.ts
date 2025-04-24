@@ -7,12 +7,15 @@ import {
 } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { execute, isHardhatNetwork, network } =
+  const { execute, isHardhatNetwork, isFuzzTestingNetwork, network } =
     await setupDeploymentBoilerplate(hre)
 
   let aggregatorAddress
-  if (isHardhatNetwork) {
-    const { mockAggregator } = await fetchAllDeployedContracts(isHardhatNetwork)
+  if (isHardhatNetwork || isFuzzTestingNetwork) {
+    const { mockAggregator } = await fetchAllDeployedContracts(
+      isHardhatNetwork,
+      isFuzzTestingNetwork,
+    )
     aggregatorAddress = await mockAggregator.getAddress()
   } else if (network.name in EXTERNAL_ADDRESSES) {
     aggregatorAddress = EXTERNAL_ADDRESSES[network.name].PriceOracleCaller

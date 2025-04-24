@@ -8,10 +8,13 @@ import {
 import { MAX_BYTES_32 } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork, isFuzzTestingNetwork } =
+    await setupDeploymentBoilerplate(hre)
 
-  const { borrowerOperations, troveManager } =
-    await fetchAllDeployedContracts(isHardhatNetwork)
+  const { borrowerOperations, troveManager } = await fetchAllDeployedContracts(
+    isHardhatNetwork,
+    isFuzzTestingNetwork,
+  )
 
   await execute(
     "SortedTroves",

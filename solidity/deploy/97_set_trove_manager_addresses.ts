@@ -6,7 +6,8 @@ import {
 } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { execute, isHardhatNetwork } = await setupDeploymentBoilerplate(hre)
+  const { execute, isHardhatNetwork, isFuzzTestingNetwork } =
+    await setupDeploymentBoilerplate(hre)
 
   const {
     activePool,
@@ -21,7 +22,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     priceFeed,
     sortedTroves,
     stabilityPool,
-  } = await fetchAllDeployedContracts(isHardhatNetwork)
+  } = await fetchAllDeployedContracts(isHardhatNetwork, isFuzzTestingNetwork)
 
   await execute(
     isHardhatNetwork ? "TroveManagerTester" : "TroveManager",

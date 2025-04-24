@@ -5,10 +5,15 @@ import path from "path"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import getDeploymentAddress from "../../deployment-helpers"
+import {
+  processBatchTransactions,
+  prepareResultsForSerialization,
+} from "../batch-transactions"
 
 // Configuration
 const TEST_ID = "close-trove-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use
+const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {
   // Get the network name
@@ -17,6 +22,7 @@ async function main() {
 
   console.log(`Running Close Trove test on network: ${networkName}`)
   console.log(`Test ID: ${TEST_ID}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
 
   // Create state manager
   const stateManager = new StateManager(networkName)
@@ -94,28 +100,19 @@ async function main() {
     `Loaded ${loadedDonorWallets} donor wallets for potential transfers`,
   )
 
-  // Initialize results object
-  const results = {
-    successful: 0,
-    failed: 0,
-    skipped: 0,
-    gasUsed: BigInt(0),
-    transactions: [],
-  }
+  // First phase: prepare accounts by ensuring they have enough MUSD to close troves
+  console.log("\nPreparing accounts - ensuring sufficient MUSD balances...")
+  const preparedAccounts = []
+  let skippedAccounts = 0
 
-  // Counter for successful tests
-  let successfulTests = 0
-
-  // Process each account until we have enough successful tests
   for (
     let i = 0;
-    i < testAccounts.length && successfulTests < NUM_ACCOUNTS;
+    i < testAccounts.length && preparedAccounts.length < NUM_ACCOUNTS;
     i++
   ) {
     const account = testAccounts[i]
-
     console.log(
-      `\nProcessing account ${i + 1}/${testAccounts.length}: ${account.address}`,
+      `\nPreparing account ${i + 1}/${testAccounts.length}: ${account.address}`,
     )
 
     // Get current trove state for reference
@@ -141,7 +138,7 @@ async function main() {
       )
     } catch (error) {
       console.log(`Could not fetch current trove state: ${error.message}`)
-      results.skipped++
+      skippedAccounts++
       continue
     }
 
@@ -154,7 +151,7 @@ async function main() {
       )
     } catch (error) {
       console.log(`Could not fetch MUSD balance: ${error.message}`)
-      results.skipped++
+      skippedAccounts++
       continue
     }
 
@@ -184,7 +181,7 @@ async function main() {
 
       if (potentialDonors.length === 0) {
         console.log("No suitable donor accounts found. Skipping this account.")
-        results.skipped++
+        skippedAccounts++
         continue
       }
 
@@ -206,14 +203,14 @@ async function main() {
           console.log(
             "Donor doesn't have enough MUSD on-chain. Skipping this account.",
           )
-          results.skipped++
+          skippedAccounts++
           continue
         }
       } catch (error) {
         console.log(
           `Could not fetch donor's on-chain balance: ${error.message}`,
         )
-        results.skipped++
+        skippedAccounts++
         continue
       }
 
@@ -223,7 +220,7 @@ async function main() {
         console.log(
           `No wallet found for donor account ${donorAccount.address}. Skipping.`,
         )
-        results.skipped++
+        skippedAccounts++
         continue
       }
 
@@ -246,14 +243,14 @@ async function main() {
         )
       } catch (error) {
         console.log(`Error trying to get more MUSD: ${error}`)
-        results.skipped++
+        skippedAccounts++
         continue
       }
 
       // Check again if we have enough MUSD now
       if (musdBalance < troveDebt) {
         console.log("Still not enough MUSD to close the trove. Skipping.")
-        results.skipped++
+        skippedAccounts++
         continue
       }
     }
@@ -263,78 +260,109 @@ async function main() {
 
     if (!wallet) {
       console.log(`No wallet found for account ${account.address}, skipping`)
-      results.skipped++
+      skippedAccounts++
       continue
     }
 
-    try {
-      // Record the start time
-      const startTime = Date.now()
+    // Account is ready to close trove
+    preparedAccounts.push({
+      account,
+      troveCollateral,
+      troveDebt,
+    })
 
-      // Close the trove
-      console.log("Closing trove...")
-      const tx = await borrowerOperations.connect(wallet).closeTrove({
-        gasLimit: 1500000, // Higher gas limit for complex operation
-      })
-
-      console.log(`Transaction sent: ${tx.hash}`)
-
-      // Wait for transaction to be mined
-      const receipt = await tx.wait()
-
-      // Calculate metrics
-      const endTime = Date.now()
-      const duration = endTime - startTime
-      const gasUsed = receipt ? receipt.gasUsed : BigInt(0)
-
-      console.log(
-        `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
-      )
-
-      // Update results
-      results.successful++
-      successfulTests++
-      results.gasUsed += gasUsed
-      results.transactions.push({
-        hash: tx.hash,
-        account: account.address,
-        collateralReturned: ethers.formatEther(troveCollateral),
-        debtRepaid: ethers.formatEther(troveDebt),
-        gasUsed: gasUsed.toString(),
-        duration,
-      })
-
-      // Record the action in the state manager
-      stateManager.recordAction(account.address, "closeTrove", TEST_ID)
-    } catch (error) {
-      console.log(`Error closing trove: ${error.message}`)
-      results.failed++
-      results.transactions.push({
-        account: account.address,
-        error: error.message,
-      })
-    }
-
-    // Wait a bit between transactions to avoid network congestion
-    if (i < testAccounts.length - 1 && successfulTests < NUM_ACCOUNTS) {
-      console.log("Waiting 2 seconds before next transaction...")
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2000)
-      })
+    // Stop if we have enough prepared accounts
+    if (preparedAccounts.length >= NUM_ACCOUNTS) {
+      break
     }
   }
 
+  console.log(
+    `\nPrepared ${preparedAccounts.length} accounts for closing troves`,
+  )
+  console.log(`Skipped ${skippedAccounts} accounts during preparation`)
+
+  if (preparedAccounts.length === 0) {
+    console.error("No accounts prepared for trove closing!")
+    process.exit(1)
+  }
+
+  // Second phase: close troves in batches
+  console.log("\nProceeding to close troves in batches...")
+
+  const results = await processBatchTransactions(
+    preparedAccounts.map((item) => item.account),
+    async (account, index) => {
+      const { troveCollateral, troveDebt } = preparedAccounts[index]
+
+      console.log(
+        `Processing account ${index + 1}/${preparedAccounts.length}: ${account.address}`,
+      )
+      console.log(
+        `Closing trove with debt: ${ethers.formatEther(troveDebt)} MUSD`,
+      )
+
+      // Get the wallet
+      const wallet = walletHelper.getWallet(account.address)
+
+      try {
+        // Record the start time
+        const startTime = Date.now()
+
+        // Close the trove
+        console.log("Closing trove...")
+        const tx = await borrowerOperations.connect(wallet).closeTrove({
+          gasLimit: 1500000, // Higher gas limit for complex operation
+        })
+
+        console.log(`Transaction sent: ${tx.hash}`)
+
+        // Wait for transaction to be mined
+        const receipt = await tx.wait()
+
+        // Calculate metrics
+        const endTime = Date.now()
+        const duration = endTime - startTime
+        const gasUsed = receipt ? receipt.gasUsed : BigInt(0)
+
+        console.log(
+          `Transaction confirmed! Gas used: ${gasUsed}, Duration: ${duration}ms`,
+        )
+
+        // Record the action in the state manager
+        stateManager.recordAction(account.address, "closeTrove", TEST_ID)
+
+        return {
+          success: true,
+          hash: tx.hash,
+          account: account.address,
+          collateralReturned: ethers.formatEther(troveCollateral),
+          debtRepaid: ethers.formatEther(troveDebt),
+          gasUsed,
+          duration,
+        }
+      } catch (error) {
+        console.log(`Error closing trove: ${error.message}`)
+
+        return {
+          success: false,
+          account: account.address,
+          error: error.message,
+        }
+      }
+    },
+    { testId: TEST_ID, batchSize: BATCH_SIZE },
+  )
+
   // Print summary
   console.log("\n--- Test Summary ---")
-  console.log(
-    `Total accounts processed: ${results.successful + results.failed + results.skipped}`,
-  )
+  console.log(`Total accounts processed: ${preparedAccounts.length}`)
   console.log(`Successful: ${results.successful}`)
   console.log(`Failed: ${results.failed}`)
   console.log(`Skipped: ${results.skipped}`)
   console.log(`Total gas used: ${results.gasUsed}`)
   console.log(
-    `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : BigInt(0)}`,
+    `Average gas per transaction: ${results.successful > 0 ? results.gasUsed / BigInt(results.successful) : 0n}`,
   )
 
   // Save results to file
@@ -364,18 +392,9 @@ async function main() {
         network: networkName,
         config: {
           numAccounts: NUM_ACCOUNTS,
+          batchSize: BATCH_SIZE,
         },
-        results: {
-          successful: results.successful,
-          failed: results.failed,
-          skipped: results.skipped,
-          gasUsed: results.gasUsed.toString(),
-          averageGas:
-            results.successful > 0
-              ? (results.gasUsed / BigInt(results.successful)).toString()
-              : "0",
-        },
-        transactions: results.transactions,
+        results: prepareResultsForSerialization(results),
       },
       null,
       2,

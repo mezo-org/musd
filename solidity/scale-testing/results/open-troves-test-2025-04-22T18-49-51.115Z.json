@@ -1,0 +1,184 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-04-22T18:49:51.115Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 20,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [150, 200, 250, 300, 350],
+    "musdDebtAmount": 2200,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 2,
+    "failed": 18,
+    "skipped": 0,
+    "gasUsed": "2588394",
+    "transactions": [
+      {
+        "success": false,
+        "account": "0x2FDC91333684AaFcD1F00Ae1C44B0831c20a6b56",
+        "collateralRatio": 300,
+        "collateralAmount": "0.00036",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x2FDC91333684AaFcD1F00Ae1C44B0831c20a6b56\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc9b15b7e25950bcfc9550e2f9e39fc20075dd02ff0d7ffe4546ba4ce9d48b55e\", \"blockNumber\": 4024377, \"contractAddress\": null, \"cumulativeGasUsed\": \"5775206\", \"from\": \"0x2FDC91333684AaFcD1F00Ae1C44B0831c20a6b56\", \"gasPrice\": \"7\", \"gasUsed\": \"1444659\", \"hash\": \"0x25c957bdea2e873398bf06bd25a60c7f495002dd0d05a244586c1ae3e655c031\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x3c92209c5640234eea3Ac62fBE7ecCc06c868290",
+        "collateralRatio": 350,
+        "collateralAmount": "0.00042",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x3c92209c5640234eea3Ac62fBE7ecCc06c868290\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc9b15b7e25950bcfc9550e2f9e39fc20075dd02ff0d7ffe4546ba4ce9d48b55e\", \"blockNumber\": 4024377, \"contractAddress\": null, \"cumulativeGasUsed\": \"6525206\", \"from\": \"0x3c92209c5640234eea3Ac62fBE7ecCc06c868290\", \"gasPrice\": \"7\", \"gasUsed\": \"750000\", \"hash\": \"0x64e50fff2d32221d0bb155f1479962143fff67c62ffd27f33f07bab3f2530328\", \"index\": 4, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+        "collateralRatio": 150,
+        "collateralAmount": "0.00018",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x643e07cee7Edc814B467c3b7dFc7204606832cE9\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc9b15b7e25950bcfc9550e2f9e39fc20075dd02ff0d7ffe4546ba4ce9d48b55e\", \"blockNumber\": 4024377, \"contractAddress\": null, \"cumulativeGasUsed\": \"1442944\", \"from\": \"0x643e07cee7Edc814B467c3b7dFc7204606832cE9\", \"gasPrice\": \"7\", \"gasUsed\": \"1442944\", \"hash\": \"0xfef62a2ed3ca1dfd44a672023d4dafbe6d67f8e21e0225c6385d790e0399fbae\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+        "collateralRatio": 200,
+        "collateralAmount": "0.00024",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc9b15b7e25950bcfc9550e2f9e39fc20075dd02ff0d7ffe4546ba4ce9d48b55e\", \"blockNumber\": 4024377, \"contractAddress\": null, \"cumulativeGasUsed\": \"4330547\", \"from\": \"0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C\", \"gasPrice\": \"7\", \"gasUsed\": \"1442944\", \"hash\": \"0x913bb5f98659d0f34b5a37e311864cdcdda2b73e33e86b7dc7baaffd583ad5da\", \"index\": 2, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0xEB932870E3cc98d354d6dd977f2cb9531b12E6f9",
+        "collateralRatio": 250,
+        "collateralAmount": "0.0003",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xEB932870E3cc98d354d6dd977f2cb9531b12E6f9\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc9b15b7e25950bcfc9550e2f9e39fc20075dd02ff0d7ffe4546ba4ce9d48b55e\", \"blockNumber\": 4024377, \"contractAddress\": null, \"cumulativeGasUsed\": \"2887603\", \"from\": \"0xEB932870E3cc98d354d6dd977f2cb9531b12E6f9\", \"gasPrice\": \"7\", \"gasUsed\": \"1444659\", \"hash\": \"0x859b7d9a994bf8e4b070e69a4e74fbc4526d7f8b4c83f0c84e282ea83d2595e9\", \"index\": 1, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x187Efb0587F47cB3C1F24397EA97F021e7FcB4C0",
+        "collateralRatio": 250,
+        "collateralAmount": "0.0003",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x187Efb0587F47cB3C1F24397EA97F021e7FcB4C0\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc86432d71818805edf02ba845f4de9236e717a38a8759f72014bb31f67684565\", \"blockNumber\": 4024378, \"contractAddress\": null, \"cumulativeGasUsed\": \"1444659\", \"from\": \"0x187Efb0587F47cB3C1F24397EA97F021e7FcB4C0\", \"gasPrice\": \"8\", \"gasUsed\": \"1444659\", \"hash\": \"0xb5db9f17365e5d0876fc63908a6668d97b4f9b3128ed647c4446e161639c83d6\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0xda7488DFd50E52E6980e211f0950C39B0a872d0A",
+        "collateralRatio": 300,
+        "collateralAmount": "0.00036",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xda7488DFd50E52E6980e211f0950C39B0a872d0A\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc86432d71818805edf02ba845f4de9236e717a38a8759f72014bb31f67684565\", \"blockNumber\": 4024378, \"contractAddress\": null, \"cumulativeGasUsed\": \"6528636\", \"from\": \"0xda7488DFd50E52E6980e211f0950C39B0a872d0A\", \"gasPrice\": \"8\", \"gasUsed\": \"1444659\", \"hash\": \"0xf7957a3b685c59030b874399f21b9dc4bcdb23473fc276f806fea9a44c290d22\", \"index\": 4, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x2338342c7DC7B67BC4ab20bdA34eFb21A5b7005e",
+        "collateralRatio": 200,
+        "collateralAmount": "0.00024",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x2338342c7DC7B67BC4ab20bdA34eFb21A5b7005e\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc86432d71818805edf02ba845f4de9236e717a38a8759f72014bb31f67684565\", \"blockNumber\": 4024378, \"contractAddress\": null, \"cumulativeGasUsed\": \"2889318\", \"from\": \"0x2338342c7DC7B67BC4ab20bdA34eFb21A5b7005e\", \"gasPrice\": \"8\", \"gasUsed\": \"1444659\", \"hash\": \"0x71020fb28536f2e3e454cf437cd74330e4068a0a08357989c7edbfbb2c0b5543\", \"index\": 1, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7",
+        "collateralRatio": 350,
+        "collateralAmount": "0.00042",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc86432d71818805edf02ba845f4de9236e717a38a8759f72014bb31f67684565\", \"blockNumber\": 4024378, \"contractAddress\": null, \"cumulativeGasUsed\": \"5083977\", \"from\": \"0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7\", \"gasPrice\": \"8\", \"gasUsed\": \"750000\", \"hash\": \"0xba7ae7aed0de125b851281661869587b893685730eae7f08487586d2b7a3ebc3\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x856d630612Bb94Ad3DCA3f113448168cEA262f21",
+        "collateralRatio": 150,
+        "collateralAmount": "0.00018",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x856d630612Bb94Ad3DCA3f113448168cEA262f21\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xc86432d71818805edf02ba845f4de9236e717a38a8759f72014bb31f67684565\", \"blockNumber\": 4024378, \"contractAddress\": null, \"cumulativeGasUsed\": \"4333977\", \"from\": \"0x856d630612Bb94Ad3DCA3f113448168cEA262f21\", \"gasPrice\": \"8\", \"gasUsed\": \"1444659\", \"hash\": \"0xb5232f585d10836557c96c9e853d0c7afcb358d88f9c4cb623e2ed4592695282\", \"index\": 2, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0xFfBDA321CA56317988A9F6c4CFf943749D4f1717",
+        "collateralRatio": 150,
+        "collateralAmount": "0.00018",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xFfBDA321CA56317988A9F6c4CFf943749D4f1717\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x4aca8e4f79d292a52fb3ce4b75e8712c98771e1ab09f3d51c123a3bcd8a2e286\", \"blockNumber\": 4024379, \"contractAddress\": null, \"cumulativeGasUsed\": \"1444659\", \"from\": \"0xFfBDA321CA56317988A9F6c4CFf943749D4f1717\", \"gasPrice\": \"10\", \"gasUsed\": \"1444659\", \"hash\": \"0x3abcfcbba7b075d48db9376c01ad2179bf52b1cfdc5f0781bfde3d3d6f614316\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0xbDaa18a5F6d11F18CC2ccceAea0C7f5EBF38E920",
+        "collateralRatio": 300,
+        "collateralAmount": "0.00036",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xbDaa18a5F6d11F18CC2ccceAea0C7f5EBF38E920\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x4aca8e4f79d292a52fb3ce4b75e8712c98771e1ab09f3d51c123a3bcd8a2e286\", \"blockNumber\": 4024379, \"contractAddress\": null, \"cumulativeGasUsed\": \"5778636\", \"from\": \"0xbDaa18a5F6d11F18CC2ccceAea0C7f5EBF38E920\", \"gasPrice\": \"10\", \"gasUsed\": \"1444659\", \"hash\": \"0x5fe82da36f8fabbd0866c6ba35db2ab961ebd5287803f6287bd0a010975db17f\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x9acc1c21560939a6042d19a8e0c9a39694abd4603945a80b60b91aa05a8d07ae",
+        "account": "0xD2c72F37a0b744C758825d81ab618C9F38beF49A",
+        "collateralRatio": 350,
+        "collateralAmount": "0.00042",
+        "debtAmount": 2200,
+        "gasUsed": "1294197",
+        "duration": 3147
+      },
+      {
+        "success": false,
+        "account": "0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1",
+        "collateralRatio": 250,
+        "collateralAmount": "0.0003",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x4aca8e4f79d292a52fb3ce4b75e8712c98771e1ab09f3d51c123a3bcd8a2e286\", \"blockNumber\": 4024379, \"contractAddress\": null, \"cumulativeGasUsed\": \"2889318\", \"from\": \"0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1\", \"gasPrice\": \"10\", \"gasUsed\": \"1444659\", \"hash\": \"0xb9cb78922fc6836f45257792c911377ec58b3cea68cbcb2f4d190425f73f2d6e\", \"index\": 1, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA",
+        "collateralRatio": 200,
+        "collateralAmount": "0.00024",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x4aca8e4f79d292a52fb3ce4b75e8712c98771e1ab09f3d51c123a3bcd8a2e286\", \"blockNumber\": 4024379, \"contractAddress\": null, \"cumulativeGasUsed\": \"4333977\", \"from\": \"0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA\", \"gasPrice\": \"10\", \"gasUsed\": \"1444659\", \"hash\": \"0xf26c0ee922f03c25c193d484148265d597b9aeb6f001ffb46488ae3cbcc979f6\", \"index\": 2, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0xF7A994986290038b1AB1C7EA92FD0CB1B0eAdd13",
+        "collateralRatio": 300,
+        "collateralAmount": "0.00036",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xF7A994986290038b1AB1C7EA92FD0CB1B0eAdd13\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xae21efcfad930f932454f7369920be6efd173dfa453337a31aa3ad77391203d0\", \"blockNumber\": 4024380, \"contractAddress\": null, \"cumulativeGasUsed\": \"2889318\", \"from\": \"0xF7A994986290038b1AB1C7EA92FD0CB1B0eAdd13\", \"gasPrice\": \"11\", \"gasUsed\": \"1444659\", \"hash\": \"0xa807dea24c7d9dede122869fbd37eb10598d36c8086b10d8dc49a604be2dc7d9\", \"index\": 1, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x788fe4d5a931876eca582a2d0d876e1d1c82e2a49e39737752c5ee5dc3ec822d",
+        "account": "0x74B878530a23aC275b90Aa2E4403Ff3260A1fe60",
+        "collateralRatio": 350,
+        "collateralAmount": "0.00042",
+        "debtAmount": 2200,
+        "gasUsed": "1294197",
+        "duration": 2968
+      },
+      {
+        "success": false,
+        "account": "0x6af2a89085815E28401d0Db10f137D94e1203C59",
+        "collateralRatio": 200,
+        "collateralAmount": "0.00024",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x6af2a89085815E28401d0Db10f137D94e1203C59\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xae21efcfad930f932454f7369920be6efd173dfa453337a31aa3ad77391203d0\", \"blockNumber\": 4024380, \"contractAddress\": null, \"cumulativeGasUsed\": \"1444659\", \"from\": \"0x6af2a89085815E28401d0Db10f137D94e1203C59\", \"gasPrice\": \"11\", \"gasUsed\": \"1444659\", \"hash\": \"0xef5b007dccba660a2a350a6402d89592c276025673b497ef8c426442506981a0\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0x938fE9eC09Df8877b6Af13B7B801526F4E5d96CE",
+        "collateralRatio": 250,
+        "collateralAmount": "0.0003",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x938fE9eC09Df8877b6Af13B7B801526F4E5d96CE\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xae21efcfad930f932454f7369920be6efd173dfa453337a31aa3ad77391203d0\", \"blockNumber\": 4024380, \"contractAddress\": null, \"cumulativeGasUsed\": \"7072487\", \"from\": \"0x938fE9eC09Df8877b6Af13B7B801526F4E5d96CE\", \"gasPrice\": \"11\", \"gasUsed\": \"1444486\", \"hash\": \"0x0eb902ac9461f6e0e5ae525547aeb40c9a76138490214fb0113ae4b0959616c4\", \"index\": 4, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": false,
+        "account": "0xDcE91B87A4A94ba02E583947aB4D9393D2954542",
+        "collateralRatio": 150,
+        "collateralAmount": "0.00018",
+        "debtAmount": 2200,
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xDcE91B87A4A94ba02E583947aB4D9393D2954542\", \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xae21efcfad930f932454f7369920be6efd173dfa453337a31aa3ad77391203d0\", \"blockNumber\": 4024380, \"contractAddress\": null, \"cumulativeGasUsed\": \"5628001\", \"from\": \"0xDcE91B87A4A94ba02E583947aB4D9393D2954542\", \"gasPrice\": \"11\", \"gasUsed\": \"1444486\", \"hash\": \"0x4954a6d9125ddfde05c48ac68666ccb2d1af470446920c362e763ae6a81ae0ad\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0xa14cbA6DD12D537A8decc7dd3c4aC413B8711eba\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "address": "0x96F676cc6ac25F8B1cBdfBdcF074eD204CBa9999",
+  "address": "0xEef94449A49ce820aCCB67b0cD707a52aa5f1791",
   "abi": [
     {
       "inputs": [],
@@ -361,10 +361,10 @@
     },
     {
       "inputs": [],
-      "name": "interestRateManagerAddress",
+      "name": "interestRateManager",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "contract IInterestRateManager",
           "name": "",
           "type": "address"
         }
@@ -492,8 +492,8 @@
       "type": "receive"
     }
   ],
-  "transactionHash": "0xd0dffd30ae6fc7d29a9755289cf6dfbd76bd63e6839b357eab07f68b384e9c29",
+  "transactionHash": "0xa25617e1a4bfca45a829e4d0ff5d8eacc4ef6d8353807bf202cf916944dfe906",
   "numDeployments": 1,
-  "implementation": "0xbbf08194c9c4da2B4a7470BEE941028ABCD906A6",
+  "implementation": "0xbFc8201773bC17cc17e34a9EB4056cd5B7358192",
   "devdoc": "Contract deployed as upgradable proxy"
 }

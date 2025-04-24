@@ -1,0 +1,63 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-04-22T16:53:46.550Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "repaymentPercentages": [10, 20, 30, 40, 50],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x998950a1e9991b07110edb5e6bf7771d5afcdc5e44c9e4cf6c5c67bff1349f6d",
+        "account": "0x269Df9cB54eE572356683698e99Cb017C3813F21",
+        "repaymentPercentage": 30,
+        "repayAmount": "713.547945032207166268",
+        "gasUsed": "500000",
+        "duration": 2229
+      },
+      {
+        "success": true,
+        "hash": "0xedbbd33f2574edf783ed2d862cfcb00a3f6380f0bd97be84886b97d987b1b49b",
+        "account": "0xE8a5DAaB642979d504250eb2Dd8C2d8D5c78924f",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.609593284928151489",
+        "gasUsed": "500000",
+        "duration": 2367
+      },
+      {
+        "success": true,
+        "hash": "0x60205dc0dcbb7a1b3c08212f7596ef597825788737f5a8c9c2596d7a6f67cb48",
+        "account": "0x110523617Bb8882eaD1B5276aB7999c3dC901b93",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.254798781707434862",
+        "gasUsed": "500000",
+        "duration": 2252
+      },
+      {
+        "success": true,
+        "hash": "0x07cb72c448f24bbec37d95448d064c5b89a91779f2379b91fb9db846063fca76",
+        "account": "0x46Db16c0fA004F597410A212710ce0Ea60ddd2BA",
+        "repaymentPercentage": 50,
+        "repayAmount": "914.547899191278042315",
+        "gasUsed": "500000",
+        "duration": 2436
+      },
+      {
+        "success": true,
+        "hash": "0xbb6dd007344e1685121a8e61acdfa79af82538391d09b1fbdc786025ccf2d64c",
+        "account": "0xf23A8d2EEbF24a04bdaEB45d253B3C1211fe3B24",
+        "repaymentPercentage": 40,
+        "repayAmount": "814.047920583711633493",
+        "gasUsed": "500000",
+        "duration": 5778
+      }
+    ]
+  }
+}
