@@ -318,78 +318,45 @@ contract BorrowerOperations is
         _claimCollateral(msg.sender, msg.sender);
     }
 
-    function setAddresses1(
-        address _activePoolAddress,
-        address _borrowerOperationsSignaturesAddress,
-        address _collSurplusPoolAddress,
-        address _defaultPoolAddress,
-        address _gasPoolAddress,
-        address _governableVariablesAddress,
-        address _interestRateManagerAddress,
-        address _musdTokenAddress,
-        address _pcvAddress,
-        address _priceFeedAddress,
-        address _sortedTrovesAddress,
-        address _stabilityPoolAddress
-    ) external onlyOwner {
+    function setAddresses(address[13] memory _addresses) external onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
         assert(minNetDebt > 0);
 
-        checkContract(_activePoolAddress);
-        checkContract(_borrowerOperationsSignaturesAddress);
-        checkContract(_collSurplusPoolAddress);
-        checkContract(_defaultPoolAddress);
-        checkContract(_gasPoolAddress);
-        checkContract(_governableVariablesAddress);
-        checkContract(_interestRateManagerAddress);
-        checkContract(_musdTokenAddress);
-        checkContract(_pcvAddress);
-        checkContract(_priceFeedAddress);
-        checkContract(_sortedTrovesAddress);
-        checkContract(_stabilityPoolAddress);
+        uint addressLength = _addresses.length;
+        for (uint i = 0; i < addressLength; i++) {
+            checkContract(_addresses[i]);
+        }
 
         // slither-disable-start missing-zero-check
-        activePool = IActivePool(_activePoolAddress);
-        borrowerOperationsSignaturesAddress = _borrowerOperationsSignaturesAddress;
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
-        gasPoolAddress = _gasPoolAddress;
-        governableVariables = IGovernableVariables(_governableVariablesAddress);
-        interestRateManager = IInterestRateManager(_interestRateManagerAddress);
-        musd = IMUSD(_musdTokenAddress);
-        pcv = IPCV(_pcvAddress);
-        pcvAddress = _pcvAddress;
-        priceFeed = IPriceFeed(_priceFeedAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        stabilityPoolAddress = _stabilityPoolAddress;
+        activePool = IActivePool(_addresses[0]);
+        borrowerOperationsSignaturesAddress = _addresses[1];
+        collSurplusPool = ICollSurplusPool(_addresses[2]);
+        defaultPool = IDefaultPool(_addresses[3]);
+        gasPoolAddress = _addresses[4];
+        governableVariables = IGovernableVariables(_addresses[5]);
+        interestRateManager = IInterestRateManager(_addresses[6]);
+        musd = IMUSD(_addresses[7]);
+        pcv = IPCV(_addresses[8]);
+        pcvAddress = _addresses[8];
+        priceFeed = IPriceFeed(_addresses[9]);
+        sortedTroves = ISortedTroves(_addresses[10]);
+        stabilityPoolAddress = _addresses[11];
+        troveManager = ITroveManager(_addresses[12]);
         // slither-disable-end missing-zero-check
 
-        emit ActivePoolAddressChanged(_activePoolAddress);
-        emit BorrowerOperationsSignaturesAddressChanged(
-            _borrowerOperationsSignaturesAddress
-        );
-        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
-        emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
-        emit MUSDTokenAddressChanged(_musdTokenAddress);
-        emit PCVAddressChanged(_pcvAddress);
-        emit PriceFeedAddressChanged(_priceFeedAddress);
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
-
-        setAddresses1Set = true;
-    }
-
-    function setAddresses2(address _troveManagerAddress) external onlyOwner {
-        require(setAddresses1Set, "Must call setAddresses1 first.");
-
-        checkContract(_troveManagerAddress);
-
-        // slither-disable-start missing-zero-check
-        troveManager = ITroveManager(_troveManagerAddress);
-        // slither-disable-end missing-zero-check
-
-        emit TroveManagerAddressChanged(_troveManagerAddress);
+        emit ActivePoolAddressChanged(_addresses[0]);
+        emit BorrowerOperationsSignaturesAddressChanged(_addresses[1]);
+        emit CollSurplusPoolAddressChanged(_addresses[2]);
+        emit DefaultPoolAddressChanged(_addresses[3]);
+        emit GasPoolAddressChanged(_addresses[4]);
+        emit GovernableVariablesAddressChanged(_addresses[5]);
+        emit InterestRateManagerAddressChanged(_addresses[6]);
+        emit MUSDTokenAddressChanged(_addresses[7]);
+        emit PCVAddressChanged(_addresses[8]);
+        emit PriceFeedAddressChanged(_addresses[9]);
+        emit SortedTrovesAddressChanged(_addresses[10]);
+        emit StabilityPoolAddressChanged(_addresses[11]);
+        emit TroveManagerAddressChanged(_addresses[12]);
 
         renounceOwnership();
     }

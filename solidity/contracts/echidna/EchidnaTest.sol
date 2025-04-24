@@ -255,21 +255,23 @@ contract EchidnaTest {
             address(stabilityPool),
             address(troveManager)
         );
-        borrowerOperations.setAddresses1(
-            address(activePool),
-            address(borrowerOperationsSignatures),
-            address(collSurplusPool),
-            address(defaultPool),
-            address(gasPool),
-            address(governableVariables),
-            address(interestRateManager),
-            address(musd),
-            address(pcv),
-            address(priceFeed),
-            address(sortedTroves),
-            address(stabilityPool)
+        borrowerOperations.setAddresses(
+            [
+                address(activePool),
+                address(borrowerOperationsSignatures),
+                address(collSurplusPool),
+                address(defaultPool),
+                address(gasPool),
+                address(governableVariables),
+                address(interestRateManager),
+                address(musd),
+                address(pcv),
+                address(priceFeed),
+                address(sortedTroves),
+                address(stabilityPool),
+                address(troveManager)
+            ]
         );
-        borrowerOperations.setAddresses2(address(troveManager));
         collSurplusPool.setAddresses(
             address(activePool),
             address(borrowerOperations),
