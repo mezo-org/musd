@@ -43,7 +43,7 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     ) external onlyOwner {
         require(
             _council != council || _treasury != treasury,
-            "PCV: these roles already set"
+            "GoverableVariables: these roles already set"
         );
 
         // solhint-disable-next-line not-rely-on-time
@@ -57,7 +57,10 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     }
 
     function cancelChangingRoles() external onlyOwner {
-        require(changingRolesInitiated != 0, "PCV: Change not initiated");
+        require(
+            changingRolesInitiated != 0,
+            "GovernableVariables: Change not initiated"
+        );
 
         changingRolesInitiated = 0;
         pendingCouncilAddress = address(0);
@@ -65,11 +68,14 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     }
 
     function finalizeChangingRoles() external onlyOwner {
-        require(changingRolesInitiated > 0, "PCV: Change not initiated");
+        require(
+            changingRolesInitiated > 0,
+            "GovernableVariables: Change not initiated"
+        );
         require(
             // solhint-disable-next-line not-rely-on-time
             block.timestamp >= changingRolesInitiated + governanceTimeDelay,
-            "PCV: Governance delay has not elapsed"
+            "GovernableVariables: Governance delay has not elapsed"
         );
 
         council = pendingCouncilAddress;
@@ -86,7 +92,7 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     ) external onlyGovernance {
         require(
             _accounts.length > 0,
-            "BorrowerOperations: Fee Exempt array must not be empty"
+            "GovernableVariables: Fee Exempt array must not be empty"
         );
         uint accountLength = _accounts.length;
         for (uint256 i = 0; i < accountLength; i++) {
@@ -99,7 +105,7 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     ) external onlyGovernance {
         require(
             _accounts.length > 0,
-            "BorrowerOperations: Fee Exempt array must not be empty."
+            "GovernableVariables: Fee Exempt array must not be empty."
         );
         uint accountLength = _accounts.length;
         for (uint256 i = 0; i < accountLength; i++) {
@@ -114,7 +120,7 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     function addFeeExemptAccount(address _account) public onlyGovernance {
         require(
             !feeExemptAccounts[_account],
-            "BorrowerOperations: Account must not already be exempt."
+            "GovernableVariables: Account must not already be exempt."
         );
 
         feeExemptAccounts[_account] = true;
@@ -124,7 +130,7 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     function removeFeeExemptAccount(address _account) public onlyGovernance {
         require(
             feeExemptAccounts[_account],
-            "BorrowerOperations: Account must currently be exempt."
+            "GovernableVariables: Account must currently be exempt."
         );
 
         feeExemptAccounts[_account] = false;

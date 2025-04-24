@@ -189,7 +189,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccount(alice.wallet),
         ).to.be.revertedWith(
-          "BorrowerOperations: Account must not already be exempt.",
+          "GovernableVariables: Account must not already be exempt.",
         )
       })
     })
@@ -339,7 +339,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccounts([alice.wallet]),
         ).to.be.revertedWith(
-          "BorrowerOperations: Account must not already be exempt.",
+          "GovernableVariables: Account must not already be exempt.",
         )
       })
 
@@ -349,7 +349,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccounts([]),
         ).to.be.revertedWith(
-          "BorrowerOperations: Fee Exempt array must not be empty.",
+          "GovernableVariables: Fee Exempt array must not be empty.",
         )
       })
     })
@@ -432,7 +432,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccounts([alice.wallet]),
         ).to.be.revertedWith(
-          "BorrowerOperations: Account must not already be exempt.",
+          "GovernableVariables: Account must not already be exempt.",
         )
       })
 
@@ -442,7 +442,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccounts([]),
         ).to.be.revertedWith(
-          "BorrowerOperations: Fee Exempt array must not be empty.",
+          "GovernableVariables: Fee Exempt array must not be empty.",
         )
       })
     })
@@ -526,7 +526,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccounts([alice.wallet]),
         ).to.be.revertedWith(
-          "BorrowerOperations: Account must not already be exempt.",
+          "GovernableVariables: Account must not already be exempt.",
         )
       })
 
@@ -536,7 +536,7 @@ describe("GovernableVariables", () => {
             .connect(council.wallet)
             .addFeeExemptAccounts([]),
         ).to.be.revertedWith(
-          "BorrowerOperations: Fee Exempt array must not be empty.",
+          "GovernableVariables: Fee Exempt array must not be empty.",
         )
       })
     })
