@@ -666,10 +666,12 @@ contract BorrowerOperations is
 
         _requireTroveisNotActive(contractsCache.troveManager, _borrower);
 
-        vars.fee;
         vars.netDebt = _debtAmount;
 
-        if (!isRecoveryMode) {
+        if (
+            !isRecoveryMode &&
+            !governableVariables.isAccountFeeExempt(_borrower)
+        ) {
             vars.fee = _triggerBorrowingFee(contractsCache.musd, _debtAmount);
             vars.netDebt += vars.fee;
         }
@@ -1055,10 +1057,14 @@ contract BorrowerOperations is
         vars.oldRate = vars.troveManagerCached.getTroveInterestRate(_borrower);
         vars.oldDebt = vars.troveManagerCached.getTroveDebt(_borrower);
         vars.amount = (refinancingFeePercentage * vars.oldDebt) / 100;
-        uint256 fee = _triggerBorrowingFee(musd, vars.amount);
+        uint256 fee = governableVariables.isAccountFeeExempt(_borrower)
+            ? 0
+            : _triggerBorrowingFee(musd, vars.amount);
         // slither-disable-next-line unused-return
         vars.troveManagerCached.increaseTroveDebt(_borrower, fee);
-        activePool.increaseDebt(fee, 0);
+        if (fee > 0) {
+            activePool.increaseDebt(fee, 0);
+        }
 
         // slither-disable-start unused-return
         (

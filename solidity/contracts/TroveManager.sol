@@ -407,9 +407,11 @@ contract TroveManager is
         );
 
         // Calculate the collateral fee
-        totals.collateralFee = borrowerOperations.getRedemptionRate(
-            totals.totalCollateralDrawn
-        );
+        totals.collateralFee = governableVariables.isAccountFeeExempt(
+            msg.sender
+        )
+            ? 0
+            : borrowerOperations.getRedemptionRate(totals.totalCollateralDrawn);
 
         totals.collateralToSendToRedeemer =
             totals.totalCollateralDrawn -
