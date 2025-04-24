@@ -3,6 +3,7 @@ import {
   Contracts,
   User,
   fastForwardTime,
+  getLatestBlockTimestamp,
   openTrove,
   performRedemption,
   setDefaultFees,
@@ -12,6 +13,7 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
+import { GovernableVariables } from "../../typechain"
 
 describe("GovernableVariables", () => {
   // users
@@ -25,9 +27,15 @@ describe("GovernableVariables", () => {
   let contracts: Contracts
   let MUSD_GAS_COMPENSATION: bigint
 
+  let governableVariables: GovernableVariables
+  let delay: bigint
+
   beforeEach(async () => {
     ;({ alice, bob, carol, council, dennis, deployer, treasury, contracts } =
       await setupTests())
+
+    // for ease of use when calling onlyOwner* functions
+    governableVariables = contracts.governableVariables.connect(deployer.wallet)
 
     MUSD_GAS_COMPENSATION =
       await contracts.borrowerOperations.MUSD_GAS_COMPENSATION()
@@ -45,6 +53,114 @@ describe("GovernableVariables", () => {
       .finalizeChangingRoles()
 
     await setDefaultFees(contracts, council)
+
+    delay = await contracts.governableVariables.governanceTimeDelay()
+  })
+
+  describe("startChangingRoles()", () => {
+    it("adds new roles as pending", async () => {
+      await governableVariables.startChangingRoles(alice.address, bob.address)
+      expect(await contracts.governableVariables.council()).to.equal(
+        council.address,
+      )
+      expect(await contracts.governableVariables.treasury()).to.equal(
+        treasury.address,
+      )
+      expect(
+        await contracts.governableVariables.pendingCouncilAddress(),
+      ).to.equal(alice.address)
+      expect(
+        await contracts.governableVariables.pendingTreasuryAddress(),
+      ).to.equal(bob.address)
+    })
+
+    it("speeds up first setting of roles", async () => {
+      // reset roles first
+      await governableVariables.startChangingRoles(ZERO_ADDRESS, ZERO_ADDRESS)
+      await fastForwardTime(Number(delay))
+      await governableVariables.finalizeChangingRoles()
+
+      await governableVariables.startChangingRoles(alice.address, bob.address)
+      const timeNow = await getLatestBlockTimestamp()
+      expect(
+        Number(await contracts.governableVariables.changingRolesInitiated()),
+      ).to.equal(Number(timeNow) - Number(delay))
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when trying to set same roles twice", async () => {
+        await expect(
+          governableVariables.startChangingRoles(
+            council.address,
+            treasury.address,
+          ),
+        ).to.be.revertedWith("GovernableVariables: these roles are already set")
+      })
+    })
+  })
+
+  describe("cancelChangingRoles()", () => {
+    it("resets pending roles", async () => {
+      await governableVariables.startChangingRoles(alice.address, bob.address)
+      await governableVariables.cancelChangingRoles()
+      expect(
+        await contracts.governableVariables.pendingCouncilAddress(),
+      ).to.equal(ZERO_ADDRESS)
+      expect(
+        await contracts.governableVariables.pendingTreasuryAddress(),
+      ).to.equal(ZERO_ADDRESS)
+      expect(await contracts.governableVariables.treasury()).to.equal(
+        treasury.address,
+      )
+      expect(await contracts.governableVariables.council()).to.equal(
+        council.address,
+      )
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when changing is not initiated", async () => {
+        await expect(
+          governableVariables.cancelChangingRoles(),
+        ).to.be.revertedWith("GovernableVariables: Change not initiated")
+      })
+    })
+  })
+
+  describe("finalizeChangingRoles()", () => {
+    it("sets new roles", async () => {
+      await governableVariables.startChangingRoles(alice.address, bob.address)
+      await fastForwardTime(Number(delay))
+      await governableVariables.finalizeChangingRoles()
+      expect(await contracts.governableVariables.council()).to.equal(
+        alice.address,
+      )
+      expect(await contracts.governableVariables.treasury()).to.equal(
+        bob.address,
+      )
+      expect(
+        await contracts.governableVariables.pendingCouncilAddress(),
+      ).to.equal(ZERO_ADDRESS)
+      expect(
+        await contracts.governableVariables.pendingTreasuryAddress(),
+      ).to.equal(ZERO_ADDRESS)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when changing is not initiated", async () => {
+        await expect(
+          governableVariables.finalizeChangingRoles(),
+        ).to.be.revertedWith("GovernableVariables: Change not initiated")
+      })
+
+      it("reverts when not enough time has passed", async () => {
+        await governableVariables.startChangingRoles(alice.address, bob.address)
+        await expect(
+          governableVariables.finalizeChangingRoles(),
+        ).to.be.revertedWith(
+          "GovernableVariables: Governance delay has not elapsed",
+        )
+      })
+    })
   })
 
   describe("addFeeExemptAccount()", () => {

@@ -43,7 +43,7 @@ contract GovernableVariables is IGovernableVariables, OwnableUpgradeable {
     ) external onlyOwner {
         require(
             _council != council || _treasury != treasury,
-            "GoverableVariables: these roles already set"
+            "GovernableVariables: these roles are already set"
         );
 
         // solhint-disable-next-line not-rely-on-time
