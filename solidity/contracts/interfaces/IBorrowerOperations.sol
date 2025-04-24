@@ -46,20 +46,22 @@ interface IBorrowerOperations {
 
     // --- Functions ---
 
-    function setAddresses(
+    function setAddresses1(
         address _activePoolAddress,
         address _borrowerOperationsSignaturesAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
+        address _governableVariablesAddress,
         address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _stabilityPoolAddress,
-        address _troveManagerAddress
+        address _stabilityPoolAddress
     ) external;
+
+    function setAddresses2(address _troveManagerAddress) external;
 
     function setRefinancingFeePercentage(
         uint8 _refinanceFeePercentage

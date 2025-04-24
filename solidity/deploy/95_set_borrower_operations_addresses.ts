@@ -14,6 +14,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     collSurplusPool,
     defaultPool,
     gasPool,
+    governableVariables,
     interestRateManager,
     musd,
     pcv,
@@ -25,18 +26,24 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await execute(
     "BorrowerOperations",
-    "setAddresses",
+    "setAddresses1",
     await activePool.getAddress(),
     await borrowerOperationsSignatures.getAddress(),
     await collSurplusPool.getAddress(),
     await defaultPool.getAddress(),
     await gasPool.getAddress(),
+    await governableVariables.getAddress(),
     await interestRateManager.getAddress(),
     await musd.getAddress(),
     await pcv.getAddress(),
     await priceFeed.getAddress(),
     await sortedTroves.getAddress(),
     await stabilityPool.getAddress(),
+  )
+
+  await execute(
+    "BorrowerOperations",
+    "setAddresses2",
     await troveManager.getAddress(),
   )
 }

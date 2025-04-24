@@ -10,6 +10,7 @@ import "./dependencies/LiquityBase.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
+import "./interfaces/IGovernableVariables.sol";
 import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
@@ -93,10 +94,12 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
     uint256 public constant MIN_NET_DEBT_MIN = 50e18;
+    bool private setAddresses1Set;
 
     // Connected contract declarations
     ITroveManager public troveManager;
     address public gasPoolAddress;
+    IGovernableVariables public governableVariables;
     address public pcvAddress;
     address public stabilityPoolAddress;
     address public borrowerOperationsSignaturesAddress;
@@ -139,6 +142,7 @@ contract BorrowerOperations is
         __Ownable_init(msg.sender);
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
+        setAddresses1Set = false;
 
         borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
         proposedBorrowingRate = borrowingRate;
@@ -314,20 +318,20 @@ contract BorrowerOperations is
         _claimCollateral(msg.sender, msg.sender);
     }
 
-    function setAddresses(
+    function setAddresses1(
         address _activePoolAddress,
         address _borrowerOperationsSignaturesAddress,
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
+        address _governableVariablesAddress,
         address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _stabilityPoolAddress,
-        address _troveManagerAddress
-    ) external override onlyOwner {
+        address _stabilityPoolAddress
+    ) external onlyOwner {
         // This makes impossible to open a trove with zero withdrawn mUSD
         assert(minNetDebt > 0);
 
@@ -336,13 +340,13 @@ contract BorrowerOperations is
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_gasPoolAddress);
+        checkContract(_governableVariablesAddress);
         checkContract(_interestRateManagerAddress);
         checkContract(_musdTokenAddress);
         checkContract(_pcvAddress);
         checkContract(_priceFeedAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_stabilityPoolAddress);
-        checkContract(_troveManagerAddress);
 
         // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
@@ -350,6 +354,7 @@ contract BorrowerOperations is
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         gasPoolAddress = _gasPoolAddress;
+        governableVariables = IGovernableVariables(_governableVariablesAddress);
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         musd = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
@@ -357,7 +362,6 @@ contract BorrowerOperations is
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         stabilityPoolAddress = _stabilityPoolAddress;
-        troveManager = ITroveManager(_troveManagerAddress);
         // slither-disable-end missing-zero-check
 
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -372,6 +376,19 @@ contract BorrowerOperations is
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit StabilityPoolAddressChanged(_stabilityPoolAddress);
+
+        setAddresses1Set = true;
+    }
+
+    function setAddresses2(address _troveManagerAddress) external onlyOwner {
+        require(setAddresses1Set, "Must call setAddresses1 first.");
+
+        checkContract(_troveManagerAddress);
+
+        // slither-disable-start missing-zero-check
+        troveManager = ITroveManager(_troveManagerAddress);
+        // slither-disable-end missing-zero-check
+
         emit TroveManagerAddressChanged(_troveManagerAddress);
 
         renounceOwnership();

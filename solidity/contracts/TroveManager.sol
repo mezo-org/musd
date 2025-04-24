@@ -14,6 +14,7 @@ import "./dependencies/LiquityBase.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
+import "./interfaces/IGovernableVariables.sol";
 import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
@@ -151,19 +152,14 @@ contract TroveManager is
     // --- Connected contract declarations ---
 
     IBorrowerOperations public borrowerOperations;
-
-    IStabilityPool public override stabilityPool;
-
-    address public gasPoolAddress;
-
     ICollSurplusPool public collSurplusPool;
-
+    address public gasPoolAddress;
+    IGovernableVariables public governableVariables;
     IMUSD public musdToken;
-
     IPCV public override pcv;
-
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTroves public sortedTroves;
+    IStabilityPool public override stabilityPool;
 
     // --- Data structures ---
 
@@ -221,6 +217,7 @@ contract TroveManager is
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
+        address _governableVariablesAddress,
         address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
@@ -233,37 +230,40 @@ contract TroveManager is
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_gasPoolAddress);
+        checkContract(_governableVariablesAddress);
+        checkContract(_interestRateManagerAddress);
         checkContract(_musdTokenAddress);
         checkContract(_pcvAddress);
         checkContract(_priceFeedAddress);
         checkContract(_sortedTrovesAddress);
         checkContract(_stabilityPoolAddress);
-        checkContract(_interestRateManagerAddress);
 
-        // slither-disable-next-line missing-zero-check
-        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
+        // slither-disable-start missing-zero-check
         activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
-        stabilityPool = IStabilityPool(_stabilityPoolAddress);
-        // slither-disable-next-line missing-zero-check
-        gasPoolAddress = _gasPoolAddress;
+        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        priceFeed = IPriceFeed(_priceFeedAddress);
-        musdToken = IMUSD(_musdTokenAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        pcv = IPCV(_pcvAddress);
+        defaultPool = IDefaultPool(_defaultPoolAddress);
+        gasPoolAddress = _gasPoolAddress;
+        governableVariables = IGovernableVariables(_governableVariablesAddress);
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        musdToken = IMUSD(_musdTokenAddress);
+        pcv = IPCV(_pcvAddress);
+        priceFeed = IPriceFeed(_priceFeedAddress);
+        sortedTroves = ISortedTroves(_sortedTrovesAddress);
+        stabilityPool = IStabilityPool(_stabilityPoolAddress);
+        // slither-disable-end missing-zero-check
 
-        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
-        emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
+        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
-        emit PriceFeedAddressChanged(_priceFeedAddress);
+        emit DefaultPoolAddressChanged(_defaultPoolAddress);
+        emit GasPoolAddressChanged(_gasPoolAddress);
+        emit GovernableVariablesAddressChanged(_governableVariablesAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
         emit PCVAddressChanged(_pcvAddress);
+        emit PriceFeedAddressChanged(_priceFeedAddress);
+        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
+        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
 
         renounceOwnership();
     }
