@@ -128,15 +128,7 @@ contract EchidnaTest {
             )
         );
         musd = IMUSD(
-            new MUSD(
-                "Mezo USD",
-                "MUSD",
-                address(troveManager),
-                address(stabilityPool),
-                address(borrowerOperations),
-                address(interestRateManager),
-                90 * 24 * 60 * 60
-            )
+            new MUSD()
         );
         mockAggregator = new MockAggregator(18);
         collSurplusPool = ICollSurplusPool(
