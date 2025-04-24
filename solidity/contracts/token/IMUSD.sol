@@ -13,7 +13,16 @@ interface IMUSD is IERC20Metadata, IERC20Permit {
     event StabilityPoolAddressAdded(address _newStabilityPoolAddress);
     event TroveManagerAddressAdded(address _troveManagerAddress);
 
+    function initialize(
+        address _troveManagerAddress,
+        address _stabilityPoolAddress,
+        address _borrowerOperationsAddress,
+        address _interestRateManagerAddress,
+        uint256 _governanceTimeDelay
+    ) external;
+
     // --- Governance Functions ---
+
     function cancelAddContracts() external;
 
     function cancelAddMintList() external;
@@ -43,7 +52,6 @@ interface IMUSD is IERC20Metadata, IERC20Permit {
 
     function finalizeRevokeMintList() external;
 
-    // --- External Functions ---
     function burn(address _account, uint256 _amount) external;
 
     function mint(address _account, uint256 _amount) external;

@@ -38,6 +38,7 @@ import "../interfaces/IPriceFeed.sol";
 import "../HintHelpers.sol";
 import "../interfaces/IHintHelpers.sol";
 import "./EchidnaProxy.sol";
+import "../tests/MUSDTester.sol";
 
 // Run with
 // `rm -rf echidna-corpus && echidna . --config echidna.yaml --contract EchidnaTest`
@@ -127,17 +128,7 @@ contract EchidnaTest {
                 )
             )
         );
-        musd = IMUSD(
-            new MUSD(
-                "Mezo USD",
-                "MUSD",
-                address(troveManager),
-                address(stabilityPool),
-                address(borrowerOperations),
-                address(interestRateManager),
-                90 * 24 * 60 * 60
-            )
-        );
+        musd = IMUSD(new MUSDTester());
         mockAggregator = new MockAggregator(18);
         collSurplusPool = ICollSurplusPool(
             address(
@@ -292,6 +283,13 @@ contract EchidnaTest {
             address(stabilityPool)
         );
         gasPool.setAddresses(address(musd), address(troveManager));
+        musd.initialize(
+            address(troveManager),
+            address(stabilityPool),
+            address(borrowerOperations),
+            address(interestRateManager),
+            10
+        );
         sortedTroves.setParams(
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,
             address(borrowerOperations),
