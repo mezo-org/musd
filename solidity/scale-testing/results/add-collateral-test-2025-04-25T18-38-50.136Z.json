@@ -1,0 +1,64 @@
+{
+  "testId": "add-collateral-test",
+  "timestamp": "2025-04-25T18:38:50.136Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "collateralAmounts": [
+      "0.0001",
+      "0.0002",
+      "0.0003",
+      "0.0004",
+      "0.0005"
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xba48dded3c5a685789d2ae0e17376a330a7d13fde34bb27944c61de2138a959c",
+        "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "collateralAmount": "0.0005",
+        "gasUsed": "500000",
+        "duration": 4442
+      },
+      {
+        "success": true,
+        "hash": "0xc871fdfcc9ad0ed940701ec2f85314c3ebd664940065aeb8a25b85a039980a14",
+        "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "collateralAmount": "0.0004",
+        "gasUsed": "500000",
+        "duration": 4635
+      },
+      {
+        "success": true,
+        "hash": "0xdca03368b9456bcdcea5aedc84b5789c2db5695eff59c3c939662d713742cda9",
+        "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "collateralAmount": "0.0001",
+        "gasUsed": "500000",
+        "duration": 4717
+      },
+      {
+        "success": true,
+        "hash": "0xccda0d15178db9c0a94c0cb646eb0777387c74f0e86587ef401b36c6ad9780c8",
+        "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "collateralAmount": "0.0003",
+        "gasUsed": "500000",
+        "duration": 5328
+      },
+      {
+        "success": true,
+        "hash": "0xc3bfa72ad25af78958c4f95ec9e1a53524c916d7f84e3e507628e53119bc67e1",
+        "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "collateralAmount": "0.0002",
+        "gasUsed": "500000",
+        "duration": 5435
+      }
+    ]
+  }
+}

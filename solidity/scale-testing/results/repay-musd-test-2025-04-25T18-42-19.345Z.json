@@ -1,0 +1,69 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-04-25T18:42:19.345Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "repaymentPercentages": [
+      10,
+      20,
+      30,
+      40,
+      50
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x0f94f9c32aa4812922d26c27e7b7325e27bfbbf968ab6044c07878dfe18a835e",
+        "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "repaymentPercentage": 20,
+        "repayAmount": "0.000034169650158952",
+        "gasUsed": "500000",
+        "duration": 4970
+      },
+      {
+        "success": true,
+        "hash": "0xa196e441bf279fdb60e64e9cc293817cb776ff464f36220877cc318a6c64495f",
+        "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "repaymentPercentage": 50,
+        "repayAmount": "0.000036940355045655",
+        "gasUsed": "500000",
+        "duration": 5044
+      },
+      {
+        "success": true,
+        "hash": "0x49af7d3fe929c6aa14cb40d62a60c8f7a7f425cf5e493624656c97f41e2027af",
+        "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "repaymentPercentage": 40,
+        "repayAmount": "0.000036016786747825",
+        "gasUsed": "500000",
+        "duration": 5148
+      },
+      {
+        "success": true,
+        "hash": "0xc804b9ffb4ce4ab4a4daa8c146ff9e35f88f335345f94fed94a0926a5f4bf779",
+        "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "repaymentPercentage": 30,
+        "repayAmount": "0.000035093218449996",
+        "gasUsed": "500000",
+        "duration": 5751
+      },
+      {
+        "success": true,
+        "hash": "0x868ba3ca88e78b0686aaa02a4c26b50d0653e1439cd9944d0ed5501846c68c79",
+        "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "repaymentPercentage": 10,
+        "repayAmount": "2.739157029081240237",
+        "gasUsed": "500000",
+        "duration": 5840
+      }
+    ]
+  }
+}

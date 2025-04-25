@@ -1,0 +1,69 @@
+{
+  "testId": "withdraw-collateral-test",
+  "timestamp": "2025-04-25T18:39:56.437Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "withdrawalPercentages": [
+      5,
+      10,
+      15,
+      20,
+      25
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xd0cf049b3ea154b659d23f38dafcf5598624b78d531605eb58dc40362ee68716",
+        "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.0002975",
+        "gasUsed": "500000",
+        "duration": 5033
+      },
+      {
+        "success": true,
+        "hash": "0x2825cae395536a2745f6de0733833e4175341b75e0210c0dd2adff313987b8cb",
+        "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.0002016",
+        "gasUsed": "500000",
+        "duration": 5122
+      },
+      {
+        "success": true,
+        "hash": "0xc1dfb187d89f6cc58fb44d4283f289d65925a011936030d3909d09feeeb9b942",
+        "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.0000183",
+        "gasUsed": "500000",
+        "duration": 5225
+      },
+      {
+        "success": true,
+        "hash": "0xa6c95612a0976e505c1e5351002fe0e226f93f9eba605989852b4cbf9678b279",
+        "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.0000596",
+        "gasUsed": "500000",
+        "duration": 5286
+      },
+      {
+        "success": true,
+        "hash": "0xc608d649510fa7cb9d941894091ff354dbea78bc54379abf6f6f900f6a8ebc46",
+        "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.0001215",
+        "gasUsed": "500000",
+        "duration": 6092
+      }
+    ]
+  }
+}

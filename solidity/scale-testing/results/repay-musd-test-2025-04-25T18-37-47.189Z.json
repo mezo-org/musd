@@ -1,0 +1,69 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-04-25T18:37:47.189Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "repaymentPercentages": [
+      10,
+      20,
+      30,
+      40,
+      50
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xea323d567c364db05acd9b66d4ee052d95191a325545a9570299dacd22bd49e1",
+        "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.15006876139368593",
+        "gasUsed": "500000",
+        "duration": 5867
+      },
+      {
+        "success": true,
+        "hash": "0x6cca92e2a41aa1dee73293dd1f4ec62691f4ad0be0623b6d095262b08ed56838",
+        "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.500808328383552378",
+        "gasUsed": "500000",
+        "duration": 6187
+      },
+      {
+        "success": true,
+        "hash": "0x17488d83890681a2ed94741dd7bb1e45260caae13068f6811b88b1ea8aa2f2b2",
+        "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.000808328383552378",
+        "gasUsed": "500000",
+        "duration": 6294
+      },
+      {
+        "success": true,
+        "hash": "0x65d7ebefe68ee715628ff61bb0b897f538986e1b546c5e7ac52e55e7fdcc67e3",
+        "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.400161665676710475",
+        "gasUsed": "500000",
+        "duration": 6383
+      },
+      {
+        "success": true,
+        "hash": "0xdbb1dae4dfbfe9567361e7275e83d33eed7d9309bcddd8324691dafe73cc217b",
+        "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.500808328383552378",
+        "gasUsed": "500000",
+        "duration": 6540
+      }
+    ]
+  }
+}

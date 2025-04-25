@@ -1,0 +1,69 @@
+{
+  "testId": "withdraw-collateral-test",
+  "timestamp": "2025-04-25T18:38:08.616Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "withdrawalPercentages": [
+      5,
+      10,
+      15,
+      20,
+      25
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xe3e8345c08299306b8099ee3605f26deae24e64380aa2b6e5fbad748f81a2081",
+        "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.000044",
+        "gasUsed": "500000",
+        "duration": 3895
+      },
+      {
+        "success": true,
+        "hash": "0xf11fa3fcf7f49fa8df509ec2432d7fd414a442e4920c0d30df74ac2d987ee50b",
+        "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.00009",
+        "gasUsed": "500000",
+        "duration": 4010
+      },
+      {
+        "success": true,
+        "hash": "0xf877a4af3abef338c5691aade450c3328e08f5b1c81be817c4dd6a9082ad986d",
+        "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.000152",
+        "gasUsed": "500000",
+        "duration": 4091
+      },
+      {
+        "success": true,
+        "hash": "0x5c8b71e1db21186e5273440e6db48f4a86ecfc763cef4082ded01073c585883c",
+        "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.00023",
+        "gasUsed": "500000",
+        "duration": 4269
+      },
+      {
+        "success": true,
+        "hash": "0x97ce9b760f385676e2b234a731a579b18ba00f6308e38c382e26995d6f200b78",
+        "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.000014",
+        "gasUsed": "500000",
+        "duration": 4371
+      }
+    ]
+  }
+}
