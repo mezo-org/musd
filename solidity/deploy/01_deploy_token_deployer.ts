@@ -8,14 +8,25 @@ import { deployWithSingletonFactory } from "../helpers/erc2470"
 import { TokenDeployer } from "../typechain"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { isHardhatNetwork, getValidDeployment, log, deployer } =
-    await setupDeploymentBoilerplate(hre)
+  const {
+    isHardhatNetwork,
+    isFuzzTestingNetwork,
+    getValidDeployment,
+    log,
+    deployer,
+  } = await setupDeploymentBoilerplate(hre)
   const { ethers, helpers, network } = hre
 
   // Short-circuit. On Hardhat, we do not use the real token contract for tests.
   // Instead, the MUSDTester is resolved as MUSD.
   if (isHardhatNetwork) {
     log("No need for TokenDeployer on Hardhat network, skipping")
+    return
+  }
+
+  // Short-circuit.  For fuzz testing, we can deploy MUSD directly.
+  if (isFuzzTestingNetwork) {
+    log("No need for TokenDeployer on fuzz testing network, skipping")
     return
   }
 

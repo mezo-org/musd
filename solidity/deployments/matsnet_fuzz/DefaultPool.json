@@ -1,6 +1,11 @@
 {
-  "address": "0x68650a9873740526f29B30b2b97040173b861Ffd",
+  "address": "0xb42087D7eE15409A827Ce163F9FdacF5Ac685CBe",
   "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
     {
       "inputs": [],
       "name": "InvalidInitialization",
@@ -39,7 +44,7 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_activePoolAddress",
+          "name": "_newActivePoolAddress",
           "type": "address"
         }
       ],
@@ -51,12 +56,76 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "_newBalance",
+          "type": "uint256"
+        }
+      ],
+      "name": "CollateralBalanceUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "address",
-          "name": "_borrowerOperationsAddress",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "CollateralSent",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_newDefaultPoolAddress",
           "type": "address"
         }
       ],
-      "name": "BorrowerOperationsAddressChanged",
+      "name": "DefaultPoolAddressChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_collateral",
+          "type": "uint256"
+        }
+      ],
+      "name": "DefaultPoolCollateralBalanceUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_principal",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_interest",
+          "type": "uint256"
+        }
+      ],
+      "name": "DefaultPoolDebtUpdated",
       "type": "event"
     },
     {
@@ -70,64 +139,6 @@
         }
       ],
       "name": "Initialized",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_newNumerator",
-          "type": "uint256"
-        }
-      ],
-      "name": "InterestNumeratorChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint16",
-          "name": "proposedRate",
-          "type": "uint16"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "proposalTime",
-          "type": "uint256"
-        }
-      ],
-      "name": "InterestRateProposed",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint16",
-          "name": "newInterestRate",
-          "type": "uint16"
-        }
-      ],
-      "name": "InterestRateUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_musdTokenAddress",
-          "type": "address"
-        }
-      ],
-      "name": "MUSDTokenAddressChanged",
       "type": "event"
     },
     {
@@ -155,11 +166,11 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_pcvAddress",
+          "name": "_newStabilityPoolAddress",
           "type": "address"
         }
       ],
-      "name": "PCVAddressChanged",
+      "name": "StabilityPoolAddressChanged",
       "type": "event"
     },
     {
@@ -168,7 +179,7 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_troveManagerAddress",
+          "name": "_newTroveManagerAddress",
           "type": "address"
         }
       ],
@@ -177,36 +188,10 @@
     },
     {
       "inputs": [],
-      "name": "MAX_INTEREST_RATE",
+      "name": "activePoolAddress",
       "outputs": [
         {
-          "internalType": "uint16",
-          "name": "",
-          "type": "uint16"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "MIN_DELAY",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "activePool",
-      "outputs": [
-        {
-          "internalType": "contract IActivePool",
+          "internalType": "address",
           "name": "",
           "type": "address"
         }
@@ -222,39 +207,19 @@
           "type": "uint256"
         },
         {
-          "internalType": "uint16",
-          "name": "_rate",
-          "type": "uint16"
+          "internalType": "uint256",
+          "name": "_interest",
+          "type": "uint256"
         }
       ],
-      "name": "addPrincipal",
+      "name": "decreaseDebt",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [],
-      "name": "approveInterestRate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "borrowerOperationsAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getAccruedInterest",
+      "name": "getCollateralBalance",
       "outputs": [
         {
           "internalType": "uint256",
@@ -263,6 +228,63 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getDebt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getInterest",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPrincipal",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_principal",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_interest",
+          "type": "uint256"
+        }
+      ],
+      "name": "increaseDebt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -270,58 +292,6 @@
       "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "interestNumerator",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "interestRate",
-      "outputs": [
-        {
-          "internalType": "uint16",
-          "name": "",
-          "type": "uint16"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "lastUpdatedTime",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "musdToken",
-      "outputs": [
-        {
-          "internalType": "contract IMUSD",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -338,65 +308,21 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint16",
-          "name": "_newProposedInterestRate",
-          "type": "uint16"
-        }
-      ],
-      "name": "proposeInterestRate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "proposedInterestRate",
-      "outputs": [
-        {
-          "internalType": "uint16",
-          "name": "",
-          "type": "uint16"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "proposedInterestRateTime",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_principal",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_rate",
-          "type": "uint16"
-        }
-      ],
-      "name": "removePrincipal",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "sendCollateralToActivePool",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -410,39 +336,11 @@
         },
         {
           "internalType": "address",
-          "name": "_borrowerOperationsAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_musdTokenAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_pcvAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
           "name": "_troveManagerAddress",
           "type": "address"
         }
       ],
       "name": "setAddresses",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint16",
-          "name": "_newInterestRate",
-          "type": "uint16"
-        }
-      ],
-      "name": "setInterestRateForTesting",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -462,48 +360,24 @@
     },
     {
       "inputs": [],
-      "name": "updateSystemInterest",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "troveManagerAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_interestOwed",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_payment",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_rate",
-          "type": "uint16"
-        }
-      ],
-      "name": "updateTroveDebt",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "principalAdjustment",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "interestAdjustment",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "stateMutability": "payable",
+      "type": "receive"
     }
   ],
-  "transactionHash": "0x249a39ebe20cb62296efbcbbb7fab2838b11327c410bfb40e4295dd3d73bac2c",
+  "transactionHash": "0x5c940e9d951439b3d5c60b921aa75328f76384b4c82308e99507bb1a90bf535d",
   "numDeployments": 1,
-  "implementation": "0x30d17eF13450c298a219FB427903A3581ef2F038",
+  "implementation": "0xa76a2c7869A82aFC7F547b467393709251b4b141",
   "devdoc": "Contract deployed as upgradable proxy"
 }

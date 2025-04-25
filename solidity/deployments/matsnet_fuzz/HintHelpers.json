@@ -1,6 +1,11 @@
 {
-  "address": "0x68650a9873740526f29B30b2b97040173b861Ffd",
+  "address": "0x6ebDb8589460e69237d7FB13265d23226b3DA17a",
   "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
     {
       "inputs": [],
       "name": "InvalidInitialization",
@@ -39,19 +44,6 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_activePoolAddress",
-          "type": "address"
-        }
-      ],
-      "name": "ActivePoolAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
           "name": "_borrowerOperationsAddress",
           "type": "address"
         }
@@ -70,64 +62,6 @@
         }
       ],
       "name": "Initialized",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_newNumerator",
-          "type": "uint256"
-        }
-      ],
-      "name": "InterestNumeratorChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint16",
-          "name": "proposedRate",
-          "type": "uint16"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "proposalTime",
-          "type": "uint256"
-        }
-      ],
-      "name": "InterestRateProposed",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint16",
-          "name": "newInterestRate",
-          "type": "uint16"
-        }
-      ],
-      "name": "InterestRateUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_musdTokenAddress",
-          "type": "address"
-        }
-      ],
-      "name": "MUSDTokenAddressChanged",
       "type": "event"
     },
     {
@@ -155,11 +89,11 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_pcvAddress",
+          "name": "_sortedTrovesAddress",
           "type": "address"
         }
       ],
-      "name": "PCVAddressChanged",
+      "name": "SortedTrovesAddressChanged",
       "type": "event"
     },
     {
@@ -177,12 +111,12 @@
     },
     {
       "inputs": [],
-      "name": "MAX_INTEREST_RATE",
+      "name": "CCR",
       "outputs": [
         {
-          "internalType": "uint16",
+          "internalType": "uint256",
           "name": "",
-          "type": "uint16"
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -190,7 +124,72 @@
     },
     {
       "inputs": [],
-      "name": "MIN_DELAY",
+      "name": "DECIMAL_PRECISION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MCR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MUSD_GAS_COMPENSATION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "NAME",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PERCENT_DIVISOR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "_100pct",
       "outputs": [
         {
           "internalType": "uint256",
@@ -215,36 +214,11 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_principal",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_rate",
-          "type": "uint16"
-        }
-      ],
-      "name": "addPrincipal",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
-      "name": "approveInterestRate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "borrowerOperationsAddress",
+      "name": "borrowerOperations",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "contract IBorrowerOperations",
           "name": "",
           "type": "address"
         }
@@ -253,12 +227,169 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getAccruedInterest",
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_coll",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        }
+      ],
+      "name": "computeCR",
       "outputs": [
         {
           "internalType": "uint256",
           "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_coll",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_debt",
+          "type": "uint256"
+        }
+      ],
+      "name": "computeNominalCR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "defaultPool",
+      "outputs": [
+        {
+          "internalType": "contract IDefaultPool",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_CR",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_numTrials",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_inputRandomSeed",
+          "type": "uint256"
+        }
+      ],
+      "name": "getApproxHint",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "hintAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "diff",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "latestRandomSeed",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getEntireSystemColl",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "entireSystemColl",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getEntireSystemDebt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "entireSystemDebt",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maxIterations",
+          "type": "uint256"
+        }
+      ],
+      "name": "getRedemptionHints",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "firstRedemptionHint",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "partialRedemptionHintNICR",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "truncatedAmount",
           "type": "uint256"
         }
       ],
@@ -274,49 +405,10 @@
     },
     {
       "inputs": [],
-      "name": "interestNumerator",
+      "name": "interestRateManager",
       "outputs": [
         {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "interestRate",
-      "outputs": [
-        {
-          "internalType": "uint16",
-          "name": "",
-          "type": "uint16"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "lastUpdatedTime",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "musdToken",
-      "outputs": [
-        {
-          "internalType": "contract IMUSD",
+          "internalType": "contract IInterestRateManager",
           "name": "",
           "type": "address"
         }
@@ -338,60 +430,16 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint16",
-          "name": "_newProposedInterestRate",
-          "type": "uint16"
-        }
-      ],
-      "name": "proposeInterestRate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
-      "name": "proposedInterestRate",
+      "name": "priceFeed",
       "outputs": [
         {
-          "internalType": "uint16",
+          "internalType": "contract IPriceFeed",
           "name": "",
-          "type": "uint16"
+          "type": "address"
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "proposedInterestRateTime",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_principal",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_rate",
-          "type": "uint16"
-        }
-      ],
-      "name": "removePrincipal",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -405,22 +453,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_activePoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
           "name": "_borrowerOperationsAddress",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_musdTokenAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_pcvAddress",
+          "name": "_sortedTrovesAddress",
           "type": "address"
         },
         {
@@ -435,16 +473,16 @@
       "type": "function"
     },
     {
-      "inputs": [
+      "inputs": [],
+      "name": "sortedTroves",
+      "outputs": [
         {
-          "internalType": "uint16",
-          "name": "_newInterestRate",
-          "type": "uint16"
+          "internalType": "contract ISortedTroves",
+          "name": "",
+          "type": "address"
         }
       ],
-      "name": "setInterestRateForTesting",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -462,48 +500,20 @@
     },
     {
       "inputs": [],
-      "name": "updateSystemInterest",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_interestOwed",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_payment",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_rate",
-          "type": "uint16"
-        }
-      ],
-      "name": "updateTroveDebt",
+      "name": "troveManager",
       "outputs": [
         {
-          "internalType": "uint256",
-          "name": "principalAdjustment",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "interestAdjustment",
-          "type": "uint256"
+          "internalType": "contract ITroveManager",
+          "name": "",
+          "type": "address"
         }
       ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     }
   ],
-  "transactionHash": "0x249a39ebe20cb62296efbcbbb7fab2838b11327c410bfb40e4295dd3d73bac2c",
+  "transactionHash": "0xde95fb76b9abfd256dd0e587d3673fa285102751f1343c0fb919d8ea69ca959a",
   "numDeployments": 1,
-  "implementation": "0x30d17eF13450c298a219FB427903A3581ef2F038",
+  "implementation": "0xf42602085F7895eb654E7FC04d4Ee3ebFf180fd4",
   "devdoc": "Contract deployed as upgradable proxy"
 }

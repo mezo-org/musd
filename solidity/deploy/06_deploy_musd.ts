@@ -15,14 +15,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     getValidDeployment,
     log,
     isHardhatNetwork,
+    isFuzzTestingNetwork,
     deployer,
     network,
   } = await setupDeploymentBoilerplate(hre)
   const { helpers } = hre
 
   const borrowerOperations = await deployments.get("BorrowerOperations")
-
-  const isFuzzTestingNetwork = hre.network.name === "matsnet_fuzz"
 
   const interestRateManagerName = isFuzzTestingNetwork
     ? "InterestRateManagerTester"
@@ -40,6 +39,21 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await getOrDeploy("MUSDTester")
     await execute(
       "MUSDTester",
+      "initialize",
+      troveManager.address,
+      stabilityPool.address,
+      borrowerOperations.address,
+      interestRateManager.address,
+      10,
+    )
+    return
+  }
+
+  // Short-circuit. For fuzz testing, we do not use the real token contract for tests.
+  if (isFuzzTestingNetwork) {
+    await getOrDeploy("MUSD")
+    await execute(
+      "MUSD",
       "initialize",
       troveManager.address,
       stabilityPool.address,
