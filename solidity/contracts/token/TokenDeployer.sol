@@ -16,13 +16,13 @@ contract TokenDeployer {
     /// @dev This is the same deployer EOA as the one used to deploy all tBTC v1,
     ///      tBTC v2, and Mezo contracts across various networks.
     address public constant DEPLOYER =
-        0x123694886DBf5Ac94DDA07135349534536D14cAf;
+        0x6e80164ea60673D64d5d6228beb684a1274Bb017;
 
     /// @notice The governance address receiving the control over the token;
     /// @dev This is the same multisig as the one used to control Mezo contracts
     ///      upgradeability and some protocol parameters of the chain.
     address public constant GOVERNANCE =
-        0x98D8899c3030741925BE630C710A98B57F397C7a;
+        0x6e80164ea60673D64d5d6228beb684a1274Bb017;
 
     uint256 public constant MEZO_CHAIN_ID = 31612;
     uint256 public constant ETHEREUM_CHAIN_ID = 1;

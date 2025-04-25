@@ -1,5 +1,5 @@
 {
-  "address": "0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90",
+  "address": "0x45F7fa66821A93B7C1c3540809714399D92b2913",
   "abi": [
     {
       "inputs": [],
@@ -159,12 +159,38 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "address",
+          "name": "_governableVariablesAddress",
+          "type": "address"
+        }
+      ],
+      "name": "GovernableVariablesAddressChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "uint64",
           "name": "version",
           "type": "uint64"
         }
       ],
       "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_interestRateManagerAddress",
+          "type": "address"
+        }
+      ],
+      "name": "InterestRateManagerAddressChanged",
       "type": "event"
     },
     {
@@ -756,6 +782,19 @@
     },
     {
       "inputs": [],
+      "name": "governableVariables",
+      "outputs": [
+        {
+          "internalType": "contract IGovernableVariables",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -1263,64 +1302,9 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_activePoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_borrowerOperationsSignaturesAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_collSurplusPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_defaultPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_gasPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_interestRateManagerAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_musdTokenAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_pcvAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_priceFeedAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_sortedTrovesAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_stabilityPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_troveManagerAddress",
-          "type": "address"
+          "internalType": "address[13]",
+          "name": "_addresses",
+          "type": "address[13]"
         }
       ],
       "name": "setAddresses",
@@ -1440,8 +1424,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x4e20c4db908af5afd9a97808294f00b05c28d115c60cc4b2bc91ffb3df797617",
+  "transactionHash": "0xb41b2ef80fd331b7153a25afe5a1f9e96bfdd1dbbe867f98a15d295bd8078610",
   "numDeployments": 1,
-  "implementation": "0xBb632Fe7a098E0c5b2760F5c93D89804Ee2a7675",
+  "implementation": "0x925303E888C26FBe94aeddA2Ad009b0b2446cFCA",
   "devdoc": "Contract deployed as upgradable proxy"
 }
