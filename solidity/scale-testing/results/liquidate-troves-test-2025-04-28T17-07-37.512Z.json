@@ -1,0 +1,64 @@
+{
+  "testId": "liquidate-troves-test",
+  "timestamp": "2025-04-28T17:07:37.512Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "targetCRRange": {
+      "min": 115,
+      "max": 500
+    },
+    "mcr": 110,
+    "priceReductionPercentage": "72.82",
+    "originalPrice": "20000000.0",
+    "reducedPrice": "5420000.0"
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "5000000",
+    "averageGas": "1000000"
+  },
+  "transactions": [
+    {
+      "hash": "0xdab2272672298a0369a01ab6036c765c4868faad98256f1ff029c8e97cf53add",
+      "account": "0x66D84F828F3E0C5BE2b5F4b3FAD8Ce9534378751",
+      "collateralLiquidated": "0.00040185",
+      "debtLiquidated": "2000.000490873016126657",
+      "gasUsed": "1000000",
+      "duration": 2373
+    },
+    {
+      "hash": "0x99e205009812a21a3ddc42351fe5c1fdef53a56ae6745e0d725022514d7b1118",
+      "account": "0xf95111C6d8662f6B1040f01204488dB1688b141c",
+      "collateralLiquidated": "0.00040185",
+      "debtLiquidated": "2000.000490871927560887",
+      "gasUsed": "1000000",
+      "duration": 5114
+    },
+    {
+      "hash": "0xdc9513ecc1bca6dd088bb46797edfd521a4b8233d648be0e59653df846b8da6f",
+      "account": "0x3aEe3aeAc032C32F3c5beb351735E83f591F99aF",
+      "collateralLiquidated": "0.00040185",
+      "debtLiquidated": "2000.000490871927583393",
+      "gasUsed": "1000000",
+      "duration": 5163
+    },
+    {
+      "hash": "0xecf81aa737fda5f0c82d7bda1d03ebebc3c48a719062f8b53d82f92d5491d079",
+      "account": "0x8Dc9eb294F124B46531145312f088DAfaD5b74ec",
+      "collateralLiquidated": "0.00040185",
+      "debtLiquidated": "2000.000490871927394021",
+      "gasUsed": "1000000",
+      "duration": 5550
+    },
+    {
+      "hash": "0xbf953db34d82bbea66fd72c2d6264b0dd2f5f79503652bfaae42680ba9fad758",
+      "account": "0xf23A8d2EEbF24a04bdaEB45d253B3C1211fe3B24",
+      "collateralLiquidated": "0.00040185",
+      "debtLiquidated": "2000.000491545158024041",
+      "gasUsed": "1000000",
+      "duration": 4603
+    }
+  ]
+}
