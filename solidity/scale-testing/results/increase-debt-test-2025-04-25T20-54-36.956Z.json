@@ -1,0 +1,184 @@
+{
+  "testId": "increase-debt-test",
+  "timestamp": "2025-04-25T20:54:36.956Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 20,
+    "musdAmounts": [
+      "100",
+      "200",
+      "300",
+      "400",
+      "500"
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 20,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "10000000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x70af3943c693885e53375edd5e99bedbd391f6921014c30b0d067b804e7fcb4c",
+        "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+        "musdAmount": "400.0",
+        "gasUsed": "500000",
+        "duration": 4808
+      },
+      {
+        "success": true,
+        "hash": "0xefde130ec90905f68f2f2a93770f0d7e59672dc160e13d03557e9aedb6695b20",
+        "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+        "musdAmount": "500.0",
+        "gasUsed": "500000",
+        "duration": 4904
+      },
+      {
+        "success": true,
+        "hash": "0x33332271784937a1cd38d0878e8f2906224bbdf3eac362708d4af76eb28923d0",
+        "account": "0x92c668261aEDB5c8C7Cc30D924F7b99e8B340046",
+        "musdAmount": "100.0",
+        "gasUsed": "500000",
+        "duration": 4986
+      },
+      {
+        "success": true,
+        "hash": "0x59c1193ac0af2af61a0e57682b1f3ec51311fb0abea2a51aa63879317c31dae9",
+        "account": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+        "musdAmount": "300.0",
+        "gasUsed": "500000",
+        "duration": 5082
+      },
+      {
+        "success": true,
+        "hash": "0xc41092d65fa1292f690b6a1d079eed4e48b98dd29b0b4c4170c8da3fdb33a00a",
+        "account": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+        "musdAmount": "200.0",
+        "gasUsed": "500000",
+        "duration": 5169
+      },
+      {
+        "success": true,
+        "hash": "0xa94d991b747b1162974c89ff34c806de8731a23e14cf4fa6a07f44fafb2d4f3e",
+        "account": "0x39aDD7A6B8Abc5ADe63e5Bd9b919ec72DfdbE62d",
+        "musdAmount": "300.0",
+        "gasUsed": "500000",
+        "duration": 2839
+      },
+      {
+        "success": true,
+        "hash": "0xc8714c161a13cc32bf700fa37e2169a8c58fc756f2fef546bea183cd7455466b",
+        "account": "0x89B09Afe54deA782160939cb0863c2727E8C8FBC",
+        "musdAmount": "100.0",
+        "gasUsed": "500000",
+        "duration": 2952
+      },
+      {
+        "success": true,
+        "hash": "0xcddb5365825e08a79e0e73809ee78a10352cf8bba32f9fef788fc113f4a3c42b",
+        "account": "0xc1A2A19d34E238Cf51D7e403E3b758206eeFBA4a",
+        "musdAmount": "400.0",
+        "gasUsed": "500000",
+        "duration": 3037
+      },
+      {
+        "success": true,
+        "hash": "0x477ff8ee9e198229d00c5fe4339c67939a75a9704a0d5ec0795cc09114f3a4dd",
+        "account": "0x4ED7Db03a92850F192f9A4148Dc80D7bCc2442e9",
+        "musdAmount": "200.0",
+        "gasUsed": "500000",
+        "duration": 3225
+      },
+      {
+        "success": true,
+        "hash": "0x7634e3b21102318e06e18381a7e97b56f888a824561f1f681b62852b017ec6a2",
+        "account": "0x43B0AAc4F57c39ab3FAAfc2b6181F328d7308857",
+        "musdAmount": "500.0",
+        "gasUsed": "500000",
+        "duration": 3310
+      },
+      {
+        "success": true,
+        "hash": "0xce8013a30af19139ef91b750a98e92f17ad4c7117e7b08534c7c3837d0c5ba30",
+        "account": "0x4427fB259fF5d3c8B4484cfAB469A7Da10b43E6a",
+        "musdAmount": "100.0",
+        "gasUsed": "500000",
+        "duration": 2943
+      },
+      {
+        "success": true,
+        "hash": "0xdd1cf7a4a9096a0a8b36af5c0c379f95ede35ca0614a1da3b7ba5c17e3bc0228",
+        "account": "0x1c8d31e1e2103454b79D0D72B4Cab5574d8fFdae",
+        "musdAmount": "500.0",
+        "gasUsed": "500000",
+        "duration": 3056
+      },
+      {
+        "success": true,
+        "hash": "0x08918c4637baf2406498eeeab8515cab1d644d61b6df65c29fec2c76491b7fd9",
+        "account": "0x61C959142AD5e2365ECca25b1f954a5eCc50caE7",
+        "musdAmount": "400.0",
+        "gasUsed": "500000",
+        "duration": 3059
+      },
+      {
+        "success": true,
+        "hash": "0xc58cd31961fc91ebbb6d6408edd0cbeb8047a191bbd114e1e9b037be88b8c1cd",
+        "account": "0x8fCE04b2c8c6C5d3eCBABfe7d1b12e839811cb46",
+        "musdAmount": "200.0",
+        "gasUsed": "500000",
+        "duration": 3136
+      },
+      {
+        "success": true,
+        "hash": "0x6abab5fcd6dc457bda6dafe3b68b586ee3b5d1000c84027075200328c1113b38",
+        "account": "0x934733526AE32a19DA271b0cA5d868eC7dd33F5f",
+        "musdAmount": "300.0",
+        "gasUsed": "500000",
+        "duration": 3242
+      },
+      {
+        "success": true,
+        "hash": "0x7bb7afa34f9ac78bb93c5a500f9d569a9f6c138b0bd172f64fdf32af37191f4b",
+        "account": "0x266dFefF280933F75Af9e14b057dE6A8Da9851E9",
+        "musdAmount": "300.0",
+        "gasUsed": "500000",
+        "duration": 2433
+      },
+      {
+        "success": true,
+        "hash": "0x182c291ab0da121b8361ad46d9a601870049b92296699c9302be2e27bfa3d7c6",
+        "account": "0x66D84F828F3E0C5BE2b5F4b3FAD8Ce9534378751",
+        "musdAmount": "100.0",
+        "gasUsed": "500000",
+        "duration": 3011
+      },
+      {
+        "success": true,
+        "hash": "0xda5a9903614f81f9354570e9f4993aeea4587c6af4fe1ede332b983e3c606e49",
+        "account": "0xc3B8497eb55B2363C1508Ad5d237500392d3e260",
+        "musdAmount": "400.0",
+        "gasUsed": "500000",
+        "duration": 3141
+      },
+      {
+        "success": true,
+        "hash": "0x1dcd711ea8425f5225a160a8cbce851859754dd5872797d514ff78a06b908da7",
+        "account": "0x23d1F5C6503b75003abc5605fCA0EE55E080e266",
+        "musdAmount": "200.0",
+        "gasUsed": "500000",
+        "duration": 3188
+      },
+      {
+        "success": true,
+        "hash": "0x24ddacc529644cb9a551aac08a416881fc88f5ebda1657648b711337ca0dabd9",
+        "account": "0xfEa52239879c7C03C39eb6C1E492aFAe07862ad5",
+        "musdAmount": "500.0",
+        "gasUsed": "500000",
+        "duration": 3382
+      }
+    ]
+  }
+}

@@ -1,0 +1,1810 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-04-28T00:15:57.155Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 200,
+    "repaymentPercentages": [
+      10,
+      20,
+      30,
+      40,
+      50
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 193,
+    "failed": 7,
+    "skipped": 0,
+    "gasUsed": "101514564",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x2aa94d355c654b0e03b29aff1da9bc59afae921c30aac4504bc09ae9e27e2705",
+        "account": "0xCAE6943DA33EfdE87817C6085eE1A3Ae3E6F1657",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.147666620971505739",
+        "gasUsed": "500000",
+        "duration": 3177
+      },
+      {
+        "success": true,
+        "hash": "0xd8e9cf3f1cc22904a2a6300357ce61316275be9eced25d76da28ed3b9d6e505b",
+        "account": "0xf95111C6d8662f6B1040f01204488dB1688b141c",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164766662097150573",
+        "gasUsed": "500000",
+        "duration": 3186
+      },
+      {
+        "success": true,
+        "hash": "0xd18931275497fb1cba002fa805ae8fbcf03c6d48003d485f25e0ae7635b21dc3",
+        "account": "0xf12E9a3dE4d6Ef0f96e623106C5D48b5d41B816B",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429533324194301147",
+        "gasUsed": "500000",
+        "duration": 4039
+      },
+      {
+        "success": true,
+        "hash": "0x237d60253d258f5821a7dda71551b83eea62ad8b6d0411d83c9e30250d235527",
+        "account": "0x9aaaD9c72d9115cca28CB51a9CB8BF3F538FdF2E",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.647666620971505739",
+        "gasUsed": "500000",
+        "duration": 4194
+      },
+      {
+        "success": true,
+        "hash": "0x6643e92a1e633c16d98a7a0d68a0c1b98b2d23b9e7b2f69d9422b6a6e78658e6",
+        "account": "0xbc7193c9831B3B6Df6a2aD2B880b70bfF001e017",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.647663564909564142",
+        "gasUsed": "500000",
+        "duration": 4166
+      },
+      {
+        "success": true,
+        "hash": "0x689b10a48b7760e11da095ab8c437bbb18249a3116b07617d91936b58b5c2319",
+        "account": "0x3666FaD321F45687CB336284a0CA9aD703341281",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.14766585695602034",
+        "gasUsed": "500000",
+        "duration": 2105
+      },
+      {
+        "success": true,
+        "hash": "0x95a6f0e88fdf900ce68ea3a44b6782ad578dc00885a5e0ed8b984a566756d35f",
+        "account": "0x23ddAAc678DFb4574e87965a2FCB7b6C581B17ec",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429533171391204068",
+        "gasUsed": "500000",
+        "duration": 2098
+      },
+      {
+        "success": true,
+        "hash": "0x33eb0d4269c39509336420569b019b388e379ff0ee99140f63fc704a69450c9c",
+        "account": "0x3aEe3aeAc032C32F3c5beb351735E83f591F99aF",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164766585695602034",
+        "gasUsed": "500000",
+        "duration": 2262
+      },
+      {
+        "success": true,
+        "hash": "0x3917a0aee64486c843203205a9b48f821e034976e3727c12ae3e5a0fc2e42dd5",
+        "account": "0x1F007518ED5493bCCa914BC627faA63D33c47f89",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.647662800894078743",
+        "gasUsed": "500000",
+        "duration": 2375
+      },
+      {
+        "success": true,
+        "hash": "0x0d2aea9a6b54658b229c325a7b1607b30842d1758d387fbc9abdf97570bf5a18",
+        "account": "0x6A05cd49c91fC6e06E2C91731c1AE8089590746e",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.64766585695602034",
+        "gasUsed": "500000",
+        "duration": 3093
+      },
+      {
+        "success": true,
+        "hash": "0xacf90257080ea8ff3ba989a3717b01bcba3a705ef059569a015ebf1958212d0c",
+        "account": "0x110523617Bb8882eaD1B5276aB7999c3dC901b93",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.64766585695602034",
+        "gasUsed": "500000",
+        "duration": 2154
+      },
+      {
+        "success": true,
+        "hash": "0x53a641a293bcc59a4f8011b5bd986ce43feca6ce0218dca74f882d6e29e4c1c5",
+        "account": "0x8Dc9eb294F124B46531145312f088DAfaD5b74ec",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164766585695602034",
+        "gasUsed": "500000",
+        "duration": 2200
+      },
+      {
+        "success": true,
+        "hash": "0xe0386761f51469af1897a55c04166a905c8d073bacde97c0e7d98fbd5c244500",
+        "account": "0xE8a5DAaB642979d504250eb2Dd8C2d8D5c78924f",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.14766585695602034",
+        "gasUsed": "500000",
+        "duration": 2334
+      },
+      {
+        "success": true,
+        "hash": "0x748900de5c2ce2949936175469d3d05634c2b3cba9f2a4284c8e0e625d369172",
+        "account": "0x269Df9cB54eE572356683698e99Cb017C3813F21",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.647023319932799593",
+        "gasUsed": "500000",
+        "duration": 3100
+      },
+      {
+        "success": true,
+        "hash": "0x8404f99e0542c6d80c8600b35d9faaf3a789139a884e41a9ae2c893a41d166c7",
+        "account": "0x21C24a02e21e38154814EB3c315a21d28dfb19e6",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429533171391204068",
+        "gasUsed": "500000",
+        "duration": 3187
+      },
+      {
+        "success": true,
+        "hash": "0x35a2d58eceafc3d7a52990d0f8db0d3af04a23f70a8d78253a0b63db8f9fe464",
+        "account": "0x46Db16c0fA004F597410A212710ce0Ea60ddd2BA",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429405886411336557",
+        "gasUsed": "500000",
+        "duration": 2614
+      },
+      {
+        "success": true,
+        "hash": "0xbaeb05eab90b3ba06d030ad6f2292e66bd05723e547aa969d71acb27631fb17c",
+        "account": "0x08AA4Fc0Cd24672B1EF52932f31bBE79c8BD5023",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.647024083948284992",
+        "gasUsed": "500000",
+        "duration": 2693
+      },
+      {
+        "success": true,
+        "hash": "0x798bc1232afe24bd1b51f865b28e5f3fd8d62020ca3c25e9bdd33897691e20b9",
+        "account": "0xf23A8d2EEbF24a04bdaEB45d253B3C1211fe3B24",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164702637599474119",
+        "gasUsed": "500000",
+        "duration": 5821
+      },
+      {
+        "success": true,
+        "hash": "0xfd509e02403e1608ee497d6af8de8788242ccca7e23c7529d1e727468f812807",
+        "account": "0x7e0eF83E44a8098E10715D6ff25D2aB841e62ca8",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.147029432056682787",
+        "gasUsed": "500000",
+        "duration": 5965
+      },
+      {
+        "success": true,
+        "hash": "0x5aa87be46eb1be071f2d978affaaae859350cfd96846865e2fee8abf8420cb34",
+        "account": "0xD7b63710F7B87dDbff7d6236a74318811fC73063",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.64702637599474119",
+        "gasUsed": "500000",
+        "duration": 6046
+      },
+      {
+        "success": true,
+        "hash": "0x3bb7c7ded22bf737d298264705d4080338ea92fbe5169ace2a1ea22894348d36",
+        "account": "0xf12E9ae3e6028998d9cd83138FeF7093fc364928",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164702943205668278",
+        "gasUsed": "500000",
+        "duration": 2275
+      },
+      {
+        "success": true,
+        "hash": "0x1078891e2722164c7c04cd38de43a1c7abccddbebf478ec0958da7553da5e7c3",
+        "account": "0xA17A93E144Ed6B7cAD47511832676a4c5Db45E78",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429405886411336557",
+        "gasUsed": "500000",
+        "duration": 2337
+      },
+      {
+        "success": true,
+        "hash": "0x7fca9e0cdda227abfb4a0342619bfa3a8b6845555caf24b69a747229a0e40d19",
+        "account": "0xf1fdcB3f5B79747B3c6162A53BE278D353dd95d7",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.647029432056682787",
+        "gasUsed": "500000",
+        "duration": 3000
+      },
+      {
+        "success": true,
+        "hash": "0x424529ada4f3a50c606d4bef7bfe16514fbdfacf0bb72b7da43efe9c74c8d201",
+        "account": "0x3E27D1b39F4d132E26AffbEb8088B1cA50EB2cc0",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.147029432056682787",
+        "gasUsed": "500000",
+        "duration": 3115
+      },
+      {
+        "success": true,
+        "hash": "0xbbb1855b6122f7b9eff314ac515b16e9ccaea2c1a20dfb1abe7aed365396370f",
+        "account": "0x59F2cbA5a03d253e2262059Bd56242525b7523B7",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.64702637599474119",
+        "gasUsed": "500000",
+        "duration": 3209
+      },
+      {
+        "success": true,
+        "hash": "0xcde5f306ebef6cfa84b81ba378feff01c6440abc55ac38a728ce75498e52b21d",
+        "account": "0xfd6DC17ba451935a4199Aa0356c04b24477Fb035",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164702943205668278",
+        "gasUsed": "500000",
+        "duration": 2147
+      },
+      {
+        "success": true,
+        "hash": "0x25e0cce680a0bcdf8627baee1299686ad67c5b7561625e7d43e1afb1a3a32a49",
+        "account": "0xfC9601C82d76267E6C15dB4447be41eCACB09A1E",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.147029432056682787",
+        "gasUsed": "500000",
+        "duration": 2229
+      },
+      {
+        "success": true,
+        "hash": "0x9ce61f65c8a1317801e871a07a89dc539f50a6e3626864f355607603f41831b3",
+        "account": "0x989fb05571653DBf2027156306f9c6E7905ceAc4",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429405886411336557",
+        "gasUsed": "500000",
+        "duration": 2333
+      },
+      {
+        "success": true,
+        "hash": "0x89f3b4690bf5fd4f786aba5279dbc73f44d3bbc95ecd894f0c17a2b15d901c34",
+        "account": "0xFb1846b3ba713F03b41A45A5a1A3df5f5187AA97",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.647029432056682787",
+        "gasUsed": "500000",
+        "duration": 3071
+      },
+      {
+        "success": true,
+        "hash": "0xfa390d642e38fd10bcd658a7193642aaebd63c3d8512f04fede97578c2c1982a",
+        "account": "0x2ceB98A51F34c6bC9b136d4FF9f0De652e472f2C",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.64702637599474119",
+        "gasUsed": "500000",
+        "duration": 3121
+      },
+      {
+        "success": true,
+        "hash": "0x3a09d660e5047009a4d9b8965226b19ea4afedb930ac6c38fca58d19914fd137",
+        "account": "0xdcED35BCb388017662539d4EF23e70566D6DcCfd",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.640776729324175541",
+        "gasUsed": "500000",
+        "duration": 2459
+      },
+      {
+        "success": true,
+        "hash": "0xb0bda1beee133c2a3d0f64b6f4f780d3e5c39b92f8040c88af125ac26fc1b1db",
+        "account": "0xB2bFdF18346cA7D5c663D1153714072335870011",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164702943205668278",
+        "gasUsed": "500000",
+        "duration": 2385
+      },
+      {
+        "success": true,
+        "hash": "0xa6453e85b273d3483cb37d6724800259cb8b846c0eccd0b11dd6927e00c23f4f",
+        "account": "0x9f5D9AC22f27178a987F491F21B7a89d46f1cD81",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.429405886411336557",
+        "gasUsed": "500000",
+        "duration": 2471
+      },
+      {
+        "success": true,
+        "hash": "0xabde971fce012151f40ee17436f8a839b944a12f3a40c84110f2aeb92413460d",
+        "account": "0xd09A838E84A053E3127a7F484C3426b9c0a48b67",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.647029432056682787",
+        "gasUsed": "500000",
+        "duration": 2616
+      },
+      {
+        "success": true,
+        "hash": "0x5abc83420ec4579f19e8c80f7a811671fec5b891b6d68be03a1984d06b5f9a3f",
+        "account": "0x89FaEC9d2917A191446341B88F0afFfE19A74b69",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.147029432056682787",
+        "gasUsed": "500000",
+        "duration": 2704
+      },
+      {
+        "success": true,
+        "hash": "0xfe0fe2d0b2613060e037bf653d215a448b82244815c103b7d8b080ce8f9dc5ed",
+        "account": "0xe2096BBcE9Bf34D71d4A976dc6CFBda7E5bb46a2",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.140779021370631738",
+        "gasUsed": "500000",
+        "duration": 2921
+      },
+      {
+        "success": true,
+        "hash": "0x2af969801b90d332fda4fc1d7f01cb90c3cc7ddfa0f3d907001be2bdc995714b",
+        "account": "0xbD5592F127A0BacEb04D82d214cC1777fA91E2E7",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.640775965308690141",
+        "gasUsed": "500000",
+        "duration": 3062
+      },
+      {
+        "success": true,
+        "hash": "0xcc3187dc2d3c91c615ad3f0d05444d02771f8cd871424a93c0bfa3424bd72b4b",
+        "account": "0x534f8624B77B669F4eA368941E73a5DcE01d2A87",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164077902137063173",
+        "gasUsed": "500000",
+        "duration": 3116
+      },
+      {
+        "success": true,
+        "hash": "0xb06705f544fcceae74e61c5065ece56f33945155609fcca24b0bf6fbca567067",
+        "account": "0xcb6CbEA358B546213523e788353C6509C44251bd",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.640779021370631738",
+        "gasUsed": "500000",
+        "duration": 3229
+      },
+      {
+        "success": true,
+        "hash": "0xa123b6579d01bb54650f3e47a868567e02408fa5c36c43c22097f05581df4d72",
+        "account": "0xF8A37291BFf423fCDCb814B1720471cb45091709",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.428155804274126347",
+        "gasUsed": "500000",
+        "duration": 3302
+      },
+      {
+        "success": true,
+        "hash": "0x635413cc1d0b914b13fcda0f9f8a8bcb1f51de66543e6babc04e135788d3591f",
+        "account": "0x4fcC30Ce37474B168F71D090eCBa69D2A4F2c77f",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.140779021370631738",
+        "gasUsed": "500000",
+        "duration": 2186
+      },
+      {
+        "success": true,
+        "hash": "0x60b2f89b148331f078cc01de32a8c591277e2c31c4c9df256469ad59715eff52",
+        "account": "0xa8C3847193cdB7Db21eaBad11c6a67d633158942",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.428155804274126347",
+        "gasUsed": "500000",
+        "duration": 2210
+      },
+      {
+        "success": true,
+        "hash": "0x2504f933284b37b46484ea2a31f6839f101f263c3d97441fc88190ad19e9247b",
+        "account": "0x2f245351E8A8c7d38830D462D1890831e597D023",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.640776729324175541",
+        "gasUsed": "500000",
+        "duration": 2895
+      },
+      {
+        "success": true,
+        "hash": "0x65931b82e61ef1b90840ee80ee01d89449ee59b269aacd8dbd7514a9410d8ecb",
+        "account": "0x8e88172c2dE460c176C12Ed72895F83231CC7c8A",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.640779021370631738",
+        "gasUsed": "500000",
+        "duration": 3008
+      },
+      {
+        "success": true,
+        "hash": "0xb17464afa26c043367c8da3906afc7e4a74e7207bfa808b59dd19b902dac7050",
+        "account": "0x4C2Ee99fFdE2d22822E05030288A7599F681Aa8c",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164077902137063173",
+        "gasUsed": "500000",
+        "duration": 3143
+      },
+      {
+        "success": true,
+        "hash": "0x1a1e13b2dbbf06740d225f6a40eba981c9caa7bf92c2ebfe0d13d83dea8ccaed",
+        "account": "0x5e0bB5eCA15042bAA3ab0609557D96C04CBbDb2a",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164077978538611713",
+        "gasUsed": "500000",
+        "duration": 2021
+      },
+      {
+        "success": true,
+        "hash": "0xb101bf399b138e840efb4ec5281e1fa7abb59b863b305b1d5e4ae4187b077b37",
+        "account": "0x0Af690ed0d2DA13D1761c357f2C40E2116259387",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.140779785386117138",
+        "gasUsed": "500000",
+        "duration": 2179
+      },
+      {
+        "success": true,
+        "hash": "0x43bdc8ba0ab12561ea9524d1632144abffc59f1066db465fd86c668cf5919a1b",
+        "account": "0x9f875E11e215d8C6D6cd19B314CE1A6398f95B47",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.640779785386117138",
+        "gasUsed": "500000",
+        "duration": 2283
+      },
+      {
+        "success": true,
+        "hash": "0x076b7cc2e41c9f773d0cfc5c17f22d7a44b0c87e2657ea0622d586c28f5d5b58",
+        "account": "0xaB0F48e983D575C7435893F1F474C586Af4c78f0",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.640776729324175541",
+        "gasUsed": "500000",
+        "duration": 2341
+      },
+      {
+        "success": true,
+        "hash": "0x31e6fde763ad8b332f8a09a5f8d8bea9f479b08e6f0d32f1bcfaae23ed34d050",
+        "account": "0x95E78043C6EC5b82B5E67fd1364CBFDd647C0628",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.428155957077223427",
+        "gasUsed": "500000",
+        "duration": 3051
+      },
+      {
+        "success": true,
+        "hash": "0xe806e0406a1420e6b205a49bdf945c2abe29a584bfe839e883d0c81e028182ac",
+        "account": "0x30208aa0472c94929d112620c2d71532dd72c1E1",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "523375",
+        "duration": 2324
+      },
+      {
+        "success": true,
+        "hash": "0xcab96b9fb584bca4fd1dafe53679bc6cb38db804e1f0d8bd49b86227b2085cf9",
+        "account": "0x8cb5f9d9C760D781722FC14F4f0813ba714a7216",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.428155804274126347",
+        "gasUsed": "500000",
+        "duration": 2278
+      },
+      {
+        "success": true,
+        "hash": "0x5c9829e379e6b0c8ffc938a34533deb9cc56a0929845d344974058d5e9e20f94",
+        "account": "0x5f500274Bf695c065f3a76C168A0C2C14fAe64e2",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.640779021370631738",
+        "gasUsed": "503329",
+        "duration": 2464
+      },
+      {
+        "success": true,
+        "hash": "0x04ebcb9b335e9b7dadab2270f28e5aa83d33e67b378ef8fb988e2dfb9f19ebeb",
+        "account": "0x0C9416bDE37ddf51811179Afb07526877D51EEaf",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.164077902137063173",
+        "gasUsed": "500000",
+        "duration": 2562
+      },
+      {
+        "success": true,
+        "hash": "0x2df013afb351db817428be486d7b09d684501267d02cf27997a56dc22f059d2e",
+        "account": "0xED32A8753A560c301f7f4C2Cdc2Df2CfDA41765E",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.140779021370631738",
+        "gasUsed": "528975",
+        "duration": 2795
+      },
+      {
+        "success": true,
+        "hash": "0x20d2f5ed58e11477d22f1808f45a877a271be68eb256268535d3393b50a646a6",
+        "account": "0x664eEAF1204524737c1476291CE09d3Bf3278a79",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 2094
+      },
+      {
+        "success": true,
+        "hash": "0x99f37e22ebed52db99883b3e5e57bc957da82e514e154e21a10fed19a4fbdfec",
+        "account": "0x220011aB36cBd1383Cd0f1Dda341b53294E79787",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "500000",
+        "duration": 2268
+      },
+      {
+        "success": true,
+        "hash": "0xe53fd2669e892b5de728899ab114b89ba22ff6928e26093b75964d235411ca30",
+        "account": "0x7B08EA129e5091eA035D4d40edE7566874D07D99",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "500000",
+        "duration": 2264
+      },
+      {
+        "success": true,
+        "hash": "0x765438409d588b9836fe81cf97282c61285d310b077b547f2cc64f6ae9cf8f8d",
+        "account": "0xe869d86C8673b26a6D031416aC3ef8c7bd29a03F",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "500000",
+        "duration": 2358
+      },
+      {
+        "success": true,
+        "hash": "0xffd917ab3b4b252f7ce71ae0e6bd465f4240a2764859170b29720c8bc879f2ce",
+        "account": "0x1AA2C45528C64FB94745c2453071003165e79Ed0",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 3140
+      },
+      {
+        "success": true,
+        "hash": "0x7547e64ac3e5cf358bc5523cfc6ec0291ae86981b899f342a0a1b14039660c61",
+        "account": "0x5F210A82946C6e917F12FbbA5d8107179da59173",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 2188
+      },
+      {
+        "success": true,
+        "hash": "0x421e0b041da13540e51dd4c3cd6b8b551cc701e0603583c58efeae2d7b8a836f",
+        "account": "0x702c3c6993700aa7F9B6e4F655AbD2fE217d4598",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 2210
+      },
+      {
+        "success": true,
+        "hash": "0xa916f014e9de7ca3b604d8b69490425133e746d9280267bfc85fedfb41860984",
+        "account": "0x442D484fea14aCdF89046909981Ce625399fC9E5",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "500000",
+        "duration": 2299
+      },
+      {
+        "success": true,
+        "hash": "0xcc11ded23f388b5ca92733e0284334c1d7f46fbc4641eac3383da321dcb731fa",
+        "account": "0x6416261f69a276229a484c7f5eD4Fb295F156C38",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639936312290236395",
+        "gasUsed": "500000",
+        "duration": 2998
+      },
+      {
+        "success": true,
+        "hash": "0xea7f8fcad5204e01fba5e209c3ccdca0e2eaee7cbc6d274a826b97104256270a",
+        "account": "0x4876422eDF02E356bA353f370310b6E99c05f2a4",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "500000",
+        "duration": 3240
+      },
+      {
+        "success": true,
+        "hash": "0x39d1cfdbec48b830734d03e4be867ff78fbcc39f664f27d509caba16e57d890b",
+        "account": "0x5EeF6c60BF0C4b5C7C3c5EC842C1C62b33BDf9De",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "548997",
+        "duration": 2337
+      },
+      {
+        "success": true,
+        "hash": "0x1631e373aca95860a09c1c3db6a91c34ffbd91353db1aa46d2c63c7ee9802916",
+        "account": "0x499EbD95dbD9701eE025d6E04027850E2Cf45AD2",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "563444",
+        "duration": 2362
+      },
+      {
+        "success": true,
+        "hash": "0x4d5eef04c79c54c25e73a1f87c1b0a9480c203e8fa28e42a5e89fbd87157e86d",
+        "account": "0x89C1E0a8EfC5C69260Ab7014d858A7926c69Db0A",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 2535
+      },
+      {
+        "success": true,
+        "hash": "0x1986e88a6ff4d4e4083439d64b48264ad302e319099ea96cb1cf7348597c8609",
+        "account": "0x83D6E63860FF6BBB35Ae4BdD3Bb6DD091fde918D",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 2626
+      },
+      {
+        "success": true,
+        "hash": "0xf9828fab422800db390eee8cb97efd06c7b0dcc1740c373a73028f3eff5488a9",
+        "account": "0xD6eFBcC6Ae5AD11742bA1f5763631c8136B8175c",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "563444",
+        "duration": 2706
+      },
+      {
+        "success": true,
+        "hash": "0x8aa5b76ab2d644b9f92b17ea50cf0f4e42cb2d39ccb3b2bd04c1c85b51665803",
+        "account": "0x77AD65AF10C589355d50B6031331e0eB7728181E",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "500000",
+        "duration": 2194
+      },
+      {
+        "success": true,
+        "hash": "0x44b5f1917b655166a12499032690e0e967a3459d840e9c30373799f0cf41195a",
+        "account": "0x70f0Eec39ec0Dc1CcbED1AF0f0E45853926a8403",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "500000",
+        "duration": 3004
+      },
+      {
+        "success": true,
+        "hash": "0x9e0e75aefc8d6c100351c0301d86a75c38fb271217d12bea477c15368d003935",
+        "account": "0x96cf23d29f20aCB7505DE3A8AB9F723386Bb93e2",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 3180
+      },
+      {
+        "success": true,
+        "hash": "0xdb9d2f85dd2d31c43d5ade65e1157f516b4749c9f036b2f8420997d901f7f803",
+        "account": "0x354821Fc389F743263cdb3C28DAfb65777cFF441",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "500000",
+        "duration": 3213
+      },
+      {
+        "success": true,
+        "hash": "0x9cf226c49f51d00de191b804cb869a42708193570d4acbfb4c7b28b10c5e28f5",
+        "account": "0x14a28F3B22036E1116f863682b27105A452c3b52",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 3143
+      },
+      {
+        "success": true,
+        "hash": "0xdaabfa4d6a2c2d72bb9429c2b28a0f832b1b20e829bfd5b5ee1d9569482e081e",
+        "account": "0xFbe73E78cddfbf6EBae0656baEDD5C0B3883BF9D",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "500000",
+        "duration": 2347
+      },
+      {
+        "success": true,
+        "hash": "0x5a8be132264aae290822acd0398e4b0b8a7e71117842ac60735e24d55dcd98b5",
+        "account": "0x7aBDF491c7Ce953499Da8cc460092A967d572747",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 2371
+      },
+      {
+        "success": true,
+        "hash": "0x68d611e9de7e537669973d0c45f6ca1a07cdb2492a231653adc87f13fcf563f4",
+        "account": "0xF5E21218D73EBd76FdcafB5Af0c70d0a1eCF6bb3",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "500000",
+        "duration": 2525
+      },
+      {
+        "success": true,
+        "hash": "0xaf89d6fa855998121b1c11857aefbe182e40e68b3c4ae6eed600463418a333dd",
+        "account": "0x88E6f4d54bFf0f620388E0863F4b5f51859848Fd",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "500000",
+        "duration": 2624
+      },
+      {
+        "success": true,
+        "hash": "0x2ecead791eebdb01b1bb60a58c3a7abed97df1c2be761f3769fbaecc547ad016",
+        "account": "0x4240621A45255cbd4b5cD33c0Ffbb3bb3d030829",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 2691
+      },
+      {
+        "success": true,
+        "hash": "0x5140667016adfaa7c8b51a7416943ee24edcea0f717d230ec8881cffd95ef1d6",
+        "account": "0xD0c96533018fe5139Eae4F9da787Cd679C08E741",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 2965
+      },
+      {
+        "success": true,
+        "hash": "0x96b2258c9238fe0835f1854abdbc6d612586c54168370d7c7f397b793d6048ab",
+        "account": "0xe8cb3987924E97b4F0F4a97E0F86ED0550a48A99",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "500000",
+        "duration": 3085
+      },
+      {
+        "success": true,
+        "hash": "0xdf716a2109153424f107619a3ce280e3091aabe5e5b5fc59ef9434453ca95d0a",
+        "account": "0xdD46e2b2cC42706cf2F2de2e2009D292b397A7fc",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "500000",
+        "duration": 3180
+      },
+      {
+        "success": true,
+        "hash": "0x09c4362f712d965d1896116fdbb55a26cdda56720b2db9fba26fe0028dc70410",
+        "account": "0x41133120Ce5BCcF9e9bd105E9d2FfB3d80378DC4",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 3182
+      },
+      {
+        "success": true,
+        "hash": "0xc5ddf43cbb9f75f8c99d91b3ceb78ee351e2ef5bb736f59b2c0d1866fcdcb444",
+        "account": "0x8f0ADf4e0bb1a16E2274C901B14d82C5cFc49711",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "500000",
+        "duration": 3276
+      },
+      {
+        "success": true,
+        "hash": "0x6e452a91db3ed9f4dacba6c57b5dd76f8364e6117fa3c7b228c1a441bf548b08",
+        "account": "0xe2BeFd6186AeD34fcAfD3c58a34186db8E219b68",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "603500",
+        "duration": 2190
+      },
+      {
+        "success": true,
+        "hash": "0x88df0496429d4e0c3cb396a5047b0d8b219b5b5cef83065a7db9562d71d08132",
+        "account": "0x53a58AFD160fa0865D276A9Ab42c2B0FA4B429fE",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 2271
+      },
+      {
+        "success": true,
+        "hash": "0x26e3b182adf7981c05278c16e110712f0bd253ae70e74da876302cf5a25ce3d0",
+        "account": "0x524Af2447dC0959e7a6761898c22e19c37B46729",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "629146",
+        "duration": 2345
+      },
+      {
+        "success": true,
+        "hash": "0x5a16b5738d3cc0b8261c0133fdf911baba1278a35cd232c7f9e1eae7a7ec2d47",
+        "account": "0x56A48B53D076D7A9cd6b85B4F9dd2a23214dab5C",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 2287
+      },
+      {
+        "success": true,
+        "hash": "0xcc8a8e2dd6a147a28a9db68e2f21edac2e0be719e7f14d93012433e3b41a4efb",
+        "account": "0x73A439012Dd28c6112AFFF858FcfeA3E47c8159B",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "623546",
+        "duration": 2335
+      },
+      {
+        "success": true,
+        "hash": "0x1cdc58a0ed2f4afa1cfb0f81bae17954796f2f3c76a811832fff2fe445794d6a",
+        "account": "0xaA3dF1cc58D244af70793c09b3D86BDB4f9b9291",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692592",
+        "gasUsed": "500000",
+        "duration": 2892
+      },
+      {
+        "success": true,
+        "hash": "0xc3c559a2942d834ead60cbc4d473f9908976920024339ad4d5b5558c631e477f",
+        "account": "0x11E23070AE41ddD13E2E5eCD824710Cd5eeDE952",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750995",
+        "gasUsed": "500000",
+        "duration": 3020
+      },
+      {
+        "success": true,
+        "hash": "0x2ed4270a8af7178002e18c47a2877ab981cd0e2db117bc2c7fd36672146b9db1",
+        "account": "0x8f8DC2634D05C0107EDE26512C06AE6601784E81",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 3124
+      },
+      {
+        "success": true,
+        "hash": "0x762efc6e610eba162ef98e90e554a6463c242f644862f7273eec7c8ef618200d",
+        "account": "0x8C7efC9999061eA189F0e089efF7Be8C589ad978",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 3244
+      },
+      {
+        "success": true,
+        "hash": "0x183c6ce0606fa6e303f8ec766921cd6d9941d622629482a3dcd6c7f93b046024",
+        "account": "0x48f75A8769b32dBE3F63718250842399E255d178",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692592",
+        "gasUsed": "500000",
+        "duration": 3286
+      },
+      {
+        "success": true,
+        "hash": "0x0b85bdbc3d9744e6cc087b29785230698da4d25e3106f634b4c66d6a56c3aba9",
+        "account": "0xB847680d74bBC55A65350D835523188fAc1934b2",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "623534",
+        "duration": 2290
+      },
+      {
+        "success": true,
+        "hash": "0xf395ea1ce7c7476b4e2d32976333f29ff9ff832367f71df1481f778c2a8d417c",
+        "account": "0x829bA378E876a107bB468D2db9eE494Aff848FD1",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 3041
+      },
+      {
+        "success": true,
+        "hash": "0xad752ebec4d63359146e1dc8d140d12da2a527868e5190addea91beb99b07f1c",
+        "account": "0x40a3e84C4dd0b15C28517B1393aE03b617D2cd0A",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 3073
+      },
+      {
+        "success": true,
+        "hash": "0xdb649e12ee5865b30d167ac854807c52fc8560c6b4fc090a7c1b6ee2f9dda204",
+        "account": "0x416E1913d31Ba4655a4A03b147c3Bb57548AE8Ef",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "643581",
+        "duration": 3143
+      },
+      {
+        "success": true,
+        "hash": "0xe1f30113b21d2f11f46056d62280b9e4058fd2b47c1c81e72c639d19e976739d",
+        "account": "0xaa71c312500c6Dbe7f3BF0dc734E2680eD582fc4",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265596",
+        "gasUsed": "643581",
+        "duration": 3238
+      },
+      {
+        "success": true,
+        "hash": "0xcfb6db5b983b0de444dab3b57cd6df9825b03b8ee6159c1301377da44e6e1d38",
+        "account": "0xa6e18784a42435a29521aAd51f4E293EE0ddA05b",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 2109
+      },
+      {
+        "success": true,
+        "hash": "0xce8754433f5dd8c26bc26e11013ad0f4cac71cec31a77f6c71c2300df0157d0d",
+        "account": "0x1A012874969B81C3f40bdB466a6Af5AA235186e3",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 2215
+      },
+      {
+        "success": true,
+        "hash": "0x1390fe8d2ed550e2f236331b602fc910af7b131ccdd493ebba09301a7a78da34",
+        "account": "0x1751E4C6453d2a0aCF45D62fd8F2E2b5C27e179F",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 2210
+      },
+      {
+        "success": true,
+        "hash": "0x0d09efd66d304c4de0015d5603e259fe23ca65de0409837cb97fe95327bdbb35",
+        "account": "0x68487c2d62EF072dEaac6B7bb2426442C007866b",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 2310
+      },
+      {
+        "success": true,
+        "hash": "0x902f9c9f46db96056dce255212a6c7137c22b95ce948b523fe701ce240df7251",
+        "account": "0xA62bF68Dd3d7aDcDB5a403551Ea5CF24360A5E2F",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "500000",
+        "duration": 2346
+      },
+      {
+        "success": true,
+        "hash": "0x3228a955f99ed0a0c9a8abeb0113e30c408b94fd7890c41377162dc63e35f05d",
+        "account": "0x0fbfAAeB7deE5762D9Ab83373Bf581e5BeA3414d",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 3073
+      },
+      {
+        "success": true,
+        "hash": "0xe949283f759d4ef5ca8ea7dd0215fbcac6f8fe157386d26b0a946d2cbdcefc3a",
+        "account": "0x9e2ee5273Ee5089dD506F00560E1b7f427b977df",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "500000",
+        "duration": 3257
+      },
+      {
+        "success": true,
+        "hash": "0x59d08b2e2e9608369e0c36adf02ba9cdf2f22c6bbef10a5adcf9d57030716bce",
+        "account": "0x4F1876672Cd524eeeA5C3985DF8c65A2B1cB12D6",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750996",
+        "gasUsed": "500000",
+        "duration": 3267
+      },
+      {
+        "success": true,
+        "hash": "0x6fbc93a524fb57ae7160c7052a3ccbf966eb5de932c542d186462de00f590d9d",
+        "account": "0x95B091d6E9Ad458E397A4d16fC4df1fE9acF7A7e",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 3363
+      },
+      {
+        "success": true,
+        "hash": "0xbb650708c9232ba756698a8e9f4c38ccd7d2edb13919f7ee14861294382a38aa",
+        "account": "0x32000E9351a1d2EE61d6C9C870Ed732af542dd62",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 3475
+      },
+      {
+        "success": true,
+        "hash": "0x4c94be4ea72889cdb1bd355ed59ce7e8cc3a34c5c1633e49efb702e0e0bee267",
+        "account": "0xd4beee34331FE795c8e975E7052C6a0Cdcf2319f",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "500000",
+        "duration": 2016
+      },
+      {
+        "success": true,
+        "hash": "0xca372d96e280e3ef3b42fd76ccbab4435e0108b21ab430c98d4aaeb20dbe23ad",
+        "account": "0x6e94832C14Eba0c540750E3F77f0A05C507D30B8",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 2199
+      },
+      {
+        "success": true,
+        "hash": "0xc6c21b36ff8dbb8b3a27c78880d8ec0f1996126ba527e71c59e6a5bc4f815c0c",
+        "account": "0x7207c00a72b136bd984F394F37fe78D754f5f07b",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 2214
+      },
+      {
+        "success": true,
+        "hash": "0xe2f0ba62bd63ebe6819bbcfe33da78e33114cacd2465da60fcdcc3ec4510691b",
+        "account": "0x457853176052Bc9aEFb7aDf8Ac4949eFfa7d8e93",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 2242
+      },
+      {
+        "success": true,
+        "hash": "0x9db7a15b69532051e2224d86c70ec8ab1968c3e0ee6783ae6b991b93be97001e",
+        "account": "0xF90dB983C519994347bed4a5994385636F9d2CFA",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 3053
+      },
+      {
+        "success": true,
+        "hash": "0x9e855f35d423d5d8f1bebe5ed9e3b605aef12579567d7f24fd24d60f2f4a924b",
+        "account": "0x2e302D7C963aE93bD8d610a7e546bb0126cB47F5",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 2036
+      },
+      {
+        "success": true,
+        "hash": "0x2059fd9044ba205bc372c9eee949fc2815103d0ff46a6ff07fe1a95d6b598571",
+        "account": "0x19595d45cC9e107c57D76441256653cCD04613c3",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 2231
+      },
+      {
+        "success": true,
+        "hash": "0xac892f025a1494225e79313fe2846a12c6f53dad38568b33b5d0f91d0d91f464",
+        "account": "0x9650569aadE2F3623481C7c78EB32B7BD2c5B432",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 2207
+      },
+      {
+        "success": true,
+        "hash": "0xfa5bfc5cade3cda957d4cce38a67e898d8f4e825853d5faa88b2df18f2da7464",
+        "account": "0xff5A63B77228a0de086De262263ED26C0b3b04c2",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 2289
+      },
+      {
+        "success": true,
+        "hash": "0xb08eb3efee25c26710620210a72436ebc301199b036ec20ea9083a90d429068a",
+        "account": "0x43Bf78346A502C020F788233941a105C48112F4a",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "500000",
+        "duration": 2349
+      },
+      {
+        "success": false,
+        "account": "0xB871Bf07cAC04715295D2A26f0C78249B040eF5E",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750996",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xB871Bf07cAC04715295D2A26f0C78249B040eF5E\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x19ba5fba254861c5137e2eee8c7a1f4c3d1473379b57fc2b34281f8d23bcf803\", \"blockNumber\": 4147748, \"contractAddress\": null, \"cumulativeGasUsed\": \"2461770\", \"from\": \"0xB871Bf07cAC04715295D2A26f0C78249B040eF5E\", \"gasPrice\": \"7\", \"gasUsed\": \"961770\", \"hash\": \"0x1cccb851114d969096bda7ff66d06d8912a0b2cb20df87466e632189b9709381\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x016de278df07e6899d0cc8603eac16a8d6bae7fa28f40ca77fce8c926f9b6393",
+        "account": "0xd504d3a7673D33f3c30c1C3ffe6F7C78EF7b3CE4",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 3175
+      },
+      {
+        "success": true,
+        "hash": "0x90f71e0e79b60724364887d7242f47af082f448b9fb675d1b402bd5472f222e4",
+        "account": "0x453c91226F80119AD7B6aedE24110faA9D4cba25",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 3326
+      },
+      {
+        "success": true,
+        "hash": "0x75a2af4634d214c30ddfaa186c2a35236630d779951a59823c5a39ecb3866862",
+        "account": "0xdce22c99D0E5ad812668405aCe50f94D0DB08628",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 3408
+      },
+      {
+        "success": true,
+        "hash": "0xa73c9e2dbcbca84f1b6be09a968c96c6203b1181383449ae77490fafd239329b",
+        "account": "0xDcB6CbF161605726976aE6728B6502aEf0d31A49",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "500000",
+        "duration": 3488
+      },
+      {
+        "success": true,
+        "hash": "0x90b38c23f3d260788b1e14f99881588ef9c296bf2e4d260be0ae1a5d07f018b4",
+        "account": "0xFE9E3436f8E8D3b99b516b87b64B8f4C3522704c",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987720867338518",
+        "gasUsed": "500000",
+        "duration": 2188
+      },
+      {
+        "success": true,
+        "hash": "0x48ff45cbe22db26df754c3663df23a17d6fc2e81538f7009dea263bd25711c0e",
+        "account": "0x8Ee4D4e661992aB2A48151A21374a96117Fa494B",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993860433669259",
+        "gasUsed": "500000",
+        "duration": 2280
+      },
+      {
+        "success": true,
+        "hash": "0xf5a0ea7e5f38ef8e3605709673ffa71fcb366148938ae1d217b1e953d6de9601",
+        "account": "0x9c9480E25BD012b946DDd911b85945082A01249A",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639938604336692593",
+        "gasUsed": "500000",
+        "duration": 2349
+      },
+      {
+        "success": false,
+        "account": "0xAf3F573f5C60b85ADb3Eb5546b5710D369b34BD4",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750996",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xAf3F573f5C60b85ADb3Eb5546b5710D369b34BD4\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xa276b7343cd6058eb9a740fe09fdf73c34fd448530d43d1c98cd5e6feb49391d\", \"blockNumber\": 4147750, \"contractAddress\": null, \"cumulativeGasUsed\": \"961949\", \"from\": \"0xAf3F573f5C60b85ADb3Eb5546b5710D369b34BD4\", \"gasPrice\": \"7\", \"gasUsed\": \"961949\", \"hash\": \"0xd46797e717869b2c2de547a31174c3127392a132e477725ca8e988756b43fd40\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x7534d0f49fb4ad8ca115c5d247c8499027c348bd74868cb25300ffd1b380b483",
+        "account": "0xBCe1860F0d029dA4698015BC773aC19B726E64AF",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139938604336692593",
+        "gasUsed": "500000",
+        "duration": 5771
+      },
+      {
+        "success": true,
+        "hash": "0x8ab614a97b149656006251fbf29dd5d844f4f62c8296a849d80bfab2ce6ed4aa",
+        "account": "0x3E13c5bE60E8Be315fe1A94d5E688bfcCCe31D06",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 3039
+      },
+      {
+        "success": true,
+        "hash": "0xd0c330dfc32a9ddd8d0056e6a15d2212205670a5b99609cab31e1ab4ff4be3ba",
+        "account": "0x567b4002Bb2786F9e72Ad487eBC0A3FDfe1eAD03",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 3218
+      },
+      {
+        "success": true,
+        "hash": "0x1c0efd700c1e28ae823cc03043567f312e9bdd00b36fc2ee0bdfe15551df146f",
+        "account": "0xF211F9A122A34BFe0ef03B48818C01d254E3B8aA",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 3220
+      },
+      {
+        "success": true,
+        "hash": "0xaf33154a12c3276ba9ca096a79f48e7551384724edade5bc7351981e403be3aa",
+        "account": "0x5FE8FB30a99FC0898D4eAEd0a07b002B198dCB7A",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "500000",
+        "duration": 3316
+      },
+      {
+        "success": true,
+        "hash": "0x1a940aa65b9074c9e766d1d1d45675e0b891476cb6703568cc621035facddbf9",
+        "account": "0xBD05D93385693c3F51cA58D091237F40476F5d04",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 3496
+      },
+      {
+        "success": true,
+        "hash": "0x40f87844d9719fb2d0a3448f9daab28bf0ce157bb747bc14d18c426bda72f33c",
+        "account": "0x0F6c5eEa48554a5C3a04F8AFf1bbD169273A16f6",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "500000",
+        "duration": 2817
+      },
+      {
+        "success": true,
+        "hash": "0xd652ed5f65af100041f95e3ff66a183aab2d2041ddedfb51bfeb206797191bc7",
+        "account": "0x4E8946aF3f94BD21113E1d658e1EA8071C1B7d84",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "500000",
+        "duration": 2625
+      },
+      {
+        "success": true,
+        "hash": "0x2767fb6dfb3f5339e703eb1854688054f6973712d3b6c3a812dee90f462d62cb",
+        "account": "0xCC448aF654D47a4D2e67b7BB611FE69EB542048E",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 2794
+      },
+      {
+        "success": true,
+        "hash": "0xbd5df887fd553f31693e26e731bf21ac51471308286b1caa83efd3534373404f",
+        "account": "0xDb166edfCD43879c703ffb4b29A48aE87058b0E6",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "500000",
+        "duration": 2748
+      },
+      {
+        "success": true,
+        "hash": "0xa027a0e2b615e1ed3f8fed5f3ff4a716dd74d1b0bc2288ac56d43414e40ebdca",
+        "account": "0x7F005789FE7F9f4f642457F65872a6d7E6e702B3",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "508929",
+        "duration": 5726
+      },
+      {
+        "success": true,
+        "hash": "0xed35e2b5fbdb5411e85a806294f7afe97ed9cf912dc25a0df97a343a5f835e4f",
+        "account": "0x84e792d4d814c59e93e2E5F131833C74e8c95537",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993707630572179",
+        "gasUsed": "523375",
+        "duration": 2939
+      },
+      {
+        "success": true,
+        "hash": "0x3d4f89a51500174c7d5bdc5e0f1bf4380a73f91116b0818d89804ecd74c2a069",
+        "account": "0xEB932870E3cc98d354d6dd977f2cb9531b12E6f9",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937076305721794",
+        "gasUsed": "523363",
+        "duration": 3052
+      },
+      {
+        "success": true,
+        "hash": "0xf94d403687ffa2e9de2adad824c4fe0d9b1ef666e0bd246aab25e2b567a6337a",
+        "account": "0xA1Ee4d8934B961377f444630425D99efe5c918FD",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987415261144358",
+        "gasUsed": "528975",
+        "duration": 3234
+      },
+      {
+        "success": true,
+        "hash": "0xe40475a5865e8e9b3c1bed395cea068f4d3b64ec54412f048324fec9452dab77",
+        "account": "0xB42239aECF3B9d4B05EcE9437129bA913ec4d3aa",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 3214
+      },
+      {
+        "success": true,
+        "hash": "0xe16559529b32939bff3e93263cc4afeea3f1375d4ecd2d90d404fae92c52f734",
+        "account": "0x2FDC91333684AaFcD1F00Ae1C44B0831c20a6b56",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937076305721794",
+        "gasUsed": "503329",
+        "duration": 3316
+      },
+      {
+        "success": true,
+        "hash": "0x23821dcfeea403fa46755b39655f46aae18a75f74614c7bc88c4565a92802494",
+        "account": "0x2338342c7DC7B67BC4ab20bdA34eFb21A5b7005e",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "523363",
+        "duration": 2290
+      },
+      {
+        "success": true,
+        "hash": "0x9a78ae13c20bd0808f13e56dec7b694dc46b6cbc4439b99c9ee7ab065c52479a",
+        "account": "0x8EBad647F8732830f93bBC849953e644a11edeC7",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 2994
+      },
+      {
+        "success": true,
+        "hash": "0x35d2d05de5585bf6e17fb91d6593d6b1a2a60d0487f1592f4e0b1d47fe496235",
+        "account": "0x856d630612Bb94Ad3DCA3f113448168cEA262f21",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "549009",
+        "duration": 3053
+      },
+      {
+        "success": true,
+        "hash": "0x64c421e2de5a6d5e4b1b97ac11bcdb2a7ea31224799c944c95c2cc87364c5982",
+        "account": "0x187Efb0587F47cB3C1F24397EA97F021e7FcB4C0",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "503329",
+        "duration": 3102
+      },
+      {
+        "success": true,
+        "hash": "0x309521b15020cc461e621b36374d6b319b9830b84aef793b2dbd8b9f6c18a3c5",
+        "account": "0x3c92209c5640234eea3Ac62fBE7ecCc06c868290",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "543409",
+        "duration": 3145
+      },
+      {
+        "success": true,
+        "hash": "0x9aa1cc1d65b7e8f888663c25cb32f1033df60eda575b889c878e805c50ea2e64",
+        "account": "0x398dA25F9466a72D618491a19a19dCe90a1cfD94",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 2325
+      },
+      {
+        "success": true,
+        "hash": "0x71b2128e0d0dba894437389480df6fdd19485e699c25ec04f7eb4f0b696c3960",
+        "account": "0xFfBDA321CA56317988A9F6c4CFf943749D4f1717",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "523363",
+        "duration": 2436
+      },
+      {
+        "success": true,
+        "hash": "0xed71c19f17e8668a30b02fe04419456963c38dd58cbf7b4c720d0a1978154a64",
+        "account": "0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "503329",
+        "duration": 2546
+      },
+      {
+        "success": false,
+        "account": "0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xf6f9e90e8ee9a0a37923e91f6e6fbb00105613dab598627a606906639c18cd89\", \"blockNumber\": 4147756, \"contractAddress\": null, \"cumulativeGasUsed\": \"2488462\", \"from\": \"0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7\", \"gasPrice\": \"7\", \"gasUsed\": \"961770\", \"hash\": \"0x37ed3ae8c6f63324372c360071a072717bbc2735ccae508d4803e15e98124e92\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x2d0eb499aa523a1d70e58a3c1c3d18058cbe51656d926f849d0f819306c4d591",
+        "account": "0xda7488DFd50E52E6980e211f0950C39B0a872d0A",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "543409",
+        "duration": 2734
+      },
+      {
+        "success": true,
+        "hash": "0xf9e9b145cbe14cc3aff92966982418ce4a5459a0fe7c9d38fed8e0e81e5183fa",
+        "account": "0xbDaa18a5F6d11F18CC2ccceAea0C7f5EBF38E920",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "528975",
+        "duration": 3152
+      },
+      {
+        "success": true,
+        "hash": "0xc4de226d5a1d1ac7dafb190e522345513d521d6ec99f759a97c468328d8b535a",
+        "account": "0xD2c72F37a0b744C758825d81ab618C9F38beF49A",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "523363",
+        "duration": 3146
+      },
+      {
+        "success": true,
+        "hash": "0x57c6f0b5d1402aaa60bcce2f23c3d89075ce1b6d368f5e4bd72c6ebd6d0d5c3c",
+        "account": "0xDcE91B87A4A94ba02E583947aB4D9393D2954542",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "503329",
+        "duration": 3338
+      },
+      {
+        "success": false,
+        "account": "0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xea08980ad81477fdb3b9f00f6dc0a39de0d9f48be44e678e7fc7c2d724b78d51\", \"blockNumber\": 4147757, \"contractAddress\": null, \"cumulativeGasUsed\": \"3017437\", \"from\": \"0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1\", \"gasPrice\": \"7\", \"gasUsed\": \"961770\", \"hash\": \"0x75ec977e94566aa0ce4ee3fb9fde7b279f7df3b8d7776ec1ad68064ea2514ada\", \"index\": 4, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0xfa62228b4ba18aa37f57950fa2bbcc536144208f4692be3bc8a623b18122b898",
+        "account": "0x08F6B26Dd4A5279221D418b06fBbF13294e79aD0",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "500000",
+        "duration": 3422
+      },
+      {
+        "success": true,
+        "hash": "0xe7e603c19c1c906fdc6f195c8c80601f03d94cf634861d8e71a0e0bf0505ccc1",
+        "account": "0xF7A994986290038b1AB1C7EA92FD0CB1B0eAdd13",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937076305721794",
+        "gasUsed": "543397",
+        "duration": 2149
+      },
+      {
+        "success": true,
+        "hash": "0x1e3f1431940c7ae35e6480983fced0a6196ebbd57f7bc8433949f768c4b3a20b",
+        "account": "0x74B878530a23aC275b90Aa2E4403Ff3260A1fe60",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937076305721794",
+        "gasUsed": "528963",
+        "duration": 2359
+      },
+      {
+        "success": false,
+        "account": "0x2cCE3aC16DcD9bcA53200Bb40abDE3a6a74595a9",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x2cCE3aC16DcD9bcA53200Bb40abDE3a6a74595a9\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x923428ba7514a30c8ac7101a70e198f2603b7ed1d4c275ebafc921430669f302\", \"blockNumber\": 4147758, \"contractAddress\": null, \"cumulativeGasUsed\": \"2557505\", \"from\": \"0x2cCE3aC16DcD9bcA53200Bb40abDE3a6a74595a9\", \"gasPrice\": \"7\", \"gasUsed\": \"961770\", \"hash\": \"0x9e4ea8e2ec9f94d1caf91816914a2fe9f064f783d869677ff484dacc50342ecc\", \"index\": 3, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0xa68b7d779c9851b3759c25e5cbff37769f3212c0c9fb9a8e970bd7e4d3b49f0c",
+        "account": "0x6af2a89085815E28401d0Db10f137D94e1203C59",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993707630572179",
+        "gasUsed": "523375",
+        "duration": 2282
+      },
+      {
+        "success": true,
+        "hash": "0x15f7679f3ec5f9ef9a36f1fffa7a1b63c1d3c3112ef5651e13d87accbb04cb38",
+        "account": "0x938fE9eC09Df8877b6Af13B7B801526F4E5d96CE",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987415261144358",
+        "gasUsed": "543409",
+        "duration": 2375
+      },
+      {
+        "success": true,
+        "hash": "0x19528c7bd16c8c463d68b5318fa3b3a42ebe5f903545efa7878228f4c590982b",
+        "account": "0x42385B51c57074356D7846AfB45092BC17F95d26",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "503341",
+        "duration": 2848
+      },
+      {
+        "success": true,
+        "hash": "0x691a52d0630115fc9d4551fdfdb4a82d18339e9cab4f4914ec90100a38a46b00",
+        "account": "0x336282Fb344d3c0cED5BEd5AD358d8eBDbf3A6f2",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "523363",
+        "duration": 2952
+      },
+      {
+        "success": true,
+        "hash": "0xdd0b65e79639f14a238b3f94d9834d1bafd21b00030102138d2bfad3f1ddda49",
+        "account": "0x95531c560bbB441c2793E6F5E4363E518415c177",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "543397",
+        "duration": 3149
+      },
+      {
+        "success": true,
+        "hash": "0x212b40cb5d9c1bdf41ea9c515f1ae4fbcbff0724e5bff5d90fae095930111f10",
+        "account": "0x780F6F284154E86A6eBc7FA4A4C467A37FFeAcDC",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "589078",
+        "duration": 3216
+      },
+      {
+        "success": true,
+        "hash": "0x92546455aa0a6d7b482a48b28383cf9504bf5abd62ebf592d8b0f08278cbc15d",
+        "account": "0x73eF952EC94808FB47Bf72d25AB16ffE099140C0",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "563444",
+        "duration": 3329
+      },
+      {
+        "success": true,
+        "hash": "0xa43e45b6a17483e1070b29ed77995d5f5eeddec4ac3fe8e3c6702645c2707108",
+        "account": "0xd8F16400f5e04A3546D23A3896E57A73fE92aeE2",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "528963",
+        "duration": 2183
+      },
+      {
+        "success": true,
+        "hash": "0x37cad59b77e15311f3ef3a1e373d89bcedf30789d2b928ba8d33e4195a661985",
+        "account": "0x66C86CBE0eEA8cFa1C4644E0152dd06528B31609",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "583478",
+        "duration": 2206
+      },
+      {
+        "success": true,
+        "hash": "0xf8525b4f240e86a1be4d0862a14b6e970dbdf1cf9fd60c2d440c318373ef873d",
+        "account": "0x2B2cC974cff8C978335b14cEb598b5c05A8c9E08",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "563444",
+        "duration": 2174
+      },
+      {
+        "success": true,
+        "hash": "0x27575b9d59761a8fcd6e41f3cfb1054bd06002b2b327aedaf031e0b75ac5e648",
+        "account": "0x678dcf2b724afA0Db487c9c1D2593E86F178F628",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "543397",
+        "duration": 2380
+      },
+      {
+        "success": true,
+        "hash": "0x914910c2a466359a6d80d89cdcc31a5bfdb734b4eb1a57d31cd933e41da892ce",
+        "account": "0x671903f1161DeD7E251f1C83A49F36a0cE3340A9",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639935548274750996",
+        "gasUsed": "503341",
+        "duration": 2462
+      },
+      {
+        "success": true,
+        "hash": "0x7456b4d317995ac34296c596e1252c506dc7e7de7d63fa0e699ab93f7a041c2e",
+        "account": "0xeC8987d1D53B0F17014830d43D39135F9411bdc9",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "548997",
+        "duration": 2977
+      },
+      {
+        "success": true,
+        "hash": "0xe9e8caffb76e134146f7889027653349329b2c5f40aa9432625c188252b1958b",
+        "account": "0x66d81d6ddFbE8ffa280c58208E0755577ac5Ce40",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "583478",
+        "duration": 2990
+      },
+      {
+        "success": true,
+        "hash": "0xec9e54ac040d170c487668ce9dfa151569bc156bd0513a3561e5d2c430f193aa",
+        "account": "0x690c46D2343777cc3794E8D9180fe07910551b82",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "523363",
+        "duration": 3148
+      },
+      {
+        "success": true,
+        "hash": "0x762fa4cb6f0ff0255992cd4b8c6c64826b13f1e739267d50410c91803bebc5e9",
+        "account": "0xC62Ab30F145c0ee8Ed5B46c1bD647B3F6e8fC5ca",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "563444",
+        "duration": 3147
+      },
+      {
+        "success": true,
+        "hash": "0xca0a47738a4324a99f70f58554f6fa0653b746a34e8ccf6cea4e559655882619",
+        "account": "0xb57cC96b867D8075F32FFa80010dBbe9F7c7Aebf",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "503341",
+        "duration": 3328
+      },
+      {
+        "success": true,
+        "hash": "0x83f130a3ea725a1377e294562c1fcd616e0fa08ff418f5d7408747585e940942",
+        "account": "0x82EF51d1E6862e2b339E0dBEd8FF917DD3F2aC5D",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "508941",
+        "duration": 2602
+      },
+      {
+        "success": true,
+        "hash": "0x0554e0b9575c8685c50c602077b85664492d5c39dc3c7b6a179cdcc37074f04e",
+        "account": "0x706E794220896F6a1e8Ec9313D8D2a20eE83083A",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "523363",
+        "duration": 2134
+      },
+      {
+        "success": true,
+        "hash": "0xfb56fe658948aa56e2c927b0e01f84da40ae4a180d216c106ba9f8d9ca2c79cc",
+        "account": "0x7494B2a38c1B824257E5f0b1324A21f94CE8c120",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "543397",
+        "duration": 2263
+      },
+      {
+        "success": false,
+        "account": "0xbB7cBBae2f00E5eE91aDBAf4FeC35BFc714E5776",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xbB7cBBae2f00E5eE91aDBAf4FeC35BFc714E5776\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0xd3951464ab6ef89c56a377ac43f11a43c231736face2a8e0af4f81d5710fdbef\", \"blockNumber\": 4147763, \"contractAddress\": null, \"cumulativeGasUsed\": \"961949\", \"from\": \"0xbB7cBBae2f00E5eE91aDBAf4FeC35BFc714E5776\", \"gasPrice\": \"7\", \"gasUsed\": \"961949\", \"hash\": \"0x037bfd9ab5b675a39e0b21adae4c55e01806251b74e1e5c50f6633f900a98630\", \"index\": 0, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x016792496524f1a164ff08f79d7cb8d7a7cdca1f555c1a91b135c707eaf6c229",
+        "account": "0xD22da5A38b0cDeee19Cf30f6AA3df1b9ca06fb48",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "669215",
+        "duration": 5730
+      },
+      {
+        "success": true,
+        "hash": "0x72be05417ec6f86f6d538a2e478145a552e07139b7e5ae3dd326017e8072c94a",
+        "account": "0xE1629F8fbb0D2E23Bf0771B6357A8479410524b8",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "669215",
+        "duration": 3000
+      },
+      {
+        "success": true,
+        "hash": "0xe00c51d611ec2949b87b4be26ee81edd7b438e8d43ec85d2698745a1345951e1",
+        "account": "0x3498A509bbEEc3F8B3D1E4f91D3eCe1Dacce0a03",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "703672",
+        "duration": 2974
+      },
+      {
+        "success": true,
+        "hash": "0xed1643b619755068993f6beee2d933fed34be89556a098acf8416daf0167fc41",
+        "account": "0xEf41E022a3d67a8D257eaED37A26D9c2f19F0011",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "643581",
+        "duration": 3077
+      },
+      {
+        "success": true,
+        "hash": "0xff351efd43f548ae462837f7765c51f3df2714b516dc9fb832236d9415501c43",
+        "account": "0x88B80A3b03C6B3a785c443D5B6960074335dD444",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "gasUsed": "663615",
+        "duration": 3324
+      },
+      {
+        "success": true,
+        "hash": "0xcc484304a439c3feff0aeed441cc28182baaab646f35731ca4b0780c00087061",
+        "account": "0x849c950aCcA1bBE037C5ae9f19F0362fC72B1cA6",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "716616",
+        "duration": 3157
+      },
+      {
+        "success": true,
+        "hash": "0x0a837059c2a38752a2c919d6ee6c4d27f9eec9e99d2c6264fde4010f87d7ddc5",
+        "account": "0x144611BF04F4b7Fb9570Cb9394f139D06979AE12",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "663615",
+        "duration": 2862
+      },
+      {
+        "success": true,
+        "hash": "0x9d588b20217632a99ffd6751a2d46795ab5df1c1f0732f7729ba74211c8cf103",
+        "account": "0xf912cF4A46eEcB37Ff1a0b08eEF489d3a9DAbe4F",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987415261144358",
+        "gasUsed": "689249",
+        "duration": 2942
+      },
+      {
+        "success": true,
+        "hash": "0x8000838a8088d2dd2ff9ad4948e7165bcc745e77f5c1e5c5f7994593ee606773",
+        "account": "0x319a4AfC7309690a0BB516fc8DEF6581d3073987",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993707630572179",
+        "gasUsed": "703684",
+        "duration": 3060
+      },
+      {
+        "success": true,
+        "hash": "0x6177aac4da0e2079d654d85b36ac514e3f51bc3f5be1a39291b09e654c565bd7",
+        "account": "0x74C1310d096Fa63825e95F2C799676de7eb8aC14",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937076305721794",
+        "gasUsed": "723706",
+        "duration": 3040
+      },
+      {
+        "success": true,
+        "hash": "0xada55fa2cf67d0d22736899032cb967b58970ce016e1bf2a49d28a3fc85e8451",
+        "account": "0xF60f1958511549BF1BBf86236DdE7A1d734cD431",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937076305721794",
+        "gasUsed": "736662",
+        "duration": 3120
+      },
+      {
+        "success": true,
+        "hash": "0x31facb1258fe76c83f3c98466cf3483ea35cbd462961cd9cf927b9bc16442aea",
+        "account": "0xbDe067066Dd704Da6F070070F7cE267a2e3f67A2",
+        "repaymentPercentage": 50,
+        "repayAmount": "913.639934784259265597",
+        "gasUsed": "641148",
+        "duration": 2086
+      },
+      {
+        "success": true,
+        "hash": "0x97c525ac76b87757a09fa8e457964e7908dbcaab95b09faf8f35d8e95a3083e9",
+        "account": "0x7552C82f701f34f75c59cA5647b6b8406D65584a",
+        "repaymentPercentage": 30,
+        "repayAmount": "712.639937840321207193",
+        "gasUsed": "703684",
+        "duration": 2292
+      },
+      {
+        "success": true,
+        "hash": "0x7ea27e31dd5c928d7964c4c5c5937ef94e89184138e20778be90ceba5db54ff3",
+        "account": "0xc28FCB3CCe570205385592d1952254e2d1075558",
+        "repaymentPercentage": 20,
+        "repayAmount": "522.427987568064241438",
+        "gasUsed": "669215",
+        "duration": 2991
+      },
+      {
+        "success": true,
+        "hash": "0xcb9aa4ac84e9bc39033d92e4e473f71232fedad1e48b5def50a1fd36d4e1ecc2",
+        "account": "0xC5fAA8186f254806a1eD657A109a6Cb25dcDd7EA",
+        "repaymentPercentage": 40,
+        "repayAmount": "813.139937840321207193",
+        "gasUsed": "703672",
+        "duration": 3110
+      },
+      {
+        "success": false,
+        "account": "0x2A634aE389f8F2aB416B957E0f7D40B2552175eC",
+        "repaymentPercentage": 10,
+        "repayAmount": "251.163993784032120719",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x2A634aE389f8F2aB416B957E0f7D40B2552175eC\", \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x76298571b731cb513f3401aa317eaa62543341f78172d4613a2be1d1cc0d19f3\", \"blockNumber\": 4147766, \"contractAddress\": null, \"cumulativeGasUsed\": \"1630985\", \"from\": \"0x2A634aE389f8F2aB416B957E0f7D40B2552175eC\", \"gasPrice\": \"7\", \"gasUsed\": \"961770\", \"hash\": \"0x3523aedd55a311926fa27b4df30b827fa3148dffce7cfb2b3dc1fc73fca29316\", \"index\": 1, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x96fb2981524cEF46B3382EEAe4cBC59D30addfC1\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      }
+    ]
+  }
+}

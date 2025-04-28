@@ -1,0 +1,204 @@
+{
+  "testId": "withdraw-collateral-test",
+  "timestamp": "2025-04-25T21:00:01.218Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 20,
+    "withdrawalPercentages": [
+      5,
+      10,
+      15,
+      20,
+      25
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 20,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "10000000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x39353fe025cbac378ab299983a41294398ed60e1d8738c7cd6b6e62ef23697ce",
+        "account": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.00017103375",
+        "gasUsed": "500000",
+        "duration": 1904
+      },
+      {
+        "success": true,
+        "hash": "0xcf52419afa7954496642b699caccdd2719588dda1001642a53de883dacaa825c",
+        "account": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.000273024",
+        "gasUsed": "500000",
+        "duration": 2012
+      },
+      {
+        "success": true,
+        "hash": "0xde6ce8980bd705c6060380adb41efa337839cf6d99f6476e2683176dd6066ef4",
+        "account": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.00002626575",
+        "gasUsed": "500000",
+        "duration": 2091
+      },
+      {
+        "success": true,
+        "hash": "0x86f05b90bbd31a4bb3653cf72f3702dc29d6567cf1a75c4c1cba5641a6e411be",
+        "account": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.00038609375",
+        "gasUsed": "500000",
+        "duration": 2169
+      },
+      {
+        "success": true,
+        "hash": "0x62d8209fd48125d4af2bbb4c98c394f55c43b39d59a4d9f9a100cbd569026346",
+        "account": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.000086276",
+        "gasUsed": "500000",
+        "duration": 2244
+      },
+      {
+        "success": true,
+        "hash": "0xf04149c99dbd3875ea61a91b15ab6cb876d9e7c2b8954d9bdf717f35266046c5",
+        "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.0002016",
+        "gasUsed": "500000",
+        "duration": 3044
+      },
+      {
+        "success": true,
+        "hash": "0x368e77061b1b65b35f37f172df2b000f8ee00724dd627acd724c2a6d44263577",
+        "account": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.0001215",
+        "gasUsed": "500000",
+        "duration": 3140
+      },
+      {
+        "success": true,
+        "hash": "0x2fad593a43d8d34a5b0ad3853e10453343f38bbf9255545ddff8ffb825088dc9",
+        "account": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.0002975",
+        "gasUsed": "500000",
+        "duration": 3146
+      },
+      {
+        "success": true,
+        "hash": "0x6ac37e8b9add941ed96aa8db31e538a61faf28bdc6b16abbcd8410be14336f88",
+        "account": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.0000596",
+        "gasUsed": "500000",
+        "duration": 3843
+      },
+      {
+        "success": true,
+        "hash": "0xe99c7418720630736f2a029019e5558bd5c641bf6ad3dc1b90d32024fc58391a",
+        "account": "0x92c668261aEDB5c8C7Cc30D924F7b99e8B340046",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.0000183",
+        "gasUsed": "500000",
+        "duration": 3940
+      },
+      {
+        "success": true,
+        "hash": "0x5b9c4d87a947f5757b8cc7a167dbadfd6ac41d200e823bff291a109791db0257",
+        "account": "0x39aDD7A6B8Abc5ADe63e5Bd9b919ec72DfdbE62d",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.0001215",
+        "gasUsed": "500000",
+        "duration": 2878
+      },
+      {
+        "success": true,
+        "hash": "0x33b9363c49d160592e2597b98387a7cca1499e7fcf6ba23dea563b7e46525b5c",
+        "account": "0xc1A2A19d34E238Cf51D7e403E3b758206eeFBA4a",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.0002016",
+        "gasUsed": "500000",
+        "duration": 2955
+      },
+      {
+        "success": true,
+        "hash": "0xfeb9d570711d158b654ae4e534c9e12b3c5d3dfa49da17b20d03b2b73cb59977",
+        "account": "0x4ED7Db03a92850F192f9A4148Dc80D7bCc2442e9",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.0000596",
+        "gasUsed": "500000",
+        "duration": 3037
+      },
+      {
+        "success": true,
+        "hash": "0xc25dbab1d74942e134548f854929b9fdf2c667ffcff30977baf9c53a3225c6e3",
+        "account": "0x43B0AAc4F57c39ab3FAAfc2b6181F328d7308857",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.0002975",
+        "gasUsed": "500000",
+        "duration": 3124
+      },
+      {
+        "success": true,
+        "hash": "0x81356adb038cd0fb2d75f4dba28b6ba6d056ac1cde2319a042d50fd91e8b40bb",
+        "account": "0x89B09Afe54deA782160939cb0863c2727E8C8FBC",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.0000183",
+        "gasUsed": "500000",
+        "duration": 3233
+      },
+      {
+        "success": true,
+        "hash": "0x4e3672dd2ce216ab7ac76fe7a8853629b5f300caad358b3edac214bd6f359474",
+        "account": "0x61C959142AD5e2365ECca25b1f954a5eCc50caE7",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.0002016",
+        "gasUsed": "500000",
+        "duration": 2233
+      },
+      {
+        "success": true,
+        "hash": "0xc3ac410cdfd15c325a197bfab74ff5cd52d602a32c589e2529de27f6f7ac9745",
+        "account": "0x1c8d31e1e2103454b79D0D72B4Cab5574d8fFdae",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.0002975",
+        "gasUsed": "500000",
+        "duration": 2355
+      },
+      {
+        "success": true,
+        "hash": "0x18289fcfc9b6d297b20e94827644ee46cc6eebada8e7bb18e792c754c9098404",
+        "account": "0x8fCE04b2c8c6C5d3eCBABfe7d1b12e839811cb46",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.0000596",
+        "gasUsed": "500000",
+        "duration": 2970
+      },
+      {
+        "success": true,
+        "hash": "0xe746f26a0c8382cd29ad81f9b9d4465af095036856353135d6c3c2635eb3be3f",
+        "account": "0x4427fB259fF5d3c8B4484cfAB469A7Da10b43E6a",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.0000183",
+        "gasUsed": "500000",
+        "duration": 3068
+      },
+      {
+        "success": true,
+        "hash": "0x7e608a9be4c5af9cec9e590726eb9137f2006b575484d6b92134866c2af1848d",
+        "account": "0x934733526AE32a19DA271b0cA5d868eC7dd33F5f",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.0001215",
+        "gasUsed": "500000",
+        "duration": 3135
+      }
+    ]
+  }
+}

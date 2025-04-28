@@ -1,0 +1,69 @@
+{
+  "testId": "send-musd-test",
+  "timestamp": "2025-04-25T20:56:56.579Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numSenderAccounts": 5,
+    "musdAmounts": [
+      "50",
+      "75",
+      "100",
+      "125",
+      "150"
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "1250000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xfe8222b3004ee591d9ab5c2f84853189fae35fb3d5d6bb6479e7bf4875c56eff",
+        "sender": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+        "receiver": "0x6e9f5F1f40D00392E7E6DdCBb903e78b4cc25087",
+        "musdAmount": "100.0",
+        "gasUsed": "250000",
+        "duration": 2983
+      },
+      {
+        "success": true,
+        "hash": "0x0f10f46957caa5460004ccdf83d1408c851ea26058161b3611758ac0019caf55",
+        "sender": "0x7428BFbD7f810018B3dE3D93e3A5E21A9404779C",
+        "receiver": "0xE7086704ad0AAFfD5DbEbD258e7195B1972aA374",
+        "musdAmount": "125.0",
+        "gasUsed": "250000",
+        "duration": 3058
+      },
+      {
+        "success": true,
+        "hash": "0xebb04a7ab6030a677ec49d1e00bed239c60ef20e680d79b9124c72c791401157",
+        "sender": "0x5Ae24A05eDC80BDF259032A3de52aD4003F2Ded2",
+        "receiver": "0xb4356f508C4415fe93Fbf38E52B5546482f18d6D",
+        "musdAmount": "50.0",
+        "gasUsed": "250000",
+        "duration": 3284
+      },
+      {
+        "success": true,
+        "hash": "0xbc0b538d4c301ffe4094e7fe61b69bc86a18017386d6c3b66e717464de9fbd15",
+        "sender": "0xd6735c136fc313C2eE7e132004941E7d6b36670E",
+        "receiver": "0xd0d433B348a4874d395d12CA0b7841e24E5a8dCd",
+        "musdAmount": "75.0",
+        "gasUsed": "250000",
+        "duration": 3361
+      },
+      {
+        "success": true,
+        "hash": "0xd4dc38d12d10abb01b8b661f04b80f1b255171baca70d25d64510758904f895c",
+        "sender": "0x89B09Afe54deA782160939cb0863c2727E8C8FBC",
+        "receiver": "0xE330F724469B95f25cD5d634584BB3F87DF622be",
+        "musdAmount": "150.0",
+        "gasUsed": "250000",
+        "duration": 3453
+      }
+    ]
+  }
+}
