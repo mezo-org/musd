@@ -1,0 +1,68 @@
+{
+  "testId": "redeem-musd-test",
+  "timestamp": "2025-04-28T17:00:58.907Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "redemptionAmount": "2000.0"
+  },
+  "results": {
+    "successful": 5,
+    "failed": 4,
+    "gasUsed": "12500000",
+    "averageGas": "2500000"
+  },
+  "transactions": [
+    {
+      "account": "0x92c668261aEDB5c8C7Cc30D924F7b99e8B340046",
+      "error": "execution reverted"
+    },
+    {
+      "hash": "0xb87a4063019d2177bf0eb2f818bc844801f785ab9fd87ec874f6c5b31cca4a26",
+      "account": "0xbB7cBBae2f00E5eE91aDBAf4FeC35BFc714E5776",
+      "redemptionAmount": "2000.0",
+      "gasUsed": "2500000",
+      "duration": 2712
+    },
+    {
+      "hash": "0x80ca5cdf800beabad308f3fe8ec216413f2e69ac9e37d99264cc776a658ad9fb",
+      "account": "0x2A634aE389f8F2aB416B957E0f7D40B2552175eC",
+      "redemptionAmount": "2000.0",
+      "gasUsed": "2500000",
+      "duration": 5069
+    },
+    {
+      "hash": "0x4d8ac5fb414c0d343b70a5d216bcfc0c5c85b63b3a7e2c87345554059c956258",
+      "account": "0xaD636a8974A4a370908200431E0Ff34bad9af820",
+      "redemptionAmount": "2000.0",
+      "gasUsed": "2500000",
+      "duration": 4507
+    },
+    {
+      "account": "0x7eBfe20cb3442Eb016EB4895EA1dFE28Ea6d3C31",
+      "error": "execution reverted"
+    },
+    {
+      "account": "0xA50fBe67d18766d63276e0B7320471a9Ceae8975",
+      "error": "execution reverted"
+    },
+    {
+      "account": "0xDCC6a3bfB6cE5e5E24b999BED160f5f26255B932",
+      "error": "execution reverted"
+    },
+    {
+      "hash": "0x4454a3d331b19ef2ea993c82ab605c5d5b7a5b05c7dd838b4e37f8daefc75025",
+      "account": "0xC547444273e5Dc760a6Dda84d5302b6e024ec4Aa",
+      "redemptionAmount": "2000.0",
+      "gasUsed": "2500000",
+      "duration": 2858
+    },
+    {
+      "hash": "0x423f31de0c00ded147e61af2217133a8f4d09badb9e7ae5bfaca7138a9560998",
+      "account": "0xA93e306eDeA6abD03Be000a9e256f88484AC0d85",
+      "redemptionAmount": "2000.0",
+      "gasUsed": "2500000",
+      "duration": 5262
+    }
+  ]
+}
