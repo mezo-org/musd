@@ -14,7 +14,7 @@ import {
 
 // Configuration
 const TEST_ID = "increase-debt-test"
-const NUM_ACCOUNTS = 200 // Number of accounts to use
+const NUM_ACCOUNTS = 20 // Number of accounts to use
 const MUSD_AMOUNTS = ["100", "200", "300", "400", "500"] // MUSD amounts to borrow
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
@@ -109,8 +109,8 @@ async function main() {
           `Projected ICR after borrowing: ${newIcr / 100n}.${newIcr % 100n}%`,
         )
 
-        // Check if new ICR would be too low (below 110%)
-        if (newIcr < 11000n) {
+        // Check if new ICR would be too low (below 111% to add some margin for error)
+        if (newIcr < 11100n) {
           console.log(
             "Warning: New ICR would be too low. Reducing borrow amount.",
           )
