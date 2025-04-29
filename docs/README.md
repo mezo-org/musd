@@ -47,8 +47,8 @@ The arbitrageur started with $100k and ended with $109k (ignoring fees). This tr
 
 The protocol collects fees in four places:
 
-- A borrowing rate of 0.5% (governable), which is added as debt to a trove but minted to governance.
-- A redemption rate of 0.5% (governable), which is taken whenever a user redeems mUSD for BTC. For example, at 0.5%, whenever $100 of mUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
+- A borrowing rate of 0.1% (governable), which is added as debt to a trove but minted to governance.
+- A redemption rate of 0.75% (governable), which is taken whenever a user redeems mUSD for BTC. For example, at 0.5%, whenever $100 of mUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
 - A refinancing rate, which operates like the borrowing rate.
 - [Simple](https://www.investopedia.com/terms/s/simple_interest.asp), [fixed](https://www.creditkarma.com/credit/i/fixed-interest-rate) interest on the principal of the loan.
 
