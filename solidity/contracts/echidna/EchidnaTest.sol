@@ -273,7 +273,6 @@ contract EchidnaTest {
             address(collSurplusPool),
             address(defaultPool),
             address(gasPool),
-            address(governableVariables),
             address(interestRateManager),
             address(musd),
             address(pcv),

@@ -94,7 +94,6 @@ contract BorrowerOperations is
 
     string public constant name = "BorrowerOperations";
     uint256 public constant MIN_NET_DEBT_MIN = 50e18;
-    bool private setAddresses1Set;
 
     // Connected contract declarations
     ITroveManager public troveManager;
@@ -142,7 +141,6 @@ contract BorrowerOperations is
         __Ownable_init(msg.sender);
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
-        setAddresses1Set = false;
 
         borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
         proposedBorrowingRate = borrowingRate;

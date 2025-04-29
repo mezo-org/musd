@@ -14,7 +14,6 @@ import "./dependencies/LiquityBase.sol";
 import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ICollSurplusPool.sol";
 import "./interfaces/IGasPool.sol";
-import "./interfaces/IGovernableVariables.sol";
 import "./interfaces/IInterestRateManager.sol";
 import "./interfaces/IPCV.sol";
 import "./interfaces/ISortedTroves.sol";
@@ -154,7 +153,6 @@ contract TroveManager is
     IBorrowerOperations public borrowerOperations;
     ICollSurplusPool public collSurplusPool;
     address public gasPoolAddress;
-    IGovernableVariables public governableVariables;
     IMUSD public musdToken;
     IPCV public override pcv;
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
@@ -217,7 +215,6 @@ contract TroveManager is
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
-        address _governableVariablesAddress,
         address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
@@ -230,7 +227,6 @@ contract TroveManager is
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_gasPoolAddress);
-        checkContract(_governableVariablesAddress);
         checkContract(_interestRateManagerAddress);
         checkContract(_musdTokenAddress);
         checkContract(_pcvAddress);
@@ -244,7 +240,6 @@ contract TroveManager is
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         defaultPool = IDefaultPool(_defaultPoolAddress);
         gasPoolAddress = _gasPoolAddress;
-        governableVariables = IGovernableVariables(_governableVariablesAddress);
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         musdToken = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
@@ -258,7 +253,6 @@ contract TroveManager is
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit GasPoolAddressChanged(_gasPoolAddress);
-        emit GovernableVariablesAddressChanged(_governableVariablesAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
@@ -407,11 +401,9 @@ contract TroveManager is
         );
 
         // Calculate the collateral fee
-        totals.collateralFee = governableVariables.isAccountFeeExempt(
-            msg.sender
-        )
-            ? 0
-            : borrowerOperations.getRedemptionRate(totals.totalCollateralDrawn);
+        totals.collateralFee = borrowerOperations.getRedemptionRate(
+            totals.totalCollateralDrawn
+        );
 
         totals.collateralToSendToRedeemer =
             totals.totalCollateralDrawn -

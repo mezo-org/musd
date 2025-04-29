@@ -10,6 +10,7 @@ import {
   setupTests,
   updateTroveSnapshot,
   updateWalletSnapshot,
+  getEmittedRedemptionValues,
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
@@ -243,7 +244,7 @@ describe("GovernableVariables", () => {
       expect(dennis.trove.debt.after).to.equal(dennis.trove.debt.before)
     })
 
-    it("makes an account exempt from redemption fees", async () => {
+    it("does NOT make an account exempt from redemption fees", async () => {
       await openTrove(contracts, {
         musdAmount: "10,000",
         sender: alice.wallet,
@@ -261,19 +262,26 @@ describe("GovernableVariables", () => {
 
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .proposeBorrowingRate((to1e18(1) * 50n) / 10000n)
+        .proposeRedemptionRate((to1e18(1) * 50n) / 10000n)
 
       const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
       await fastForwardTime(timeToIncrease)
 
       await contracts.borrowerOperations
         .connect(council.wallet)
-        .approveBorrowingRate()
+        .approveRedemptionRate()
 
       await updateWalletSnapshot(contracts, bob, "before")
 
       const amount = to1e18(100)
-      await performRedemption(contracts, bob, alice, amount)
+      const redemptionTx = await performRedemption(
+        contracts,
+        bob,
+        alice,
+        amount,
+      )
+
+      const { collateralFee } = await getEmittedRedemptionValues(redemptionTx)
 
       await updateWalletSnapshot(contracts, bob, "after")
 
@@ -281,7 +289,10 @@ describe("GovernableVariables", () => {
 
       const expectedBTCGain = (amount * to1e18(1)) / price
 
-      expect(bob.btc.after).to.equal(bob.btc.before + expectedBTCGain)
+      expect(collateralFee).to.be.greaterThan(0)
+      expect(bob.btc.after).to.equal(
+        bob.btc.before + expectedBTCGain - collateralFee,
+      )
     })
 
     context("Expected Reverts", () => {
@@ -358,7 +369,7 @@ describe("GovernableVariables", () => {
       )
     })
 
-    it("makes accounts exempt from redemption fees", async () => {
+    it("does NOT make accounts exempt from redemption fees", async () => {
       await openTrove(contracts, {
         musdAmount: "10,000",
         sender: alice.wallet,
@@ -388,7 +399,14 @@ describe("GovernableVariables", () => {
       await updateWalletSnapshot(contracts, bob, "before")
 
       const amount = to1e18(100)
-      await performRedemption(contracts, bob, alice, amount)
+      const redemptionTx = await performRedemption(
+        contracts,
+        bob,
+        alice,
+        amount,
+      )
+
+      const { collateralFee } = await getEmittedRedemptionValues(redemptionTx)
 
       await updateWalletSnapshot(contracts, bob, "after")
 
@@ -396,7 +414,9 @@ describe("GovernableVariables", () => {
 
       const expectedBTCGain = (amount * to1e18(1)) / price
 
-      expect(bob.btc.after).to.equal(bob.btc.before + expectedBTCGain)
+      expect(bob.btc.after).to.equal(
+        bob.btc.before + expectedBTCGain - collateralFee,
+      )
     })
 
     it("makes accounts exempt from refinancing fees", async () => {

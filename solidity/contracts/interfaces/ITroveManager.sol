@@ -29,9 +29,6 @@ interface ITroveManager {
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event GasPoolAddressChanged(address _gasPoolAddress);
-    event GovernableVariablesAddressChanged(
-        address _governableVariablesAddress
-    );
     event InterestRateManagerAddressChanged(
         address _interestRateManagerAddress
     );
@@ -94,7 +91,6 @@ interface ITroveManager {
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _gasPoolAddress,
-        address _governableVariablesAddress,
         address _interestRateManagerAddress,
         address _musdTokenAddress,
         address _pcvAddress,
