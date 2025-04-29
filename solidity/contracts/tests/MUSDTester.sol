@@ -24,24 +24,4 @@ contract MUSDTester is MUSD {
     ) external {
         _approve(owner, spender, amount);
     }
-
-    function getPendingRevokedBurnAddressesLength()
-        external
-        view
-        returns (uint)
-    {
-        return pendingRevokedBurnAddresses.length;
-    }
-
-    function getPendingAddedMintAddressesLength() external view returns (uint) {
-        return pendingAddedMintAddresses.length;
-    }
-
-    function getPendingRevokedMintAddressesLength()
-        external
-        view
-        returns (uint)
-    {
-        return pendingRevokedMintAddresses.length;
-    }
 }
