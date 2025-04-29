@@ -17,7 +17,6 @@ import "./ITroveManagerFuzzTester.sol";
 import "../StabilityPool.sol";
 import "../interfaces/IStabilityPool.sol";
 import "../token/MUSD.sol";
-import "../token/IMUSD.sol";
 import "../tests/MockAggregator.sol";
 import "../CollSurplusPool.sol";
 import "../interfaces/ICollSurplusPool.sol";
@@ -50,7 +49,7 @@ contract EchidnaTest {
         private immutable borrowerOperationsSignatures;
     ITroveManagerFuzzTester private immutable troveManager;
     IStabilityPool private immutable stabilityPool;
-    IMUSD private immutable musd;
+    MUSD private immutable musd;
     MockAggregator private immutable mockAggregator;
     ICollSurplusPool private immutable collSurplusPool;
     IDefaultPool private immutable defaultPool;
@@ -128,7 +127,7 @@ contract EchidnaTest {
                 )
             )
         );
-        musd = IMUSD(new MUSDTester());
+        musd = MUSD(new MUSDTester());
         mockAggregator = new MockAggregator(18);
         collSurplusPool = ICollSurplusPool(
             address(
@@ -287,8 +286,7 @@ contract EchidnaTest {
             address(troveManager),
             address(stabilityPool),
             address(borrowerOperations),
-            address(interestRateManager),
-            10
+            address(interestRateManager)
         );
         sortedTroves.setParams(
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,

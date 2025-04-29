@@ -44,8 +44,7 @@ contract TokenDeployer {
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress,
-        uint256 _governanceTimeDelay
+        address _interestRateManagerAddress
     ) external {
         if (
             block.chainid == MEZO_CHAIN_ID || block.chainid == ETHEREUM_CHAIN_ID
@@ -69,8 +68,7 @@ contract TokenDeployer {
             _troveManagerAddress,
             _stabilityPoolAddress,
             _borrowerOperationsAddress,
-            _interestRateManagerAddress,
-            _governanceTimeDelay
+            _interestRateManagerAddress
         );
 
         MUSD(token).transferOwnership(GOVERNANCE);

@@ -45,7 +45,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       stabilityPool.address,
       borrowerOperations.address,
       interestRateManager.address,
-      10,
     )
     return
   }
@@ -82,8 +81,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     stabilityPool.address,
     borrowerOperations.address,
     interestRateManager.address,
-    // FIXME: Should be updated and made upgradeable
-    24 * 60 * 60, // 24 hours in seconds
   )
 
   const tokenDeployer = (await helpers.contracts.getContract(

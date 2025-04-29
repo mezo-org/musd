@@ -4,12 +4,10 @@ import {
   Contracts,
   TestingAddresses,
   User,
-  fastForwardTime,
   getDeployedContract,
-  getLatestBlockTimestamp,
   setupTests,
 } from "./helpers"
-import { to1e18, GOVERNANCE_TIME_DELAY } from "./utils"
+import { to1e18 } from "./utils"
 import {
   BorrowerOperations,
   InterestRateManager,
@@ -63,7 +61,6 @@ describe("MUSD", () => {
             newStabilityPool,
             newBorrowerOperations,
             newInterestRateManager,
-            10,
           ),
       ).to.be.revertedWith("Already initialized")
     })
@@ -297,48 +294,151 @@ describe("MUSD", () => {
     })
   })
 
-  describe("startAddContracts()", () => {
-    it("puts new set of contracts to pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddContracts(
-          await newTroveManager.getAddress(),
-          await newStabilityPool.getAddress(),
-          await newBorrowerOperations.getAddress(),
-          await newInterestRateManager.getAddress(),
+  describe("addToMintList()", () => {
+    context("Expected Reverts", () => {
+      it("reverts when caller is not owner", async () => {
+        await expect(
+          contracts.musd.connect(alice.wallet).addToMintList(alice.wallet),
+        ).to.be.revertedWithCustomError(
+          contracts.musd,
+          "OwnableUnauthorizedAccount",
         )
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingTroveManager()).to.be.eq(
-        await newTroveManager.getAddress(),
-      )
-      expect(await contracts.musd.pendingStabilityPool()).to.be.eq(
-        await newStabilityPool.getAddress(),
-      )
-      expect(await contracts.musd.pendingBorrowerOperations()).to.be.eq(
-        await newBorrowerOperations.getAddress(),
-      )
-      expect(await contracts.musd.addContractsInitiated()).to.be.eq(timeNow)
+      })
 
-      expect(
-        await contracts.musd.burnList(await newTroveManager.getAddress()),
-      ).to.equal(false)
-      expect(
-        await contracts.musd.burnList(await newStabilityPool.getAddress()),
-      ).to.equal(false)
-      expect(
-        await contracts.musd.burnList(await newBorrowerOperations.getAddress()),
-      ).to.equal(false)
-      expect(
-        await contracts.musd.mintList(await newBorrowerOperations.getAddress()),
-      ).to.equal(false)
+      it("reverts when account already has minting role", async () => {
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .addToMintList(addresses.borrowerOperations),
+        ).to.be.revertedWithCustomError(contracts.musd, "AddressHasMintRole")
+      })
     })
 
+    it("adds account to minting list", async () => {
+      const tx = await contracts.musd
+        .connect(deployer.wallet)
+        .addToMintList(alice.wallet)
+
+      expect(await contracts.musd.mintList(alice.wallet)).to.equal(true)
+      await expect(tx)
+        .to.emit(contracts.musd, "MintListAddressAdded")
+        .withArgs(alice.wallet)
+    })
+  })
+
+  describe("removeFromMintList()", () => {
     context("Expected Reverts", () => {
+      it("reverts when caller is not owner", async () => {
+        await expect(
+          contracts.musd.connect(alice.wallet).removeFromMintList(alice.wallet),
+        ).to.be.revertedWithCustomError(
+          contracts.musd,
+          "OwnableUnauthorizedAccount",
+        )
+      })
+
+      it("reverts when account has no minting role", async () => {
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .removeFromMintList(alice.wallet),
+        ).to.be.revertedWithCustomError(
+          contracts.musd,
+          "AddressWithoutMintRole",
+        )
+      })
+    })
+
+    it("removes account from minting list", async () => {
+      await contracts.musd.connect(deployer.wallet).addToMintList(alice.wallet)
+
+      const tx = await contracts.musd
+        .connect(deployer.wallet)
+        .removeFromMintList(alice.wallet)
+
+      expect(await contracts.musd.mintList(alice.wallet)).to.equal(false)
+      await expect(tx)
+        .to.emit(contracts.musd, "MintListAddressRemoved")
+        .withArgs(alice.wallet)
+    })
+  })
+
+  describe("addToBurnList()", () => {
+    context("Expected Reverts", () => {
+      it("reverts when caller is not owner", async () => {
+        await expect(
+          contracts.musd.connect(alice.wallet).addToBurnList(alice.wallet),
+        ).to.be.revertedWithCustomError(
+          contracts.musd,
+          "OwnableUnauthorizedAccount",
+        )
+      })
+
+      it("reverts when account already has burn role", async () => {
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .addToBurnList(addresses.borrowerOperations),
+        ).to.be.revertedWithCustomError(contracts.musd, "AddressHasBurnRole")
+      })
+    })
+
+    it("adds account to burn list", async () => {
+      const tx = await contracts.musd
+        .connect(deployer.wallet)
+        .addToBurnList(alice.wallet)
+
+      expect(await contracts.musd.burnList(alice.wallet)).to.equal(true)
+      await expect(tx)
+        .to.emit(contracts.musd, "BurnListAddressAdded")
+        .withArgs(alice.wallet)
+    })
+  })
+
+  describe("removeFromBurnList()", () => {
+    context("Expected Reverts", () => {
+      it("reverts when caller is not owner", async () => {
+        await expect(
+          contracts.musd.connect(alice.wallet).removeFromBurnList(alice.wallet),
+        ).to.be.revertedWithCustomError(
+          contracts.musd,
+          "OwnableUnauthorizedAccount",
+        )
+      })
+
+      it("reverts when account has no burn role", async () => {
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .removeFromBurnList(alice.wallet),
+        ).to.be.revertedWithCustomError(
+          contracts.musd,
+          "AddressWithoutBurnRole",
+        )
+      })
+    })
+
+    it("removes account from burn list", async () => {
+      await contracts.musd.connect(deployer.wallet).addToBurnList(alice.wallet)
+
+      const tx = await contracts.musd
+        .connect(deployer.wallet)
+        .removeFromBurnList(alice.wallet)
+
+      expect(await contracts.musd.burnList(alice.wallet)).to.equal(false)
+      await expect(tx)
+        .to.emit(contracts.musd, "BurnListAddressRemoved")
+        .withArgs(alice.wallet)
+    })
+  })
+
+  describe("setSystemContracts()", () => {
+    context("Expected reverts", () => {
       it("reverts when caller is not owner", async () => {
         await expect(
           contracts.musd
             .connect(alice.wallet)
-            .startAddContracts(
+            .setSystemContracts(
               await newTroveManager.getAddress(),
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
@@ -350,33 +450,11 @@ describe("MUSD", () => {
         )
       })
 
-      it("reverts when provided addresses are not contracts", async () => {
+      it("reverts when provided address is not contract", async () => {
         await expect(
           contracts.musd
             .connect(deployer.wallet)
-            .startAddContracts(
-              await newTroveManager.getAddress(),
-              await newStabilityPool.getAddress(),
-              alice.address,
-              bob.address,
-            ),
-        ).to.be.revertedWith("Account code size cannot be zero")
-
-        await expect(
-          contracts.musd
-            .connect(deployer.wallet)
-            .startAddContracts(
-              await newTroveManager.getAddress(),
-              alice.address,
-              await newBorrowerOperations.getAddress(),
-              await newInterestRateManager.getAddress(),
-            ),
-        ).to.be.revertedWith("Account code size cannot be zero")
-
-        await expect(
-          contracts.musd
-            .connect(deployer.wallet)
-            .startAddContracts(
+            .setSystemContracts(
               alice.wallet,
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
@@ -387,10 +465,45 @@ describe("MUSD", () => {
         await expect(
           contracts.musd
             .connect(deployer.wallet)
-            .startAddContracts(
+            .setSystemContracts(
+              await newTroveManager.getAddress(),
+              alice.address,
+              await newBorrowerOperations.getAddress(),
+              await newInterestRateManager.getAddress(),
+            ),
+        ).to.be.revertedWith("Account code size cannot be zero")
+
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .setSystemContracts(
               await newTroveManager.getAddress(),
               await newStabilityPool.getAddress(),
+              alice.address,
+              await newInterestRateManager.getAddress(),
+            ),
+        ).to.be.revertedWith("Account code size cannot be zero")
+
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .setSystemContracts(
+              await newTroveManager.getAddress(),
+              await newStabilityPool.getAddress(),
+              await newBorrowerOperations.getAddress(),
+              alice.address,
+            ),
+        ).to.be.revertedWith("Account code size cannot be zero")
+      })
+
+      it("reverts when provided address is zero address", async () => {
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .setSystemContracts(
               ZERO_ADDRESS,
+              await newStabilityPool.getAddress(),
+              await newBorrowerOperations.getAddress(),
               await newInterestRateManager.getAddress(),
             ),
         ).to.be.revertedWith("Account cannot be zero address")
@@ -398,7 +511,7 @@ describe("MUSD", () => {
         await expect(
           contracts.musd
             .connect(deployer.wallet)
-            .startAddContracts(
+            .setSystemContracts(
               await newTroveManager.getAddress(),
               ZERO_ADDRESS,
               await newBorrowerOperations.getAddress(),
@@ -409,91 +522,36 @@ describe("MUSD", () => {
         await expect(
           contracts.musd
             .connect(deployer.wallet)
-            .startAddContracts(
+            .setSystemContracts(
+              await newTroveManager.getAddress(),
+              await newStabilityPool.getAddress(),
               ZERO_ADDRESS,
+              await newInterestRateManager.getAddress(),
+            ),
+        ).to.be.revertedWith("Account cannot be zero address")
+
+        await expect(
+          contracts.musd
+            .connect(deployer.wallet)
+            .setSystemContracts(
+              await newTroveManager.getAddress(),
               await newStabilityPool.getAddress(),
               await newBorrowerOperations.getAddress(),
-              await newInterestRateManager.getAddress(),
+              ZERO_ADDRESS,
             ),
         ).to.be.revertedWith("Account cannot be zero address")
       })
     })
-  })
 
-  describe("cancelAddContracts()", () => {
-    it("cancels adding system contracts", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddContracts(
-          await newTroveManager.getAddress(),
-          await newStabilityPool.getAddress(),
-          await newBorrowerOperations.getAddress(),
-          await newInterestRateManager.getAddress(),
-        )
-
-      await contracts.musd.connect(deployer.wallet).cancelAddContracts()
-
-      expect(await contracts.musd.pendingTroveManager()).to.be.eq(ZERO_ADDRESS)
-      expect(await contracts.musd.pendingStabilityPool()).to.be.eq(ZERO_ADDRESS)
-      expect(await contracts.musd.pendingBorrowerOperations()).to.be.eq(
-        ZERO_ADDRESS,
-      )
-      expect(await contracts.musd.addContractsInitiated()).to.be.eq(0)
-
-      expect(
-        await contracts.musd.burnList(await newTroveManager.getAddress()),
-      ).to.equal(false)
-      expect(
-        await contracts.musd.burnList(await newStabilityPool.getAddress()),
-      ).equal(false)
-      expect(
-        await contracts.musd.burnList(await newBorrowerOperations.getAddress()),
-      ).to.equal(false)
-      expect(
-        await contracts.musd.mintList(await newBorrowerOperations.getAddress()),
-      ).to.equal(false)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).cancelAddContracts(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("cancelAddContracts(): reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).cancelAddContracts(),
-        ).to.be.revertedWith("Adding contracts is not started")
-      })
-    })
-  })
-
-  describe("finalizeAddContracts()", () => {
     it("enables new system contracts roles", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddContracts(
-          await newTroveManager.getAddress(),
-          await newStabilityPool.getAddress(),
-          await newBorrowerOperations.getAddress(),
-          await newInterestRateManager.getAddress(),
-        )
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
       const tx = await contracts.musd
         .connect(deployer.wallet)
-        .finalizeAddContracts()
-
-      expect(await contracts.musd.pendingTroveManager()).to.be.eq(ZERO_ADDRESS)
-      expect(await contracts.musd.pendingStabilityPool()).to.be.eq(ZERO_ADDRESS)
-      expect(await contracts.musd.pendingBorrowerOperations()).to.be.eq(
-        ZERO_ADDRESS,
-      )
-      expect(await contracts.musd.addContractsInitiated()).to.be.eq(0)
+        .setSystemContracts(
+          await newTroveManager.getAddress(),
+          await newStabilityPool.getAddress(),
+          await newBorrowerOperations.getAddress(),
+          await newInterestRateManager.getAddress(),
+        )
 
       expect(await contracts.musd.burnList(addresses.troveManager)).to.equal(
         true,
@@ -523,512 +581,25 @@ describe("MUSD", () => {
       await expect(tx)
         .to.emit(contracts.musd, "BorrowerOperationsAddressAdded")
         .withArgs(await newBorrowerOperations.getAddress())
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).finalizeAddContracts(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeAddContracts(),
-        ).to.be.revertedWith("Change not initiated")
-      })
-
-      it("reverts when not enough time has passed", async () => {
-        await contracts.musd
-          .connect(deployer.wallet)
-          .startAddContracts(
-            await newTroveManager.getAddress(),
-            await newStabilityPool.getAddress(),
-            await newBorrowerOperations.getAddress(),
-            await newInterestRateManager.getAddress(),
-          )
-
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeAddContracts(),
-        ).to.be.revertedWith("Governance delay has not elapsed")
-      })
-    })
-  })
-
-  describe("startRevokeMintList()", () => {
-    it("puts account to pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeMintList([addresses.borrowerOperations])
-
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingRevokedMintAddresses(0)).to.be.equal(
-        addresses.borrowerOperations,
-      )
-      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(
-        timeNow,
-      )
-      expect(
-        await contracts.musd.mintList(addresses.borrowerOperations),
-      ).to.equal(true)
-    })
-
-    it("puts multiple accounts to pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeMintList([
-          addresses.borrowerOperations,
-          addresses.interestRateManager,
-        ])
-
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingRevokedMintAddresses(0)).to.be.equal(
-        addresses.borrowerOperations,
-      )
-      expect(await contracts.musd.pendingRevokedMintAddresses(1)).to.be.equal(
-        addresses.interestRateManager,
-      )
-      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(
-        timeNow,
-      )
-      expect(
-        await contracts.musd.mintList(addresses.borrowerOperations),
-      ).to.equal(true)
-      expect(
-        await contracts.musd.mintList(addresses.interestRateManager),
-      ).to.equal(true)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd
-            .connect(alice.wallet)
-            .startRevokeMintList([addresses.borrowerOperations]),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when account has no minting role", async () => {
-        await expect(
-          contracts.musd
-            .connect(deployer.wallet)
-            .startRevokeMintList([alice.wallet]),
-        ).to.be.revertedWith("Incorrect address to revoke")
-      })
-    })
-  })
-
-  describe("cancelRevokeMintList()", () => {
-    it("cancels revoking from mint list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeMintList([addresses.borrowerOperations])
-      await contracts.musd.connect(deployer.wallet).cancelRevokeMintList()
-
-      expect(
-        await contracts.musd.getPendingRevokedMintAddressesLength(),
-      ).to.be.equal(0)
-      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(0)
-      expect(
-        await contracts.musd.mintList(addresses.borrowerOperations),
-      ).to.equal(true)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).cancelRevokeMintList(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).cancelRevokeMintList(),
-        ).to.be.revertedWith("Revoking from mint list is not started")
-      })
-    })
-  })
-
-  describe("finalizeRevokeMintList()", () => {
-    it("removes account from minting list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeMintList([addresses.borrowerOperations])
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
-      await contracts.musd.connect(deployer.wallet).finalizeRevokeMintList()
-
-      expect(
-        await contracts.musd.getPendingRevokedMintAddressesLength(),
-      ).to.be.equal(0)
-      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(0)
-      expect(
-        await contracts.musd.mintList(addresses.borrowerOperations),
-      ).to.equal(false)
-    })
-
-    it("removes multiple accounts from minting list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeMintList([
-          addresses.borrowerOperations,
-          addresses.interestRateManager,
-        ])
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
-      await contracts.musd.connect(deployer.wallet).finalizeRevokeMintList()
-
-      expect(
-        await contracts.musd.getPendingRevokedMintAddressesLength(),
-      ).to.be.equal(0)
-      expect(await contracts.musd.revokeMintListInitiated()).to.be.equal(0)
-      expect(
-        await contracts.musd.mintList(addresses.borrowerOperations),
-      ).to.equal(false)
-      expect(
-        await contracts.musd.mintList(addresses.interestRateManager),
-      ).to.equal(false)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).finalizeRevokeMintList(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeRevokeMintList(),
-        ).to.be.revertedWith("Change not initiated")
-      })
-
-      it("reverts when passed not enough time", async () => {
-        await contracts.musd
-          .connect(deployer.wallet)
-          .startRevokeMintList([addresses.borrowerOperations])
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeRevokeMintList(),
-        ).to.be.revertedWith("Governance delay has not elapsed")
-      })
-    })
-  })
-
-  describe("startAddMintList()", () => {
-    it("puts account to pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddMintList([alice.wallet])
-
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingAddedMintAddresses(0)).to.be.equal(
-        alice.wallet,
-      )
-      expect(await contracts.musd.addMintListInitiated()).to.be.equal(timeNow)
-      expect(await contracts.musd.mintList(alice.wallet)).to.equal(false)
-    })
-
-    it("puts multiple accounts to the pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddMintList([alice.wallet, bob.wallet])
-
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingAddedMintAddresses(0)).to.be.equal(
-        alice.wallet,
-      )
-      expect(await contracts.musd.pendingAddedMintAddresses(1)).to.be.equal(
-        bob.wallet,
-      )
-      expect(await contracts.musd.addMintListInitiated()).to.be.equal(timeNow)
-      expect(await contracts.musd.mintList(alice.wallet)).to.equal(false)
-      expect(await contracts.musd.mintList(bob.wallet)).to.equal(false)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).startAddMintList([alice.wallet]),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when account already has minting role", async () => {
-        await expect(
-          contracts.musd
-            .connect(deployer.wallet)
-            .startAddMintList([addresses.borrowerOperations]),
-        ).to.be.revertedWith("Incorrect address to add")
-      })
-    })
-  })
-
-  describe("cancelAddMintList()", () => {
-    it("cancels adding to mint list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddMintList([alice.wallet])
-      await contracts.musd.connect(deployer.wallet).cancelAddMintList()
-
-      expect(
-        await contracts.musd.getPendingAddedMintAddressesLength(),
-      ).to.equal(0)
-      expect(await contracts.musd.addMintListInitiated()).to.be.equal(0)
-      expect(await contracts.musd.mintList(alice.wallet)).to.equal(false)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).cancelAddMintList(),
-        ).to.be.revertedWith("Adding to mint list is not started")
-      })
-    })
-  })
-
-  describe("finalizeAddMintList()", () => {
-    it("adds account to minting list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddMintList([alice.wallet])
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
-      await contracts.musd.connect(deployer.wallet).finalizeAddMintList()
-
-      expect(
-        await contracts.musd.getPendingAddedMintAddressesLength(),
-      ).to.equal(0)
-      expect(await contracts.musd.addMintListInitiated()).to.be.equal(0)
-      expect(await contracts.musd.mintList(alice.wallet)).to.equal(true)
-    })
-
-    it("adds multiple accounts to the minting list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startAddMintList([alice.wallet, bob.wallet])
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
-      await contracts.musd.connect(deployer.wallet).finalizeAddMintList()
-
-      expect(
-        await contracts.musd.getPendingAddedMintAddressesLength(),
-      ).to.equal(0)
-      expect(await contracts.musd.addMintListInitiated()).to.be.equal(0)
-      expect(await contracts.musd.mintList(alice.wallet)).to.equal(true)
-      expect(await contracts.musd.mintList(bob.wallet)).to.equal(true)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).finalizeAddMintList(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeAddMintList(),
-        ).to.be.revertedWith("Change not initiated")
-      })
-
-      it("reverts when passed not enough time", async () => {
-        await contracts.musd
-          .connect(deployer.wallet)
-          .startAddMintList([alice.wallet])
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeAddMintList(),
-        ).to.be.revertedWith("Governance delay has not elapsed")
-      })
-    })
-  })
-
-  describe("startRevokeBurnList()", () => {
-    it("puts account to pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeBurnList([addresses.borrowerOperations])
-
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingRevokedBurnAddresses(0)).to.be.equal(
-        addresses.borrowerOperations,
-      )
-      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(
-        timeNow,
-      )
-
-      expect(
-        await contracts.musd.burnList(addresses.borrowerOperations),
-      ).to.equal(true)
-    })
-
-    it("puts multiple accounts to the pending list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeBurnList([
-          addresses.borrowerOperations,
-          addresses.stabilityPool,
-        ])
-
-      const timeNow = await getLatestBlockTimestamp()
-      expect(await contracts.musd.pendingRevokedBurnAddresses(0)).to.be.equal(
-        addresses.borrowerOperations,
-      )
-      expect(await contracts.musd.pendingRevokedBurnAddresses(1)).to.be.equal(
-        addresses.stabilityPool,
-      )
-      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(
-        timeNow,
-      )
-
-      expect(
-        await contracts.musd.burnList(addresses.borrowerOperations),
-      ).to.equal(true)
-      expect(await contracts.musd.burnList(addresses.stabilityPool)).to.equal(
-        true,
-      )
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd
-            .connect(alice.wallet)
-            .startRevokeBurnList([addresses.borrowerOperations]),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when account has no burning role", async () => {
-        await expect(
-          contracts.musd
-            .connect(deployer.wallet)
-            .startRevokeBurnList([alice.wallet]),
-        ).to.be.revertedWith("Incorrect address to revoke")
-      })
-    })
-  })
-
-  describe("cancelRevokeBurnList()", () => {
-    it("cancels revoking from burn list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeBurnList([addresses.borrowerOperations])
-      await contracts.musd.connect(deployer.wallet).cancelRevokeBurnList()
-
-      expect(
-        await contracts.musd.getPendingRevokedBurnAddressesLength(),
-      ).to.equal(0)
-      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(0)
-
-      expect(
-        await contracts.musd.burnList(addresses.borrowerOperations),
-      ).to.equal(true)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).cancelRevokeBurnList(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).cancelRevokeBurnList(),
-        ).to.be.revertedWith("Revoking from burn list is not started")
-      })
-    })
-  })
-
-  describe("finalizeRevokeBurnList()", () => {
-    it("removes account from the burn list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeBurnList([addresses.borrowerOperations])
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
-      await contracts.musd.connect(deployer.wallet).finalizeRevokeBurnList()
-
-      expect(
-        await contracts.musd.getPendingRevokedBurnAddressesLength(),
-      ).to.equal(0)
-      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(0)
-
-      expect(
-        await contracts.musd.burnList(addresses.borrowerOperations),
-      ).to.equal(false)
-    })
-
-    it("removes multiple accounts from the burn list", async () => {
-      await contracts.musd
-        .connect(deployer.wallet)
-        .startRevokeBurnList([
-          addresses.borrowerOperations,
-          addresses.stabilityPool,
-        ])
-      await fastForwardTime(GOVERNANCE_TIME_DELAY + 1)
-
-      await contracts.musd.connect(deployer.wallet).finalizeRevokeBurnList()
-
-      expect(
-        await contracts.musd.getPendingRevokedBurnAddressesLength(),
-      ).to.equal(0)
-      expect(await contracts.musd.revokeBurnListInitiated()).to.be.equal(0)
-
-      expect(
-        await contracts.musd.burnList(addresses.borrowerOperations),
-      ).to.equal(false)
-      expect(await contracts.musd.burnList(addresses.stabilityPool)).to.equal(
-        false,
-      )
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts when caller is not owner", async () => {
-        await expect(
-          contracts.musd.connect(alice.wallet).finalizeRevokeBurnList(),
-        ).to.be.revertedWithCustomError(
-          contracts.musd,
-          "OwnableUnauthorizedAccount",
-        )
-      })
-
-      it("reverts when change is not initiated", async () => {
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeRevokeBurnList(),
-        ).to.be.revertedWith("Change not initiated")
-      })
-
-      it("reverts when passed not enough time", async () => {
-        await contracts.musd
-          .connect(deployer.wallet)
-          .startRevokeBurnList([addresses.borrowerOperations])
-        await expect(
-          contracts.musd.connect(deployer.wallet).finalizeRevokeBurnList(),
-        ).to.be.revertedWith("Governance delay has not elapsed")
-      })
+      await expect(tx)
+        .to.emit(contracts.musd, "InterestRateManagerAddressAdded")
+        .withArgs(await newInterestRateManager.getAddress())
+
+      await expect(tx)
+        .to.emit(contracts.musd, "MintListAddressAdded")
+        .withArgs(await newBorrowerOperations.getAddress())
+      await expect(tx)
+        .to.emit(contracts.musd, "MintListAddressAdded")
+        .withArgs(await newInterestRateManager.getAddress())
+      await expect(tx)
+        .to.emit(contracts.musd, "BurnListAddressAdded")
+        .withArgs(await newTroveManager.getAddress())
+      await expect(tx)
+        .to.emit(contracts.musd, "BurnListAddressAdded")
+        .withArgs(await newStabilityPool.getAddress())
+      await expect(tx)
+        .to.emit(contracts.musd, "BurnListAddressAdded")
+        .withArgs(await newBorrowerOperations.getAddress())
     })
   })
 })

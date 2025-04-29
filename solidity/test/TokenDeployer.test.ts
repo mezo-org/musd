@@ -10,7 +10,6 @@ describe("TokenDeployer", () => {
   let stabilityPoolAddress: string
   let borrowerOperationsAddress: string
   let interestRateManagerAddress: string
-  const governanceDelay = 86400
 
   const deployerAddress = "0x123694886DBf5Ac94DDA07135349534536D14cAf"
   const governanceAddress = "0x98D8899c3030741925BE630C710A98B57F397C7a"
@@ -56,7 +55,6 @@ describe("TokenDeployer", () => {
             stabilityPoolAddress,
             borrowerOperationsAddress,
             interestRateManagerAddress,
-            governanceDelay,
           ),
         ).to.be.revertedWithCustomError(deployer, "NotDeployer")
       })
@@ -73,7 +71,6 @@ describe("TokenDeployer", () => {
             stabilityPoolAddress,
             borrowerOperationsAddress,
             interestRateManagerAddress,
-            governanceDelay,
           )
 
         token = await ethers.getContractAt("MUSD", await deployer.token())
@@ -85,7 +82,6 @@ describe("TokenDeployer", () => {
         expect(await token.burnList(borrowerOperationsAddress)).to.eq(true)
         expect(await token.mintList(borrowerOperationsAddress)).to.eq(true)
         expect(await token.mintList(interestRateManagerAddress)).to.eq(true)
-        expect(await token.governanceTimeDelay()).to.eq(governanceDelay)
       })
 
       it("should pass the token ownership to governance", async () => {
