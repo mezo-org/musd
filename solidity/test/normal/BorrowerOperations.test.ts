@@ -1968,6 +1968,13 @@ describe("BorrowerOperations in Normal Mode", () => {
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
+
+      it("reverts when the caller does not have sufficient MUSD to close the trove", async () => {
+        await testRevert(
+          {},
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
+        )
+      })
     })
   })
 

@@ -956,7 +956,7 @@ contract BorrowerOperations is
             _borrower
         );
 
-        _requireSufficientMUSDBalance(_borrower, debt - MUSD_GAS_COMPENSATION);
+        _requireSufficientMUSDBalance(_caller, debt - MUSD_GAS_COMPENSATION);
         if (canMint) {
             uint256 newTCR = _getNewTCRFromTroveChange(
                 coll,
