@@ -2,6 +2,7 @@
 import { ethers } from "hardhat"
 import fs from "fs"
 import path from "path"
+import { ZeroAddress } from "ethers"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import calculateTroveOperationHints from "../hint-helper"
@@ -162,6 +163,18 @@ async function main() {
           operation: "open",
           verbose: true,
         })
+
+        if (upperHint === ZeroAddress || lowerHint === ZeroAddress) {
+          // Bail if no hints are found
+          console.log(
+            `No hints found for account ${account.address}, skipping transaction`,
+          )
+          return {
+            success: false,
+            account: account.address,
+            error: "no hints found - skipped",
+          }
+        }
 
         // Record the start time
         const startTime = Date.now()
