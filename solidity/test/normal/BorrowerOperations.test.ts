@@ -1970,6 +1970,10 @@ describe("BorrowerOperations in Normal Mode", () => {
       })
 
       it("reverts when the caller does not have sufficient MUSD to close the trove", async () => {
+        // grant Bob (the borrower) enough MUSD to close the trove
+        await contracts.musd.unprotectedMint(bob.wallet, to1e18("40,000"))
+
+        // Alice (the caller) does not have enough MUSD to close the trove
         await testRevert(
           {},
           "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
