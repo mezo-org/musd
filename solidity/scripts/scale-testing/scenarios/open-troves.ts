@@ -97,7 +97,6 @@ async function main() {
   const testAccounts = stateManager.getAccounts({
     minBtcBalance: MIN_BTC_BALANCE,
     hasTrove: false,
-    notUsedInTest: TEST_ID,
     limit: NUM_ACCOUNTS,
   })
 
