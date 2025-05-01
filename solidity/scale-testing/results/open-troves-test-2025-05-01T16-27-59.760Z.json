@@ -1,0 +1,51 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-05-01T16:27:59.760Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2200,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 0,
+    "failed": 0,
+    "skipped": 5,
+    "gasUsed": "0",
+    "transactions": [
+      {
+        "success": false,
+        "account": "0x8Dc9eb294F124B46531145312f088DAfaD5b74ec",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x66D84F828F3E0C5BE2b5F4b3FAD8Ce9534378751",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xf95111C6d8662f6B1040f01204488dB1688b141c",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xf23A8d2EEbF24a04bdaEB45d253B3C1211fe3B24",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x3aEe3aeAc032C32F3c5beb351735E83f591F99aF",
+        "error": "no hints found - skipped"
+      }
+    ]
+  }
+}

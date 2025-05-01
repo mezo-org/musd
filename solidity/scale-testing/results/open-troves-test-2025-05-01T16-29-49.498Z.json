@@ -1,0 +1,76 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-05-01T16:29:49.498Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2200,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "3750000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x18ec5c02a1885e2532995f157a68759673817cc07574b12f915d0db5660e1041",
+        "account": "0xf95111C6d8662f6B1040f01204488dB1688b141c",
+        "collateralRatio": 200,
+        "collateralAmount": "0.00024",
+        "debtAmount": 2200,
+        "gasUsed": "750000",
+        "duration": 4298
+      },
+      {
+        "success": true,
+        "hash": "0x92a5517784f5ece64fe3eb59fa585d9a4ee0ee4743dd3611a13560fcd4592e08",
+        "account": "0x3aEe3aeAc032C32F3c5beb351735E83f591F99aF",
+        "collateralRatio": 250,
+        "collateralAmount": "0.0003",
+        "debtAmount": 2200,
+        "gasUsed": "750000",
+        "duration": 4456
+      },
+      {
+        "success": true,
+        "hash": "0xf6eb1fb0de4a4d6e4788362db9fb29bf44d2bac37e07e082d94c659df6597ce8",
+        "account": "0x66D84F828F3E0C5BE2b5F4b3FAD8Ce9534378751",
+        "collateralRatio": 150,
+        "collateralAmount": "0.00018",
+        "debtAmount": 2200,
+        "gasUsed": "750000",
+        "duration": 4597
+      },
+      {
+        "success": true,
+        "hash": "0x0baa0ab7e32858fd9cf74aa1e566e5516a9a6afaa8d09fc61d98e6f37cf6acf7",
+        "account": "0x8Dc9eb294F124B46531145312f088DAfaD5b74ec",
+        "collateralRatio": 300,
+        "collateralAmount": "0.00036",
+        "debtAmount": 2200,
+        "gasUsed": "750000",
+        "duration": 4505
+      },
+      {
+        "success": true,
+        "hash": "0xc73d3740666109b484e261e4170b8f1b73f5b6131c62b8cb659bf513a0fc0d8b",
+        "account": "0xf23A8d2EEbF24a04bdaEB45d253B3C1211fe3B24",
+        "collateralRatio": 350,
+        "collateralAmount": "0.00042",
+        "debtAmount": 2200,
+        "gasUsed": "750000",
+        "duration": 4639
+      }
+    ]
+  }
+}

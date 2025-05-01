@@ -6,7 +6,7 @@ import * as path from "path"
 const BTC_PER_WALLET = "0.001"
 const OUTPUT_DIR = path.join(__dirname, "..", "..", "scale-testing")
 const WALLETS_FILE = path.join(OUTPUT_DIR, "wallets.json")
-const BATCH_SIZE = 50
+const BATCH_SIZE = 5000
 
 async function main() {
   if (!fs.existsSync(WALLETS_FILE)) {
@@ -32,17 +32,22 @@ async function main() {
     for (const wallet of batch) {
       const balance = await ethers.provider.getBalance(wallet.address)
       if (balance >= ethers.parseEther(BTC_PER_WALLET)) {
-        console.log(`Wallet ${wallet.address} is funded with ${ethers.formatEther(balance)} ETH`)
+        console.log(
+          `Wallet ${wallet.address} is funded with ${ethers.formatEther(balance)} ETH`,
+        )
         fundedCount++
         fundedWallets.push(wallet.address)
       } else {
-        console.log(`Wallet ${wallet.address} is not funded (balance: ${ethers.formatEther(balance)} ETH)`)
+        console.log(
+          `Wallet ${wallet.address} is not funded (balance: ${ethers.formatEther(balance)} ETH)`,
+        )
         unfundedWallets.push(wallet.address)
+        break
       }
     }
   }
 
-  console.log(`\nVerification complete.`)
+  console.log("\nVerification complete.")
   console.log(`Funded wallets: ${fundedCount}/${wallets.length}`)
   console.log(`Unfunded wallets: ${unfundedWallets.length}/${wallets.length}`)
 
@@ -50,16 +55,15 @@ async function main() {
   const updatedWallets = wallets.map(async (wallet) => ({
     ...wallet,
     funded: fundedWallets.includes(wallet.address),
-    balance: ethers.formatEther(await ethers.provider.getBalance(wallet.address)),
+    balance: ethers.formatEther(
+      await ethers.provider.getBalance(wallet.address),
+    ),
   }))
 
   const resolvedWallets = await Promise.all(updatedWallets)
-  fs.writeFileSync(
-    WALLETS_FILE,
-    JSON.stringify(resolvedWallets, null, 2),
-  )
+  fs.writeFileSync(WALLETS_FILE, JSON.stringify(resolvedWallets, null, 2))
 
-  console.log(`\nUpdated wallets.json with current funding status.`)
+  console.log("\nUpdated wallets.json with current funding status.")
 }
 
 main().catch((error) => {
