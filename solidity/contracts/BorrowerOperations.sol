@@ -1020,9 +1020,9 @@ contract BorrowerOperations is
         vars.interestRateManagerCached = interestRateManager;
 
         vars.oldRate = vars.troveManagerCached.getTroveInterestRate(_borrower);
-        vars.oldDebt =
-            vars.troveManagerCached.getTroveDebt(_borrower) -
-            MUSD_GAS_COMPENSATION;
+        vars.oldDebt = _getNetDebt(
+            vars.troveManagerCached.getTroveDebt(_borrower)
+        );
         vars.amount = (refinancingFeePercentage * vars.oldDebt) / 100;
         uint256 fee = governableVariables.isAccountFeeExempt(_borrower)
             ? 0
