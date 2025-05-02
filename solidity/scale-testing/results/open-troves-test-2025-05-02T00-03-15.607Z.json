@@ -1,0 +1,36 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-05-02T00:03:15.607Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 1,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 2200,
+    "batchSize": 1
+  },
+  "results": {
+    "successful": 1,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "750000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xcc285ad53dc6769f54d45ef4b5fda24fb4e5fd4b9e3e12e027837f2b596df4f1",
+        "account": "0x3676c41B4175F9aB482dC3ed13BF196171A838d3",
+        "collateralRatio": 150,
+        "collateralAmount": "0.00018",
+        "debtAmount": 2200,
+        "gasUsed": "750000",
+        "duration": 5305
+      }
+    ]
+  }
+}
