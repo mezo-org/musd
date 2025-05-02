@@ -4129,6 +4129,37 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("does not double count interest when checking maxBorrowingCapacity", async () => {
+      await setInterestRate(contracts, council, 1000)
+      await setupCarolsTrove()
+
+      // Open a trove for Dennis to avoid reverting for TCR < CCR
+      await openTrove(contracts, {
+        musdAmount: "50,000",
+        ICR: "500",
+        sender: dennis.wallet,
+      })
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      await fastForwardTime(60 * 60 * 24 * 365) // fast-forward one year
+
+      // Calculate the maximum amount Carol should be able to borrow accounting for the borrowing fee
+      const currentDebt = await contracts.troveManager.getTroveDebt(
+        carol.address,
+      )
+      const numerator = carol.trove.maxBorrowingCapacity.before - currentDebt
+      const denominator =
+        to1e18(1) + (await contracts.borrowerOperations.borrowingRate())
+      const additionalBorrow = to1e18(numerator) / denominator - to1e18(1) // Subtract a 1 MUSD buffer to account for rounding
+
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(0, additionalBorrow, true, carol.wallet, carol.wallet)
+
+      // Trivial assertion to check that the above does not revert
+      expect(true).to.be.equal(true)
+    })
+
     it("Borrowing at zero base rate sends total requested mUSD to the user", async () => {
       const amount = to1e18(37)
 

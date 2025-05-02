@@ -1352,8 +1352,7 @@ contract BorrowerOperations is
         LocalVariables_adjustTrove memory _vars
     ) internal pure {
         require(
-            _vars.maxBorrowingCapacity >=
-                _vars.netDebtChange + _vars.debt + _vars.interestOwed,
+            _vars.maxBorrowingCapacity >= _vars.netDebtChange + _vars.debt,
             "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted"
         );
     }
