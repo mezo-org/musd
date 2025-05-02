@@ -5342,7 +5342,7 @@ describe("BorrowerOperations in Normal Mode", () => {
     })
   })
 
-  describe.only("refinance()", () => {
+  describe("refinance()", () => {
     it("changes the trove's interest rate to the current interest rate", async () => {
       await setupCarolsTrove()
       await setInterestRate(contracts, council, 1000)
@@ -5767,10 +5767,9 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       await updateTroveSnapshot(contracts, alice, "after")
 
-      const expectedDebt =
-        alice.trove.debt.before + bob.trove.debt.before - MUSD_GAS_COMPENSATION
+      const expectedDebt = alice.trove.debt.before + bob.trove.debt.before
       const fee =
-        (expectedDebt *
+        ((expectedDebt - MUSD_GAS_COMPENSATION) *
           (await contracts.borrowerOperations.refinancingFeePercentage()) *
           (await contracts.borrowerOperations.borrowingRate())) /
         to1e18(100)
