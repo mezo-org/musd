@@ -4105,6 +4105,30 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
+    it("decreases maxBorrowingCapacity on collateral withdrawal if price has fallen", async () => {
+      await setupCarolsTrove()
+      await updateTroveSnapshot(contracts, carol, "before")
+
+      const price = await dropPrice(contracts, deployer, carol, to1e18("290"))
+
+      const collWithdrawal = 1n
+      await contracts.borrowerOperations
+        .connect(carol.wallet)
+        .adjustTrove(collWithdrawal, 0, false, carol.wallet, carol.wallet)
+
+      await updateTroveSnapshot(contracts, carol, "after")
+
+      const expectedMaxBorrowingCapacity =
+        (carol.trove.collateral.after * price) / to1e18("1.1")
+
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.lessThan(
+        carol.trove.maxBorrowingCapacity.before,
+      )
+      expect(carol.trove.maxBorrowingCapacity.after).to.be.equal(
+        expectedMaxBorrowingCapacity,
+      )
+    })
+
     it("does not double count interest when checking maxBorrowingCapacity", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupCarolsTrove()
