@@ -4105,7 +4105,7 @@ describe("BorrowerOperations in Normal Mode", () => {
       )
     })
 
-    it.only("does not double count interest when checking maxBorrowingCapacity", async () => {
+    it("does not double count interest when checking maxBorrowingCapacity", async () => {
       await setInterestRate(contracts, council, 1000)
       await setupCarolsTrove()
 
