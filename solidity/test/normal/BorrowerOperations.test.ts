@@ -5427,7 +5427,9 @@ describe("BorrowerOperations in Normal Mode", () => {
         carol.trove.lastInterestUpdateTime.before,
         carol.trove.lastInterestUpdateTime.after,
       )
-      const carolFee = (carol.trove.debt.before + carolInterest) / 1000n
+      const carolFee =
+        (carol.trove.debt.before + carolInterest - MUSD_GAS_COMPENSATION) /
+        1000n
 
       const dennisInterest = calculateInterestOwed(
         dennis.trove.debt.before,
@@ -5484,7 +5486,7 @@ describe("BorrowerOperations in Normal Mode", () => {
           after,
         )
 
-      const expectedFee = debt / 1000n
+      const expectedFee = (debt - MUSD_GAS_COMPENSATION) / 1000n
 
       expect(state.activePool.principal.after).to.equal(
         state.activePool.principal.before + expectedFee,
@@ -5564,8 +5566,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       const borrowingRate = await contracts.borrowerOperations.borrowingRate()
 
       // default fee percentage is 20% or 1/5
-      const expectedFee =
-        (borrowingRate * carol.trove.debt.before) / to1e18("5")
+      const expectedDebt = carol.trove.debt.before - MUSD_GAS_COMPENSATION
+      const expectedFee = (borrowingRate * expectedDebt) / to1e18("5")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5594,8 +5596,8 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const borrowingRate = await contracts.borrowerOperations.borrowingRate()
 
-      const expectedFee =
-        (borrowingRate * carol.trove.debt.before) / to1e18("100")
+      const expectedDebt = carol.trove.debt.before - MUSD_GAS_COMPENSATION
+      const expectedFee = (borrowingRate * expectedDebt) / to1e18("100")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5617,8 +5619,8 @@ describe("BorrowerOperations in Normal Mode", () => {
       await updateTroveSnapshot(contracts, carol, "after")
 
       const borrowingRate = await contracts.borrowerOperations.borrowingRate()
-      const expectedFee =
-        (borrowingRate * carol.trove.debt.before) / to1e18("2")
+      const expectedDebt = carol.trove.debt.before - MUSD_GAS_COMPENSATION
+      const expectedFee = (borrowingRate * expectedDebt) / to1e18("2")
 
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(
         expectedFee,
@@ -5767,7 +5769,7 @@ describe("BorrowerOperations in Normal Mode", () => {
 
       const expectedDebt = alice.trove.debt.before + bob.trove.debt.before
       const fee =
-        (expectedDebt *
+        ((expectedDebt - MUSD_GAS_COMPENSATION) *
           (await contracts.borrowerOperations.refinancingFeePercentage()) *
           (await contracts.borrowerOperations.borrowingRate())) /
         to1e18(100)
