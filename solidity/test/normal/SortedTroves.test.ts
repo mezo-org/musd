@@ -409,5 +409,77 @@ describe("SortedTroves", () => {
 
       expect(await isSortedTrovesSorted(contracts)).to.equal(true)
     })
+
+    it("does not skip nodes when ascending the list", async () => {
+      // Create a sequence of troves with different NICRs (from highest to lowest)
+      // Using much higher ICR values to avoid MCR constraints
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        ICR: "300", // Highest NICR
+        sender: alice.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        ICR: "250",
+        sender: bob.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        ICR: "170",
+        sender: dennis.wallet,
+      })
+
+      await openTrove(contracts, {
+        musdAmount: "5,000",
+        ICR: "150",
+        sender: eric.wallet,
+      })
+
+      // Verify the list is properly ordered
+      expect(await contracts.sortedTroves.getFirst()).to.equal(alice.address)
+      expect(await contracts.sortedTroves.getLast()).to.equal(eric.address)
+
+      // Let's verify the order of the list
+      let current = await contracts.sortedTroves.getFirst()
+      const actualOrder: string[] = []
+
+      while (current !== ZERO_ADDRESS) {
+        actualOrder.push(current)
+        current = await contracts.sortedTroves.getNext(current)
+      }
+
+      expect(actualOrder).to.deep.equal([
+        alice.address,
+        bob.address,
+        carol.address,
+        dennis.address,
+        eric.address,
+      ])
+
+      // Now we'll target the _ascendList function, using findInsertPosition with specific hints
+      // We want to insert a new trove with NICR that would place it between carol and dennis
+      const targetNICR =
+        (await contracts.troveManager.getNominalICR(dennis.address)) + 1n
+
+      // We're deliberately giving a hint that will force _ascendList to be used,
+      // starting from eric's position which is too low in the list
+      const [prevId, nextId] = await contracts.sortedTroves.findInsertPosition(
+        targetNICR,
+        eric.wallet, // prevId hint - deliberately wrong to force _ascendList usage
+        ZERO_ADDRESS, // nextId hint
+      )
+
+      // The correct insertion position should be (carol, dennis)
+      expect(prevId).to.equal(carol.address)
+      expect(nextId).to.equal(dennis.address)
+    })
   })
 })
