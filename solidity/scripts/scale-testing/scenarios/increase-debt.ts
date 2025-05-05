@@ -53,9 +53,9 @@ async function main() {
   }
 
   // Update trove states before selecting accounts
-  console.log("Updating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
-  console.log("Trove states updated")
+  // console.log("Updating Trove states for all accounts...")
+  // await stateManager.updateTroveStates(troveManagerAddress)
+  // console.log("Trove states updated")
 
   // Select accounts for testing - accounts that HAVE troves
   const testAccounts = stateManager.getAccounts({
@@ -72,6 +72,13 @@ async function main() {
   const addresses = testAccounts.map((account) => account.address)
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
   console.log(`Loaded ${loadedWallets} wallets for testing`)
+
+  // Update trove states for selected accounts
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
+  )
 
   // Process accounts in batches using our utility
   const results = await processBatchTransactions(
@@ -275,7 +282,11 @@ async function main() {
 
   // Update all Trove states again to ensure data is current
   console.log("\nUpdating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
+  )
 
   // Update MUSD balances
   console.log("Updating MUSD balances for all accounts...")
