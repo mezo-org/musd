@@ -5328,6 +5328,16 @@ describe("BorrowerOperations in Normal Mode", () => {
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
+
+      it.only("reverts when the caller does not have sufficient MUSD to repay debt", async () => {
+        await updateWalletSnapshot(contracts, dennis, "before")
+        console.log(dennis.musd.before)
+        // Dennis (the caller) does not have any MUSD
+        await testRevert(
+          { caller: dennis.wallet },
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
+        )
+      })
     })
   })
 
