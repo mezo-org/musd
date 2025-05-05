@@ -22,6 +22,29 @@ describe("Proxy Upgrades", () => {
   const updatePriceFeed = async () =>
     helpers.upgrades.upgradeProxy("PriceFeed", "PriceFeedUpgradeTester")
 
+  it("upgrades TroveManager contract correctly", async () => {
+    const [upgradedTroveManager] = await helpers.upgrades.upgradeProxy(
+      "TroveManagerTester",
+      "TroveManagerV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradedTroveManager.stabilityPool()).to.equal(
+      await contracts.stabilityPool.getAddress(),
+    )
+
+    // new functionality works
+    await upgradedTroveManager.newFunction()
+    expect(await upgradedTroveManager.newField()).to.equal(1000)
+  })
+
   it("do not change the underlying address", async () => {
     const oldPrice = await contracts.priceFeed.fetchPrice()
     const oldAddress = await contracts.priceFeed.getAddress()
