@@ -1,11 +1,7 @@
 import { expect } from "chai"
 import { helpers } from "hardhat"
 
-import {
-  Contracts,
-  User,
-  setupTests,
-} from "../helpers"
+import { Contracts, User, setupTests } from "../helpers"
 
 describe("Proxy Upgrades", () => {
   let contracts: Contracts
@@ -178,6 +174,23 @@ describe("Proxy Upgrades", () => {
     expect(await upgradedDefaultPool.newField()).to.equal(213)
   })
 
+  it("upgrades PCV contract correctly", async () => {
+    const [upgradedPCV] = await helpers.upgrades.upgradeProxy("PCV", "PCVv2", {
+      proxyOpts: {
+        call: {
+          fn: "initializeV2",
+        },
+      },
+    })
+
+    // state preserved and previous functionality works
+    expect(await upgradedPCV.owner()).to.equal(deployer.address)
+
+    // new functionality works
+    await upgradedPCV.newFunction()
+    expect(await upgradedPCV.newField()).to.equal(61)
+  })
+
   it("upgrades PriceFeed contract correctly", async () => {
     const [upgradedPriceFeed] = await helpers.upgrades.upgradeProxy(
       "PriceFeed",
@@ -192,9 +205,7 @@ describe("Proxy Upgrades", () => {
     )
 
     // state preserved and previous functionality works
-    expect(await upgradedPriceFeed.owner()).to.equal(
-      deployer.address
-    )
+    expect(await upgradedPriceFeed.owner()).to.equal(deployer.address)
 
     // new functionality works
     await upgradedPriceFeed.newFunction()
