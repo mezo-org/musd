@@ -262,7 +262,7 @@ export default class StateManager {
   public async updateTroveStates(
     troveManagerAddress: string,
     addresses: string[] = [],
-    batchSize: number = 20,
+    batchSize: number = 200,
   ) {
     const accountsToUpdate =
       addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
@@ -331,7 +331,7 @@ export default class StateManager {
   public async updateMusdBalances(
     musdAddress: string,
     addresses: string[] = [],
-    batchSize: number = 20,
+    batchSize: number = 200,
   ) {
     const accountsToUpdate =
       addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
@@ -374,7 +374,7 @@ export default class StateManager {
    */
   public async updateBtcBalances(
     addresses: string[] = [],
-    batchSize: number = 20,
+    batchSize: number = 200,
   ) {
     const accountsToUpdate =
       addresses.length > 0 ? addresses : Object.keys(this.state.accounts)
