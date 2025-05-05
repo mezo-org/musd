@@ -213,6 +213,28 @@ describe("Proxy Upgrades", () => {
     expect(await upgradedSortedTroves.newField()).to.equal(701)
   })
 
+  it("upgrades GasPool contract correctly", async () => {
+    const token = await contracts.gasPool.musdToken()
+    const [upgradedGasPool] = await helpers.upgrades.upgradeProxy(
+      "GasPool",
+      "GasPoolV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradedGasPool.musdToken()).to.equal(token)
+
+    // new functionality works
+    await upgradedGasPool.newFunction()
+    expect(await upgradedGasPool.newField()).to.equal(145)
+  })
+
   it("upgrades PriceFeed contract correctly", async () => {
     const [upgradedPriceFeed] = await helpers.upgrades.upgradeProxy(
       "PriceFeed",
