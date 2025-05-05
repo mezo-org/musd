@@ -17,6 +17,8 @@ import "./interfaces/ISortedTroves.sol";
 import "./interfaces/ITroveManager.sol";
 import "./token/IMUSD.sol";
 
+import "hardhat/console.sol";
+
 contract BorrowerOperations is
     CheckContract,
     IBorrowerOperations,
@@ -857,7 +859,7 @@ contract BorrowerOperations is
                 _getNetDebt(vars.debt) - vars.netDebtChange
             );
             _requireValidMUSDRepayment(vars.debt, vars.netDebtChange);
-            _requireSufficientMUSDBalance(_borrower, vars.netDebtChange);
+            _requireSufficientMUSDBalance(_caller, vars.netDebtChange);
         }
 
         (
@@ -1223,6 +1225,8 @@ contract BorrowerOperations is
         address _borrower,
         uint256 _debtRepayment
     ) internal view {
+        console.log("hit this");
+        console.log(musd.balanceOf(_borrower));
         require(
             musd.balanceOf(_borrower) >= _debtRepayment,
             "BorrowerOps: Caller doesnt have enough mUSD to make repayment"

@@ -5263,7 +5263,7 @@ describe("BorrowerOperations in Normal Mode", () => {
         const value = {
           collWithdrawal: data.collWithdrawal,
           debtChange: data.debtChange,
-          isDebtIncrease: data.isDebtIncrease,
+          isDebtIncrease: overriddenData.isDebtIncrease,
           assetAmount: data.assetAmount,
           borrower: data.borrower,
           recipient: data.recipient,
@@ -5368,6 +5368,14 @@ describe("BorrowerOperations in Normal Mode", () => {
             ),
         ).to.be.revertedWith(
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
+        )
+      })
+
+      it.only("reverts when the caller does not have sufficient MUSD to repay debt", async () => {
+        // Dennis (the caller) does not have any MUSD
+        await testRevert(
+          { isDebtIncrease: false, caller: dennis.wallet },
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )
       })
     })
