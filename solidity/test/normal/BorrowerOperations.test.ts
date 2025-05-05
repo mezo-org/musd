@@ -4959,6 +4959,35 @@ describe("BorrowerOperations in Normal Mode", () => {
             ),
         ).to.be.revertedWithPanic() // caused by netDebtChange being greater than the debt requiring a negative number going into a uint256
       })
+
+      it("Reverts when a collateral withdrawal + debt increase would exceed maxBorrowingCapacity", async () => {
+        await updateTroveSnapshot(contracts, alice, "before")
+
+        // Calculate an amount that Alice should not be allowed to borrow with her current collateral balance
+        // Attempting to borrow this amount should put her over maxBorrowingCapacity due to the fee
+        const totalDebtIncrease =
+          alice.trove.maxBorrowingCapacity.before - alice.trove.debt.before
+
+        // Increase the price so that Alice's maxBorrowingCapacity is lower than the amount required to keep ICR > MCR
+        await dropPrice(contracts, deployer, alice, to1e18("600"))
+
+        // Withdraw some of Alice's collateral, but not enough to put her below MCR
+        const collWithdrawal = alice.trove.collateral.before / 10n
+
+        await expect(
+          contracts.borrowerOperations
+            .connect(alice.wallet)
+            .adjustTrove(
+              collWithdrawal,
+              totalDebtIncrease,
+              true,
+              alice.wallet,
+              alice.wallet,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: An operation that exceeds maxBorrowingCapacity is not permitted",
+        )
+      })
     })
   })
 
