@@ -255,4 +255,27 @@ describe("Proxy Upgrades", () => {
     await upgradedPriceFeed.newFunction()
     expect(await upgradedPriceFeed.newField()).to.equal(398)
   })
+
+  it("upgrades HintHelpers contract correctly", async () => {
+    const [upgradedHintHelpers] = await helpers.upgrades.upgradeProxy(
+      "HintHelpers",
+      "HintHelpersV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradedHintHelpers.troveManager()).to.equal(
+      await contracts.troveManager.getAddress(),
+    )
+
+    // new functionality works
+    await upgradedHintHelpers.newFunction()
+    expect(await upgradedHintHelpers.newField()).to.equal(255)
+  })
 })
