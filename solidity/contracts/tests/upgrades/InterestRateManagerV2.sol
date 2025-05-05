@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.24;
 
-import "../../TroveManager.sol";
+import "../../InterestRateManager.sol";
 
-contract TroveManagerV2 is TroveManager {
+contract InterestRateManagerV2 is InterestRateManager {
     uint256 public newField;
 
     function initializeV2() external reinitializer(2) {
-        newField = 999;
+        newField = 880;
     }
 
     function newFunction() external {

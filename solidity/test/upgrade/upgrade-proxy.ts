@@ -22,6 +22,31 @@ describe("Proxy Upgrades", () => {
   const updatePriceFeed = async () =>
     helpers.upgrades.upgradeProxy("PriceFeed", "PriceFeedUpgradeTester")
 
+  it("upgrades InterestRateManager contract correctly", async () => {
+    const interestRate = await contracts.interestRateManager.interestRate()
+
+    const [upgradeInterestRateManager] = await helpers.upgrades.upgradeProxy(
+      "InterestRateManager",
+      "InterestRateManagerV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradeInterestRateManager.interestRate()).to.equal(
+      interestRate,
+    )
+
+    // new functionality works
+    await upgradeInterestRateManager.newFunction()
+    expect(await upgradeInterestRateManager.newField()).to.equal(881)
+  })
+
   it("upgrades TroveManager contract correctly", async () => {
     const [upgradedTroveManager] = await helpers.upgrades.upgradeProxy(
       "TroveManagerTester",
