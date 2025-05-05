@@ -162,6 +162,29 @@ describe("Proxy Upgrades", () => {
     expect(await upgradedActivePool.newField()).to.equal(610)
   })
 
+  it("upgrades DefaultPool contract correctly", async () => {
+    const [upgradedDefaultPool] = await helpers.upgrades.upgradeProxy(
+      "DefaultPool",
+      "DefaultPoolV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradedDefaultPool.activePoolAddress()).to.equal(
+      await contracts.activePool.getAddress(),
+    )
+
+    // new functionality works
+    await upgradedDefaultPool.newFunction()
+    expect(await upgradedDefaultPool.newField()).to.equal(213)
+  })
+
   it("do not change the underlying address", async () => {
     const oldPrice = await contracts.priceFeed.fetchPrice()
     const oldAddress = await contracts.priceFeed.getAddress()
