@@ -5370,6 +5370,69 @@ describe("BorrowerOperations in Normal Mode", () => {
           "BorrowerOps: Caller is not BorrowerOperationsSignatures",
         )
       })
+
+      it("reverts when the caller does not have sufficient MUSD to repay debt", async () => {
+        const { borrower, recipient, nonce, deadline } =
+          await setupSignatureTests(bob)
+
+        const data = {
+          collWithdrawal,
+          debtChange,
+          isDebtIncrease: false,
+          assetAmount,
+          upperHint,
+          lowerHint,
+          borrower,
+          recipient,
+          nonce,
+          deadline,
+          signer: bob.wallet,
+          caller: dennis.wallet, // Dennis does not have enough MUSD to repay debt
+          domainName: "BorrowerOperationsSignatures",
+          domainVersion: "1",
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: addresses.borrowerOperationsSignatures,
+        }
+
+        const value = {
+          collWithdrawal: data.collWithdrawal,
+          debtChange: data.debtChange,
+          isDebtIncrease: data.isDebtIncrease,
+          assetAmount: data.assetAmount,
+          borrower: data.borrower,
+          recipient: data.recipient,
+          nonce: data.nonce,
+          deadline: data.deadline,
+        }
+
+        const domain = {
+          name: data.domainName,
+          version: data.domainVersion,
+          chainId: data.chainId,
+          verifyingContract: data.verifyingContract,
+        }
+
+        const signature = await data.signer.signTypedData(domain, types, value)
+
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(data.caller)
+            .adjustTroveWithSignature(
+              data.collWithdrawal,
+              data.debtChange,
+              data.isDebtIncrease,
+              data.upperHint,
+              data.lowerHint,
+              data.borrower,
+              data.recipient,
+              signature,
+              data.deadline,
+              { value: data.assetAmount },
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
+        )
+      })
     })
   })
 

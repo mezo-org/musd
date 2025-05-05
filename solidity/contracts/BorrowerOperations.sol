@@ -857,7 +857,7 @@ contract BorrowerOperations is
                 _getNetDebt(vars.debt) - vars.netDebtChange
             );
             _requireValidMUSDRepayment(vars.debt, vars.netDebtChange);
-            _requireSufficientMUSDBalance(_borrower, vars.netDebtChange);
+            _requireSufficientMUSDBalance(_caller, vars.netDebtChange);
         }
 
         (
