@@ -93,6 +93,29 @@ describe("Proxy Upgrades", () => {
     expect(await upgradedTroveManager.newField()).to.equal(1000)
   })
 
+  it("upgrades StabilityPool contract correctly", async () => {
+    const [upgradedStabilityPool] = await helpers.upgrades.upgradeProxy(
+      "StabilityPool",
+      "StabilityPoolV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradedStabilityPool.borrowerOperations()).to.equal(
+      await contracts.borrowerOperations.getAddress(),
+    )
+
+    // new functionality works
+    await upgradedStabilityPool.newFunction()
+    expect(await upgradedStabilityPool.newField()).to.equal(701)
+  })
+
   it("do not change the underlying address", async () => {
     const oldPrice = await contracts.priceFeed.fetchPrice()
     const oldAddress = await contracts.priceFeed.getAddress()
