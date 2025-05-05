@@ -191,6 +191,28 @@ describe("Proxy Upgrades", () => {
     expect(await upgradedPCV.newField()).to.equal(61)
   })
 
+  it("upgrades SortedTroves contract correctly", async () => {
+    const size = await contracts.sortedTroves.getSize()
+    const [upgradedSortedTroves] = await helpers.upgrades.upgradeProxy(
+      "SortedTroves",
+      "SortedTrovesV2",
+      {
+        proxyOpts: {
+          call: {
+            fn: "initializeV2",
+          },
+        },
+      },
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgradedSortedTroves.getSize()).to.equal(size)
+
+    // new functionality works
+    await upgradedSortedTroves.newFunction()
+    expect(await upgradedSortedTroves.newField()).to.equal(701)
+  })
+
   it("upgrades PriceFeed contract correctly", async () => {
     const [upgradedPriceFeed] = await helpers.upgrades.upgradeProxy(
       "PriceFeed",
