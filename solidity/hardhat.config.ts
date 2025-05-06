@@ -13,12 +13,20 @@ dotenv.config({
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
+const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+  ? [process.env.MAINNET_PRIVATE_KEY]
+  : []
+
 const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
   ? [process.env.MATSNET_PRIVATE_KEY]
   : []
 
-const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
-  ? [process.env.MAINNET_PRIVATE_KEY]
+const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL
+  ? process.env.MAINNET_RPC_URL
+  : ""
+
+const ETHEREUM_PRIVATE_KEY = process.env.ETHEREUM_PRIVATE_KEY
+  ? [process.env.ETHEREUM_PRIVATE_KEY]
   : []
 
 const config: HardhatUserConfig = {
@@ -56,6 +64,12 @@ const config: HardhatUserConfig = {
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
       tags: ["allowStubs", "etherscan"],
+    },
+    ethereum: {
+      url: ETHEREUM_RPC_URL,
+      accounts: ETHEREUM_PRIVATE_KEY,
+      chainId: 1,
+      tags: ["etherscan"],
     },
     hardhat: {
       initialBaseFeePerGas: 0,
