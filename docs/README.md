@@ -64,11 +64,19 @@ The mUSD CDP is a part of the Mezo ecosystem. The interest and fees from mUSD fl
 
 ### Protocol Bootstrap Loan
 
-In Liquity v1 deposits to the StabilityPool earn the LQTY token, this resulted in lots of mint and deposits to the StabilityPool. In mUSD there are no direct incentives for depositing into the StabilityPool, it is not anticipated that borrowers will deposit into the StabilityPool.
+In Liquity v1 deposits to the Stability Pool earn the LQTY token, this resulted in lots of mint and deposits to the Stability Pool. In MUSD there are no direct incentives for depositing into the Stability Pool, it is not anticipated that borrowers will deposit into the Stability Pool.
 
-The StabilityPool is initallly populated with a bootstrapping loan. This can only leave the StabilityPool via liquidations.
+The Stability Pool is initallly populated with a bootstrapping loan. This can only leave the Stability Pool via liquidations.
 
-When the protocol's mUSD is withdrawn from the StabilityPool to the PCV contract it is first used to repay any outstanding protocol loan balance. This is to ensure that the bootstrap loan can not be withdrawn from the protocol.
+![Minting the protocol bootstrap loan](images/protocolLoan.png)
+
+Flow of Funds
+
+1. The deployment process makes a call to mint the bootstrap loan to the PCV contract.
+2. MUSD is minted to the PCV contract.
+3. MUSD is then deposited from the PCV contract into the Stability Pool.
+
+When the protocol's MUSD is withdrawn from the Stability Pool to the PCV contract it is first used to repay any outstanding protocol loan balance. This is to ensure that the bootstrap loan can not be withdrawn from the protocol.
 
 It is anticipated that repayments on the protocol bootstrap loan will be made on a roughly weekly basis via calls to distributeMUSD in the PCV contract.
 
@@ -76,11 +84,41 @@ It is anticipated that repayments on the protocol bootstrap loan will be made on
 
 Protocol Owned Liquidty as the name suggests is owned by the protocol, it is intended to provide utility to the protocol regardless of market conditions and without requiring incentives for the liquidity to stay in place.
 
-Over time as the protocol accrues interest and fees the bootstrap loan gets repaid and the portion of the mUSD in the StabilityPool that is Protocol Owned Liquidity increases.
+Over time as the protocol accrues interest and fees the bootstrap loan gets repaid and the portion of the MUSD in the Stability Pool that is Protocol Owned Liquidity increases.
 
-The PCV contract has the ability to distribute the mUSD that it accrues from interest and fees. The fee split for how to use that mUSD can be set by governance.
+#### Distributing fees with an active Protocol Loan
 
-To illustrate how the mUSD is distributed, assume the feeSplitPercentage is set to 60%
+When the protocol is initialised with the fee recipient and an active protocol loan the following occurs.
+
+![Active Protocol Loan and Fees](images/feesAndActiveProtocolLoan.png)
+
+Flow of Funds
+
+1. A user transaction triggers an event that results in a fee or interest collection events
+2. MUSD is minted and sent to the PCV contract
+3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address
+4. A portion of the accrued MUSD is sent to the fee recipient
+5. A portion of the MUSD is burnt to reduce the protocol loan.
+
+#### Distributing fees when the Protocol Loan has been repaid
+
+When the protocol is initialised with a fee recipient and the protocol loan has been repaid then the following occurs.
+
+![Repaid Protocol Loan and Fees](images/feesAndRepaidProtocolLoan.png)
+
+Flow of Funds
+
+1. A user transaction triggers an event that results in a fee or interest collection events
+2. MUSD is minted and sent to the PCV contract
+3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address
+4. A portion of the accrued MUSD is sent to the fee recipient
+5. A portion of the MUSD is deposited into the Stability Pool.
+
+#### Distribution of MUSD
+
+The PCV contract has the ability to distribute the MUSD that it accrues from interest and fees. The fee split for how to use that MUSD can be set by governance.
+
+To illustrate how the MUSD is distributed, assume the feeSplitPercentage is set to 60%
 
 - Protocol Loan
   - feeRecipient is not set.
@@ -92,21 +130,29 @@ To illustrate how the mUSD is distributed, assume the feeSplitPercentage is set 
     - Loan repayment > outstanding loan
       - Protocol loan is repaid.
       - 40% is sent to the feeRecipient.
-      - Excess loan repayment amount is deposited into the StabilityPool.
+      - Excess loan repayment amount is deposited into the Stability Pool.
 - Protocol Loan has been repaid
   - feeRecipient is not set
-    - 100% of the amount is deposited into the StabilityPool.
+    - 100% of the amount is deposited into the Stability Pool.
   - feeRecipient is set
-    - 60% is deposited into the StabilityPool.
+    - 60% is deposited into the Stability Pool.
     - 40% is sent to the feeRecipient.
 
-Note that the call to distribute MUSD does not require the entire balance of mUSD held by the PCV contract to be distributed. This means that the distributions to the feeRecipient from the PCV contract can be smoothed out.
-
-When the protocol's StabilityPool deposit is used to offset liquidations, that results in BTC from the liquidated loans to be in the StabilityPool. The governance process is able to withdraw the BTC to exchange it into mUSD to redeposit into the StabilityPool.
-
-At launch this process will be done manually however one of the governance addresses may be updated to point to a smart contract to automate the process in the future.
+Note that the call to distribute MUSD does not require the entire balance of MUSD held by the PCV contract to be distributed. This means that the distributions to the feeRecipient from the PCV contract can be smoothed out.
 
 The feeRecipient address in the PCV contract can be changed via governance.
+
+#### Withdrawing MUSD
+
+Withdrawing MUSD from the PCV contract is different to distributing MUSD. The call to withdraw MUSD can only be called after the protocol loan has been repaid, this withdraws MUSD to the contract owner, council address or treasury address rather than the fee recipient address.
+
+![Withdrawing MUSD from the PCV contract](images/withdrawingMUSDfromPCV.png)
+
+Flow of Funds
+
+1. Governance requests withdrawing MUSD from the Stability Pool
+2. MUSD is transferred from the Stability Pool to PCV
+3. Governance withdraws MUSD
 
 ### Immutability and Upgradability
 
@@ -132,11 +178,11 @@ When the Stability Pool has sufficent funds to cover the liquidated loan/s debt,
 
 Flow of Funds
 
-1. Liquidator sends liquidation request to TroveManager
+1. Liquidator sends liquidation request to Trove Manager
 2. Liquidator receives gas compensation (MUSD)
 3. Stability Pool burns the MUSD required to buy the debt
 4. Liquidator receives 0.5% of the liquidated BTC
-5. Remaining BTC collateral is sent from the ActivePool to the StabilityPool
+5. Remaining BTC collateral is sent from the Active Pool to the Stability Pool
 
 Anyone can deposit into the Stabily Pool and proportionately acquire discounted BTC when a liquidation occurs, however it is not expected that users will deposit into the Stability Pool. Unlike Liquity v1 there are no direct incentives for depositing into the Stability Pool. This means the yield from being a Stability Pool depositor would be purely based on the liquidations that occur.
 
@@ -152,7 +198,7 @@ Flow of Funds
 
 1. Liquidator sends liquidation request to Trove Manager
 2. Liquidator receives gas compensation (MUSD)
-3. StabilityPool burns the MUSD required to buy the debt
+3. Stability Pool burns the MUSD required to buy the debt
 4. Liquidator receives 0.5% of the liquidated BTC
 5. BTC is sent from the Active Pool to the Stability Pool
 6. BTC for debt that cant be covered by the Stability Pool is sent to the Default Pool
