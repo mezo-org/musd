@@ -45,6 +45,9 @@ export const EXTERNAL_ADDRESSES: ExternalAddresses = {
   matsnet: {
     PriceOracleCaller: "0x7b7c000000000000000000000000000000000015",
   },
+  mainnet: {
+    PriceOracleCaller: "0x7b7c000000000000000000000000000000000015",
+  },
 }
 
 export default async function waitForTransaction(
