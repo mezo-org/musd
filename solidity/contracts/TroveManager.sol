@@ -399,6 +399,8 @@ contract TroveManager is
                 singleRedemption.principal +
                 singleRedemption.interest;
 
+            // Previous write to this value would hit `continue` statement
+            // slither-disable-next-line write-after-write
             currentBorrower = nextUserToCheck;
         }
         require(
