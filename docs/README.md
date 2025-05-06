@@ -1,6 +1,6 @@
 # Mezo USD
 
-mUSD is a stablecoin that is minted by creating a loan against the borrowers crytpo assets, this is known as a Collateralised Debt Position (CDP).
+mUSD is a stablecoin that is minted by creating a loan against the borrowers crytpo assets, this is known as a Collateralized Debt Position (CDP).
 
 mUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
 
@@ -120,9 +120,125 @@ When the protocol has been battle tested in production the contracts will be har
 
 Whenever a trove becomes under-collateralized (sub 110% BTC value to debt), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
 
-When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% CR, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and seizes the remaining 99.5% of the trove's collateral.
+When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateralization ratio, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and seizes the remaining 99.5% of the trove's collateral. It is important to note that anyone is able to execute the call to trigger the liquidation and that they do not require a MUSD balance to take the liquidation, the liquidator only spends BTC on gas for the transaction.
 
-If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proportional ownership of all deposited collateral. The newly acquired collateral and debt are included for all purposes: calculating collateralization ratio, redemptions, closing a trove, etc.
+Liquidations can be triggered on individual loans with `TroveManager.liquidate` or on a list of loans with `TroveManager.batchLiquidateTroves`.
+
+#### Liquidation using the Stability Pool
+
+When the Stability Pool has sufficent funds to cover the liquidated loan/s debt, the Stability Pool burns MUSD to cover all of the trove's debt and seizes the remaining 99.5% of the trove's collateral. The MUSD burnt to cover the debt is done proportionately across all MUSD deposits in the Stability Pool, in exchange the Stability Pool depositor has a right to claim the same proportion of the collateral from the liquidation.
+
+![Liquidation using the Stability Pool flow](images/liquidationUsingStabilityPool.png)
+
+Flow of Funds
+
+1. Liquidator sends liquidation request to TroveManager
+2. Liquidator receives gas compensation (MUSD)
+3. Stability Pool burns the MUSD required to buy the debt
+4. Liquidator receives 0.5% of the liquidated BTC
+5. Remaining BTC collateral is sent from the ActivePool to the StabilityPool
+
+Anyone can deposit into the Stabily Pool and proportionately acquire discounted BTC when a liquidation occurs, however it is not expected that users will deposit into the Stability Pool. Unlike Liquity v1 there are no direct incentives for depositing into the Stability Pool. This means the yield from being a Stability Pool depositor would be purely based on the liquidations that occur.
+
+The liquidity source for the Stability Pool is intended to initially be from the [protocol loan](#protocol-bootstrap-loan) and for this balance to grow over time through interest and fees.
+
+#### Liquidation greater than the Stability Pool balance
+
+If there are insufficent funds in the Stability Pool to cover the liquidated loan/s debt, the Stability Pool covers as much debt as it can, burning MUSD in exchange for the collatearl. The remaining debt and collateral is proportionately redistrubuted across the remaining loans.
+
+![Liquidation partially using the Stability Pool flow](images/liquidationPartiallyUsingStabilityPool.png)
+
+Flow of Funds
+
+1. Liquidator sends liquidation request to Trove Manager
+2. Liquidator receives gas compensation (MUSD)
+3. StabilityPool burns the MUSD required to buy the debt
+4. Liquidator receives 0.5% of the liquidated BTC
+5. BTC is sent from the Active Pool to the Stability Pool
+6. BTC for debt that cant be covered by the Stability Pool is sent to the Default Pool
+7. When active loans next have a borrower operation, redemption or liquidation they take on a proportionate amount of the liquidated debt and collateral which results in their share of the liquidated BTC being moved back to the Active Pool.
+
+#### Liquidation when the Stability Pool is empty.
+
+If the Stability Pool is empty, we redistribute both the debt and collateral. All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proportional ownership of all deposited collateral. The newly acquired collateral and debt are included for all purposes: calculating collateralization ratio, redemptions, closing a trove, etc.
+
+![Liquidation when the Stability Pool is empty flow](images/liquidationWithEmptyStabilityPool.png)
+
+Flow of Funds
+
+1. Liquidator sends liquidation request to Trove Manager
+2. Liquidator receives gas compensation (MUSD)
+3. Liquidator receives 0.5% of the liquidated BTC
+4. BTC is sent from the ActivePool to the DefaultPool for proportionate redistribution to other loans.
+5. When active loans next have a borrower operation, redemption or liquidation they take on a proportionate amount of the liquidated debt and collateral which results in their share of the liquidated BTC being moved back to the Active Pool.
+
+The pending debt does not accrue interest until it has been applied to a borrowers loan.
+
+Note that when a redistribution of debt and collateral from a liquidated loan is done across the other loans, no external liquidty source is required.
+
+#### Liquidations and Protocol Owned Liquidity
+
+The Stability Pool is initially seeded with a [bootstrap loan](#protocol-bootstrap-loan) against the protocol's future fees, over time the MUSD minted as part of this loan is converted into Protocol Owned Liquidity through fees and interest being burnt by the PCV contract.
+
+BTC acquired by the protocol through liquidations may be converted back into MUSD and redeposited into the Stablity Pool depending on the maturity and state of the protocol at the time of liquidation.
+
+##### Rebalancing Large Liquidations
+
+In the early days of Liquity v1 the protocol almost had to deal with a stress test from a large deposit that was a disproportionate amount of the TVL getting liquiditated. This could have resulted in cascading liquidations with sustained negative price action.
+
+The protocol loan is intended to help mitigate this circumstance.
+
+If this scenario was to arise early into the life of MUSD where a $100M liquidation emptied the Stability Pool. This might leave $109M of BTC in the Stability Pool and insufficent BTC in the Active Pool to honour redemptions for all of the circulating MUSD. In this event the governance process that manages the PCV contract would withdraw the BTC from the Stability Pool and open a loan to borrow MUSD against BTC to get the BTC back into the Active Pool so that redemptions are able to honour requests. The borrowed MUSD would then be deposited into the Stability Pool.
+
+![Rebalancing large liquidation into MUSD](images/rebalancingLargeLiquidationIntoMUSD.png)
+
+Flow of Funds
+
+1. Governance requests withdrawing BTC from Stability Pool
+2. BTC is transferred from Stability Pool to PCV
+3. Governance withdraws BTC
+4. Governance deposits BTC into Borrower Operations to open a loan
+5. MUSD Borrow fee is sent to PCV
+6. MUSD is sent to governance
+7. Governance deposits MUSD back into PCV
+8. PCV transfers MUSD back to Stability Pool
+
+This would result in a decrease in the total MUSD in the Stability Pool as the collateralisation requirements to open at a safe collateralisation level. However it is important to note that the Stability Pool balance would be replenished over time through interest and fees.
+
+##### Rebalancing Small Liquidations
+
+For smaller liquidations the governance process that manages the PCV contract would withdraw BTC from the Stability Pool and swap to MUSD then redeposit into the Stability Pool.
+
+When the protocol's Stability Pool deposit is used to offset liquidations, that results in BTC from the liquidated loans to be in the Stability Pool. The governance process is able to withdraw the BTC to exchange it into MUSD to redeposit into the Stability Pool.
+
+![Rebalancing BTC into MUSD](images/rebalancingBTCintoMUSD.png)
+
+Flow of Funds
+
+1. Governance requests withdrawing BTC from Stability Pool
+2. BTC is transferred from Stability Pool to PCV
+3. Governance withdraws BTC
+4. Governance swaps BTC
+5. Governance recieves MUSD
+6. Governance deposits MUSD back into PCV
+7. PCV transfers MUSD back to Stability Pool
+
+Initially this process would be manually executed via a governance multisig and eventually automated with a smart contract once routing liqudity on Mezo has matured. This is to ensure the Protocol Owned Liquidity does not get raided by MEV while the infrastructure for the new chain matures.
+
+#### Liquidations and the last loan
+
+The system requires atleast one active loan, if there is only one loan in the system it can not be liquidated. Liquidations require there to be other troves to distribute the debt and collateral to if the Stability Pool is empty.
+
+#### Liquidations and bad debt
+
+It is anticipated that bad debt would be a low probability event due to the following:
+
+- Low cost for liquidators to trigger a liquidation.
+- Liquidators receive 200 MUSD + 0.5% of the liquidated collateral.
+- Fast block times on Mezo should lead to quick finality when a liquidation become available.
+- The price oracle updates on a per block basis.
+- There is a 10% margin for profitable liquidations.
+- Redistribution of debt and collateral from liquidations when the Stability Pool is empty do not require an external liquidity source to complete the liquidation.
 
 ### Stability Pool
 
