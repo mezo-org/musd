@@ -371,6 +371,12 @@ contract TroveManager is
                 currentBorrower
             );
 
+            // Skip troves with ICR < MCR
+            if (getCurrentICR(currentBorrower, totals.price) < MCR) {
+                currentBorrower = nextUserToCheck;
+                continue;
+            }
+
             SingleRedemptionValues
                 memory singleRedemption = _redeemCollateralFromTrove(
                     contractsCache,
@@ -393,6 +399,8 @@ contract TroveManager is
                 singleRedemption.principal +
                 singleRedemption.interest;
 
+            // Previous write to this value would hit `continue` statement
+            // slither-disable-next-line write-after-write
             currentBorrower = nextUserToCheck;
         }
         require(

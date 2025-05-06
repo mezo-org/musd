@@ -1,13 +1,15 @@
 import { expect } from "chai"
 import {
   Contracts,
-  User,
+  dropPrice,
   fastForwardTime,
   openTrove,
   setDefaultFees,
   setInterestRate,
   setupTests,
   updateTroveSnapshot,
+  updateTroveSnapshots,
+  User,
 } from "../helpers"
 import { to1e18 } from "../utils"
 
@@ -106,6 +108,64 @@ describe("HintHelpers", () => {
 
       expect(firstRedemptionHint).to.equal(alice.address)
       expect(partialRedemptionHintNICR).to.equal(nICR)
+    })
+
+    it("skips troves with ICR < MCR even if they are out of order in SortedTroves", async () => {
+      // Open a trove for Alice with a high ICR so we don't go into recovery mode
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "500",
+        sender: alice.wallet,
+      })
+
+      // Open a trove for Bob with a lower ICR and no interest
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: bob.wallet,
+      })
+
+      // Open a trove for Carol with the same ICR as Bob but a high interest rate
+      await setInterestRate(contracts, council, 5000)
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      // Open a trove for Dennis with the same ICR as Bob and Carol but no interest
+      await setInterestRate(contracts, council, 0)
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: dennis.wallet,
+      })
+      // Fast-forward time so that Carol's trove is out of order in the sorted list due to interest
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      // Drop the price so that Dennis and Bob are at 110% ICR and Carol is below due to interest
+      await dropPrice(contracts, deployer, dennis, to1e18("110"))
+
+      // Attempt a redemption
+      await updateTroveSnapshots(contracts, [bob, carol, dennis], "before")
+
+      // Fully redeem two troves (Dennis and Bob)
+      const redemptionAmount =
+        dennis.trove.debt.before +
+        bob.trove.debt.before -
+        2n * (await contracts.troveManager.MUSD_GAS_COMPENSATION())
+
+      const price = await contracts.priceFeed.fetchPrice()
+
+      const { partialRedemptionHintNICR } =
+        await contracts.hintHelpers.getRedemptionHints(
+          redemptionAmount,
+          price,
+          0,
+        )
+
+      // If we redeem from Bob and Dennis, the last trove should be a full redemption, so the final NICR should be 0
+      expect(partialRedemptionHintNICR).to.equal(0n)
     })
   })
 
