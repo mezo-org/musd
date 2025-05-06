@@ -16,6 +16,7 @@ import {
   CollSurplusPoolV2,
   DefaultPoolV2,
   GasPoolV2,
+  GovernableVariablesV2,
   HintHelpersV2,
   InterestRateManagerV2,
   PCVv2,
@@ -401,5 +402,24 @@ describe("Proxy Upgrades", () => {
       )
 
     await expect(tx).to.emit(contracts.borrowerOperations, "TroveCreated")
+  })
+
+  it("upgrades GovernableVariables contract correctly", async () => {
+    const upgraded = await upgradeProxy<GovernableVariablesV2>(
+      "GovernableVariables",
+      "GovernableVariablesV2",
+    )
+
+    // sanity check - address is the same
+    expect(await upgraded.getAddress()).to.equal(
+      await contracts.governableVariables.getAddress(),
+    )
+
+    // state preserved and previous functionality works
+    expect(await upgraded.owner()).to.equal(deployer.address)
+
+    // new functionality works
+    await upgraded.newFunction()
+    expect(await upgraded.newField()).to.equal(172)
   })
 })
