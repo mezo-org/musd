@@ -17,6 +17,10 @@ const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
   ? [process.env.MATSNET_PRIVATE_KEY]
   : []
 
+const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+  ? [process.env.MAINNET_PRIVATE_KEY]
+  : []
+
 const config: HardhatUserConfig = {
   mocha: {
     timeout: 100000000,
@@ -35,6 +39,12 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
   },
   networks: {
+    mainnet: {
+      url: "https://rpc.mezo.org",
+      chainId: 31612,
+      accounts: MAINNET_PRIVATE_KEY,
+      tags: ["allowStubs", "etherscan"],
+    },
     matsnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
@@ -110,9 +120,18 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      mainnet: "empty",
       matsnet: "empty",
     },
     customChains: [
+      {
+        network: "mainnet",
+        chainId: 31612,
+        urls: {
+          apiURL: "https://api.explorer.mezo.org/api",
+          browserURL: "https://explorer.mezo.org",
+        },
+      },
       {
         network: "matsnet",
         chainId: 31611,
