@@ -117,6 +117,11 @@ contract HintHelpers is
         ) {
             _maxIterations--;
 
+            if (troveManager.getCurrentICR(currentTroveuser, _price) < MCR) {
+                currentTroveuser = sortedTrovesCached.getPrev(currentTroveuser);
+                continue;
+            }
+
             // slither-disable-start unused-return
             (
                 uint256 coll,
@@ -159,6 +164,7 @@ contract HintHelpers is
                 remainingMUSD -= netDebt;
             }
 
+            // slither-disable-start write-after-write
             currentTroveuser = sortedTrovesCached.getPrev(currentTroveuser);
         }
         // slither-disable-end calls-loop
