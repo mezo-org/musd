@@ -10,3 +10,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MockERC20"]
+
+// Only execute for hardhat
+func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+  hre.network.name !== "hardhat"

@@ -12,3 +12,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["MockAggregator"]
+
+// Only execute for hardhat
+func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+  hre.network.name !== "hardhat"
