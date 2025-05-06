@@ -108,12 +108,6 @@ const config: HardhatUserConfig = {
       tags: ["allowStubs"],
     },
   },
-  external: {
-    deployments: {
-      sepolia: ["./external/sepolia"],
-      mainnet: ["./external/mainnet"],
-    },
-  },
   etherscan: {
     apiKey: {
       matsnet: "empty",
