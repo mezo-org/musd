@@ -51,19 +51,19 @@ const config: HardhatUserConfig = {
       url: "https://rpc.mezo.org",
       chainId: 31612,
       accounts: MAINNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
     },
     matsnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
     },
     matsnet_fuzz: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
     },
     ethereum: {
       url: ETHEREUM_RPC_URL,
@@ -129,7 +129,6 @@ const config: HardhatUserConfig = {
           balance: "1000000000000000000009",
         },
       ],
-      tags: ["allowStubs"],
     },
   },
   etherscan: {
