@@ -139,7 +139,8 @@ const config: HardhatUserConfig = {
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
-    strict: false,
+    strict: true,
+    except: ["EchidnaTest$"],
   },
   gasReporter: {
     enabled: true,
