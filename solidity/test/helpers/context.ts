@@ -21,7 +21,6 @@ import {
   HintHelpers,
   InterestRateManager,
   MockAggregator,
-  MockERC20,
   MUSDTester,
   PCV,
   PriceFeed,
@@ -51,7 +50,6 @@ export async function deployment() {
   )
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
-  const mockERC20: MockERC20 = await getDeployedContract("MockERC20")
   const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
@@ -72,7 +70,6 @@ export async function deployment() {
     hintHelpers,
     interestRateManager,
     mockAggregator,
-    mockERC20,
     musd,
     pcv,
     priceFeed,
@@ -227,7 +224,6 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     hintHelpers: await contracts.hintHelpers.getAddress(),
     interestRateManager: await contracts.interestRateManager.getAddress(),
     mockAggregator: await contracts.mockAggregator.getAddress(),
-    mockERC20: await contracts.mockERC20.getAddress(),
     musd: await contracts.musd.getAddress(),
     pcv: await contracts.pcv.getAddress(),
     priceFeed: await contracts.priceFeed.getAddress(),

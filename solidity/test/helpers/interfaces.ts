@@ -12,7 +12,6 @@ import {
   HintHelpers,
   InterestRateManager,
   MockAggregator,
-  MockERC20,
   MUSDTester,
   PCV,
   PriceFeed,
@@ -31,7 +30,6 @@ export interface TestingAddresses {
   hintHelpers: string
   interestRateManager: string
   mockAggregator: string
-  mockERC20: string
   musd: string
   pcv: string
   priceFeed: string
@@ -110,7 +108,6 @@ export interface Contracts {
   hintHelpers: HintHelpers
   interestRateManager: InterestRateManager
   mockAggregator: MockAggregator
-  mockERC20: MockERC20
   musd: MUSDTester
   pcv: PCV
   priceFeed: PriceFeed
