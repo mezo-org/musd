@@ -371,6 +371,12 @@ contract TroveManager is
                 currentBorrower
             );
 
+            // Skip troves with ICR < MCR
+            if (getCurrentICR(currentBorrower, totals.price) < MCR) {
+                currentBorrower = nextUserToCheck;
+                continue;
+            }
+
             SingleRedemptionValues
                 memory singleRedemption = _redeemCollateralFromTrove(
                     contractsCache,

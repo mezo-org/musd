@@ -2386,7 +2386,7 @@ describe("TroveManager in Normal Mode", () => {
       ).to.equal(0n)
     })
 
-    it.only("doesn't touch Troves with ICR < 110% even if they are out of order in SortedTroves due to interest", async () => {
+    it("doesn't touch Troves with ICR < 110% even if they are out of order in SortedTroves due to interest", async () => {
       // Open a trove for Alice with a high ICR so we don't go into recovery mode
       await openTrove(contracts, {
         musdAmount: "20000",
@@ -2424,18 +2424,39 @@ describe("TroveManager in Normal Mode", () => {
 
       // Attempt a redemption
       await updateTroveSnapshots(contracts, [bob, carol, dennis], "before")
-      const redemptionAmount = dennis.trove.debt.before + bob.trove.debt.before
-      await performRedemption(contracts, alice, dennis, redemptionAmount)
 
-      // Check that Carol's trove is untouched
-      expect(await checkTroveClosedByRedemption(contracts, carol)).to.equal(
-        false,
+      // Fully redeem two troves (Dennis and Bob)
+      const redemptionAmount =
+        dennis.trove.debt.before +
+        bob.trove.debt.before -
+        2n * (await contracts.troveManager.MUSD_GAS_COMPENSATION())
+      const redemptionTx = await performRedemption(
+        contracts,
+        alice,
+        dennis,
+        redemptionAmount,
+      )
+      const { attemptedMUSDAmount, actualMUSDAmount } =
+        await getEmittedRedemptionValues(redemptionTx)
+
+      // Check that the redemption succeeded
+      expect(attemptedMUSDAmount).to.equal(actualMUSDAmount)
+
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
       )
 
-      // Bob and Dennis's troves should be closed by redemption
+      // Check that Bob and Dennis's troves are fully redeemed
       expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(true)
       expect(await checkTroveClosedByRedemption(contracts, dennis)).to.equal(
         true,
+      )
+
+      // Carol's trove should be untouched
+      expect(await checkTroveClosedByRedemption(contracts, carol)).to.equal(
+        false,
       )
     })
 
