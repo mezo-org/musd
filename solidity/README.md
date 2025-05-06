@@ -1,6 +1,6 @@
 # musd Contracts
 
-Smart contracts powering mUSD
+Smart contracts powering MUSD
 
 ## Development
 
