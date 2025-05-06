@@ -315,6 +315,36 @@ Alice now has $950 debt backed by $1250 collateral (132% ratio).
 
 Someone's full debt can be cancelled in this way. For example, if Carol redeemed $1000 instead of $50, then Alice's debt would be fully paid, and she would be left with $300 worth of collateral. The remaining collateral is sent to the `CollSurplusPool`. Alice can collect it by calling `BorrowerOperations.claimCollateral`.
 
+The `minNetDebt` value is used to prevent the list of active loans being filled up with nearly empty troves, filling the sorted loans list with lots of nearly empty troves could be used to cause redemption requests to fail by running out of gas. Note that the redemption amount must leave the loan with a debt level greater than the `minNetDebt` value, this is initialised at 1800 MUSD but can be changed through governance, it can be increased or reduced as low as 50 MUSD.
+
+#### Partial Loan Redemption
+
+When the redemption amount is less than the debt of the loan with the lowest collateralisation this results in a partial redemption.
+
+![Partial Loan Redemption](images/partialRedemption.png)
+
+Flow of Funds
+
+1. Redeemer deposits MUSD into Borrower Operation contract
+2. MUSD is burnt
+3. BTC is sent to the Redeemer
+4. Redemption fee is sent to PCV
+
+#### Full Loan Redemption
+
+When the redemption amount is greater than a loans value, that loan become fully redeemed. The remaining redemption amount is then applied to the next loan, this continues until the full redemption amount is fulfilled.
+
+![Full loan Redemption](images/fullRedemption.png)
+
+Flow of Funds
+
+1. Redeemer deposits mUSD into BorrowerOperation contract and fully redeems a borrowers debt
+2. mUSD is burnt
+3. BTC is sent to the Redeemer
+4. Redemption fee is sent to PCV
+5. Borrowers excess BTC is sent to the CollSurplusPool
+6. Liquidation reserve is burnt
+
 ## Supporting Ideas
 
 ### Gas Compensation
