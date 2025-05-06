@@ -1,8 +1,8 @@
-# mUSD V2: Simple Interest Approach
+# MUSD V2: Simple Interest Approach
 
 ## Overview
 
-This document outlines a block-based simple interest approach to manage debt and calculate interest in mUSD V2. The system uses linear interest calculations to minimize complexity while maintaining accurate debt tracking.
+This document outlines a block-based simple interest approach to manage debt and calculate interest in MUSD V2. The system uses linear interest calculations to minimize complexity while maintaining accurate debt tracking.
 
 ## Key Concepts
 

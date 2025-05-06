@@ -1,22 +1,22 @@
 # Mezo USD
 
-mUSD is a stablecoin that is minted by creating a loan against the borrowers crytpo assets, this is known as a Collateralized Debt Position (CDP).
+MUSD is a stablecoin that is minted by creating a loan against the borrowers crytpo assets, this is known as a Collateralized Debt Position (CDP).
 
-mUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
+MUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
 
 ## Architectural Overview
 
-The protocol allows Bitcoin holders to mint mUSD (mezo USD stablecoins) by using their BTC as collateral. This means users can access USD-denominated liquidity while keeping their Bitcoin investment intact.
+The protocol allows Bitcoin holders to mint MUSD (mezo USD stablecoins) by using their BTC as collateral. This means users can access USD-denominated liquidity while keeping their Bitcoin investment intact.
 
 The primary components are how the...
 
 - BTC is **custodied**.
-- mUSD token maintains its **1 mUSD = $1 price peg**.
+- MUSD token maintains its **1 MUSD = $1 price peg**.
 - system earns **fees**.
 
 ### Custody
 
-A user opens up a position by calling `BorrowerOperations.openTrove`, providing BTC, and requesting mUSD. The BTC is routed to the `ActivePool`, where it stays until a user either...
+A user opens up a position by calling `BorrowerOperations.openTrove`, providing BTC, and requesting MUSD. The BTC is routed to the `ActivePool`, where it stays until a user either...
 
 - withdraws (via `BorrowerOperations.withdrawColl`)
 - pays off their debt (via `BorrowerOperations.closeTrove`)
@@ -27,28 +27,28 @@ Liquidated positions are either paid for by the `StabilityPool`, in which case t
 
 ### Maintaining the Peg
 
-We maintain the **price floor of $1** through arbitrage, an external USD <-> BTC price oracle, and the ability to redeem mUSD for BTC $1 for $1 (via `TroveManager.redeemCollateral`). Imagine that mUSD was trading for $0.80 on an exchange and that bitcoin is selling for 1 BTC = $100k. A arbitrageur with $800 could:
+We maintain the **price floor of $1** through arbitrage, an external USD <-> BTC price oracle, and the ability to redeem MUSD for BTC $1 for $1 (via `TroveManager.redeemCollateral`). Imagine that MUSD was trading for $0.80 on an exchange and that bitcoin is selling for 1 BTC = $100k. A arbitrageur with $800 could:
 
-1. Trade $800 for 1000 mUSD
-1. Redeem 1000 mUSD for 0.01 BTC ($1000 worth of BTC)
+1. Trade $800 for 1000 MUSD
+1. Redeem 1000 MUSD for 0.01 BTC ($1000 worth of BTC)
 1. Sell 0.01 BTC for $1000
 
-The arbitrageur started with $800 and ended with $1000 (ignoring fees). This trade _buys_ mUSD and _burns_ it (for the backing BTC), causing upwards price pressure. This trade continues to be effective until the price resets to $1.
+The arbitrageur started with $800 and ended with $1000 (ignoring fees). This trade _buys_ MUSD and _burns_ it (for the backing BTC), causing upwards price pressure. This trade continues to be effective until the price resets to $1.
 
-We maintain a **price ceiling of $1.10** via the minimum 110% collateralization ratio. Imagine that mUSD for trading for $1.20 on an exchange, and that bitcoin is selling for 1 BTC = $100k. An arbitrageur with $100k could:
+We maintain a **price ceiling of $1.10** via the minimum 110% collateralization ratio. Imagine that MUSD for trading for $1.20 on an exchange, and that bitcoin is selling for 1 BTC = $100k. An arbitrageur with $100k could:
 
 1. Buy 1 BTC (worth $100k)
-1. Open up a trove with 1 BTC as collateral, and the maximum 90,909 mUSD as debt.
-1. Sell 90,909 mUSD for $109,091.
+1. Open up a trove with 1 BTC as collateral, and the maximum 90,909 MUSD as debt.
+1. Sell 90,909 MUSD for $109,091.
 
-The arbitrageur started with $100k and ended with $109k (ignoring fees). This trade _sells_ and _mints_ mUSD, causing downward price pressure. This trade continues to be effective until the price reaches $1.10.
+The arbitrageur started with $100k and ended with $109k (ignoring fees). This trade _sells_ and _mints_ MUSD, causing downward price pressure. This trade continues to be effective until the price reaches $1.10.
 
 ### Fees
 
 The protocol collects fees in four places:
 
 - A borrowing rate of 0.1% (governable), which is added as debt to a trove but minted to governance.
-- A redemption rate of 0.75% (governable), which is taken whenever a user redeems mUSD for BTC. For example, at 0.5%, whenever $100 of mUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
+- A redemption rate of 0.75% (governable), which is taken whenever a user redeems MUSD for BTC. For example, at 0.5%, whenever $100 of MUSD is redeemed, the user receives $99.50 worth of BTC and the protocol receives $0.50 worth of BTC.
 - A refinancing rate, which operates like the borrowing rate.
 - [Simple](https://www.investopedia.com/terms/s/simple_interest.asp), [fixed](https://www.creditkarma.com/credit/i/fixed-interest-rate) interest on the principal of the loan.
 
@@ -60,7 +60,7 @@ Simple interest is non-compounding. For example, if a user owes a principal of $
 
 ### Part of Ecosystem
 
-The mUSD CDP is a part of the Mezo ecosystem. The interest and fees from mUSD flow into other parts of Mezo.
+The MUSD CDP is a part of the Mezo ecosystem. The interest and fees from MUSD flow into other parts of Mezo.
 
 ### Protocol Bootstrap Loan
 
@@ -156,9 +156,9 @@ Flow of Funds
 
 ### Immutability and Upgradability
 
-Unlike Liquity v1 the mUSD smart contracts are upgradable. This provides the flexibility to fix any small issues that arise after launch.
+Unlike Liquity v1 the MUSD smart contracts are upgradable. This provides the flexibility to fix any small issues that arise after launch.
 
-Substantial changes to the functionality would be done by deploying a new set of contracts and adding the new contracts to the mUSD token contracts mintlist and burnlist. This ensures that for any substantial changes the user must take an action to opt in and migrate funds between versions.
+Substantial changes to the functionality would be done by deploying a new set of contracts and adding the new contracts to the MUSD token contracts mintlist and burnlist. This ensures that for any substantial changes the user must take an action to opt in and migrate funds between versions.
 
 When the protocol has been battle tested in production the contracts will be hardened with the upgradability removed. This will give borrowers certainty.
 
@@ -166,7 +166,7 @@ When the protocol has been battle tested in production the contracts will be har
 
 Whenever a trove becomes under-collateralized (sub 110% BTC value to debt), it is eligible for liquidation. We have two ways to liquidate troves: with the Stability pool (default), and with redistribution (fallback).
 
-When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateralization ratio, that user is rewarded with a $200 mUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns mUSD to cover all of the trove's debt and seizes the remaining 99.5% of the trove's collateral. It is important to note that anyone is able to execute the call to trigger the liquidation and that they do not require a MUSD balance to take the liquidation, the liquidator only spends BTC on gas for the transaction.
+When a user (or bot) calls `TroveManager.liquidate` on a trove with sub-110% collateralization ratio, that user is rewarded with a $200 MUSD gas compensation as well as 0.5% of the trove's collateral. Then, the Stability pool burns MUSD to cover all of the trove's debt and seizes the remaining 99.5% of the trove's collateral. It is important to note that anyone is able to execute the call to trigger the liquidation and that they do not require a MUSD balance to take the liquidation, the liquidator only spends BTC on gas for the transaction.
 
 Liquidations can be triggered on individual loans with `TroveManager.liquidate` or on a list of loans with `TroveManager.batchLiquidateTroves`.
 
@@ -288,19 +288,19 @@ It is anticipated that bad debt would be a low probability event due to the foll
 
 ### Stability Pool
 
-The Stability Pool provides a mechanism to socialize liquidations. Users deposit mUSD into the pool, and the stability pool has first priority to provide mUSD to liquidate troves and seize collateral.
+The Stability Pool provides a mechanism to socialize liquidations. Users deposit MUSD into the pool, and the stability pool has first priority to provide MUSD to liquidate troves and seize collateral.
 
-In effect, the Stability Pool is buying BTC at a discount from liquidated troves. If a trove has $10000 in debt backed by $11000 worth of BTC, then when that trove is liquidated, the pool loses $10000 mUSD and gains $10,945 worth of BTC. In effect, they were able to buy $10945 worth of BTC for $10000 which is a ~9% discount.
+In effect, the Stability Pool is buying BTC at a discount from liquidated troves. If a trove has $10000 in debt backed by $11000 worth of BTC, then when that trove is liquidated, the pool loses $10000 MUSD and gains $10,945 worth of BTC. In effect, they were able to buy $10945 worth of BTC for $10000 which is a ~9% discount.
 
-Users own shares of the pool, and when they exit the pool, they withdraw both their mUSD and their share of seized BTC.
+Users own shares of the pool, and when they exit the pool, they withdraw both their MUSD and their share of seized BTC.
 
-For example, say that the pool currently has $20000 mUSD. A user deposits $5000 mUSD. They would own 5000 shares out of 25000 shares. Later, the pool burns $3000 mUSD and seizes $3270 worth of BTC and the user decides to exit. The pool still has 25000 shares, but now has $22000 mUSD and $3270 BTC. The user withdraws `5000 / 25000 * $22000 = $4400` mUSD and `5000 / 25000 * $3270 = $654` worth of BTC.
+For example, say that the pool currently has $20000 MUSD. A user deposits $5000 MUSD. They would own 5000 shares out of 25000 shares. Later, the pool burns $3000 MUSD and seizes $3270 worth of BTC and the user decides to exit. The pool still has 25000 shares, but now has $22000 MUSD and $3270 BTC. The user withdraws `5000 / 25000 * $22000 = $4400` MUSD and `5000 / 25000 * $3270 = $654` worth of BTC.
 
-The Stability pool is seeded by a bootstrap loan given to governance. $100m mUSD is minted against future fees, and the `PCV` contract assumes $100m of debt. That $100m mUSD is deposited directly into the Stability Pool. 50% of all [protocol fees](#fees) are burned to incrementally pay off this bootstrap loan.
+The Stability pool is seeded by a bootstrap loan given to governance. $100m MUSD is minted against future fees, and the `PCV` contract assumes $100m of debt. That $100m MUSD is deposited directly into the Stability Pool. 50% of all [protocol fees](#fees) are burned to incrementally pay off this bootstrap loan.
 
 ### Redemptions
 
-A user may call `TroveManager.redeemCollateral` to burn mUSD to obtain BTC, $1 for $1 worth (minus the redemption fee). This is the main mechanism [maintaining the peg](#maintaining-the-peg).
+A user may call `TroveManager.redeemCollateral` to burn MUSD to obtain BTC, $1 for $1 worth (minus the redemption fee). This is the main mechanism [maintaining the peg](#maintaining-the-peg).
 
 The trove with the lowest collateral ratio (but above the 110% liquidation threshold) has an equivalent amount of debt canceled, and then their BTC is trasferred to the redeeming user. This has a net effect of _raising_ their collateral ratio.
 
@@ -338,8 +338,8 @@ When the redemption amount is greater than a loans value, that loan become fully
 
 Flow of Funds
 
-1. Redeemer deposits mUSD into BorrowerOperation contract and fully redeems a borrowers debt
-2. mUSD is burnt
+1. Redeemer deposits MUSD into BorrowerOperation contract and fully redeems a borrowers debt
+2. MUSD is burnt
 3. BTC is sent to the Redeemer
 4. Redemption fee is sent to PCV
 5. Borrowers excess BTC is sent to the CollSurplusPool
@@ -349,13 +349,13 @@ Flow of Funds
 
 ### Gas Compensation
 
-When a user opens up a trove, an extra flat $200 mUSD is minted for gas compensation, sent to the `GasPool`, and added to the borrower's debt. This debt is included when calculating the user's collateral ratio.
+When a user opens up a trove, an extra flat $200 MUSD is minted for gas compensation, sent to the `GasPool`, and added to the borrower's debt. This debt is included when calculating the user's collateral ratio.
 
 When a trove is liquidated, the whole debt (including the $200 gas compensation) is paid. The initiator of the liquidation is sent the $200 gas compensation, to offset any gas they might pay to call the liquidation function, especially in times of high network traffic.
 
 In other situations (redemption, closing a trove, repaying debt), the last $200 of debt of a trove is paid by the Gas Pool.
 
-For example, say that Alice wants to mint $2000 mUSD with $3000 of BTC as collateral. Alice will receive $2000, $200 will be sent to the Gas Pool, and a borrowing fee of $10 (0.5%) is sent to the protocol.
+For example, say that Alice wants to mint $2000 MUSD with $3000 of BTC as collateral. Alice will receive $2000, $200 will be sent to the Gas Pool, and a borrowing fee of $10 (0.5%) is sent to the protocol.
 
 Alice's total debt, for liquidations or calculating collateral ratios, is $2210.
 
@@ -391,7 +391,7 @@ For example, if `rewardSnapshots[_borrower].collateral < L_Collateral`, then the
 
 ## Key Changes from THUSD
 
-Much of mUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), but there are a few key differences to highlight:
+Much of MUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), but there are a few key differences to highlight:
 
 ### Fixed-Interest Borrowing
 
@@ -427,7 +427,7 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 ### EIP-712 Signature Verification
 
-The mUSD system implements EIP-712 signature verification through the `BorrowerOperationsSignatures` contract, allowing users to authorize operations on their troves without directly executing transactions.
+The MUSD system implements EIP-712 signature verification through the `BorrowerOperationsSignatures` contract, allowing users to authorize operations on their troves without directly executing transactions.
 
 - **Smart Contract Integration**: This mechanism enables other smart contracts to execute operations on behalf of users who have provided signed authorizations, facilitating integration with other DeFi protocols.
 
@@ -437,11 +437,11 @@ The mUSD system implements EIP-712 signature verification through the `BorrowerO
 
 - **Authorization Flow**: The signature verification contract validates the user's signature before calling the corresponding restricted function in the BorrowerOperations contract.
 
-This feature enhances user experience by enabling delegation of transaction execution while maintaining security through cryptographic verification of user intent. It also creates opportunities for third-party applications to build on top of mUSD by allowing them to manage user positions with proper authorization.
+This feature enhances user experience by enabling delegation of transaction execution while maintaining security through cryptographic verification of user intent. It also creates opportunities for third-party applications to build on top of MUSD by allowing them to manage user positions with proper authorization.
 
 ### No Special Recovery Mode Liquidations
 
-Unlike THUSD, mUSD does not have special handling for liquidations during recovery mode. All liquidations follow a single process regardless of the system's collateralization ratio.
+Unlike THUSD, MUSD does not have special handling for liquidations during recovery mode. All liquidations follow a single process regardless of the system's collateralization ratio.
 
 ## System Overview
 
@@ -486,7 +486,7 @@ graph TD
 
 ### Core Smart Contracts
 
-`MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers mUSD tokens.
+`MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers MUSD tokens.
 
 `BorrowerOperations.sol` - contains the basic operations by which borrowers interact with their Trove: Trove creation, collateral top-up / withdrawal, stablecoin issuance and repayment. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move collateral/Tokens between Pools or between Pool <> user, where necessary.
 
@@ -500,9 +500,9 @@ graph TD
 
 `SortedTroves.sol` - Maintains a sorted list of Troves by Individual Collateral Ratio (ICR).
 
-`StabilityPool.sol` - contains functionality for Stability Pool operations: making deposits, and withdrawing compounded deposits and accumulated collateral gains. Holds the mUSD Stability Pool deposits, and the collateral gains for depositors, from liquidations.
+`StabilityPool.sol` - contains functionality for Stability Pool operations: making deposits, and withdrawing compounded deposits and accumulated collateral gains. Holds the MUSD Stability Pool deposits, and the collateral gains for depositors, from liquidations.
 
-### mUSD Token - `MUSD.sol`
+### MUSD Token - `MUSD.sol`
 
 `startRevokeMintList(address _account)`: This function initiates the process of revoking a borrower operations contract's capability to mint new tokens. It first validates that the address provided in `_account` parameter is included in the `mintList`. Once verified, the function initializes the revocation process by updating `revokeMintListInitiated` with the current block timestamp and `pendingRevokedMintAddress` with the address passed in `_account` parameter.
 
@@ -516,13 +516,13 @@ graph TD
 
 `finalizeAddMintList()`: This function adds the minting capability to the borrower operations contract, previously designated in the `pendingAddedMintAddress`. It executes only after the governance delay has elapsed following the `addMintListInitiated` timestamp. By finalizing the revoke mint process it resets the `pendingAddedMintAddress` and `addMintListInitiated`.
 
-`startAddContracts(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress, address _interestRateManagerAddress)`: This function initiates the process of integrating borrower operations, trove manager, stability pool, and interest rate manager contracts, enabling them to mint and burn mUSD tokens.
+`startAddContracts(address _troveManagerAddress, address _stabilityPoolAddress, address _borrowerOperationsAddress, address _interestRateManagerAddress)`: This function initiates the process of integrating borrower operations, trove manager, stability pool, and interest rate manager contracts, enabling them to mint and burn MUSD tokens.
 
 `cancelAddContracts()`: This function terminates the current process of adding contracts.
 
 `finalizeAddContracts()`: This function adds the minting and burning capabilities to the borrower operations, trove manager, interest rate manager, and stability pool contracts previously designated in the `pendingBorrowerOperations`, `pendingStabilityPool`, `pendingInterestRateManager`, and `pendingTroveManager`. It executes only after the governance delay has elapsed following the `addContractsInitiated` timestamp.
 
-`startRevokeBurnList(address _account)`: This function initiates the process of revoking a contract's capability to burn mUSD tokens.
+`startRevokeBurnList(address _account)`: This function initiates the process of revoking a contract's capability to burn MUSD tokens.
 
 `cancelRevokeBurnList()`: Cancels the existing revoking mint process.
 
@@ -536,13 +536,13 @@ graph TD
 
 `withdrawColl(uint _amount, address _upperHint, address _lowerHint)`: withdraws `_amount` of collateral from the caller’s Trove. Executes only if the user has an active Trove, the withdrawal would not pull the user’s Trove below the minimum collateralization ratio, and the resulting total collateralization ratio of the system is above 150%.
 
-`withdrawMUSD(uint _amount, address _upperHint, address _lowerHint)`: issues `_amount` of mUSD from the caller’s Trove to the caller. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%.
+`withdrawMUSD(uint _amount, address _upperHint, address _lowerHint)`: issues `_amount` of MUSD from the caller’s Trove to the caller. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%.
 
-`repayMUSD(uint _amount, address _upperHint, address _lowerHint)`: repay `_amount` of mUSD to the caller’s Trove, subject to leaving enough debt in the Trove for gas compensation.
+`repayMUSD(uint _amount, address _upperHint, address _lowerHint)`: repay `_amount` of MUSD to the caller’s Trove, subject to leaving enough debt in the Trove for gas compensation.
 
 `adjustTrove(address _borrower, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint)`: enables a borrower to simultaneously change both their collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%.
 
-`closeTrove()`: allows a borrower to repay all debt, withdraw all their collateral, and close their Trove. Requires the borrower have an mUSD balance sufficient to repay their Trove's debt, excluding gas compensation - i.e. `(debt - MUSD_GAS_COMPENSATION)` mUSD.
+`closeTrove()`: allows a borrower to repay all debt, withdraw all their collateral, and close their Trove. Requires the borrower have an MUSD balance sufficient to repay their Trove's debt, excluding gas compensation - i.e. `(debt - MUSD_GAS_COMPENSATION)` MUSD.
 
 `claimCollateral(address _user)`: when a borrower’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 110%, this function allows the borrower to claim their collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 110% of the debt upon liquidation).
 
@@ -554,7 +554,7 @@ Each function requires a signature and deadline (when the signature is valid unt
 
 `addCollWithSignature(address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: payable function that adds the received collateral to the signer's active Trove.
 
-`closeTroveWithSignature(address _borrower, bytes memory _signature, uint256 _deadline)`: allows a signer to repay all debt, withdraw all their collateral, and close their Trove. Requires the caller have an mUSD balance sufficient to repay the signer's Trove's debt, excluding gas compensation - i.e. `(debt - MUSD_GAS_COMPENSATION)` mUSD.
+`closeTroveWithSignature(address _borrower, bytes memory _signature, uint256 _deadline)`: allows a signer to repay all debt, withdraw all their collateral, and close their Trove. Requires the caller have an MUSD balance sufficient to repay the signer's Trove's debt, excluding gas compensation - i.e. `(debt - MUSD_GAS_COMPENSATION)` MUSD.
 
 `adjustTroveWithSignature(uint256 _collWithdrawal, uint256 _debtChange, bool _isDebtIncrease,address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: enables a caller to simultaneously change a signer's collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%.
 
@@ -562,9 +562,9 @@ Each function requires a signature and deadline (when the signature is valid unt
 
 `openTroveWithSignature(uint256 _debtAmount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: payable function that creates a Trove for the signer with the requested debt, and the collateral received from the caller. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation.
 
-`withdrawMUSDWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: issues `_amount` of mUSD from the signer’s Trove to the signer. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%.
+`withdrawMUSDWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: issues `_amount` of MUSD from the signer’s Trove to the signer. Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%.
 
-`repayMUSDWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: repay `_amount` of mUSD to the signer’s Trove from the caller, subject to leaving enough debt in the Trove for gas compensation.
+`repayMUSDWithSignature(uint256 _amount, address _upperHint, address _lowerHint, address _borrower, bytes memory _signature, uint256 _deadline)`: repay `_amount` of MUSD to the signer’s Trove from the caller, subject to leaving enough debt in the Trove for gas compensation.
 
 `refinanceWithSignature(address _borrower, bytes memory _signature, uint256 _deadline)`: allows a caller to move the signer's debt to a new (presumably lower) interest rate. In addition to the original debt, extra debt is issued to pay the refinancing fee.
 
@@ -576,9 +576,9 @@ Each function requires a signature and deadline (when the signature is valid unt
 
 `batchLiquidateTroves(address[] calldata _troveArray)`: callable by anyone, accepts a custom list of Troves addresses as an argument. Steps through the provided list and attempts to liquidate every Trove, until it reaches the end or it runs out of gas. A Trove is liquidated only if it meets the conditions for liquidation. For a batch of 10 Troves, the gas costs per liquidated Trove are roughly between 75K-83K, for a batch of 50 Troves between 54K-69K.
 
-`redeemCollateral(uint _MUSDAmount, address _firstRedemptionHint, address _upperPartialRedemptionHint, address _lowerPartialRedemptionHint, uint _partialRedemptionHintNICR, uint _maxIterations)`: redeems `_MUSDamount` of stablecoins for ether from the system. Decreases the caller’s mUSD balance, and sends them the corresponding amount of collateral. Executes successfully if the caller has sufficient mUSD to redeem. The number of Troves redeemed from is capped by `_maxIterations`.
+`redeemCollateral(uint _MUSDAmount, address _firstRedemptionHint, address _upperPartialRedemptionHint, address _lowerPartialRedemptionHint, uint _partialRedemptionHintNICR, uint _maxIterations)`: redeems `_MUSDamount` of stablecoins for ether from the system. Decreases the caller’s MUSD balance, and sends them the corresponding amount of collateral. Executes successfully if the caller has sufficient MUSD to redeem. The number of Troves redeemed from is capped by `_maxIterations`.
 
-`getCurrentICR(address _user, uint _price)`: computes the user’s individual collateralization ratio (ICR) based on their total collateral and total mUSD debt. Returns 2^256 -1 if they have 0 debt.
+`getCurrentICR(address _user, uint _price)`: computes the user’s individual collateralization ratio (ICR) based on their total collateral and total MUSD debt. Returns 2^256 -1 if they have 0 debt.
 
 `getTroveOwnersCount()`: get the number of active Troves in the system.
 
@@ -655,11 +655,11 @@ _**Trove:**_ a collateralized debt position, bound to a single Ethereum address.
 
 _**Active collateral:**_ the amount of collateral recorded on a Trove’s struct
 
-_**Active principal:**_ the amount of mUSD debt recorded on a Trove’s struct, not including any interest
+_**Active principal:**_ the amount of MUSD debt recorded on a Trove’s struct, not including any interest
 
-_**Active interest:**_: the amount of mUSD interest recorded on a Trove's struct
+_**Active interest:**_: the amount of MUSD interest recorded on a Trove's struct
 
-_**Active debt:**_ the amount of mUSD debt recorded on a Trove’s struct (active principal plus active interest)
+_**Active debt:**_ the amount of MUSD debt recorded on a Trove’s struct (active principal plus active interest)
 
 _**Entire collateral:**_ the sum of a Trove’s active collateral plus its pending collateral rewards accumulated from distributions
 
@@ -677,14 +677,14 @@ _**Total collateralization ratio (TCR):**_ the ratio of the dollar value of the 
 
 _**Critical collateralization ratio (CCR):**_ 150%. When the TCR is below the CCR, the system enters Recovery Mode.
 
-_**Redemption:**_ the act of swapping mUSD tokens with the system, in return for an equivalent value of collateral. Any account with an mUSD token balance may redeem them, regardless of whether they are a borrower.
+_**Redemption:**_ the act of swapping MUSD tokens with the system, in return for an equivalent value of collateral. Any account with an MUSD token balance may redeem them, regardless of whether they are a borrower.
 
 _**Liquidation:**_ the act of force-closing an undercollateralized Trove and redistributing its collateral and debt. When the Stability Pool is sufficiently large, the liquidated debt is offset with the Stability Pool, and the collateral distributed to depositors. If the liquidated debt can not be offset with the Pool, the system redistributes the liquidated collateral and debt directly to the active Troves with >110% collateralization ratio.
 
 Liquidation functionality is permissionless and publically available - anyone may liquidate an undercollateralized Trove, or batch liquidate Troves in ascending order of collateralization ratio.
 
-_**Collateral Surplus:**_ The difference between the dollar value of a Troves's collateral, and the dollar value of its mUSD debt. In a full liquidation, this is the net gain earned by the recipients of the liquidation.
+_**Collateral Surplus:**_ The difference between the dollar value of a Troves's collateral, and the dollar value of its MUSD debt. In a full liquidation, this is the net gain earned by the recipients of the liquidation.
 
-_**Offset:**_ cancellation of liquidated debt with mUSD in the Stability Pool, and assignment of liquidated collateral to Stability Pool depositors, in proportion to their deposit.
+_**Offset:**_ cancellation of liquidated debt with MUSD in the Stability Pool, and assignment of liquidated collateral to Stability Pool depositors, in proportion to their deposit.
 
-_**Gas compensation:**_ A refund, in mUSD and collateral, automatically paid to the caller of a liquidation function, intended to at least cover the gas cost of the transaction. Designed to ensure that liquidators are not dissuaded by potentially high gas costs.
+_**Gas compensation:**_ A refund, in MUSD and collateral, automatically paid to the caller of a liquidation function, intended to at least cover the gas cost of the transaction. Designed to ensure that liquidators are not dissuaded by potentially high gas costs.
