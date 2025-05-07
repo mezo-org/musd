@@ -158,6 +158,73 @@ export async function fetchAllDeployedContracts(
   }
 }
 
+export async function newFetchAllDeployedContracts(
+  isHardhatNetwork: boolean,
+  isFuzzTestingNetwork: boolean,
+) {
+  const activePool: ActivePool = await getDeployedContract("NewActivePool")
+
+  const borrowerOperations: BorrowerOperations = await getDeployedContract(
+    "NewBorrowerOperations",
+  )
+
+  const borrowerOperationsSignatures: BorrowerOperationsSignatures =
+    await getDeployedContract("NewBorrowerOperationsSignatures")
+
+  const collSurplusPool: CollSurplusPool =
+    await getDeployedContract("NewCollSurplusPool")
+
+  const defaultPool: DefaultPool = await getDeployedContract("NewDefaultPool")
+  const gasPool: GasPool = await getDeployedContract("NewGasPool")
+  const governableVariables: GovernableVariables = await getDeployedContract(
+    "NewGovernableVariables",
+  )
+  const hintHelpers: HintHelpers = await getDeployedContract("NewHintHelpers")
+
+  const interestRateManager: InterestRateManager = await getDeployedContract(
+    isFuzzTestingNetwork ? "InterestRateManagerTester" : "InterestRateManager",
+  )
+
+  // TODO: replace with a real aggregator
+  const mockAggregator: MockAggregator =
+    await getDeployedContract("MockAggregator")
+
+  const musd = isHardhatNetwork
+    ? await getDeployedContract("MUSDTester")
+    : await getDeployedContract("MUSD")
+
+  const pcv: PCV = await getDeployedContract("PCV")
+  const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
+  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
+
+  const stabilityPool: StabilityPool =
+    await getDeployedContract("StabilityPool")
+
+  const troveManager: TroveManager | TroveManagerTester =
+    await getDeployedContract(
+      isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
+    )
+
+  return {
+    activePool,
+    borrowerOperations,
+    borrowerOperationsSignatures,
+    collSurplusPool,
+    defaultPool,
+    gasPool,
+    governableVariables,
+    hintHelpers,
+    interestRateManager,
+    mockAggregator,
+    musd,
+    pcv,
+    priceFeed,
+    sortedTroves,
+    stabilityPool,
+    troveManager,
+  }
+}
+
 export async function setupDeploymentBoilerplate(
   hre: HardhatRuntimeEnvironment,
 ) {

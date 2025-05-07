@@ -4,16 +4,12 @@ import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
-
-  const isFuzzTestingNetwork = hre.network.name === "matsnet_fuzz"
-
-  const contractName = isFuzzTestingNetwork
-    ? "InterestRateManagerTester"
-    : "InterestRateManager"
-
-  await getOrDeployProxy(`New${contractName}`, { contractName })
+  await getOrDeployProxy("NewPCV", {
+    contractName: "PCV",
+    initializerArgs: [7200],
+  })
 }
 
 export default func
 
-func.tags = ["NewInterestRateManager"]
+func.tags = ["NewPCV"]
