@@ -142,12 +142,12 @@ contract BorrowerOperations is
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
 
-        borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
+        borrowingRate = DECIMAL_PRECISION / 1000; // 0.1%
         proposedBorrowingRate = borrowingRate;
         // solhint-disable-next-line not-rely-on-time
         proposedBorrowingRateTime = block.timestamp;
 
-        redemptionRate = DECIMAL_PRECISION / 200; // 0.5%
+        redemptionRate = (DECIMAL_PRECISION * 3) / 400; // 0.75%
         proposedRedemptionRate = redemptionRate;
         // solhint-disable-next-line not-rely-on-time
         proposedRedemptionRateTime = block.timestamp;
