@@ -253,6 +253,7 @@ contract TroveManager is
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit GasPoolAddressChanged(_gasPoolAddress);
+        emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
