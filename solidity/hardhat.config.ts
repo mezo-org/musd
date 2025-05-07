@@ -13,8 +13,20 @@ dotenv.config({
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
+const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+  ? [process.env.MAINNET_PRIVATE_KEY]
+  : []
+
 const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
   ? [process.env.MATSNET_PRIVATE_KEY]
+  : []
+
+const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL
+  ? process.env.MAINNET_RPC_URL
+  : ""
+
+const ETHEREUM_PRIVATE_KEY = process.env.ETHEREUM_PRIVATE_KEY
+  ? [process.env.ETHEREUM_PRIVATE_KEY]
   : []
 
 const config: HardhatUserConfig = {
@@ -35,17 +47,29 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
   },
   networks: {
+    mainnet: {
+      url: "https://rpc.mezo.org",
+      chainId: 31612,
+      accounts: MAINNET_PRIVATE_KEY,
+      tags: ["etherscan"],
+    },
     matsnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
     },
     matsnet_fuzz: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
+    },
+    ethereum: {
+      url: ETHEREUM_RPC_URL,
+      accounts: ETHEREUM_PRIVATE_KEY,
+      chainId: 1,
+      tags: ["etherscan"],
     },
     hardhat: {
       initialBaseFeePerGas: 0,
@@ -105,20 +129,22 @@ const config: HardhatUserConfig = {
           balance: "1000000000000000000009",
         },
       ],
-      tags: ["allowStubs"],
-    },
-  },
-  external: {
-    deployments: {
-      sepolia: ["./external/sepolia"],
-      mainnet: ["./external/mainnet"],
     },
   },
   etherscan: {
     apiKey: {
+      mainnet: "empty",
       matsnet: "empty",
     },
     customChains: [
+      {
+        network: "mainnet",
+        chainId: 31612,
+        urls: {
+          apiURL: "https://api.explorer.mezo.org/api",
+          browserURL: "https://explorer.mezo.org",
+        },
+      },
       {
         network: "matsnet",
         chainId: 31611,
@@ -139,7 +165,8 @@ const config: HardhatUserConfig = {
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
-    strict: false,
+    strict: true,
+    except: ["EchidnaTest", "BorrowerOperationsV2"],
   },
   gasReporter: {
     enabled: true,
