@@ -11,7 +11,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     ? "InterestRateManagerTester"
     : "InterestRateManager"
 
-  await getOrDeployProxy("NewInterestRateManager", { contractName })
+  await getOrDeployProxy(`New${contractName}`, { contractName })
 }
 
 export default func
