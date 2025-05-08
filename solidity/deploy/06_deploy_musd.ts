@@ -51,15 +51,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // Short-circuit. For fuzz testing, we do not use the real token contract for tests.
   if (isFuzzTestingNetwork) {
     await getOrDeploy("MUSD")
-    await execute(
-      "MUSD",
-      "initialize",
-      troveManager.address,
-      stabilityPool.address,
-      borrowerOperations.address,
-      interestRateManager.address,
-      10,
-    )
+    // await execute(
+    //   "MUSD",
+    //   "initialize",
+    //   troveManager.address,
+    //   stabilityPool.address,
+    //   borrowerOperations.address,
+    //   interestRateManager.address,
+    // )
     return
   }
 
