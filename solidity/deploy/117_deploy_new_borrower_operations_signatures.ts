@@ -4,7 +4,9 @@ import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getOrDeployProxy } = await setupDeploymentBoilerplate(hre)
-  await getOrDeployProxy("BorrowerOperationsSignatures")
+  await getOrDeployProxy("NewBorrowerOperationsSignatures", {
+    contractName: "BorrowerOperationsSignatures",
+  })
 }
 
 export default func

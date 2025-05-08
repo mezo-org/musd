@@ -182,7 +182,9 @@ export async function newFetchAllDeployedContracts(
   const hintHelpers: HintHelpers = await getDeployedContract("NewHintHelpers")
 
   const interestRateManager: InterestRateManager = await getDeployedContract(
-    isFuzzTestingNetwork ? "InterestRateManagerTester" : "InterestRateManager",
+    isFuzzTestingNetwork
+      ? "NewInterestRateManagerTester"
+      : "NewInterestRateManager",
   )
 
   // TODO: replace with a real aggregator
@@ -193,16 +195,17 @@ export async function newFetchAllDeployedContracts(
     ? await getDeployedContract("MUSDTester")
     : await getDeployedContract("MUSD")
 
-  const pcv: PCV = await getDeployedContract("PCV")
+  const pcv: PCV = await getDeployedContract("NewPCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
-  const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
+  const sortedTroves: SortedTroves =
+    await getDeployedContract("NewSortedTroves")
 
   const stabilityPool: StabilityPool =
-    await getDeployedContract("StabilityPool")
+    await getDeployedContract("NewStabilityPool")
 
   const troveManager: TroveManager | TroveManagerTester =
     await getDeployedContract(
-      isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
+      isHardhatNetwork ? "NewTroveManagerTester" : "NewTroveManager",
     )
 
   return {
