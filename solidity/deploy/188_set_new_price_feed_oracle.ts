@@ -30,3 +30,4 @@ export default func
 
 func.tags = ["SetAddresses", "NewSetPriceFeedOracle"]
 func.dependencies = ["PriceFeed", "MockAggregator"]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true

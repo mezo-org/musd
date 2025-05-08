@@ -6,7 +6,7 @@ async function getNewContracts() {
   const borrowerOperationsAddress = await getDeploymentAddress(
     "NewBorrowerOperations",
   )
-  const priceFeedAddress = await getDeploymentAddress("NewPriceFeed")
+  const priceFeedAddress = await getDeploymentAddress("PriceFeed")
   const troveManagerAddress = await getDeploymentAddress("NewTroveManager")
   const hintHelpersAddress = await getDeploymentAddress("NewHintHelpers")
   const sortedTrovesAddress = await getDeploymentAddress("NewSortedTroves")

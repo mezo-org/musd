@@ -1,0 +1,19 @@
+{
+  "0x90bf9f659de38f051bd9dd2ad7c10bc34bbdec9bed388cdaf109547218bdec87": {
+    "decoded": {
+      "from": "0x6e80164ea60673D64d5d6228beb684a1274Bb017",
+      "gasPrice": "8",
+      "maxFeePerGas": "8",
+      "maxPriorityFeePerGas": "1",
+      "gasLimit": "3000000",
+      "to": "0xBA29be735A5d126ae5845aAbFB135cf69313A3E3",
+      "value": "0",
+      "nonce": 69044,
+      "data": "0xe93c0bd1000000000000000000000000f45eb65fb743afc94bbf76e964431577d0863c87000000000000000000000000b4b33aee9bc0b99b1d4b0261093264f774cfcdc0000000000000000000000000b65c224c7621b3e772b3336706050a8942087c5700000000000000000000000063107ee541bf21d75ac6f1e2d2f26e4a82db91e2",
+      "r": "0x93afdfe78dd421b422d76dccd42bb1821d6d79a255f90d3af7481a0428422d0e",
+      "s": "0x78d3b5345bdf8d7b34999eb19e1a2e301c6d39b42cbffe9b141b64e67fcf9bd1",
+      "v": 0,
+      "chainId": 31611
+    }
+  }
+}

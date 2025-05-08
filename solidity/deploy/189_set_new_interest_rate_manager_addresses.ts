@@ -36,3 +36,4 @@ func.dependencies = [
   "NewPCV",
   "NewTroveManager",
 ]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true

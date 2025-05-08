@@ -41,3 +41,4 @@ func.dependencies = [
   "NewStabilityPool",
   "NewTroveManager",
 ]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true

@@ -26,3 +26,4 @@ export default func
 
 func.tags = ["SetAddresses", "NewSetGasPoolAddresses"]
 func.dependencies = ["NewGasPool", "MUSD", "NewTroveManager"]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true

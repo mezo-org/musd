@@ -26,3 +26,4 @@ export default func
 
 func.tags = ["SetAddresses", "NewSetPCVAddresses"]
 func.dependencies = ["NewBorrowerOperations", "MUSD", "NewPCV"]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true

@@ -31,3 +31,4 @@ func.dependencies = [
   "NewSortedTroves",
   "NewTroveManager",
 ]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true

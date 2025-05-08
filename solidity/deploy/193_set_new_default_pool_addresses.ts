@@ -27,3 +27,4 @@ export default func
 
 func.tags = ["SetAddresses", "NewSetDefaultPoolAddresses"]
 func.dependencies = ["NewActivePool", "NewDefaultPool", "NewTroveManager"]
+func.skip = async (hre: HardhatRuntimeEnvironment) => true
