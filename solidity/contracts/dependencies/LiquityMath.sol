@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 library LiquityMath {
     /* Precision for Nominal ICR (independent of price). Rationale for the value:

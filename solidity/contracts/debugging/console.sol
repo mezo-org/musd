@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // solhint-disable state-visibility
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 // Buidler's helper contract for console logging
 library console {
