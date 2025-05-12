@@ -17,12 +17,16 @@ const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
   ? [process.env.MAINNET_PRIVATE_KEY]
   : []
 
+const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL
+  ? process.env.MAINNET_RPC_URL
+  : ""
+
 const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
   ? [process.env.MATSNET_PRIVATE_KEY]
   : []
 
 const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL
-  ? process.env.MAINNET_RPC_URL
+  ? process.env.ETHEREUM_RPC_URL
   : ""
 
 const ETHEREUM_PRIVATE_KEY = process.env.ETHEREUM_PRIVATE_KEY
@@ -48,7 +52,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     mainnet: {
-      url: "https://rpc.mezo.org",
+      url: MAINNET_RPC_URL,
       chainId: 31612,
       accounts: MAINNET_PRIVATE_KEY,
       tags: ["etherscan"],
