@@ -33,6 +33,10 @@ const ETHEREUM_PRIVATE_KEY = process.env.ETHEREUM_PRIVATE_KEY
   ? [process.env.ETHEREUM_PRIVATE_KEY]
   : []
 
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+  ? process.env.ETHERSCAN_API_KEY
+  : ""
+
 const config: HardhatUserConfig = {
   mocha: {
     timeout: 100000000,
@@ -139,6 +143,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       mainnet: "empty",
       matsnet: "empty",
+      ethereum: ETHERSCAN_API_KEY,
     },
     customChains: [
       {
@@ -155,6 +160,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.explorer.test.mezo.org/api",
           browserURL: "https://explorer.test.mezo.org",
+        },
+      },
+      {
+        network: "ethereum",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/api",
+          browserURL: "https://etherscan.io",
         },
       },
     ],
