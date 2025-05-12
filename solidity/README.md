@@ -67,17 +67,10 @@ detailed in `.env.example`.
 pnpm run deploy
 ```
 
-**Sepolia**
+**matsnet**
 
 To deploy contracts on Sepolia run:
 
 ```
-$ pnpm run deploy --network sepolia
+$ pnpm run deploy --network matsnet
 ```
-
-Or, alternatively, manually trigger the [`Solidity`
-workflow](https://github.com/thesis/mezo-portal/actions/workflows/solidity.yml)
-(this will not only deploy the contracts, but also update the values of
-`TBTC_CONTRACT_ADDRESS`, `WBTC_CONTRACT_ADDRESS` and `PORTAL_CONTRACT_ADDRESS`
-environment variables in the settings of Netlify builds deploying dApp and its
-previews).
