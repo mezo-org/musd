@@ -2,6 +2,65 @@
 
 ## Changelog from [previous changelog commit] (https://github.com/mezo-org/musd/commit/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e) to [1.0.0 release] (https://github.com/mezo-org/musd/releases/tag/v1.0.0)
 
+### Major Contract/Interface Changes
+
+#### ActivePool
+- `interestRateManagerAddress` is now `IInterestRateManager public interestRateManager`
+- `getDebt()` now returns `principal + getInterest()` (was `principal + interest`)
+- `getInterest()` now returns `interest + interestRateManager.getAccruedInterest()` (was just `interest`)
+
+#### BorrowerOperations
+- **New Enum Value:** `BorrowerOperation.refinanceTrove`
+- **New State Variables:** `IGovernableVariables public governableVariables`, `borrowingRate`, `redemptionRate`, and their proposal/approval state
+- **refinance:** Now takes `_upperHint` and `_lowerHint` as arguments
+- **New Functions:**
+    - `proposeBorrowingRate`, `approveBorrowingRate`, `proposeRedemptionRate`, `approveRedemptionRate`
+    - `getRedemptionRate(uint256 _collateralDrawn) returns (uint256)`
+    - `getBorrowingFee(uint256 _debt) returns (uint)`
+- **Fee Exemption:** Borrowing fee is not charged if `governableVariables.isAccountFeeExempt(_borrower)` is true
+- **Borrowing Fee Calculation:** Now uses `getBorrowingFee` (local) instead of calling TroveManager
+- **Redemption Fee Calculation:** Now uses `getRedemptionRate` (local) instead of TroveManager
+- **Events:** Added events for borrowing/redemption rate changes/proposals
+
+#### BorrowerOperationsSignatures
+- **refinanceWithSignature:** Now takes `_upperHint` and `_lowerHint` as arguments and passes them through
+
+#### GovernableVariables (New Contract)
+- **Governance Roles:** `council`, `treasury`, with time-delayed role changes
+- **Fee Exemption:** `addFeeExemptAccount`, `removeFeeExemptAccount`, and batch versions
+- **Events:** `FeeExemptAccountAdded`, `FeeExemptAccountRemoved`, `RolesSet`
+- **Frontend Impact:** Frontend can now check if an account is fee-exempt
+
+#### HintHelpers
+- **getRedemptionHints:** Now skips troves with ICR < MCR
+
+#### InterestRateManager
+- **Proposal/Approval:** Proposal time variable renamed, and proposal/approval logic clarified
+- **initialize:** Now sets default interest rate and proposal time
+
+#### TroveManager
+- **Redemption Fee:** Now calculated via `BorrowerOperations.getRedemptionRate` instead of internal logic
+- **Borrowing Fee:** No longer exposes `getBorrowingFee` (was a pure function)
+- **Redemption Loop:** Now skips troves with ICR < MCR
+
+#### MUSD Token
+- **Governance Delay:** All time-delayed governance functions removed
+- **Mint/Burn List:** Now uses immediate `addToMintList`, `removeFromMintList`, `addToBurnList`, `removeFromBurnList`
+- **Events:** Added events for mint/burn list changes
+- **Errors:** Added custom errors for mint/burn list management
+
+#### TokenDeployer (New)
+- **deployToken:** Deploys MUSD at a deterministic address using CREATE2. Only callable by specific deployer or governance depending on chain
+
+### Summary of Frontend-Relevant Changes
+- **Fee Calculation:** Borrowing and redemption fees are now governed and can be proposed/approved by governance, with new events and proposal/approval delays
+- **Fee Exemption:** Some accounts can be made fee-exempt via governance
+- **Mint/Burn List:** Immediate changes, new events, and errors for UI to handle
+- **Redemption/Borrowing Fee Calculation:** Now lives in `BorrowerOperations`, not `TroveManager`
+- **Refinance:** Now requires hints for sorted trove insertion
+- **Token Deployment:** MUSD is now deployed via a deterministic deployer contract
+- **Interface Changes:** Many functions now require different arguments or have new events/errors
+
 ### Matsnet Addresses
  Contract   | Mezo Address |
 |------------|--------------|
@@ -20,7 +79,6 @@
 | SortedTroves | 0x722E4D24FD6Ff8b0AC679450F3D91294607268fA |
 | StabilityPool | 0x1CCA7E410eE41739792eA0A24e00349Dd247680e |
 | TroveManager | 0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0 |
-
 
 ## Changelog 0.1.0 to [this commit] (https://github.com/mezo-org/musd/commit/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e)
 
@@ -177,63 +235,6 @@ Interest is no longer used in NICR calculations for insertion into SortedTroves.
    - All contracts are now OwnableUpgradeable, meaning contract addresses should remain the same after upgrades.
    - **Consequences for Frontend**: There will not be a need going forward to update contract addresses. However, the first release will involve different contract addresses, and we still need to spec out how that initial upgrade will happen.
 
-## Latest Changes (Post 0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e)
 
-### New Contracts and Features
 
-1. **GovernableVariables Contract**
-   - New contract for managing governance-related variables and fee exemptions
-   - Implements fee exemption functionality for specific accounts
-   - Includes governance roles (council and treasury) with time-delayed changes
-   - Added to BorrowerOperations for fee exemption checks
 
-2. **Fee Management Changes**
-   - Added new fee management functions in BorrowerOperations:
-     - `proposeBorrowingRate` and `approveBorrowingRate`
-     - `proposeRedemptionRate` and `approveRedemptionRate`
-   - Fees now have a 7-day delay between proposal and approval
-   - Removed fixed fee floors in favor of governance-controlled rates
-
-### Contract Updates
-
-1. **BorrowerOperations**
-   - Refactored `setAddresses` to use an array parameter
-   - Added fee exemption checks in fee calculations
-   - Updated refinancing logic to include hints for sorted list reinsertion
-   - Added new fee calculation functions:
-     - `getRedemptionRate`
-     - `getBorrowingFee`
-
-2. **BorrowerOperationsSignatures**
-   - Updated refinancing signature verification to include hints
-   - Added upper and lower hints to Refinance struct
-
-3. **InterestRateManager**
-   - Renamed `proposalTime` to `proposedInterestRateTime`
-   - Added initial interest rate setting in initialize function
-
-4. **TroveManager**
-   - Removed fixed redemption fee floor
-   - Updated redemption fee calculation to use BorrowerOperations' rate
-   - Added ICR checks in redemption process
-   - Improved reward application timing
-
-### Integration Notes for Frontend Developers
-
-1. **Fee Management**
-   - Frontend should now handle the 7-day delay for fee changes
-   - Need to display both proposed and current fee rates
-   - May want to indicate pending fee changes
-
-2. **Refinancing**
-   - Refinancing operations now require hints for sorted list reinsertion
-   - Frontend should calculate and provide these hints
-
-3. **Fee Exemptions**
-   - New functionality to check if accounts are fee exempt
-   - Frontend should handle fee exemption status in UI
-
-4. **Governance**
-   - New governance roles and time-delayed changes
-   - Frontend should handle role changes with appropriate UI elements
-   - Need to display pending role changes and their timers
