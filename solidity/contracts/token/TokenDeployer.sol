@@ -10,7 +10,7 @@ import "./MUSD.sol";
 ///         to the chain using the EIP2470 singleton factory.
 contract TokenDeployer {
     bytes32 public constant SALT =
-        keccak256("Bank on yourself. Bring everyday finance to your Bitcoin.");
+        keccak256("Bank on yourself. Bring everyday finance to your Bitcoin. Testnet.");
 
     /// @notice The deployer address allowed to call the `deploy()` function.
     /// @dev This is the same deployer EOA as the one used to deploy all tBTC v1,

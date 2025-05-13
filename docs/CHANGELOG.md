@@ -152,3 +152,64 @@ Interest is no longer used in NICR calculations for insertion into SortedTroves.
 4. **OwnableUpgradeable Contracts**
    - All contracts are now OwnableUpgradeable, meaning contract addresses should remain the same after upgrades.
    - **Consequences for Frontend**: There will not be a need going forward to update contract addresses. However, the first release will involve different contract addresses, and we still need to spec out how that initial upgrade will happen.
+
+## Latest Changes (Post 0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e)
+
+### New Contracts and Features
+
+1. **GovernableVariables Contract**
+   - New contract for managing governance-related variables and fee exemptions
+   - Implements fee exemption functionality for specific accounts
+   - Includes governance roles (council and treasury) with time-delayed changes
+   - Added to BorrowerOperations for fee exemption checks
+
+2. **Fee Management Changes**
+   - Added new fee management functions in BorrowerOperations:
+     - `proposeBorrowingRate` and `approveBorrowingRate`
+     - `proposeRedemptionRate` and `approveRedemptionRate`
+   - Fees now have a 7-day delay between proposal and approval
+   - Removed fixed fee floors in favor of governance-controlled rates
+
+### Contract Updates
+
+1. **BorrowerOperations**
+   - Refactored `setAddresses` to use an array parameter
+   - Added fee exemption checks in fee calculations
+   - Updated refinancing logic to include hints for sorted list reinsertion
+   - Added new fee calculation functions:
+     - `getRedemptionRate`
+     - `getBorrowingFee`
+
+2. **BorrowerOperationsSignatures**
+   - Updated refinancing signature verification to include hints
+   - Added upper and lower hints to Refinance struct
+
+3. **InterestRateManager**
+   - Renamed `proposalTime` to `proposedInterestRateTime`
+   - Added initial interest rate setting in initialize function
+
+4. **TroveManager**
+   - Removed fixed redemption fee floor
+   - Updated redemption fee calculation to use BorrowerOperations' rate
+   - Added ICR checks in redemption process
+   - Improved reward application timing
+
+### Integration Notes for Frontend Developers
+
+1. **Fee Management**
+   - Frontend should now handle the 7-day delay for fee changes
+   - Need to display both proposed and current fee rates
+   - May want to indicate pending fee changes
+
+2. **Refinancing**
+   - Refinancing operations now require hints for sorted list reinsertion
+   - Frontend should calculate and provide these hints
+
+3. **Fee Exemptions**
+   - New functionality to check if accounts are fee exempt
+   - Frontend should handle fee exemption status in UI
+
+4. **Governance**
+   - New governance roles and time-delayed changes
+   - Frontend should handle role changes with appropriate UI elements
+   - Need to display pending role changes and their timers
