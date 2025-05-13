@@ -1,4 +1,5 @@
 {
   "detectors_to_exclude": "assembly,naming-convention,timestamp,pragma,solc-version,incorrect-equality",
+  "hardhat_artifacts_directory": "build",
   "filter_paths": "node_modules/.*,contracts/debugging/console.sol"
 }

@@ -51,6 +51,10 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  paths: {
+    artifacts: "./build",
+    deployments: "./artifacts/deployments",
+  },
   typechain: {
     outDir: "typechain",
   },
