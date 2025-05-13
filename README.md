@@ -1,6 +1,6 @@
-# mUSD
+# MUSD
 
-Smart contracts and the dApp powering mUSD on Mezo.
+Smart contracts and the dApp powering MUSD on Mezo.
 
 ## Development
 
