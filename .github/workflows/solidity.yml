@@ -52,6 +52,7 @@ jobs:
           name: solidity-build
           path: |
             solidity/artifacts
+            solidity/build
             solidity/cache
             solidity/typechain
           if-no-files-found: error

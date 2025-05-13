@@ -1,1 +1,2 @@
-deployments/
+build/
+artifacts/deployments
