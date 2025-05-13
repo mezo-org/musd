@@ -234,7 +234,3 @@ Interest is no longer used in NICR calculations for insertion into SortedTroves.
 4. **OwnableUpgradeable Contracts**
    - All contracts are now OwnableUpgradeable, meaning contract addresses should remain the same after upgrades.
    - **Consequences for Frontend**: There will not be a need going forward to update contract addresses. However, the first release will involve different contract addresses, and we still need to spec out how that initial upgrade will happen.
-
-
-
-
