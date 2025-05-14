@@ -1,11 +1,6 @@
 {
-  "address": "0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9",
+  "address": "0x6552059B6eFc6aA4AE3ea45f28ED4D92acE020cD",
   "abi": [
-    {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
     {
       "inputs": [],
       "name": "InvalidInitialization",
@@ -44,11 +39,11 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_newActivePoolAddress",
+          "name": "_account",
           "type": "address"
         }
       ],
-      "name": "ActivePoolAddressChanged",
+      "name": "FeeExemptAccountAdded",
       "type": "event"
     },
     {
@@ -56,50 +51,12 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "address",
-          "name": "_newBorrowerOperationsAddress",
-          "type": "address"
-        }
-      ],
-      "name": "BorrowerOperationsAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
           "internalType": "address",
           "name": "_account",
           "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_newBalance",
-          "type": "uint256"
         }
       ],
-      "name": "CollBalanceUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_to",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "CollateralSent",
+      "name": "FeeExemptAccountRemoved",
       "type": "event"
     },
     {
@@ -140,84 +97,28 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_newTroveManagerAddress",
+          "name": "_council",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_treasury",
           "type": "address"
         }
       ],
-      "name": "TroveManagerAddressChanged",
+      "name": "RolesSet",
       "type": "event"
     },
     {
-      "inputs": [],
-      "name": "NAME",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "address",
           "name": "_account",
           "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
         }
       ],
-      "name": "accountSurplus",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "activePoolAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "borrowerOperationsAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_account",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_recipient",
-          "type": "address"
-        }
-      ],
-      "name": "claimColl",
+      "name": "addFeeExemptAccount",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -225,12 +126,78 @@
     {
       "inputs": [
         {
+          "internalType": "address[]",
+          "name": "_accounts",
+          "type": "address[]"
+        }
+      ],
+      "name": "addFeeExemptAccounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cancelChangingRoles",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "changingRolesInitiated",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "council",
+      "outputs": [
+        {
           "internalType": "address",
-          "name": "_account",
+          "name": "",
           "type": "address"
         }
       ],
-      "name": "getCollateral",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "feeExemptAccounts",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "finalizeChangingRoles",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governanceTimeDelay",
       "outputs": [
         {
           "internalType": "uint256",
@@ -242,23 +209,35 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getCollateralBalance",
-      "outputs": [
+      "inputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "_governanceTimeDelay",
           "type": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "isAccountFeeExempt",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -276,6 +255,58 @@
     },
     {
       "inputs": [],
+      "name": "pendingCouncilAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pendingTreasuryAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "removeFeeExemptAccount",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "_accounts",
+          "type": "address[]"
+        }
+      ],
+      "name": "removeFeeExemptAccounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "renounceOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -285,21 +316,16 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_activePoolAddress",
+          "name": "_council",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_borrowerOperationsAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_troveManagerAddress",
+          "name": "_treasury",
           "type": "address"
         }
       ],
-      "name": "setAddresses",
+      "name": "startChangingRoles",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -319,7 +345,7 @@
     },
     {
       "inputs": [],
-      "name": "troveManagerAddress",
+      "name": "treasury",
       "outputs": [
         {
           "internalType": "address",
@@ -329,14 +355,10 @@
       ],
       "stateMutability": "view",
       "type": "function"
-    },
-    {
-      "stateMutability": "payable",
-      "type": "receive"
     }
   ],
-  "transactionHash": "0x4204805c2653ceed35b8c73f33a5d7e3f7f9589ad36d1365a980017f40c27a93",
+  "transactionHash": "0x0530ed79d3a07945dee61a415a6e45a4ab89740ec0e6b9f103dd10de673e7886",
   "numDeployments": 1,
-  "implementation": "0x13AF349efde2A7Ff4469EF1f98126FFD57C32806",
+  "implementation": "0x4EDC83c5C5B0C41A594371485554B95280653f94",
   "devdoc": "Contract deployed as upgradable proxy"
 }
