@@ -187,7 +187,11 @@ const config: HardhatUserConfig = {
     alphaSort: true,
     runOnCompile: true,
     strict: true,
-    except: ["EchidnaTest", "BorrowerOperationsV2"],
+    except: [
+      "EchidnaTest",
+      "BorrowerOperationsV2",
+      "BorrowerOperationsFuzzTester",
+    ],
   },
   gasReporter: {
     enabled: true,
