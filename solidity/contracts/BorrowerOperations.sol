@@ -50,6 +50,8 @@ contract BorrowerOperations is
         bool isRecoveryMode;
         uint256 newNICR;
         uint256 maxBorrowingCapacity;
+        uint16 interestRate;
+        uint256 finalMaxBorrowingCapacity;
     }
 
     struct LocalVariables_openTrove {
@@ -61,6 +63,7 @@ contract BorrowerOperations is
         uint256 NICR;
         uint256 stake;
         uint256 arrayIndex;
+        uint16 interestRate;
     }
 
     struct LocalVariables_refinance {
@@ -671,9 +674,10 @@ contract BorrowerOperations is
             _requireNewTCRisAboveCCR(newTCR);
         }
 
+        vars.interestRate = contractsCache.interestRateManager.interestRate();
         contractsCache.troveManager.setTroveInterestRate(
             _borrower,
-            contractsCache.interestRateManager.interestRate()
+            vars.interestRate
         );
 
         // Set the trove struct's properties
@@ -747,6 +751,8 @@ contract BorrowerOperations is
             0,
             msg.value,
             vars.stake,
+            vars.interestRate,
+            block.timestamp,
             uint8(BorrowerOperation.openTrove)
         );
         emit BorrowingFeePaid(_borrower, vars.fee);
@@ -822,6 +828,9 @@ contract BorrowerOperations is
 
         vars.debt = contractsCache.troveManager.getTroveDebt(_borrower);
         vars.coll = contractsCache.troveManager.getTroveColl(_borrower);
+        vars.interestRate = contractsCache.troveManager.getTroveInterestRate(
+            _borrower
+        );
 
         // Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
         vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
@@ -887,14 +896,14 @@ contract BorrowerOperations is
                 .troveManager
                 .getTroveMaxBorrowingCapacity(_borrower);
 
-            uint256 finalMaxBorrowingCapacity = LiquityMath._min(
+            vars.finalMaxBorrowingCapacity = LiquityMath._min(
                 currentMaxBorrowingCapacity,
                 newMaxBorrowingCapacity
             );
 
             contractsCache.troveManager.setTroveMaxBorrowingCapacity(
                 _borrower,
-                finalMaxBorrowingCapacity
+                vars.finalMaxBorrowingCapacity
             );
         }
 
@@ -912,6 +921,8 @@ contract BorrowerOperations is
             vars.newInterest,
             vars.newColl,
             vars.stake,
+            vars.interestRate,
+            block.timestamp,
             uint8(BorrowerOperation.adjustTrove)
         );
         // slither-disable-next-line reentrancy-events
@@ -974,6 +985,8 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
+            0,
+            0,
             0,
             0,
             0,
@@ -1066,10 +1079,7 @@ contract BorrowerOperations is
             vars.newRate
         );
 
-        vars.troveManagerCached.setTroveInterestRate(
-            _borrower,
-            vars.interestRateManagerCached.interestRate()
-        );
+        vars.troveManagerCached.setTroveInterestRate(_borrower, vars.newRate);
 
         vars.maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
             vars.troveManagerCached.getTroveColl(_borrower),
@@ -1092,6 +1102,8 @@ contract BorrowerOperations is
             newInterest,
             newColl,
             vars.troveManagerCached.updateStakeAndTotalStakes(_borrower),
+            vars.newRate,
+            block.timestamp,
             uint8(BorrowerOperation.refinanceTrove)
         );
         // slither-disable-end reentrancy-events

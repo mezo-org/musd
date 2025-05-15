@@ -44,8 +44,10 @@ interface IBorrowerOperations {
         uint256 _principal,
         uint256 _interest,
         uint256 _coll,
-        uint256 stake,
-        uint8 operation
+        uint256 _stake,
+        uint16 _interestRate,
+        uint256 _lastInterestUpdateTime,
+        uint8 _operation
     );
     event BorrowingFeePaid(address indexed _borrower, uint256 _fee);
     event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
