@@ -45,7 +45,7 @@ interface IBorrowerOperations {
         uint256 _interest,
         uint256 _coll,
         uint256 _stake,
-        uint256 _interestRate,
+        uint16 _interestRate,
         uint256 _lastInterestUpdateTime,
         uint8 _operation
     );
