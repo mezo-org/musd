@@ -19,12 +19,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     `prepared transaction: ${JSON.stringify(preparedTransaction)}`,
   )
 
-  if (["mainnet", "matsnet"].includes(hre.network.name)) {
-    return
+  if (hre.network.name !== "mainnet") {
+    deployments.log("Sending transaction to upgrade implementation...")
+    await deployer.sendTransaction(preparedTransaction)
   }
-
-  deployments.log("Sending transaction to upgrade implementation...")
-  await deployer.sendTransaction(preparedTransaction)
 
   if (hre.network.tags.etherscan) {
     // We use `verify` instead of `verify:verify` as the `verify` task is defined
