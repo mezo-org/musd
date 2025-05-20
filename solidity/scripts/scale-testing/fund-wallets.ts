@@ -53,12 +53,14 @@ async function main() {
       const receipt = await tx.wait(2) // Wait for 2 confirmations
       console.log(`Transaction confirmed in block ${receipt.blockNumber}`)
       return true
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         `Error funding wallet ${walletAddress} (attempt ${retryCount + 1}):`,
         error.message,
       )
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000)
+      })
       return sendWithRetry(walletAddress, retryCount + 1)
     }
   }
@@ -94,7 +96,9 @@ async function main() {
 
     console.log(`Batch ${i / BATCH_SIZE + 1} complete.`)
     if (i + BATCH_SIZE < wallets.length) {
-      await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
+      await new Promise((resolve) => {
+        setTimeout(resolve, DELAY_BETWEEN_BATCHES)
+      })
     }
   }
 
