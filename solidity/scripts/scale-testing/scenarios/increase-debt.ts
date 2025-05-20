@@ -53,9 +53,9 @@ async function main() {
   }
 
   // Update trove states before selecting accounts
-  // console.log("Updating Trove states for all accounts...")
-  // await stateManager.updateTroveStates(troveManagerAddress)
-  // console.log("Trove states updated")
+  console.log("Updating Trove states for all accounts...")
+  await stateManager.updateTroveStates(troveManagerAddress)
+  console.log("Trove states updated")
 
   // Select accounts for testing - accounts that HAVE troves
   const testAccounts = stateManager.getAccounts({

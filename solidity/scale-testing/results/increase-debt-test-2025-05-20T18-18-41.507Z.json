@@ -1,0 +1,62 @@
+{
+  "testId": "increase-debt-test",
+  "timestamp": "2025-05-20T18:18:41.507Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "musdAmounts": [
+      "100",
+      "200",
+      "300",
+      "400",
+      "500"
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 4,
+    "failed": 1,
+    "skipped": 0,
+    "gasUsed": "2000000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xddf5bcc674d4182b42775e44f058ce79429b965ec4e6d56a795fb17e2c9e8ae6",
+        "account": "0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA",
+        "musdAmount": "500.0",
+        "gasUsed": "500000",
+        "duration": 3180
+      },
+      {
+        "success": true,
+        "hash": "0x72b99e101f606d02c9b35a30dd671c09cb7330eb6956a37a1f9e29895e9611cf",
+        "account": "0xFfBDA321CA56317988A9F6c4CFf943749D4f1717",
+        "musdAmount": "400.0",
+        "gasUsed": "500000",
+        "duration": 3337
+      },
+      {
+        "success": false,
+        "account": "0xda7488DFd50E52E6980e211f0950C39B0a872d0A",
+        "musdAmount": "200.0",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0xda7488DFd50E52E6980e211f0950C39B0a872d0A\", \"to\": \"0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x57f122969e7ed5386c7cb178a57e73bbc89ab49fb792bade980eda33906488ac\", \"blockNumber\": 4670146, \"contractAddress\": null, \"cumulativeGasUsed\": \"2108359\", \"from\": \"0xda7488DFd50E52E6980e211f0950C39B0a872d0A\", \"gasPrice\": \"11\", \"gasUsed\": \"500000\", \"hash\": \"0xe20041cd9620e5fd0dc852e800c44b7854bb748bf9c4a4267a58d7b06fab2438\", \"index\": 4, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x82b29dab5c0464162492c33de63dd716e90b96365e602b99f1546d2999bd8241",
+        "account": "0x3c92209c5640234eea3Ac62fBE7ecCc06c868290",
+        "musdAmount": "100.0",
+        "gasUsed": "500000",
+        "duration": 4007
+      },
+      {
+        "success": true,
+        "hash": "0x799cff4c45ab3151ad76086d1f6455d2990c110438acdd6899ee72475aa17267",
+        "account": "0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7",
+        "musdAmount": "300.0",
+        "gasUsed": "500000",
+        "duration": 4054
+      }
+    ]
+  }
+}
