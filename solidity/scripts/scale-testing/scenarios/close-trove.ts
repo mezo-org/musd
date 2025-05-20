@@ -51,14 +51,6 @@ async function main() {
   )
   const musdToken = await ethers.getContractAt("MUSD", musdAddress)
 
-  // Select accounts for testing - accounts that HAVE troves
-  const testAccounts = stateManager.getAccounts({
-    hasTrove: true,
-    minInterestRate: "0.01", // Testing specifically accounts with interest
-    notUsedInTest: TEST_ID,
-    limit: NUM_ACCOUNTS * 2, // Get more accounts than needed in case some can't be used
-  })
-
   // Update trove states before selecting accounts
   console.log("Updating Trove states for all accounts...")
   await stateManager.updateTroveStates(troveManagerAddress)
@@ -68,6 +60,14 @@ async function main() {
   console.log("Updating MUSD balances for all accounts...")
   await stateManager.updateMusdBalances(musdAddress)
   console.log("MUSD balances updated")
+
+  // Select accounts for testing - accounts that HAVE troves
+  const testAccounts = stateManager.getAccounts({
+    hasTrove: true,
+    minInterestRate: "0.01", // Testing specifically accounts with interest
+    notUsedInTest: TEST_ID,
+    limit: NUM_ACCOUNTS * 2, // Get more accounts than needed in case some can't be used
+  })
 
   console.log(
     `Selected ${testAccounts.length} accounts with troves for testing`,
