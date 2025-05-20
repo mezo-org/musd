@@ -1,0 +1,63 @@
+{
+  "testId": "withdraw-collateral-test",
+  "timestamp": "2025-05-20T19:27:55.840Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "withdrawalPercentages": [5, 10, 15, 20, 25],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x642fecc554024db4db93d5a1dd36459aad28f7530b9eef6af9ebd59c6961a7fc",
+        "account": "0x3c92209c5640234eea3Ac62fBE7ecCc06c868290",
+        "withdrawalPercentage": 5,
+        "withdrawAmount": "0.00005736016624384",
+        "gasUsed": "500000",
+        "duration": 4195
+      },
+      {
+        "success": true,
+        "hash": "0xd4abb2ab97beef6035f2e67eab6a4ab87816178c526eb75e07e3387cb0cef2d0",
+        "account": "0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7",
+        "withdrawalPercentage": 15,
+        "withdrawAmount": "0.000145264909940739",
+        "gasUsed": "500000",
+        "duration": 4890
+      },
+      {
+        "success": true,
+        "hash": "0x65953c8164dec38f64590b06b4c261a1f7544a32cb66a611684fb36e62e6e784",
+        "account": "0xFfBDA321CA56317988A9F6c4CFf943749D4f1717",
+        "withdrawalPercentage": 20,
+        "withdrawAmount": "0.000134207431328237",
+        "gasUsed": "500000",
+        "duration": 4987
+      },
+      {
+        "success": true,
+        "hash": "0x426cbdcc3480123dca81ea5d34c0c3134597af52da63abeade187a7b98324edb",
+        "account": "0xda7488DFd50E52E6980e211f0950C39B0a872d0A",
+        "withdrawalPercentage": 10,
+        "withdrawAmount": "0.000108422039843814",
+        "gasUsed": "500000",
+        "duration": 5125
+      },
+      {
+        "success": true,
+        "hash": "0xe6ad40e41bc52fe1e6c4f25c4917559b88fd317ff89158d19f2e6d51e9566b01",
+        "account": "0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA",
+        "withdrawalPercentage": 25,
+        "withdrawAmount": "0.000239918301247525",
+        "gasUsed": "500000",
+        "duration": 5240
+      }
+    ]
+  }
+}

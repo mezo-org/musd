@@ -9,7 +9,7 @@ import getDeploymentAddress from "../../deployment-helpers"
 // Configuration
 const TEST_ID = "redeem-musd-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use for redemptions
-const REDEMPTION_AMOUNT = ethers.parseEther("10") // Fixed amount: 10 MUSD
+const REDEMPTION_AMOUNT = ethers.parseEther("20") // Fixed amount: 2000 MUSD
 
 async function main() {
   // Get the network name

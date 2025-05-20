@@ -4,17 +4,17 @@
     {
       "name": "Generate Wallets",
       "path": "generate-wallets.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Fund Wallets",
       "path": "fund-wallets.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Initialize State",
       "path": "init-state-tracking.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Open Troves",
@@ -51,7 +51,7 @@
     {
       "name": "Redeem MUSD",
       "path": "scenarios/redeem-musd.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Liquidate Troves",
@@ -61,26 +61,26 @@
     {
       "name": "Close Trove",
       "path": "scenarios/close-trove.ts",
-      "enabled": false
+      "enabled": true
     }
   ],
   "scenarioLoops": [
     {
       "name": "Basic Trove Operations Loop",
-      "enabled": true,
+      "enabled": false,
       "scenarios": [
         "scenarios/add-collateral.ts",
         "scenarios/increase-debt.ts",
         "scenarios/repay-musd.ts",
         "scenarios/withdraw-collateral.ts"
       ],
-      "iterations": 2
+      "iterations": 1
     },
     {
       "name": "MUSD Usage Loop",
       "enabled": false,
-      "scenarios": ["scenarios/send-musd.ts", "scenarios/redeem-musd.ts"],
-      "iterations": 2
+      "scenarios": ["scenarios/send-musd.ts", "scenarios/repay-musd.ts"],
+      "iterations": 1
     }
   ]
 }

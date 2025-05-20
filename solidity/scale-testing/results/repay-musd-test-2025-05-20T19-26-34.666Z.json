@@ -1,0 +1,63 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-05-20T19:26:34.666Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "repaymentPercentages": [10, 20, 30, 40, 50],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "skipped": 0,
+    "gasUsed": "2500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0x6bd8210b682771690e90fe036c4626234c4ee5ba5708f063df3d6c6f8008ca6c",
+        "account": "0xda7488DFd50E52E6980e211f0950C39B0a872d0A",
+        "repaymentPercentage": 20,
+        "repayAmount": "650.136186502705147467",
+        "gasUsed": "500000",
+        "duration": 2102
+      },
+      {
+        "success": true,
+        "hash": "0x1b213cacfff4a90f131dd33d48e6dd829cb04134e09666da9eb3d625704e56bd",
+        "account": "0xFfBDA321CA56317988A9F6c4CFf943749D4f1717",
+        "repaymentPercentage": 40,
+        "repayAmount": "1357.065031524265668056",
+        "gasUsed": "500000",
+        "duration": 2341
+      },
+      {
+        "success": true,
+        "hash": "0x26a824a8d9c0a1207e3a6da557051201ccf1109fde5772e7f6c8dc52ad26180f",
+        "account": "0x3c92209c5640234eea3Ac62fBE7ecCc06c868290",
+        "repaymentPercentage": 10,
+        "repayAmount": "355.341832084209468769",
+        "gasUsed": "500000",
+        "duration": 6079
+      },
+      {
+        "success": true,
+        "hash": "0xa86c2d4aedc4fabbd99a79891da19aef06a497a4b83a2fdc9450a8993307bbf9",
+        "account": "0x4C7418ccD114F09Dd1292026BE7Eb941E982A6E7",
+        "repaymentPercentage": 30,
+        "repayAmount": "1134.992781196806085689",
+        "gasUsed": "500000",
+        "duration": 6203
+      },
+      {
+        "success": true,
+        "hash": "0xb409fa7fbab13b292bd11018116ccca17ffa4ebccfcb97c3c37cb37be5e06dce",
+        "account": "0x27B1aBC47eEBDfeEf7ED8Ae5fc795C45524aBDeA",
+        "repaymentPercentage": 50,
+        "repayAmount": "1724.290431504667650644",
+        "gasUsed": "500000",
+        "duration": 6281
+      }
+    ]
+  }
+}

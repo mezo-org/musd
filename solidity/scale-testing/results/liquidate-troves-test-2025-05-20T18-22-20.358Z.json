@@ -1,0 +1,64 @@
+{
+  "testId": "liquidate-troves-test",
+  "timestamp": "2025-05-20T18:22:20.358Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "targetCRRange": {
+      "min": 115,
+      "max": 500
+    },
+    "mcr": 110,
+    "priceReductionPercentage": "30.13",
+    "originalPrice": "20000000.0",
+    "reducedPrice": "13960000.0"
+  },
+  "results": {
+    "successful": 5,
+    "failed": 0,
+    "gasUsed": "5000000",
+    "averageGas": "1000000"
+  },
+  "transactions": [
+    {
+      "hash": "0xff73505197d67844103765cdd11495c5ba1948edc6990662935e0c869bdd279a",
+      "account": "0x643e07cee7Edc814B467c3b7dFc7204606832cE9",
+      "collateralLiquidated": "0.00018",
+      "debtLiquidated": "2411.0",
+      "gasUsed": "1000000",
+      "duration": 2857
+    },
+    {
+      "hash": "0x2aa339e66af23b0e37e3c16d0913fdff624de0458c5a3264ddda97b2fe485a2c",
+      "account": "0xF60f1958511549BF1BBf86236DdE7A1d734cD431",
+      "collateralLiquidated": "0.00018",
+      "debtLiquidated": "2411.0",
+      "gasUsed": "1000000",
+      "duration": 5817
+    },
+    {
+      "hash": "0xef6b50473849468ab6db7e89caee7554e919fcd95c3631758caccd7b433fb55c",
+      "account": "0x7552C82f701f34f75c59cA5647b6b8406D65584a",
+      "collateralLiquidated": "0.00018",
+      "debtLiquidated": "2411.0",
+      "gasUsed": "1000000",
+      "duration": 5108
+    },
+    {
+      "hash": "0x9cf9b702c7ba86ed947efb18ef33cfddae9b272a594b00de08f8e7d08c3abb2e",
+      "account": "0xA50fBe67d18766d63276e0B7320471a9Ceae8975",
+      "collateralLiquidated": "0.00018",
+      "debtLiquidated": "2411.0",
+      "gasUsed": "1000000",
+      "duration": 5486
+    },
+    {
+      "hash": "0xe7efcf0ca742d67aab3473924e10655e14207ea5377cab19bed911ccf550b021",
+      "account": "0x390d3f090522aFE487087Ce68e2E6fC051553882",
+      "collateralLiquidated": "0.00018",
+      "debtLiquidated": "2411.0",
+      "gasUsed": "1000000",
+      "duration": 4998
+    }
+  ]
+}

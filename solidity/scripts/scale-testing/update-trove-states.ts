@@ -21,8 +21,11 @@ async function main() {
   console.log(`Using MUSD at: ${musdAddress}`)
 
   // Update Trove states
-  const updatedTroves =
-    await stateManager.updateTroveStates(troveManagerAddress)
+  const updatedTroves = await stateManager.updateTroveStates(
+    troveManagerAddress,
+    [],
+    200,
+  )
   console.log(`Updated Trove states for ${updatedTroves} accounts`)
 
   // Update MUSD balances
