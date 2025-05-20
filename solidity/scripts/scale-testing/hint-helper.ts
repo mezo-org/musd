@@ -145,13 +145,6 @@ async function calculateTroveOperationHints(params: {
       throw error
     }
 
-    // Get approximate hint
-    // const { 0: approxHint } = await hintHelpers.getApproxHint(
-    //   nicr,
-    //   numTrials,
-    //   randomSeed,
-    // )
-
     // Log success
     console.log("\nAfter getApproxHint:")
     console.log(`- Successfully got hint: ${approxHint}`)
