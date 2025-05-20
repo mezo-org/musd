@@ -5,13 +5,7 @@
   "config": {
     "numAccounts": 20,
     "minBtcBalance": "0.0005",
-    "collateralRatios": [
-      150,
-      200,
-      250,
-      300,
-      350
-    ],
+    "collateralRatios": [150, 200, 250, 300, 350],
     "musdDebtAmount": 2200,
     "batchSize": 10
   },

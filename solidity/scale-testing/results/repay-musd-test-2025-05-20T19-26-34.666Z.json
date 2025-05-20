@@ -4,13 +4,7 @@
   "network": "matsnet_fuzz",
   "config": {
     "numAccounts": 5,
-    "repaymentPercentages": [
-      10,
-      20,
-      30,
-      40,
-      50
-    ],
+    "repaymentPercentages": [10, 20, 30, 40, 50],
     "batchSize": 5
   },
   "results": {

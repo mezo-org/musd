@@ -933,9 +933,7 @@
       "address": "0xD7b63710F7B87dDbff7d6236a74318811fC73063",
       "index": 42,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00108814995758245",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -950,9 +948,7 @@
       "address": "0x7e0eF83E44a8098E10715D6ff25D2aB841e62ca8",
       "index": 43,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.418Z",
       "troveDebt": "0",
@@ -967,9 +963,7 @@
       "address": "0x08AA4Fc0Cd24672B1EF52932f31bBE79c8BD5023",
       "index": 44,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -984,9 +978,7 @@
       "address": "0xf12E9ae3e6028998d9cd83138FeF7093fc364928",
       "index": 45,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -1001,9 +993,7 @@
       "address": "0xA17A93E144Ed6B7cAD47511832676a4c5Db45E78",
       "index": 46,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999956987653",
       "lastBalanceUpdate": "2025-05-20T19:27:57.416Z",
       "troveDebt": "0",
@@ -1018,9 +1008,7 @@
       "address": "0xf1fdcB3f5B79747B3c6162A53BE278D353dd95d7",
       "index": 47,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149955113109",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -1035,9 +1023,7 @@
       "address": "0x3E27D1b39F4d132E26AffbEb8088B1cA50EB2cc0",
       "index": 48,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.417Z",
       "troveDebt": "0",
@@ -1052,9 +1038,7 @@
       "address": "0x59F2cbA5a03d253e2262059Bd56242525b7523B7",
       "index": 49,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -1069,9 +1053,7 @@
       "address": "0xfd6DC17ba451935a4199Aa0356c04b24477Fb035",
       "index": 50,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -1086,9 +1068,7 @@
       "address": "0x989fb05571653DBf2027156306f9c6E7905ceAc4",
       "index": 51,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999957868295",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -1103,9 +1083,7 @@
       "address": "0xFb1846b3ba713F03b41A45A5a1A3df5f5187AA97",
       "index": 52,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149957969333",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -1120,9 +1098,7 @@
       "address": "0xfC9601C82d76267E6C15dB4447be41eCACB09A1E",
       "index": 53,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -1137,9 +1113,7 @@
       "address": "0x2ceB98A51F34c6bC9b136d4FF9f0De652e472f2C",
       "index": 54,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.419Z",
       "troveDebt": "0",
@@ -1154,9 +1128,7 @@
       "address": "0xB2bFdF18346cA7D5c663D1153714072335870011",
       "index": 55,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -1171,9 +1143,7 @@
       "address": "0x9f5D9AC22f27178a987F491F21B7a89d46f1cD81",
       "index": 56,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.420Z",
       "troveDebt": "0",
@@ -1188,9 +1158,7 @@
       "address": "0xd09A838E84A053E3127a7F484C3426b9c0a48b67",
       "index": 57,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -1205,9 +1173,7 @@
       "address": "0x89FaEC9d2917A191446341B88F0afFfE19A74b69",
       "index": 58,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00191519995583203",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -1222,9 +1188,7 @@
       "address": "0xdcED35BCb388017662539d4EF23e70566D6DcCfd",
       "index": 59,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "0",
@@ -1239,9 +1203,7 @@
       "address": "0x534f8624B77B669F4eA368941E73a5DcE01d2A87",
       "index": 60,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149957976697",
       "lastBalanceUpdate": "2025-05-20T19:27:57.427Z",
       "troveDebt": "0",
@@ -1256,9 +1218,7 @@
       "address": "0xF8A37291BFf423fCDCb814B1720471cb45091709",
       "index": 61,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.418Z",
       "troveDebt": "0",
@@ -1273,9 +1233,7 @@
       "address": "0xcb6CbEA358B546213523e788353C6509C44251bd",
       "index": 62,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -1290,9 +1248,7 @@
       "address": "0xe2096BBcE9Bf34D71d4A976dc6CFBda7E5bb46a2",
       "index": 63,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199957937581",
       "lastBalanceUpdate": "2025-05-20T19:27:57.419Z",
       "troveDebt": "0",
@@ -1307,9 +1263,7 @@
       "address": "0xbD5592F127A0BacEb04D82d214cC1777fA91E2E7",
       "index": 64,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499957976781",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -1324,9 +1278,7 @@
       "address": "0x4C2Ee99fFdE2d22822E05030288A7599F681Aa8c",
       "index": 65,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -1341,9 +1293,7 @@
       "address": "0xa8C3847193cdB7Db21eaBad11c6a67d633158942",
       "index": 66,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -1358,9 +1308,7 @@
       "address": "0x8e88172c2dE460c176C12Ed72895F83231CC7c8A",
       "index": 67,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.417Z",
       "troveDebt": "0",
@@ -1375,9 +1323,7 @@
       "address": "0x4fcC30Ce37474B168F71D090eCBa69D2A4F2c77f",
       "index": 68,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199955443866",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -1392,9 +1338,7 @@
       "address": "0x2f245351E8A8c7d38830D462D1890831e597D023",
       "index": 69,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -1409,9 +1353,7 @@
       "address": "0x5e0bB5eCA15042bAA3ab0609557D96C04CBbDb2a",
       "index": 70,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -1426,9 +1368,7 @@
       "address": "0x95E78043C6EC5b82B5E67fd1364CBFDd647C0628",
       "index": 71,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.417Z",
       "troveDebt": "0",
@@ -1443,9 +1383,7 @@
       "address": "0x9f875E11e215d8C6D6cd19B314CE1A6398f95B47",
       "index": 72,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.418Z",
       "troveDebt": "0",
@@ -1460,9 +1398,7 @@
       "address": "0x0Af690ed0d2DA13D1761c357f2C40E2116259387",
       "index": 73,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -1477,9 +1413,7 @@
       "address": "0xaB0F48e983D575C7435893F1F474C586Af4c78f0",
       "index": 74,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -1494,9 +1428,7 @@
       "address": "0x0C9416bDE37ddf51811179Afb07526877D51EEaf",
       "index": 75,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -1511,9 +1443,7 @@
       "address": "0x8cb5f9d9C760D781722FC14F4f0813ba714a7216",
       "index": 76,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.418Z",
       "troveDebt": "0",
@@ -1528,9 +1458,7 @@
       "address": "0x5f500274Bf695c065f3a76C168A0C2C14fAe64e2",
       "index": 77,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149956767342",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -1545,9 +1473,7 @@
       "address": "0xED32A8753A560c301f7f4C2Cdc2Df2CfDA41765E",
       "index": 78,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199957797175",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -1562,9 +1488,7 @@
       "address": "0x30208aa0472c94929d112620c2d71532dd72c1E1",
       "index": 79,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499957836375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -1579,9 +1503,7 @@
       "address": "0x664eEAF1204524737c1476291CE09d3Bf3278a79",
       "index": 80,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -1596,9 +1518,7 @@
       "address": "0x1AA2C45528C64FB94745c2453071003165e79Ed0",
       "index": 81,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -1613,9 +1533,7 @@
       "address": "0x220011aB36cBd1383Cd0f1Dda341b53294E79787",
       "index": 82,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -1630,9 +1548,7 @@
       "address": "0xe869d86C8673b26a6D031416aC3ef8c7bd29a03F",
       "index": 83,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -1647,9 +1563,7 @@
       "address": "0x7B08EA129e5091eA035D4d40edE7566874D07D99",
       "index": 84,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -1664,9 +1578,7 @@
       "address": "0x702c3c6993700aa7F9B6e4F655AbD2fE217d4598",
       "index": 85,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -1681,9 +1593,7 @@
       "address": "0x5F210A82946C6e917F12FbbA5d8107179da59173",
       "index": 86,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -1698,9 +1608,7 @@
       "address": "0x442D484fea14aCdF89046909981Ce625399fC9E5",
       "index": 87,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -1715,9 +1623,7 @@
       "address": "0x4876422eDF02E356bA353f370310b6E99c05f2a4",
       "index": 88,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199954926307",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -1732,9 +1638,7 @@
       "address": "0x6416261f69a276229a484c7f5eD4Fb295F156C38",
       "index": 89,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -1749,9 +1653,7 @@
       "address": "0x83D6E63860FF6BBB35Ae4BdD3Bb6DD091fde918D",
       "index": 90,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -1766,9 +1668,7 @@
       "address": "0x89C1E0a8EfC5C69260Ab7014d858A7926c69Db0A",
       "index": 91,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.419Z",
       "troveDebt": "0",
@@ -1783,9 +1683,7 @@
       "address": "0x5EeF6c60BF0C4b5C7C3c5EC842C1C62b33BDf9De",
       "index": 92,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149951225428",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -1800,9 +1698,7 @@
       "address": "0xD6eFBcC6Ae5AD11742bA1f5763631c8136B8175c",
       "index": 93,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199957555892",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -1817,9 +1713,7 @@
       "address": "0x499EbD95dbD9701eE025d6E04027850E2Cf45AD2",
       "index": 94,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499957555892",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -1834,9 +1728,7 @@
       "address": "0x96cf23d29f20aCB7505DE3A8AB9F723386Bb93e2",
       "index": 95,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001238149958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -1851,9 +1743,7 @@
       "address": "0x14a28F3B22036E1116f863682b27105A452c3b52",
       "index": 96,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001994999958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -1868,9 +1758,7 @@
       "address": "0x77AD65AF10C589355d50B6031331e0eB7728181E",
       "index": 97,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001088149956790645",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -1885,9 +1773,7 @@
       "address": "0x354821Fc389F743263cdb3C28DAfb65777cFF441",
       "index": 98,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001915199958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -1902,9 +1788,7 @@
       "address": "0x70f0Eec39ec0Dc1CcbED1AF0f0E45853926a8403",
       "index": 99,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001942499958",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -1919,9 +1803,7 @@
       "address": "0x7aBDF491c7Ce953499Da8cc460092A967d572747",
       "index": 100,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013331499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -1936,9 +1818,7 @@
       "address": "0x4240621A45255cbd4b5cD33c0Ffbb3bb3d030829",
       "index": 101,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011749999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -1953,9 +1833,7 @@
       "address": "0x88E6f4d54bFf0f620388E0863F4b5f51859848Fd",
       "index": 102,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013431499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -1970,9 +1848,7 @@
       "address": "0xF5E21218D73EBd76FdcafB5Af0c70d0a1eCF6bb3",
       "index": 103,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0012351999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -1987,9 +1863,7 @@
       "address": "0xFbe73E78cddfbf6EBae0656baEDD5C0B3883BF9D",
       "index": 104,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013174999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "0",
@@ -2004,9 +1878,7 @@
       "address": "0x41133120Ce5BCcF9e9bd105E9d2FfB3d80378DC4",
       "index": 105,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013331499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.417Z",
       "troveDebt": "0",
@@ -2021,9 +1893,7 @@
       "address": "0xD0c96533018fe5139Eae4F9da787Cd679C08E741",
       "index": 106,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011749999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -2038,9 +1908,7 @@
       "address": "0xe8cb3987924E97b4F0F4a97E0F86ED0550a48A99",
       "index": 107,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013431499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -2055,9 +1923,7 @@
       "address": "0x8f0ADf4e0bb1a16E2274C901B14d82C5cFc49711",
       "index": 108,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0012351999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -2072,9 +1938,7 @@
       "address": "0xdD46e2b2cC42706cf2F2de2e2009D292b397A7fc",
       "index": 109,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013174999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -2089,9 +1953,7 @@
       "address": "0x53a58AFD160fa0865D276A9Ab42c2B0FA4B429fE",
       "index": 110,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013331499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.420Z",
       "troveDebt": "0",
@@ -2106,9 +1968,7 @@
       "address": "0x56A48B53D076D7A9cd6b85B4F9dd2a23214dab5C",
       "index": 111,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011749999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -2123,9 +1983,7 @@
       "address": "0xe2BeFd6186AeD34fcAfD3c58a34186db8E219b68",
       "index": 112,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013431499607755",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -2140,9 +1998,7 @@
       "address": "0x73A439012Dd28c6112AFFF858FcfeA3E47c8159B",
       "index": 113,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001235199960635178",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -2157,9 +2013,7 @@
       "address": "0x524Af2447dC0959e7a6761898c22e19c37B46729",
       "index": 114,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001317499960595978",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -2174,9 +2028,7 @@
       "address": "0x8C7efC9999061eA189F0e089efF7Be8C589ad978",
       "index": 115,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013331499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.427Z",
       "troveDebt": "0",
@@ -2191,9 +2043,7 @@
       "address": "0x8f8DC2634D05C0107EDE26512C06AE6601784E81",
       "index": 116,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011749999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.420Z",
       "troveDebt": "0",
@@ -2208,9 +2058,7 @@
       "address": "0xaA3dF1cc58D244af70793c09b3D86BDB4f9b9291",
       "index": 117,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001343149961014088",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -2225,9 +2073,7 @@
       "address": "0x48f75A8769b32dBE3F63718250842399E255d178",
       "index": 118,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0012351999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.420Z",
       "troveDebt": "0",
@@ -2242,9 +2088,7 @@
       "address": "0x11E23070AE41ddD13E2E5eCD824710Cd5eeDE952",
       "index": 119,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013174999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -2259,9 +2103,7 @@
       "address": "0x40a3e84C4dd0b15C28517B1393aE03b617D2cd0A",
       "index": 120,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013331499615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -2276,9 +2118,7 @@
       "address": "0x829bA378E876a107bB468D2db9eE494Aff848FD1",
       "index": 121,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011749999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -2293,9 +2133,7 @@
       "address": "0xB847680d74bBC55A65350D835523188fAc1934b2",
       "index": 122,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001343149960635262",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -2310,9 +2148,7 @@
       "address": "0x416E1913d31Ba4655a4A03b147c3Bb57548AE8Ef",
       "index": 123,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001235199960494933",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -2327,9 +2163,7 @@
       "address": "0xaa71c312500c6Dbe7f3BF0dc734E2680eD582fc4",
       "index": 124,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00131749995784264",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -2344,9 +2178,7 @@
       "address": "0xa6e18784a42435a29521aAd51f4E293EE0ddA05b",
       "index": 125,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013233999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -2361,9 +2193,7 @@
       "address": "0x1751E4C6453d2a0aCF45D62fd8F2E2b5C27e179F",
       "index": 126,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011369999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -2378,9 +2208,7 @@
       "address": "0x68487c2d62EF072dEaac6B7bb2426442C007866b",
       "index": 127,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0012598999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -2395,9 +2223,7 @@
       "address": "0xA62bF68Dd3d7aDcDB5a403551Ea5CF24360A5E2F",
       "index": 128,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0010911999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "0",
@@ -2412,9 +2238,7 @@
       "address": "0x1A012874969B81C3f40bdB466a6Af5AA235186e3",
       "index": 129,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000908749904160513",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -2429,9 +2253,7 @@
       "address": "0x32000E9351a1d2EE61d6C9C870Ed732af542dd62",
       "index": 130,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001323399961483501",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -2446,9 +2268,7 @@
       "address": "0x0fbfAAeB7deE5762D9Ab83373Bf581e5BeA3414d",
       "index": 131,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0011369999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -2463,9 +2283,7 @@
       "address": "0x95B091d6E9Ad458E397A4d16fC4df1fE9acF7A7e",
       "index": 132,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001259899957476995",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -2480,9 +2298,7 @@
       "address": "0x9e2ee5273Ee5089dD506F00560E1b7f427b977df",
       "index": 133,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0010911999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -2497,9 +2313,7 @@
       "address": "0x4F1876672Cd524eeeA5C3985DF8c65A2B1cB12D6",
       "index": 134,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00106499995826929",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -2514,9 +2328,7 @@
       "address": "0x457853176052Bc9aEFb7aDf8Ac4949eFfa7d8e93",
       "index": 135,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001323399961145142",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -2531,9 +2343,7 @@
       "address": "0x7207c00a72b136bd984F394F37fe78D754f5f07b",
       "index": 136,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001136999961213322",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -2548,9 +2358,7 @@
       "address": "0x6e94832C14Eba0c540750E3F77f0A05C507D30B8",
       "index": 137,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0012598999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -2565,9 +2373,7 @@
       "address": "0xd4beee34331FE795c8e975E7052C6a0Cdcf2319f",
       "index": 138,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001091199961483501",
       "lastBalanceUpdate": "2025-05-20T19:27:57.427Z",
       "troveDebt": "0",
@@ -2582,9 +2388,7 @@
       "address": "0xF90dB983C519994347bed4a5994385636F9d2CFA",
       "index": 139,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000848749904160513",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -2599,9 +2403,7 @@
       "address": "0x9650569aadE2F3623481C7c78EB32B7BD2c5B432",
       "index": 140,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013233999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.421Z",
       "troveDebt": "0",
@@ -2616,9 +2418,7 @@
       "address": "0x19595d45cC9e107c57D76441256653cCD04613c3",
       "index": 141,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00113699996125073",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -2633,9 +2433,7 @@
       "address": "0xff5A63B77228a0de086De262263ED26C0b3b04c2",
       "index": 142,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001259899957169765",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -2650,9 +2448,7 @@
       "address": "0x43Bf78346A502C020F788233941a105C48112F4a",
       "index": 143,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001091199961271268",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -2667,9 +2463,7 @@
       "address": "0x2e302D7C963aE93bD8d610a7e546bb0126cB47F5",
       "index": 144,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00106499995826929",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -2684,9 +2478,7 @@
       "address": "0xd504d3a7673D33f3c30c1C3ffe6F7C78EF7b3CE4",
       "index": 145,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013233999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -2701,9 +2493,7 @@
       "address": "0x453c91226F80119AD7B6aedE24110faA9D4cba25",
       "index": 146,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00113699996125073",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -2718,9 +2508,7 @@
       "address": "0xdce22c99D0E5ad812668405aCe50f94D0DB08628",
       "index": 147,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001259899957169765",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -2735,9 +2523,7 @@
       "address": "0xDcB6CbF161605726976aE6728B6502aEf0d31A49",
       "index": 148,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001091199961271268",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -2752,9 +2538,7 @@
       "address": "0xB871Bf07cAC04715295D2A26f0C78249B040eF5E",
       "index": 149,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001079071693293311",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -2769,9 +2553,7 @@
       "address": "0x8Ee4D4e661992aB2A48151A21374a96117Fa494B",
       "index": 150,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001323399954548671",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -2786,9 +2568,7 @@
       "address": "0xFE9E3436f8E8D3b99b516b87b64B8f4C3522704c",
       "index": 151,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00113699996125073",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "0",
@@ -2803,9 +2583,7 @@
       "address": "0x9c9480E25BD012b946DDd911b85945082A01249A",
       "index": 152,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001259899961447192",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -2820,9 +2598,7 @@
       "address": "0xBCe1860F0d029dA4698015BC773aC19B726E64AF",
       "index": 153,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001091199961271268",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -2837,9 +2613,7 @@
       "address": "0xAf3F573f5C60b85ADb3Eb5546b5710D369b34BD4",
       "index": 154,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001079071693292058",
       "lastBalanceUpdate": "2025-05-20T19:27:57.424Z",
       "troveDebt": "0",
@@ -2854,9 +2628,7 @@
       "address": "0x567b4002Bb2786F9e72Ad487eBC0A3FDfe1eAD03",
       "index": 155,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013233999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -2871,9 +2643,7 @@
       "address": "0x3E13c5bE60E8Be315fe1A94d5E688bfcCCe31D06",
       "index": 156,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00113699996125073",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -2888,9 +2658,7 @@
       "address": "0xBD05D93385693c3F51cA58D091237F40476F5d04",
       "index": 157,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001259899961447192",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -2905,9 +2673,7 @@
       "address": "0x5FE8FB30a99FC0898D4eAEd0a07b002B198dCB7A",
       "index": 158,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001091199961212468",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "0",
@@ -2922,9 +2688,7 @@
       "address": "0xF211F9A122A34BFe0ef03B48818C01d254E3B8aA",
       "index": 159,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000788749904028054",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -2939,9 +2703,7 @@
       "address": "0x0F6c5eEa48554a5C3a04F8AFf1bbD169273A16f6",
       "index": 160,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.0013233999615",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -2956,9 +2718,7 @@
       "address": "0xDb166edfCD43879c703ffb4b29A48aE87058b0E6",
       "index": 161,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00113699996125073",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -2973,9 +2733,7 @@
       "address": "0x4E8946aF3f94BD21113E1d658e1EA8071C1B7d84",
       "index": 162,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001259899961388392",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -2990,9 +2748,7 @@
       "address": "0x7F005789FE7F9f4f642457F65872a6d7E6e702B3",
       "index": 163,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001091199961208765",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -3007,9 +2763,7 @@
       "address": "0xCC448aF654D47a4D2e67b7BB611FE69EB542048E",
       "index": 164,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000728749904028054",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "0",
@@ -3024,9 +2778,7 @@
       "address": "0x84e792d4d814c59e93e2E5F131833C74e8c95537",
       "index": 165,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001323399961172834",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -3041,9 +2793,7 @@
       "address": "0xA1Ee4d8934B961377f444630425D99efe5c918FD",
       "index": 166,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001136999960989105",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "0",
@@ -3096,9 +2846,7 @@
       "address": "0xB42239aECF3B9d4B05EcE9437129bA913ec4d3aa",
       "index": 169,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000968749905399531",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -3135,9 +2883,7 @@
       "address": "0x856d630612Bb94Ad3DCA3f113448168cEA262f21",
       "index": 171,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001136999922369056",
       "lastBalanceUpdate": "2025-05-20T19:27:57.422Z",
       "troveDebt": "0",
@@ -3152,9 +2898,7 @@
       "address": "0x2338342c7DC7B67BC4ab20bdA34eFb21A5b7005e",
       "index": 172,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00101989992280384",
       "lastBalanceUpdate": "2025-05-20T19:27:57.420Z",
       "troveDebt": "0",
@@ -3169,9 +2913,7 @@
       "address": "0x187Efb0587F47cB3C1F24397EA97F021e7FcB4C0",
       "index": 173,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000911199911267106",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "0",
@@ -3186,9 +2928,7 @@
       "address": "0x8EBad647F8732830f93bBC849953e644a11edeC7",
       "index": 174,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000548749898924478",
       "lastBalanceUpdate": "2025-05-20T19:27:57.425Z",
       "troveDebt": "0",
@@ -3289,9 +3029,7 @@
       "address": "0x398dA25F9466a72D618491a19a19dCe90a1cfD94",
       "index": 179,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000968749901512899",
       "lastBalanceUpdate": "2025-05-20T19:27:57.428Z",
       "troveDebt": "0",
@@ -3306,10 +3044,7 @@
       "address": "0x3fE7591C8B6D368bf65f85dB3EaF0Cedc7b631F1",
       "index": 180,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test",
-        "add-collateral-test"
-      ],
+      "usedInTests": ["open-troves-test", "add-collateral-test"],
       "btcBalance": "0.001143399863326195",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "3452.91784696913798963",
@@ -3324,9 +3059,7 @@
       "address": "0xbDaa18a5F6d11F18CC2ccceAea0C7f5EBF38E920",
       "index": 181,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00113699992507088",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "0",
@@ -3341,9 +3074,7 @@
       "address": "0xD2c72F37a0b744C758825d81ab618C9F38beF49A",
       "index": 182,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001019899935843295",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "0",
@@ -3358,10 +3089,7 @@
       "address": "0xDcE91B87A4A94ba02E583947aB4D9393D2954542",
       "index": 183,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test",
-        "add-collateral-test"
-      ],
+      "usedInTests": ["open-troves-test", "add-collateral-test"],
       "btcBalance": "0.000251199866738793",
       "lastBalanceUpdate": "2025-05-20T19:27:57.430Z",
       "troveDebt": "3250.680994398780054677",
@@ -3376,9 +3104,7 @@
       "address": "0x08F6B26Dd4A5279221D418b06fBbF13294e79aD0",
       "index": 184,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000944999948498243",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "0",
@@ -3393,9 +3119,7 @@
       "address": "0x6af2a89085815E28401d0Db10f137D94e1203C59",
       "index": 185,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00094339987991592",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "2412.242497755486651562",
@@ -3410,9 +3134,7 @@
       "address": "0x938fE9eC09Df8877b6Af13B7B801526F4E5d96CE",
       "index": 186,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001156999888611931",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "2412.242904211724883949",
@@ -3427,9 +3149,7 @@
       "address": "0xF7A994986290038b1AB1C7EA92FD0CB1B0eAdd13",
       "index": 187,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000879899921110112",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "2412.242907267786825546",
@@ -3444,9 +3164,7 @@
       "address": "0x74B878530a23aC275b90Aa2E4403Ff3260A1fe60",
       "index": 188,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000911199949633298",
       "lastBalanceUpdate": "2025-05-20T19:27:57.423Z",
       "troveDebt": "0",
@@ -3461,9 +3179,7 @@
       "address": "0x2cCE3aC16DcD9bcA53200Bb40abDE3a6a74595a9",
       "index": 189,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000959071685318535",
       "lastBalanceUpdate": "2025-05-20T19:27:57.429Z",
       "troveDebt": "0",
@@ -3478,9 +3194,7 @@
       "address": "0x73eF952EC94808FB47Bf72d25AB16ffE099140C0",
       "index": 190,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000863399928576153",
       "lastBalanceUpdate": "2025-05-20T19:27:57.435Z",
       "troveDebt": "2412.242904211724883949",
@@ -3495,9 +3209,7 @@
       "address": "0x780F6F284154E86A6eBc7FA4A4C467A37FFeAcDC",
       "index": 191,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000976999935235205",
       "lastBalanceUpdate": "2025-05-20T19:27:57.434Z",
       "troveDebt": "2412.242898863616486154",
@@ -3512,9 +3224,7 @@
       "address": "0x95531c560bbB441c2793E6F5E4363E518415c177",
       "index": 192,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000699899935554972",
       "lastBalanceUpdate": "2025-05-20T19:27:57.426Z",
       "troveDebt": "2412.242901919678427751",
@@ -3529,9 +3239,7 @@
       "address": "0x336282Fb344d3c0cED5BEd5AD358d8eBDbf3A6f2",
       "index": 193,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000931199935522702",
       "lastBalanceUpdate": "2025-05-20T19:27:57.431Z",
       "troveDebt": "2412.243002769722500449",
@@ -3546,9 +3254,7 @@
       "address": "0x42385B51c57074356D7846AfB45092BC17F95d26",
       "index": 194,
       "hasTrove": false,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000968749900113023",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "0",
@@ -3563,9 +3269,7 @@
       "address": "0x2B2cC974cff8C978335b14cEb598b5c05A8c9E08",
       "index": 195,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001123399950954205",
       "lastBalanceUpdate": "2025-05-20T19:27:57.433Z",
       "troveDebt": "2412.243005825784442046",
@@ -3580,9 +3284,7 @@
       "address": "0x66C86CBE0eEA8cFa1C4644E0152dd06528B31609",
       "index": 196,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000836999944838949",
       "lastBalanceUpdate": "2025-05-20T19:27:57.432Z",
       "troveDebt": "2412.243002769722500449",
@@ -3857,9 +3559,7 @@
       "address": "0xF60f1958511549BF1BBf86236DdE7A1d734cD431",
       "index": 217,
       "hasTrove": false,
-      "usedInTests": [
-        "liquidate-troves-test"
-      ],
+      "usedInTests": ["liquidate-troves-test"],
       "btcBalance": "0.000733999950972674",
       "lastBalanceUpdate": "2025-05-20T19:27:57.538Z",
       "troveDebt": "0",
@@ -3926,9 +3626,7 @@
       "address": "0x7552C82f701f34f75c59cA5647b6b8406D65584a",
       "index": 222,
       "hasTrove": false,
-      "usedInTests": [
-        "liquidate-troves-test"
-      ],
+      "usedInTests": ["liquidate-troves-test"],
       "btcBalance": "0.000733999951381166",
       "lastBalanceUpdate": "2025-05-20T19:27:57.538Z",
       "troveDebt": "0",
@@ -3995,9 +3693,7 @@
       "address": "0xA50fBe67d18766d63276e0B7320471a9Ceae8975",
       "index": 227,
       "hasTrove": false,
-      "usedInTests": [
-        "liquidate-troves-test"
-      ],
+      "usedInTests": ["liquidate-troves-test"],
       "btcBalance": "0.000579999968155024",
       "lastBalanceUpdate": "2025-05-20T19:27:57.550Z",
       "troveDebt": "0",
@@ -4064,9 +3760,7 @@
       "address": "0x390d3f090522aFE487087Ce68e2E6fC051553882",
       "index": 232,
       "hasTrove": false,
-      "usedInTests": [
-        "liquidate-troves-test"
-      ],
+      "usedInTests": ["liquidate-troves-test"],
       "btcBalance": "0.000639999958462032",
       "lastBalanceUpdate": "2025-05-20T19:27:57.544Z",
       "troveDebt": "0",
@@ -5433,9 +5127,7 @@
       "address": "0x9F307c1279C703D53b4DFc055A9c072c4fa0f751",
       "index": 337,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000859999976",
       "lastBalanceUpdate": "2025-05-20T19:27:58.101Z",
       "troveDebt": "2396.622012725604951825",
@@ -5450,9 +5142,7 @@
       "address": "0xc117FADc327B1714B973Ac7Cd735217FBC025D9f",
       "index": 338,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000919999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.765Z",
       "troveDebt": "2411.0",
@@ -5467,9 +5157,7 @@
       "address": "0xB32CFD75D65581E307F2170A3F9e9bba50d46534",
       "index": 339,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000979999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.753Z",
       "troveDebt": "2411.0",
@@ -5484,9 +5172,7 @@
       "address": "0x58E1497AA9b4C81fF54303e603fAaEa097b2774d",
       "index": 340,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000739999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.746Z",
       "troveDebt": "2411.0",
@@ -5501,9 +5187,7 @@
       "address": "0xb2da28a4929120A56e91aDA8B4c9Da1118E9B4da",
       "index": 341,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000499999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.789Z",
       "troveDebt": "2411.0",
@@ -5518,9 +5202,7 @@
       "address": "0x7CF572E65Af5335997Bd53370e92bEe8eE3b401b",
       "index": 342,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000799999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.768Z",
       "troveDebt": "2411.0",
@@ -5535,9 +5217,7 @@
       "address": "0x00C5c4ED10d31DE768a2D6bF2914fBf0489aA573",
       "index": 343,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000679999973",
       "lastBalanceUpdate": "2025-05-20T19:27:57.749Z",
       "troveDebt": "2411.0",
@@ -5552,9 +5232,7 @@
       "address": "0xc0DE0d1796C8A03921E7796983D15E4f6Fe2B901",
       "index": 344,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00103999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.771Z",
       "troveDebt": "2411.0",
@@ -5569,9 +5247,7 @@
       "address": "0xF6043b63EFcfd06414C76644b059D5041b89A500",
       "index": 345,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00079999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.781Z",
       "troveDebt": "2411.0",
@@ -5586,9 +5262,7 @@
       "address": "0x2E6005b5846aE70fF80359218EeFD15b144c74b4",
       "index": 346,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00055999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.765Z",
       "troveDebt": "2411.0",
@@ -5603,9 +5277,7 @@
       "address": "0xBA9d0Fa8D1cBB04d31f31c66ff6C1f7D3AdDd15a",
       "index": 347,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00079999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.759Z",
       "troveDebt": "2411.0",
@@ -5620,9 +5292,7 @@
       "address": "0x0a7b6B3a2ebCd714527973fB09562862C59D234E",
       "index": 348,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00067999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.799Z",
       "troveDebt": "2411.0",
@@ -5637,9 +5307,7 @@
       "address": "0x3b5921a446B3e2b3F582725b7d7D5E91B0Ce3Ec0",
       "index": 349,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00103999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.773Z",
       "troveDebt": "2411.0",
@@ -5654,9 +5322,7 @@
       "address": "0x982AA6A51A037A61F35512Dd458d0a7044EC8387",
       "index": 350,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000799999973",
       "lastBalanceUpdate": "2025-05-20T19:27:57.775Z",
       "troveDebt": "2411.0",
@@ -5671,9 +5337,7 @@
       "address": "0x99656be9305e2B2d2557da07fFF605e22C739bA1",
       "index": 351,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000559999973",
       "lastBalanceUpdate": "2025-05-20T19:27:57.748Z",
       "troveDebt": "2411.0",
@@ -5688,9 +5352,7 @@
       "address": "0x44d02470780437dA1d782E86Ab281f954b2d7E83",
       "index": 352,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00073999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.793Z",
       "troveDebt": "2411.0",
@@ -5705,9 +5367,7 @@
       "address": "0x0750c4b406B22bd3Be0E78D5361638260172999B",
       "index": 353,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00067999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.754Z",
       "troveDebt": "2411.0",
@@ -5722,9 +5382,7 @@
       "address": "0xF177E2B8EA12393cD198920d0e039383219DFb2c",
       "index": 354,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.001039999973",
       "lastBalanceUpdate": "2025-05-20T19:27:57.778Z",
       "troveDebt": "2411.0",
@@ -5739,9 +5397,7 @@
       "address": "0x9F36e0BC1563dbc194C697F0f10eC5f5f3984dc3",
       "index": 355,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00079999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.789Z",
       "troveDebt": "2411.0",
@@ -5756,9 +5412,7 @@
       "address": "0x3becfD8701096F9e3ea199ed65FA280dE4917ac5",
       "index": 356,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00055999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.768Z",
       "troveDebt": "2411.0",
@@ -5773,9 +5427,7 @@
       "address": "0xc41768218AB4C92f41C0EcC3bF932333Ea04109F",
       "index": 357,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00067999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.771Z",
       "troveDebt": "2411.0",
@@ -5790,9 +5442,7 @@
       "address": "0x4bA96725077791a9F969A2056c0f641e51cC1B68",
       "index": 358,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00073999997375",
       "lastBalanceUpdate": "2025-05-20T19:27:57.771Z",
       "troveDebt": "2416.621997423916739848",
@@ -5807,9 +5457,7 @@
       "address": "0xB84Df7c1d807704B936f95A436151BCdc739f48d",
       "index": 359,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000859999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.759Z",
       "troveDebt": "2411.0",
@@ -5824,9 +5472,7 @@
       "address": "0x3dE92b282889Eb61Dc555f75A4819aA1d8Ed3a53",
       "index": 360,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000919999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.789Z",
       "troveDebt": "2411.0",
@@ -5841,9 +5487,7 @@
       "address": "0x2d8f73aa674e36c8076E915F6eb958a1cd91f367",
       "index": 361,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000679999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.765Z",
       "troveDebt": "2411.0",
@@ -5858,9 +5502,7 @@
       "address": "0x3bAcd8786D0f9fD01113c0DC53a1C0fb2b9E8f29",
       "index": 362,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000739999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.801Z",
       "troveDebt": "2411.0",
@@ -5875,9 +5517,7 @@
       "address": "0x896771855B754E09bF9Ab05C237650DbC301A782",
       "index": 363,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000799999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.777Z",
       "troveDebt": "2416.621976795498634069",
@@ -5892,9 +5532,7 @@
       "address": "0x6DcF04110FCc4ccE7b7066736D2ac312a814CA98",
       "index": 364,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000859999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.777Z",
       "troveDebt": "2411.0",
@@ -5909,9 +5547,7 @@
       "address": "0x2f044b6E6e7490d611aCc5fC8761BF0366484e8f",
       "index": 365,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00091999997525",
       "lastBalanceUpdate": "2025-05-20T19:27:57.765Z",
       "troveDebt": "2411.0",
@@ -5926,9 +5562,7 @@
       "address": "0x321e9d81b71F63D98bCE36791e40B8D2555B7c60",
       "index": 366,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000679999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.790Z",
       "troveDebt": "2411.0",
@@ -5943,9 +5577,7 @@
       "address": "0x4d345B034C468Aea74F1065e7D2c3898ea7B1a33",
       "index": 367,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00073999997525",
       "lastBalanceUpdate": "2025-05-20T19:27:57.777Z",
       "troveDebt": "2411.0",
@@ -5973,9 +5605,7 @@
       "address": "0xceFa9A12dd414f100775FF05045723EE1079E0D2",
       "index": 369,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000919999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.795Z",
       "troveDebt": "2416.621982907622517263",
@@ -6016,9 +5646,7 @@
       "address": "0xBd502ac2a26BA990d54013327eaf0827aF1CB9ca",
       "index": 372,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00091999997525",
       "lastBalanceUpdate": "2025-05-20T19:27:57.796Z",
       "troveDebt": "2411.0",
@@ -6085,9 +5713,7 @@
       "address": "0xe2ed1404C43805bF1B6D001B0A16E661a9D5D2cb",
       "index": 377,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00091999997525",
       "lastBalanceUpdate": "2025-05-20T19:27:57.823Z",
       "troveDebt": "2411.0",
@@ -6154,9 +5780,7 @@
       "address": "0x9B9D476b9AA519022eE23C8C7a6660d71d78C456",
       "index": 382,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.00085999997525",
       "lastBalanceUpdate": "2025-05-20T19:27:57.816Z",
       "troveDebt": "2411.0",
@@ -6223,9 +5847,7 @@
       "address": "0x46eF1E5880C8Bf0ee319574643B490433502b1ac",
       "index": 387,
       "hasTrove": true,
-      "usedInTests": [
-        "open-troves-test"
-      ],
+      "usedInTests": ["open-troves-test"],
       "btcBalance": "0.000799999976",
       "lastBalanceUpdate": "2025-05-20T19:27:57.775Z",
       "troveDebt": "2411.0",
