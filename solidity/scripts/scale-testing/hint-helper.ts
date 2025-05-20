@@ -43,7 +43,6 @@ async function calculateTroveOperationHints(params: {
   try {
     if (operation === "open") {
       // Calculate expected total debt for an open operation
-      console.log("got here")
       const gasCompensation = await troveManager.MUSD_GAS_COMPENSATION()
       const borrowingFee = await borrowerOperations.getBorrowingFee(debtAmount)
 
