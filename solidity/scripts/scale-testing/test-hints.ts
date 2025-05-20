@@ -1,6 +1,6 @@
 import { ethers } from "hardhat"
 import calculateTroveOperationHints from "./hint-helper"
-import getContracts from "./get-contracts.ts"
+import getContracts from "./get-contracts"
 
 async function main() {
   // Get contracts

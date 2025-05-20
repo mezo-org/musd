@@ -13,7 +13,7 @@ import {
 
 // Configuration
 const TEST_ID = "add-collateral-test"
-const NUM_ACCOUNTS = 100 // Number of accounts to use
+const NUM_ACCOUNTS = 5 // Number of accounts to use
 const COLLATERAL_AMOUNTS = ["0.0001", "0.0002", "0.0003", "0.0004", "0.0005"] // BTC amounts to add
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 

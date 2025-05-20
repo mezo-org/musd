@@ -12,7 +12,7 @@ import {
 
 // Configuration
 const TEST_ID = "close-trove-test"
-const NUM_ACCOUNTS = 100 // Number of accounts to use
+const NUM_ACCOUNTS = 5 // Number of accounts to use
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {

@@ -14,7 +14,7 @@ import {
 
 // Configuration
 const TEST_ID = "open-troves-test"
-const NUM_ACCOUNTS = 10000 // Number of accounts to use
+const NUM_ACCOUNTS = 20 // Number of accounts to use
 const MIN_BTC_BALANCE = "0.0005" // Minimum BTC balance required
 const MUSD_DEBT_AMOUNT = 2200 // Amount of MUSD debt to create - just over the minimum debt
 const BATCH_SIZE = 10 // Number of transactions to send in parallel

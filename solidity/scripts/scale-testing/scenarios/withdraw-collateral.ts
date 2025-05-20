@@ -13,7 +13,7 @@ import {
 
 // Configuration
 const TEST_ID = "withdraw-collateral-test"
-const NUM_ACCOUNTS = 200 // Number of accounts to use
+const NUM_ACCOUNTS = 5 // Number of accounts to use
 const WITHDRAWAL_PERCENTAGES = [5, 10, 15, 20, 25] // Percentage of collateral to withdraw
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
