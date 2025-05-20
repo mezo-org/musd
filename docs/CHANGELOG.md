@@ -1,5 +1,17 @@
 # Changelog for Frontend Developers
 
+## Changelog from [1.0.0 release] (https://github.com/mezo-org/musd/releases/tag/v1.0.0) to [1.0.2] (https://github.com/mezo-org/musd/commit/e0d53f63e391c8eea993b60cb3b1f9c4e80162b4)
+
+### Updated Deployment Artifacts
+
+The latest contracts have been deployed to matsnet and mainnet and the corresponding artifacts have been updated.
+
+### TroveUpdated Event Includes Interest
+
+The `TroveUpdated` events emitted by `BorrowerOperations` and `TroveManager` now contain two new fields that match the corresponding items on the Trove struct: 
+- `uint16 interestRate`
+- `uint256 lastInterestUpdateTime`
+
 ## Changelog from [previous changelog commit] (https://github.com/mezo-org/musd/commit/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e) to [1.0.0 release] (https://github.com/mezo-org/musd/releases/tag/v1.0.0)
 
 ### Major Contract/Interface Changes
