@@ -4,12 +4,12 @@
     {
       "name": "Generate Wallets",
       "path": "generate-wallets.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Fund Wallets",
       "path": "fund-wallets.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Initialize State",
@@ -26,32 +26,32 @@
     {
       "name": "Add Collateral",
       "path": "scenarios/add-collateral.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Increase Debt",
       "path": "scenarios/increase-debt.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Repay MUSD",
       "path": "scenarios/repay-musd.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Withdraw Collateral",
       "path": "scenarios/withdraw-collateral.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Send MUSD",
       "path": "scenarios/send-musd.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Redeem MUSD",
       "path": "scenarios/redeem-musd.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Liquidate Troves",
@@ -61,7 +61,7 @@
     {
       "name": "Close Trove",
       "path": "scenarios/close-trove.ts",
-      "enabled": false
+      "enabled": true
     }
   ],
   "scenarioLoops": [
