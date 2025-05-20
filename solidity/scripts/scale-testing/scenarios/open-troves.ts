@@ -161,7 +161,7 @@ async function main() {
           verbose: true,
         })
 
-        if (upperHint === ZeroAddress || lowerHint === ZeroAddress) {
+        if (upperHint === ZeroAddress && lowerHint === ZeroAddress) {
           // Bail if no hints are found
           console.log(
             `No hints found for account ${account.address}, skipping transaction`,
