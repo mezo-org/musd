@@ -14,7 +14,7 @@
     {
       "name": "Initialize State",
       "path": "init-state-tracking.ts",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Open Troves",
@@ -26,27 +26,27 @@
     {
       "name": "Add Collateral",
       "path": "scenarios/add-collateral.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Increase Debt",
       "path": "scenarios/increase-debt.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Repay MUSD",
       "path": "scenarios/repay-musd.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Withdraw Collateral",
       "path": "scenarios/withdraw-collateral.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Send MUSD",
       "path": "scenarios/send-musd.ts",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Redeem MUSD",
@@ -67,20 +67,20 @@
   "scenarioLoops": [
     {
       "name": "Basic Trove Operations Loop",
-      "enabled": true,
+      "enabled": false,
       "scenarios": [
         "scenarios/add-collateral.ts",
         "scenarios/increase-debt.ts",
         "scenarios/repay-musd.ts",
         "scenarios/withdraw-collateral.ts"
       ],
-      "iterations": 2
+      "iterations": 1
     },
     {
       "name": "MUSD Usage Loop",
       "enabled": false,
-      "scenarios": ["scenarios/send-musd.ts", "scenarios/redeem-musd.ts"],
-      "iterations": 2
+      "scenarios": ["scenarios/send-musd.ts", "scenarios/repay-musd.ts"],
+      "iterations": 1
     }
   ]
 }

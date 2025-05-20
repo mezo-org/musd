@@ -10,7 +10,7 @@ const TEST_ID = "liquidate-troves-test"
 const NUM_ACCOUNTS = 5 // Number of troves to liquidate
 const TARGET_CR_RANGE = {
   min: 115, // Minimum CR to consider (%)
-  max: 250, // Maximum CR to consider (%) - Increased to find more candidates
+  max: 500, // Maximum CR to consider (%) - Increased to find more candidates
 }
 const MCR = 110 // Minimum Collateralization Ratio (%)
 

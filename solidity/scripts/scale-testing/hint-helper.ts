@@ -43,6 +43,7 @@ async function calculateTroveOperationHints(params: {
   try {
     if (operation === "open") {
       // Calculate expected total debt for an open operation
+      console.log("got here")
       const gasCompensation = await troveManager.MUSD_GAS_COMPENSATION()
       const borrowingFee = await borrowerOperations.getBorrowingFee(debtAmount)
 
@@ -122,12 +123,39 @@ async function calculateTroveOperationHints(params: {
       console.log(`- Using ${numTrials} trials for hint approximation`)
     }
 
+    // Log block information before getApproxHint
+    const block = await ethers.provider.getBlock("latest")
+    console.log("\nBefore getApproxHint:")
+    console.log(`- Block number: ${block.number}`)
+    console.log(`- Block gas limit: ${block.gasLimit.toString()}`)
+    console.log(`- NICR: ${nicr}`)
+    console.log(`- Num trials: ${numTrials}`)
+    console.log(`- Random seed: ${randomSeed}`)
+
+    console.log("Starting getApproxHint call...")
+    let approxHint
+    try {
+      ;({ 0: approxHint } = await hintHelpers.getApproxHint(
+        nicr,
+        numTrials,
+        randomSeed,
+      ))
+      console.log("getApproxHint completed successfully")
+    } catch (error) {
+      console.log("getApproxHint failed:", error)
+      throw error
+    }
+
     // Get approximate hint
-    const { 0: approxHint } = await hintHelpers.getApproxHint(
-      nicr,
-      numTrials,
-      randomSeed,
-    )
+    // const { 0: approxHint } = await hintHelpers.getApproxHint(
+    //   nicr,
+    //   numTrials,
+    //   randomSeed,
+    // )
+
+    // Log success
+    console.log("\nAfter getApproxHint:")
+    console.log(`- Successfully got hint: ${approxHint}`)
 
     if (verbose) {
       console.log(`- Approximate hint address: ${approxHint}`)

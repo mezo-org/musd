@@ -14,7 +14,7 @@ import {
 
 // Configuration
 const TEST_ID = "increase-debt-test"
-const NUM_ACCOUNTS = 5 // Number of accounts to use
+const NUM_ACCOUNTS = 20 // Number of accounts to use
 const MUSD_AMOUNTS = ["100", "200", "300", "400", "500"] // MUSD amounts to borrow
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
@@ -53,9 +53,9 @@ async function main() {
   }
 
   // Update trove states before selecting accounts
-  console.log("Updating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
-  console.log("Trove states updated")
+  // console.log("Updating Trove states for all accounts...")
+  // await stateManager.updateTroveStates(troveManagerAddress)
+  // console.log("Trove states updated")
 
   // Select accounts for testing - accounts that HAVE troves
   const testAccounts = stateManager.getAccounts({
@@ -72,6 +72,10 @@ async function main() {
   const addresses = testAccounts.map((account) => account.address)
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
   console.log(`Loaded ${loadedWallets} wallets for testing`)
+
+  // Update trove states for selected accounts
+  await stateManager.updateTroveStates(troveManagerAddress, addresses, 200)
+  console.log("Trove states updated for selected accounts")
 
   // Process accounts in batches using our utility
   const results = await processBatchTransactions(
@@ -109,8 +113,8 @@ async function main() {
           `Projected ICR after borrowing: ${newIcr / 100n}.${newIcr % 100n}%`,
         )
 
-        // Check if new ICR would be too low (below 110%)
-        if (newIcr < 11000n) {
+        // Check if new ICR would be too low (below 111% to add some margin for error)
+        if (newIcr < 11100n) {
           console.log(
             "Warning: New ICR would be too low. Reducing borrow amount.",
           )
@@ -275,7 +279,7 @@ async function main() {
 
   // Update all Trove states again to ensure data is current
   console.log("\nUpdating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
+  await stateManager.updateTroveStates(troveManagerAddress, addresses, 200)
 
   // Update MUSD balances
   console.log("Updating MUSD balances for all accounts...")

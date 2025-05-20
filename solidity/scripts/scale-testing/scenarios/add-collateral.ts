@@ -13,7 +13,7 @@ import {
 
 // Configuration
 const TEST_ID = "add-collateral-test"
-const NUM_ACCOUNTS = 5 // Number of accounts to use
+const NUM_ACCOUNTS = 100 // Number of accounts to use
 const COLLATERAL_AMOUNTS = ["0.0001", "0.0002", "0.0003", "0.0004", "0.0005"] // BTC amounts to add
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
@@ -41,9 +41,9 @@ async function main() {
   } = await getContracts()
 
   // Update trove states before selecting accounts
-  console.log("Updating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
-  console.log("Trove states updated")
+  // console.log("Updating Trove states for all accounts...")
+  // await stateManager.updateTroveStates(troveManagerAddress)
+  // console.log("Trove states updated")
 
   // Select accounts for testing - accounts that HAVE troves
   const testAccounts = stateManager.getAccounts({
@@ -54,6 +54,12 @@ async function main() {
 
   console.log(
     `Selected ${testAccounts.length} accounts with existing troves for testing`,
+  )
+
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
   )
 
   // Load wallets for these accounts
@@ -225,7 +231,11 @@ async function main() {
 
   // Update all Trove states again to ensure data is current
   console.log("\nUpdating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
+  )
 
   console.log("Test completed!")
 }

@@ -13,7 +13,7 @@ import {
 
 // Configuration
 const TEST_ID = "repay-musd-test"
-const NUM_ACCOUNTS = 5 // Number of accounts to use
+const NUM_ACCOUNTS = 200 // Number of accounts to use
 const REPAYMENT_PERCENTAGES = [10, 20, 30, 40, 50] // Percentage of debt to repay
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 

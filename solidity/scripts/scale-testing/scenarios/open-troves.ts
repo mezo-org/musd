@@ -2,6 +2,7 @@
 import { ethers } from "hardhat"
 import fs from "fs"
 import path from "path"
+import { ZeroAddress } from "ethers"
 import StateManager from "../state-manager"
 import WalletHelper from "../wallet-helper"
 import calculateTroveOperationHints from "../hint-helper"
@@ -13,10 +14,10 @@ import {
 
 // Configuration
 const TEST_ID = "open-troves-test"
-const NUM_ACCOUNTS = 20 // Number of accounts to use
+const NUM_ACCOUNTS = 10000 // Number of accounts to use
 const MIN_BTC_BALANCE = "0.0005" // Minimum BTC balance required
 const MUSD_DEBT_AMOUNT = 2200 // Amount of MUSD debt to create - just over the minimum debt
-const BATCH_SIZE = 5 // Number of transactions to send in parallel
+const BATCH_SIZE = 10 // Number of transactions to send in parallel
 
 // Collateral ratios to test (150%, 200%, 250%, 300%, 350%)
 const COLLATERAL_RATIOS = [150, 200, 250, 300, 350]
@@ -33,7 +34,7 @@ async function main() {
   // Create state manager
   const stateManager = new StateManager(networkName)
 
-  // Create wallet helper and load wallets
+  // Create wallet helper
   const walletHelper = new WalletHelper()
 
   const {
@@ -102,15 +103,12 @@ async function main() {
 
   console.log(`Selected ${testAccounts.length} accounts for testing`)
 
-  // Load wallets for these accounts
-  const addresses = testAccounts.map((account) => account.address)
-  const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
-  console.log(`Loaded ${loadedWallets} wallets for testing`)
-
   // Process accounts in batches using our utility
   const results = await processBatchTransactions(
     testAccounts,
     async (account, index) => {
+      // Load wallet for just this account
+      await walletHelper.loadEncryptedWallets([account.address])
       const wallet = walletHelper.getWallet(account.address)
 
       if (!wallet) {
@@ -163,6 +161,19 @@ async function main() {
           verbose: true,
         })
 
+        if (upperHint === ZeroAddress || lowerHint === ZeroAddress) {
+          // Bail if no hints are found
+          console.log(
+            `No hints found for account ${account.address}, skipping transaction`,
+          )
+          walletHelper.clearWallets()
+          return {
+            success: false,
+            account: account.address,
+            error: "no hints found - skipped",
+          }
+        }
+
         // Record the start time
         const startTime = Date.now()
 
@@ -196,6 +207,9 @@ async function main() {
         // Record the action in the state manager
         stateManager.recordAction(account.address, "openTrove", TEST_ID)
 
+        // Clear wallet after successful transaction
+        walletHelper.clearWallets()
+
         return {
           success: true,
           hash: tx.hash,
@@ -210,6 +224,9 @@ async function main() {
         console.log(
           `Error opening Trove for ${account.address}: ${error.message}`,
         )
+
+        // Clear wallet after failed transaction
+        walletHelper.clearWallets()
 
         return {
           success: false,
@@ -278,7 +295,11 @@ async function main() {
 
   // Update all Trove states to ensure data is current
   console.log("\nUpdating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
+  )
 
   console.log("Test completed!")
 }

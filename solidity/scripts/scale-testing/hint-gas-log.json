@@ -1,0 +1,18 @@
+[
+  {
+    "blockNumber": 4237949,
+    "numTroves": "10491",
+    "gasEstimate": "0",
+    "nicr": "82987551867219917",
+    "numTrials": "999",
+    "randomSeed": 4265481
+  },
+  {
+    "blockNumber": 4237983,
+    "numTroves": "10491",
+    "gasEstimate": "0",
+    "nicr": "82987551867219917",
+    "numTrials": "899",
+    "randomSeed": 9916328
+  }
+]
