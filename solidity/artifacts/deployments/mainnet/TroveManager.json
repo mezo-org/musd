@@ -456,13 +456,25 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "stake",
+          "name": "_stake",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "_interestRate",
+          "type": "uint16"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_lastInterestUpdateTime",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint8",
-          "name": "operation",
+          "name": "_operation",
           "type": "uint8"
         }
       ],
@@ -1782,7 +1794,7 @@
     }
   ],
   "transactionHash": "0x51818086ec66a914b8f221a3e5e21ce3886a2ed05ce7d11775f4cf8c07a45897",
-  "numDeployments": 1,
-  "implementation": "0xa57c03F2E0fF9F059802eEE44CcFf090a7DD4189",
+  "numDeployments": 2,
+  "implementation": "0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9",
   "devdoc": "Contract deployed as upgradable proxy"
 }
