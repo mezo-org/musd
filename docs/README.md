@@ -275,17 +275,6 @@ Initially this process would be manually executed via a governance multisig and 
 
 The system requires atleast one active loan, if there is only one loan in the system it can not be liquidated. Liquidations require there to be other troves to distribute the debt and collateral to if the Stability Pool is empty.
 
-#### Liquidations and bad debt
-
-It is anticipated that bad debt would be a low probability event due to the following:
-
-- Low cost for liquidators to trigger a liquidation.
-- Liquidators receive 200 MUSD + 0.5% of the liquidated collateral.
-- Fast block times on Mezo should lead to quick finality when a liquidation become available.
-- The price oracle updates on a per block basis.
-- There is a 10% margin for profitable liquidations.
-- Redistribution of debt and collateral from liquidations when the Stability Pool is empty do not require an external liquidity source to complete the liquidation.
-
 ### Stability Pool
 
 The Stability Pool provides a mechanism to socialize liquidations. Users deposit MUSD into the pool, and the stability pool has first priority to provide MUSD to liquidate troves and seize collateral.
@@ -457,6 +446,53 @@ As a gas optimization, we track the these funds as "pending", so each borrower h
 `TroveManager.sol` maintains `L_Collateral`, `L_Principal`, and `L_Interest`, which tracks the total amount of pending collateral, principal, and interest in the default pool, per unit of collateral in the system. On a user level, we track snapshots of those values, so we can calculate the pending funds of a user when they interact with the system.
 
 For example, if `rewardSnapshots[_borrower].collateral < L_Collateral`, then the user has pending collateral.
+
+## Borrower Risks
+
+There are two primary risks for borrowers
+
+- Liquidation Risk
+- Redemption Risk
+- Bad Debt
+- Depegging
+
+### Liquidation Risk
+
+If the borrower’s deposit falls below the liquidation threshold of 110% collateralization, the borrower's collateral can be liquidated to close out their loan. This is done to protect the overall collatearlisation of the protocol. This has the following implications for the liquidated borrower:
+
+- Potential capital gains tax implications.
+- Up to a 10% capital loss.
+- Loss of exposure to the price upside of the collateral asset.
+
+To avoid these risks, borrowers must monitor their loans and provide additional collateral to maintain their loan health.
+
+### Redemption Risk
+
+The protocol enables holders of MUSD to redeem it for BTC, this acts as a mechanism to bring the price back to peg via arbitrage if it depegs downwards. The trade off is that this redemption is done against the collateral of the borrower with the lowest collateralisation ratio. This mechanism cancels $1 of debt for each $1 of BTC that is redeemed. This has the following implications for the liquidated borrower:
+
+- Potential capital gains tax implications.
+- Loss of exposure to the price upside of the collateral asset.
+
+For example assume that Bob has a 200k MUSD debt that is backed by 3 BTC and BTC is trading at $100k USD. If Bob's loan has the lowest collateralisation and Alice redeems 200k MUSD, her redemption will be against Bob's BTC. So Bob's debt will be cancelled as his collateral balance is reduced.
+
+If Bob is fully redeemed against this means that he would no longer have a loan to repay.
+
+The redemption cancels the debt of the borrower on a dollar with dollar basis as their BTC gets redeemed.
+
+So Bob had 1 BTC of his collateral redeemed which also cancelled his 200k of debt. Bob still has the MUSD he borrowed and is able to withdraw the remaining 1 BTC of excess collateral. It is important to note that when Bob is redeemed against he loses the upside exposure of the BTC that was redeemed.
+
+### Bad Debt
+
+Bad debt occurs when the value of the collateral is less than the amount that has been borrowed. This debt is handled the same way as other liquidations, this leads to either depositors in the Stability Pool absorbing the loss or the bad debt being proportionately redistributed across the other loans.
+
+It is anticipated that bad debt would be a low probability event due to the following:
+
+- Low cost for liquidators to trigger a liquidation.
+- Liquidators receive 200 MUSD + 0.5% of the liquidated collateral.
+- Fast block times on Mezo should lead to quick finality when a liquidation becomes available.
+- The BTC price oracle updates on a per block basis.
+- There is a 10% margin for profitable liquidations.
+- Redistribution of debt and collateral from liquidations when the Stability Pool is empty do not require an external liquidity source to complete the liquidation.
 
 ## Key Changes from THUSD
 
