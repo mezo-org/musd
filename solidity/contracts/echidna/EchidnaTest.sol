@@ -687,6 +687,12 @@ contract EchidnaTest {
         echidnaProxies[actor].provideToSPPrx(_amount);
     }
 
+    function provideToSPSafeExt(uint _i, uint _amount) external {
+        EchidnaProxy actor = echidnaProxies[_i % NUMBER_OF_ACTORS];
+        uint256 balance = musd.balanceOf(address(actor));
+        actor.provideToSPPrx(_amount % balance);
+    }
+
     function withdrawFromSPExt(uint _i, uint _amount) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         echidnaProxies[actor].withdrawFromSPPrx(_amount);
