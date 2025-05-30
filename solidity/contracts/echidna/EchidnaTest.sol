@@ -508,6 +508,7 @@ contract EchidnaTest {
         uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
         uint nicr = hintHelpers.computeNominalCR(BTC, amountWithFees);
 
+        // slither-disable-next-line unused-return
         (address hintAddress, , ) = hintHelpers.getApproxHint(
             nicr,
             500,
