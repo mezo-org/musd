@@ -866,6 +866,17 @@ contract EchidnaTest {
         actor.transferPrx(address(pcv), musdAmount);
     }
 
+    function addRecipientsToWhitelistExt(
+        address[] calldata _accounts
+    ) external {
+        pcv.addRecipientsToWhitelist(_accounts);
+    }
+
+    function removeRecipientsFromWhitelistExt(
+        address[] calldata _accounts
+    ) external {
+        pcv.removeRecipientsFromWhitelist(_accounts);
+    }
     // Governable Variables
 
     function gvStartChangingRolesExt(
