@@ -470,7 +470,7 @@ contract EchidnaTest {
         uint musdAmount = 1800e18 + addedMUSD;
         uint collatRatio = 110 + (_collatRatio % 1000);
         uint price = priceFeed.fetchPrice();
-        uint amountWithFees = musdAmount + musdAmount / 200 + 200e18;
+        uint amountWithFees = musdAmount + musdAmount / 1000 + 200e18;
 
         uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
 
