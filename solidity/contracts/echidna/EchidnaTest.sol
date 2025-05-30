@@ -477,6 +477,49 @@ contract EchidnaTest {
         echidnaProxy.openTrovePrx(BTC, musdAmount, address(0), address(0));
     }
 
+    function openMinCollateralRatioTrove(uint _i, uint _extraMUSD) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        EchidnaProxy echidnaProxy = echidnaProxies[actor];
+        uint addedMUSD = (_extraMUSD % 100_000) * 1e18;
+        uint musdAmount = 1800e18 + addedMUSD;
+        uint collatRatio = 110;
+        uint price = priceFeed.fetchPrice();
+        uint amountWithFees = musdAmount + musdAmount / 1000 + 200e18;
+
+        uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
+
+        echidnaProxy.openTrovePrx(BTC, musdAmount, address(0), address(0));
+    }
+
+    function openTroveWithHints(
+        uint _i,
+        uint _extraMUSD,
+        uint _collatRatio,
+        uint256 _randomSeed
+    ) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        EchidnaProxy echidnaProxy = echidnaProxies[actor];
+        uint addedMUSD = (_extraMUSD % 100_000) * 1e18;
+        uint musdAmount = 1800e18 + addedMUSD;
+        uint collatRatio = 110 + (_collatRatio % 1000);
+        uint price = priceFeed.fetchPrice();
+        uint amountWithFees = musdAmount + musdAmount / 1000 + 200e18;
+
+        uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
+        uint nicr = hintHelpers.computeNominalCR(BTC, amountWithFees);
+
+        (address hintAddress, , ) = hintHelpers.getApproxHint(
+            nicr,
+            500,
+            _randomSeed
+        );
+
+        (address upperHint, address lowerHint) = sortedTroves
+            .findInsertPosition(nicr, hintAddress, hintAddress);
+
+        echidnaProxy.openTrovePrx(BTC, musdAmount, upperHint, lowerHint);
+    }
+
     function openTroveRawExt(
         uint _i,
         uint _BTC,
