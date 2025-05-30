@@ -324,6 +324,9 @@ contract EchidnaTest {
         pcv.startChangingRoles(address(this), address(this));
         pcv.finalizeChangingRoles();
         pcv.addRecipientToWhitelist(address(this));
+
+        governableVariables.startChangingRoles(address(this), address(this));
+        governableVariables.finalizeChangingRoles();
     }
 
     // TroveManager
@@ -788,6 +791,51 @@ contract EchidnaTest {
 
         // slither-disable-next-line unused-return
         actor.transferPrx(address(pcv), musdAmount);
+    }
+
+    // Governable Variables
+
+    function gvStartChangingRolesExt(
+        address _council,
+        address _treasury
+    ) external {
+        governableVariables.startChangingRoles(_council, _treasury);
+    }
+
+    function gvCancelChangingRolesExt() external {
+        governableVariables.cancelChangingRoles();
+    }
+
+    function finalizeChangingRolesExt() external {
+        governableVariables.finalizeChangingRoles();
+    }
+
+    function removeFeeExemptAccountExt(address _account) external {
+        governableVariables.removeFeeExemptAccount(_account);
+    }
+
+    function addFeeExemptAccountExt(address _account) external {
+        governableVariables.addFeeExemptAccount(_account);
+    }
+
+    function removeFeeExemptAccountSafeExt(uint _i) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        governableVariables.removeFeeExemptAccount(
+            address(echidnaProxies[actor])
+        );
+    }
+
+    function addFeeExemptAccountSafeExt(uint _i) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        governableVariables.addFeeExemptAccount(address(echidnaProxies[actor]));
+    }
+
+    function addFeeExemptAccountsExt(address[] calldata _accounts) external {
+        governableVariables.addFeeExemptAccounts(_accounts);
+    }
+
+    function removeFeeExemptAccountsExt(address[] calldata _accounts) external {
+        governableVariables.removeFeeExemptAccounts(_accounts);
     }
 
     // debugging
