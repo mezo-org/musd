@@ -88,7 +88,6 @@ contract TroveManager is
         uint256 totalPrincipalToRedistribute;
         uint256 totalInterestToRedistribute;
         uint256 totalCollToRedistribute;
-        uint256 totalCollSurplus;
     }
 
     struct LocalVariables_LiquidationSequence {
@@ -712,12 +711,6 @@ contract TroveManager is
             totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
-        if (totals.totalCollSurplus > 0) {
-            activePoolCached.sendCollateral(
-                address(collSurplusPool),
-                totals.totalCollSurplus
-            );
-        }
 
         // Update system snapshots
         _updateSystemSnapshotsExcludeCollRemainder(
@@ -727,8 +720,8 @@ contract TroveManager is
 
         vars.liquidatedColl =
             totals.totalCollInSequence -
-            totals.totalCollGasCompensation -
-            totals.totalCollSurplus;
+            totals.totalCollGasCompensation;
+
         emit Liquidation(
             totals.totalPrincipalInSequence,
             totals.totalInterestInSequence,
@@ -1674,10 +1667,6 @@ contract TroveManager is
         newTotals.totalCollToRedistribute =
             oldTotals.totalCollToRedistribute +
             singleLiquidation.collToRedistribute;
-
-        newTotals.totalCollSurplus =
-            oldTotals.totalCollSurplus +
-            singleLiquidation.collSurplus;
 
         return newTotals;
     }
