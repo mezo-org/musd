@@ -670,6 +670,30 @@ contract EchidnaTest {
         borrowerOperations.proposeMinNetDebt(_minNetDebt);
     }
 
+    function proposeBorrowingRateExt(uint256 _rate) external {
+        borrowerOperations.proposeBorrowingRate(_rate);
+    }
+
+    function proposeBorrowingRateSafeExt(uint256 _rate) external {
+        borrowerOperations.proposeBorrowingRate(_rate % 1e18);
+    }
+
+    function approveBorrowingRateExt() external {
+        borrowerOperations.approveBorrowingRate();
+    }
+
+    function proposeRedemptionRateExt(uint256 _rate) external {
+        borrowerOperations.proposeRedemptionRate(_rate);
+    }
+
+    function proposeRedemptionRateSafeExt(uint256 _rate) external {
+        borrowerOperations.proposeRedemptionRate(_rate % 1e18);
+    }
+
+    function approveRedemptionRateExt() external {
+        borrowerOperations.approveRedemptionRate();
+    }
+
     // Interest Rate Manager
 
     function proposeInterestRateExt(uint256 _rate) external {
