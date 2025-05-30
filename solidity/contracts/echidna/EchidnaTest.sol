@@ -877,6 +877,22 @@ contract EchidnaTest {
     ) external {
         pcv.removeRecipientsFromWhitelist(_accounts);
     }
+
+    function startChangingRolesExt(
+        address _council,
+        address _treasury
+    ) external {
+        pcv.startChangingRoles(_council, _treasury);
+    }
+
+    function cancelChangingRolesExt() external {
+        pcv.cancelChangingRoles();
+    }
+
+    function finalizeChangingRoles() external {
+        pcv.finalizeChangingRoles();
+    }
+
     // Governable Variables
 
     function gvStartChangingRolesExt(
