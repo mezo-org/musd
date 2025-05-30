@@ -808,7 +808,6 @@ contract BorrowerOperations is
                 (msg.sender == stabilityPoolAddress &&
                     msg.value > 0 &&
                     _mUSDChange == 0) ||
-                msg.sender == address(this) ||
                 msg.sender == borrowerOperationsSignaturesAddress
         );
 
