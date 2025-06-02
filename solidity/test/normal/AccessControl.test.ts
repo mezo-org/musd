@@ -159,16 +159,6 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   })
 
   describe("TroveManager", () => {
-    it("applyPendingRewards(): reverts when called by an account that is not BorrowerOperations", async () => {
-      await expect(
-        contracts.troveManager
-          .connect(alice.wallet)
-          .applyPendingRewards(alice.address),
-      ).to.be.revertedWith(
-        "TroveManager: Caller is not the BorrowerOperations contract",
-      )
-    })
-
     it("updateTroveRewardSnapshots(): reverts when called by an account that is not BorrowerOperations", async () => {
       await expect(
         contracts.troveManager

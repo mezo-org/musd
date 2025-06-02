@@ -324,6 +324,9 @@ contract EchidnaTest {
         pcv.startChangingRoles(address(this), address(this));
         pcv.finalizeChangingRoles();
         pcv.addRecipientToWhitelist(address(this));
+
+        governableVariables.startChangingRoles(address(this), address(this));
+        governableVariables.finalizeChangingRoles();
     }
 
     // TroveManager
@@ -467,11 +470,56 @@ contract EchidnaTest {
         uint musdAmount = 1800e18 + addedMUSD;
         uint collatRatio = 110 + (_collatRatio % 1000);
         uint price = priceFeed.fetchPrice();
-        uint amountWithFees = musdAmount + musdAmount / 200 + 200e18;
+        uint fee = borrowerOperations.getBorrowingFee(musdAmount);
+        uint amountWithFees = musdAmount + fee + 200e18;
 
         uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
 
         echidnaProxy.openTrovePrx(BTC, musdAmount, address(0), address(0));
+    }
+
+    function openMinCollateralRatioTrove(uint _i, uint _extraMUSD) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        EchidnaProxy echidnaProxy = echidnaProxies[actor];
+        uint addedMUSD = (_extraMUSD % 100_000) * 1e18;
+        uint musdAmount = 1800e18 + addedMUSD;
+        uint collatRatio = 110;
+        uint price = priceFeed.fetchPrice();
+        uint amountWithFees = musdAmount + musdAmount / 1000 + 200e18;
+
+        uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
+
+        echidnaProxy.openTrovePrx(BTC, musdAmount, address(0), address(0));
+    }
+
+    function openTroveWithHints(
+        uint _i,
+        uint _extraMUSD,
+        uint _collatRatio,
+        uint256 _randomSeed
+    ) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        EchidnaProxy echidnaProxy = echidnaProxies[actor];
+        uint addedMUSD = (_extraMUSD % 100_000) * 1e18;
+        uint musdAmount = 1800e18 + addedMUSD;
+        uint collatRatio = 110 + (_collatRatio % 1000);
+        uint price = priceFeed.fetchPrice();
+        uint amountWithFees = musdAmount + musdAmount / 1000 + 200e18;
+
+        uint BTC = (amountWithFees * collatRatio * 1e18) / (100 * price);
+        uint nicr = hintHelpers.computeNominalCR(BTC, amountWithFees);
+
+        // slither-disable-next-line unused-return
+        (address hintAddress, , ) = hintHelpers.getApproxHint(
+            nicr,
+            500,
+            _randomSeed
+        );
+
+        (address upperHint, address lowerHint) = sortedTroves
+            .findInsertPosition(nicr, hintAddress, hintAddress);
+
+        echidnaProxy.openTrovePrx(BTC, musdAmount, upperHint, lowerHint);
     }
 
     function openTroveRawExt(
@@ -641,6 +689,12 @@ contract EchidnaTest {
         echidnaProxies[actor].provideToSPPrx(_amount);
     }
 
+    function provideToSPSafeExt(uint _i, uint _amount) external {
+        EchidnaProxy actor = echidnaProxies[_i % NUMBER_OF_ACTORS];
+        uint256 balance = musd.balanceOf(address(actor));
+        actor.provideToSPPrx(_amount % balance);
+    }
+
     function withdrawFromSPExt(uint _i, uint _amount) external {
         uint actor = _i % NUMBER_OF_ACTORS;
         echidnaProxies[actor].withdrawFromSPPrx(_amount);
@@ -665,6 +719,30 @@ contract EchidnaTest {
 
     function proposeMinNetDebtExt(uint256 _minNetDebt) external {
         borrowerOperations.proposeMinNetDebt(_minNetDebt);
+    }
+
+    function proposeBorrowingRateExt(uint256 _rate) external {
+        borrowerOperations.proposeBorrowingRate(_rate);
+    }
+
+    function proposeBorrowingRateSafeExt(uint256 _rate) external {
+        borrowerOperations.proposeBorrowingRate(_rate % 1e18);
+    }
+
+    function approveBorrowingRateExt() external {
+        borrowerOperations.approveBorrowingRate();
+    }
+
+    function proposeRedemptionRateExt(uint256 _rate) external {
+        borrowerOperations.proposeRedemptionRate(_rate);
+    }
+
+    function proposeRedemptionRateSafeExt(uint256 _rate) external {
+        borrowerOperations.proposeRedemptionRate(_rate % 1e18);
+    }
+
+    function approveRedemptionRateExt() external {
+        borrowerOperations.approveRedemptionRate();
     }
 
     // Interest Rate Manager
@@ -788,6 +866,78 @@ contract EchidnaTest {
 
         // slither-disable-next-line unused-return
         actor.transferPrx(address(pcv), musdAmount);
+    }
+
+    function addRecipientsToWhitelistExt(
+        address[] calldata _accounts
+    ) external {
+        pcv.addRecipientsToWhitelist(_accounts);
+    }
+
+    function removeRecipientsFromWhitelistExt(
+        address[] calldata _accounts
+    ) external {
+        pcv.removeRecipientsFromWhitelist(_accounts);
+    }
+
+    function startChangingRolesExt(
+        address _council,
+        address _treasury
+    ) external {
+        pcv.startChangingRoles(_council, _treasury);
+    }
+
+    function cancelChangingRolesExt() external {
+        pcv.cancelChangingRoles();
+    }
+
+    function finalizeChangingRoles() external {
+        pcv.finalizeChangingRoles();
+    }
+
+    // Governable Variables
+
+    function gvStartChangingRolesExt(
+        address _council,
+        address _treasury
+    ) external {
+        governableVariables.startChangingRoles(_council, _treasury);
+    }
+
+    function gvCancelChangingRolesExt() external {
+        governableVariables.cancelChangingRoles();
+    }
+
+    function finalizeChangingRolesExt() external {
+        governableVariables.finalizeChangingRoles();
+    }
+
+    function removeFeeExemptAccountExt(address _account) external {
+        governableVariables.removeFeeExemptAccount(_account);
+    }
+
+    function addFeeExemptAccountExt(address _account) external {
+        governableVariables.addFeeExemptAccount(_account);
+    }
+
+    function removeFeeExemptAccountSafeExt(uint _i) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        governableVariables.removeFeeExemptAccount(
+            address(echidnaProxies[actor])
+        );
+    }
+
+    function addFeeExemptAccountSafeExt(uint _i) external {
+        uint actor = _i % NUMBER_OF_ACTORS;
+        governableVariables.addFeeExemptAccount(address(echidnaProxies[actor]));
+    }
+
+    function addFeeExemptAccountsExt(address[] calldata _accounts) external {
+        governableVariables.addFeeExemptAccounts(_accounts);
+    }
+
+    function removeFeeExemptAccountsExt(address[] calldata _accounts) external {
+        governableVariables.removeFeeExemptAccounts(_accounts);
     }
 
     // debugging

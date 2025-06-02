@@ -469,12 +469,6 @@ contract TroveManager is
         return _addTroveOwnerToArray(_borrower);
     }
 
-    function applyPendingRewards(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
-
-        return _applyPendingRewards(activePool, defaultPool, _borrower);
-    }
-
     function closeTrove(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
         return _closeTrove(_borrower, Status.closedByOwner);

@@ -78,6 +78,14 @@ interface IBorrowerOperations {
 
     function approveMinNetDebt() external;
 
+    function proposeBorrowingRate(uint256 _fee) external;
+
+    function approveBorrowingRate() external;
+
+    function proposeRedemptionRate(uint256 _fee) external;
+
+    function approveRedemptionRate() external;
+
     function addColl(address _upperHint, address _lowerHint) external payable;
 
     function moveCollateralGainToTrove(
