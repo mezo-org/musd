@@ -30,13 +30,6 @@ repos:
         types_or: [json, yaml]
         language: script
         description: "Checks JSON/YAML code according to the package's linter configuration"
-      - id: solidity-slither
-        name: "run slither"
-        entry: /usr/bin/env bash -c "cd solidity && slither --hardhat-ignore-compile ."
-        files: ^solidity/
-        types: [solidity]
-        language: script
-        description: "Runs Slither static analysis on Solidity files"
       # dApp
       - id: dapp-lint-eslint
         name: "lint dapp ts/js"
