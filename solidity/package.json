@@ -13,7 +13,7 @@
     "format:fix": "npm run lint:ts:fix && npm run lint:sol:fix && npm run lint:config:fix",
     "lint:config": "prettier --check '**/*.@(json|md)'",
     "lint:config:fix": "prettier --write '**/*.@(json|md)'",
-    "lint:sol": "solhint 'contracts/**/*.sol' && prettier --plugin=prettier-plugin-solidity --check 'contracts/**/*.sol'",
+    "lint:sol": "solhint 'contracts/**/*.sol' --max-warnings 0 && prettier --plugin=prettier-plugin-solidity --check 'contracts/**/*.sol'",
     "lint:sol:fix": "solhint 'contracts/**/*.sol' --fix && prettier --plugin=prettier-plugin-solidity --write 'contracts/**/*.sol'",
     "lint:ts": "eslint .",
     "lint:ts:fix": "eslint . --fix",
