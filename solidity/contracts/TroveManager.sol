@@ -871,14 +871,13 @@ contract TroveManager is
     function _updateTroveInterest(address _borrower) internal {
         Trove storage trove = Troves[_borrower];
 
-        // FIXME move solhint disable to here -- only moved below for testing
+        // solhint-disable not-rely-on-time
         trove.interestOwed += InterestRateMath.calculateInterestOwed(
             trove.principal,
             trove.interestRate,
             trove.lastInterestUpdateTime,
             block.timestamp
         );
-        // solhint-disable not-rely-on-time
         trove.lastInterestUpdateTime = block.timestamp;
         // solhint-enable not-rely-on-time
 
