@@ -41,6 +41,37 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         );
     }
 
+    // --- Functions for intra-Liquity calls ---
+
+    function mint(address _account, uint256 _amount) external {
+        require(mintList[msg.sender], "MUSD: Caller not allowed to mint");
+        _mint(_account, _amount);
+    }
+
+    function burn(address _account, uint256 _amount) external {
+        require(burnList[msg.sender], "MUSD: Caller not allowed to burn");
+        _burn(_account, _amount);
+    }
+
+    function transfer(
+        address to,
+        uint256 amount
+    ) public virtual override(ERC20, IERC20) returns (bool) {
+        require(to != address(0), "ERC20: transfer to the zero address");
+        require(to != address(this), "ERC20: transfer to the contract address");
+        return super.transfer(to, amount);
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public override(ERC20, IERC20) returns (bool) {
+        require(to != address(0), "ERC20: transfer to the zero address");
+        require(to != address(this), "ERC20: transfer to the contract address");
+        return super.transferFrom(from, to, amount);
+    }
+
     // --- Governance ---
 
     function addToMintList(address _address) public onlyOwner {
@@ -98,37 +129,6 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
 
         addToMintList(_interestRateManagerAddress);
         emit InterestRateManagerAddressAdded(_interestRateManagerAddress);
-    }
-
-    // --- Functions for intra-Liquity calls ---
-
-    function mint(address _account, uint256 _amount) external {
-        require(mintList[msg.sender], "MUSD: Caller not allowed to mint");
-        _mint(_account, _amount);
-    }
-
-    function burn(address _account, uint256 _amount) external {
-        require(burnList[msg.sender], "MUSD: Caller not allowed to burn");
-        _burn(_account, _amount);
-    }
-
-    function transfer(
-        address to,
-        uint256 amount
-    ) public virtual override(ERC20, IERC20) returns (bool) {
-        require(to != address(0), "ERC20: transfer to the zero address");
-        require(to != address(this), "ERC20: transfer to the contract address");
-        return super.transfer(to, amount);
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public override(ERC20, IERC20) returns (bool) {
-        require(to != address(0), "ERC20: transfer to the zero address");
-        require(to != address(this), "ERC20: transfer to the contract address");
-        return super.transferFrom(from, to, amount);
     }
 
     function nonces(

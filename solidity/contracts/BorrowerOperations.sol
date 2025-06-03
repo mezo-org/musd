@@ -745,6 +745,7 @@ contract BorrowerOperations is
         // slither-disable-start reentrancy-events
         emit TroveCreated(_borrower, vars.arrayIndex);
 
+        // solhint-disable not-rely-on-time
         emit TroveUpdated(
             _borrower,
             vars.compositeDebt,
@@ -755,6 +756,7 @@ contract BorrowerOperations is
             block.timestamp,
             uint8(BorrowerOperation.openTrove)
         );
+        // solhint-enable not-rely-on-time
         emit BorrowingFeePaid(_borrower, vars.fee);
         // slither-disable-end reentrancy-events
     }
@@ -913,6 +915,7 @@ contract BorrowerOperations is
         );
         sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
+        // solhint-disable not-rely-on-time
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
@@ -924,6 +927,7 @@ contract BorrowerOperations is
             block.timestamp,
             uint8(BorrowerOperation.adjustTrove)
         );
+        // solhint-enable not-rely-on-time
         // slither-disable-next-line reentrancy-events
         emit BorrowingFeePaid(_borrower, vars.fee);
 
@@ -1095,6 +1099,7 @@ contract BorrowerOperations is
 
         // slither-disable-start reentrancy-events
         emit RefinancingFeePaid(_borrower, fee);
+        // solhint-disable not-rely-on-time
         emit TroveUpdated(
             _borrower,
             newPrincipal,
@@ -1105,6 +1110,7 @@ contract BorrowerOperations is
             block.timestamp,
             uint8(BorrowerOperation.refinanceTrove)
         );
+        // solhint-enable not-rely-on-time
         // slither-disable-end reentrancy-events
     }
 
