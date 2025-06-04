@@ -139,9 +139,11 @@ contract BorrowerOperationsSignatures is
         );
 
     mapping(address => uint256) private nonces;
+    address public activePoolAddress;
     IBorrowerOperations public borrowerOperations;
     IInterestRateManager public interestRateManager;
 
+    event ActivePoolAddressChanged(address _activePoolAddress);
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress
     );
@@ -160,21 +162,42 @@ contract BorrowerOperationsSignatures is
     }
 
     function setAddresses(
+        address _activePoolAddress,
         address _borrowerOperationsAddress,
         address _interestRateManagerAddress
     ) external onlyOwner {
+        checkContract(_activePoolAddress);
         checkContract(_borrowerOperationsAddress);
         checkContract(_interestRateManagerAddress);
 
         // slither-disable-start missing-zero-check
+        activePoolAddress = _activePoolAddress;
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
         // slither-disable-end missing-zero-check
 
+        emit ActivePoolAddressChanged(_activePoolAddress);
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
 
         renounceOwnership();
+    }
+
+    function setActivePool(address _activePoolAddress) external {
+        require(
+            activePoolAddress == address(0),
+            "BorrowerOperationsSignatures: The active pool is already set"
+        );
+        require(
+            msg.sender == borrowerOperations.governableVariables().council(),
+            "BorrowerOperationsSignatures: Caller is not the council."
+        );
+
+        checkContract(_activePoolAddress);
+
+        // slither-disable-next-line missing-zero-check
+        activePoolAddress = _activePoolAddress;
+        emit ActivePoolAddressChanged(_activePoolAddress);
     }
 
     function addCollWithSignature(
