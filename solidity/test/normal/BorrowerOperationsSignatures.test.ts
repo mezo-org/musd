@@ -31,6 +31,9 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
   let treasury: User
   let contracts: Contracts
 
+  const FAKE_SIGNATURE =
+    "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+
   async function defaultTrovesSetup() {
     // data setup
     const transactions = [
@@ -602,6 +605,21 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
           "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )
       })
+
+      it("reverts when the recipient is the active pool", async () => {
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(bob.wallet)
+            .closeTroveWithSignature(
+              bob.wallet,
+              addresses.activePool,
+              FAKE_SIGNATURE,
+              0n,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOperationsSignatures: recipient must not be the active pool",
+        )
+      })
     })
   })
 
@@ -991,6 +1009,24 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
 
       it("reverts when the asset amount is does not match the signed value", async () => {
         await testRevert({ amount: to1e18(777) })
+      })
+
+      it("reverts when the recipient is the active pool", async () => {
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(bob.wallet)
+            .withdrawCollWithSignature(
+              0n,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              addresses.activePool,
+              FAKE_SIGNATURE,
+              0n,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOperationsSignatures: recipient must not be the active pool",
+        )
       })
     })
   })
@@ -1930,6 +1966,26 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
           "BorrowerOps: Caller doesnt have enough mUSD to make repayment",
         )
       })
+
+      it("reverts when the recipient is the active pool", async () => {
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(bob.wallet)
+            .adjustTroveWithSignature(
+              0n,
+              0n,
+              true,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              ZERO_ADDRESS,
+              addresses.activePool,
+              FAKE_SIGNATURE,
+              0n,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOperationsSignatures: recipient must not be the active pool",
+        )
+      })
     })
   })
 
@@ -2288,6 +2344,21 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
 
       it("reverts when the contract name is not correctly specified", async () => {
         await testRevert({ domainName: "TroveManager" })
+      })
+
+      it("reverts when the recipient is the active pool", async () => {
+        await expect(
+          contracts.borrowerOperationsSignatures
+            .connect(bob.wallet)
+            .claimCollateralWithSignature(
+              ZERO_ADDRESS,
+              addresses.activePool,
+              FAKE_SIGNATURE,
+              0n,
+            ),
+        ).to.be.revertedWith(
+          "BorrowerOperationsSignatures: recipient must not be the active pool",
+        )
       })
     })
   })
