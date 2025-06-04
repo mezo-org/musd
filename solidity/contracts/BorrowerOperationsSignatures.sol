@@ -151,6 +151,14 @@ contract BorrowerOperationsSignatures is
         address _newInterestRateManagerAddress
     );
 
+    modifier properRecipient(address _recipient) {
+        require(
+            _recipient != activePoolAddress,
+            "BorrowerOperationsSignatures: recipient must not be the active pool"
+        );
+        _;
+    }
+
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         __EIP712_init_unchained(SIGNING_DOMAIN, SIGNATURE_VERSION);
@@ -239,7 +247,7 @@ contract BorrowerOperationsSignatures is
         address _recipient,
         bytes memory _signature,
         uint256 _deadline
-    ) external {
+    ) external properRecipient(_recipient) {
         CloseTrove memory closeTroveData = CloseTrove({
             borrower: _borrower,
             recipient: _recipient,
@@ -271,7 +279,7 @@ contract BorrowerOperationsSignatures is
         address _recipient,
         bytes memory _signature,
         uint256 _deadline
-    ) external payable {
+    ) external payable properRecipient(_recipient) {
         AdjustTrove memory adjustTroveData = AdjustTrove({
             collWithdrawal: _collWithdrawal,
             debtChange: _debtChange,
@@ -318,7 +326,7 @@ contract BorrowerOperationsSignatures is
         address _recipient,
         bytes memory _signature,
         uint256 _deadline
-    ) external {
+    ) external properRecipient(_recipient) {
         WithdrawColl memory withdrawCollData = WithdrawColl({
             amount: _amount,
             upperHint: _upperHint,
@@ -507,7 +515,7 @@ contract BorrowerOperationsSignatures is
         address _recipient,
         bytes memory _signature,
         uint256 _deadline
-    ) external {
+    ) external properRecipient(_recipient) {
         ClaimCollateral memory claimCollateralData = ClaimCollateral({
             borrower: _borrower,
             recipient: _recipient,
