@@ -19,7 +19,7 @@ implemented and battle-proven for tBTC bridging from Ethereum to various L2s.
 We are going to implement a `WormholeMUSDGateway` smart contract on Ethereum
 similar to tBTC [`L2WormholeGateway`](https://github.com/threshold-network/tbtc-v2/blob/main/solidity/contracts/cross-chain/wormhole/L2WormholeGateway.sol)
 deployed on various L2s. The MUSD minted on Mezo is bridged to Ethereum using
-Wormhole Bridge contract deployed on Mezo with the `WormholeMUSDGateway`
+Wormhole Token Bridge contract deployed on Mezo with the `WormholeMUSDGateway`
 contract set as an Ethereum token recipient. The `WormholeMUSDGateway` receives
 Wormhole-wrapped MUSD token representation and mints the canonical MUSD on
 Ethereum to the recipient address provided in the bridging payload. The
@@ -27,19 +27,60 @@ reference code is the [`L2WormholeGateway.receiveTbtc`](https://github.com/thres
 The `WormholeMUSDGateway` needs to be added to the MUSD token's mint list on
 Ethereum.
 
+```
++-------------------------------------+          +----------------------------------------------------------------+
+|                Mezo                 |          |                              Ethereum                          |
+|                                     |          |                                                                |
+| +------+  +----------------------+  |          |  +----------------------+  +---------------------+  +------+   |
+| | MUSD |--| Wormhole TokenBridge |--|---->>>---|--| Wormhole TokenBridge |--| WormholeMUSDGateway |--| MUSD |   |
+| +------+  +----------------------+  |          |  +----------------------+  +---------------------+  +------+   |
+|                                     |          |                                                                |
++-------------------------------------+          +----------------------------------------------------------------+
+```
+
+The order of operations is as follows:
+1. The user approves MUSD to the Wormhole Token Bridge contract on Mezo and calls
+   `TokenBridge.transferTokensWithPayload`.
+2. Once the bridging operation completes, the user (or the relayer) calls
+   `WormholeMUSDGateway.receive` function on Ethereum providing signed Wormhole
+   VAA.
+3. That function calls `TokenBridge.completeTransferWithPayload` on Ethereum
+   and mints the canonical MUSD on Ethereum to the recipient address obtained
+   from the bridging payload.
+
 ### Bridging back to Mezo
 
 To send back MUSD to Mezo, the `WormholeMUSDGateway.bridgeOut` function is used
 on Ethereum. If `recipientChain` is not Mezo, the function reverts. The received
 MUSD on Ethereum is burned and bridged back to Mezo using the `transferTokens`
 function of the Wormhole's gateway. Once the token is bridged by Wormhole, MUSD
-is unlocked on Mezo from the Wormhole Bridge contract to the recipient's
+is unlocked on Mezo from the Wormhole Token Bridge contract to the recipient's
 address. The reference code to be implemented on Ethereum is
 [`L2WormholeGateway.sendTbtc`](https://github.com/threshold-network/tbtc-v2/blob/f702144f76b3fc8648ed4eb9d7d9c7113b0f343b/solidity/contracts/cross-chain/wormhole/L2WormholeGateway.sol#L166-L229). We are not interested in bridging to other chains
 for the time being. This RFC aims to implement the simplest solution, allowing
 to bridge from Mezo to Ethereum and the other way round. If necessary, the
 `WormholeMUSDGateway` contract can be upgraded in the future to add canonical
 tokens and gateways on other chains.
+
+
+```
++-------------------------------------+          +----------------------------------------------------------------+
+|                Mezo                 |          |                              Ethereum                          |
+|                                     |          |                                                                |
+| +------+  +----------------------+  |          |  +----------------------+  +---------------------+  +------+   |
+| | MUSD |--| Wormhole TokenBridge |--|----<<<---|--| Wormhole TokenBridge |--| WormholeMUSDGateway |--| MUSD |   |
+| +------+  +----------------------+  |          |  +----------------------+  +---------------------+  +------+   |
+|                                     |          |                                                                |
++-------------------------------------+          +----------------------------------------------------------------+
+```
+
+The order of operations is as follows:
+1. The user approves MUSD to the `WormholeMUSDGateway` and calls the
+   `WormholeMUSDGateway.bridgeOut` function on Ethereum.
+2. That function burns the canonical MUSD and calls `TokenBridge.transferTokens`
+   to transfer the Wormhole wrapped token back to Mezo.
+3. Once the bridging operation completes, the user (or the relayer) redeems MUSD
+   on Mezo, providing signed Wormhole VAA to the Wormhole `TokenBridge` contract.
 
 ### Relaying VAAs
 
@@ -48,7 +89,7 @@ VAA message signed by Wormhole guardians needs to be delivered to the Wormhol
 Bridge contract on that target chain. When MUSD is bridged to Ethereum, that VAA
 is delivered via `WormholeMUSDGateway.receive` function. (see
 `L2WormholeGateway.receiveTbtc` for a reference). When MUSD is bridged back to
-Mezo, that VAA is delivered directly to the Wormhole Bridge contract.
+Mezo, that VAA is delivered directly to the Wormhole Token Bridge contract.
 
 One way to deliver this message is to have the user bridging tokens obtain it
 from Wormhole guardians and execute a redemption transaction on the Wormhole
