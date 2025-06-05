@@ -87,6 +87,38 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
     }
   }
 
+  // @ts-expect-error implicit any is okay here
+  async function verifyPoolRecipientReverts(f, args) {
+    const pools = [
+      {
+        error:
+          "BorrowerOperationsSignatures: recipient must not be the active pool",
+        address: addresses.activePool,
+      },
+      {
+        error:
+          "BorrowerOperationsSignatures: recipient must not be the coll surplus pool",
+        address: addresses.collSurplusPool,
+      },
+      {
+        error:
+          "BorrowerOperationsSignatures: recipient must not be the default pool",
+        address: addresses.defaultPool,
+      },
+      {
+        error:
+          "BorrowerOperationsSignatures: recipient must not be the stability pool",
+        address: addresses.stabilityPool,
+      },
+    ]
+    /* eslint-disable no-restricted-syntax */
+    for (const { error, address } of pools) {
+      const fullArgs = [...args, address, FAKE_SIGNATURE, 0n]
+      await expect(f(...fullArgs)).to.be.revertedWith(error)
+    }
+    /* eslint-enable no-restricted-syntax */
+  }
+
   beforeEach(async () => {
     ;({
       alice,
@@ -606,18 +638,11 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
         )
       })
 
-      it("reverts when the recipient is the active pool", async () => {
-        await expect(
-          contracts.borrowerOperationsSignatures
-            .connect(bob.wallet)
-            .closeTroveWithSignature(
-              bob.wallet,
-              addresses.activePool,
-              FAKE_SIGNATURE,
-              0n,
-            ),
-        ).to.be.revertedWith(
-          "BorrowerOperationsSignatures: recipient must not be the active pool",
+      it("reverts when the recipient is a pool", async () => {
+        await verifyPoolRecipientReverts(
+          contracts.borrowerOperationsSignatures.connect(bob.wallet)
+            .closeTroveWithSignature,
+          [bob.wallet],
         )
       })
     })
@@ -1011,21 +1036,11 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
         await testRevert({ amount: to1e18(777) })
       })
 
-      it("reverts when the recipient is the active pool", async () => {
-        await expect(
-          contracts.borrowerOperationsSignatures
-            .connect(bob.wallet)
-            .withdrawCollWithSignature(
-              0n,
-              ZERO_ADDRESS,
-              ZERO_ADDRESS,
-              ZERO_ADDRESS,
-              addresses.activePool,
-              FAKE_SIGNATURE,
-              0n,
-            ),
-        ).to.be.revertedWith(
-          "BorrowerOperationsSignatures: recipient must not be the active pool",
+      it("reverts when the recipient is a pool", async () => {
+        await verifyPoolRecipientReverts(
+          contracts.borrowerOperationsSignatures.connect(bob.wallet)
+            .withdrawCollWithSignature,
+          [0n, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS],
         )
       })
     })
@@ -1967,23 +1982,11 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
         )
       })
 
-      it("reverts when the recipient is the active pool", async () => {
-        await expect(
-          contracts.borrowerOperationsSignatures
-            .connect(bob.wallet)
-            .adjustTroveWithSignature(
-              0n,
-              0n,
-              true,
-              ZERO_ADDRESS,
-              ZERO_ADDRESS,
-              ZERO_ADDRESS,
-              addresses.activePool,
-              FAKE_SIGNATURE,
-              0n,
-            ),
-        ).to.be.revertedWith(
-          "BorrowerOperationsSignatures: recipient must not be the active pool",
+      it("reverts when the recipient is a pool", async () => {
+        await verifyPoolRecipientReverts(
+          contracts.borrowerOperationsSignatures.connect(bob.wallet)
+            .adjustTroveWithSignature,
+          [0n, 0n, true, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS],
         )
       })
     })
@@ -2346,18 +2349,11 @@ describe("BorrowerOperationsSignatures in Normal Mode", () => {
         await testRevert({ domainName: "TroveManager" })
       })
 
-      it("reverts when the recipient is the active pool", async () => {
-        await expect(
-          contracts.borrowerOperationsSignatures
-            .connect(bob.wallet)
-            .claimCollateralWithSignature(
-              ZERO_ADDRESS,
-              addresses.activePool,
-              FAKE_SIGNATURE,
-              0n,
-            ),
-        ).to.be.revertedWith(
-          "BorrowerOperationsSignatures: recipient must not be the active pool",
+      it("reverts when the recipient is a pool", async () => {
+        await verifyPoolRecipientReverts(
+          contracts.borrowerOperationsSignatures.connect(bob.wallet)
+            .claimCollateralWithSignature,
+          [ZERO_ADDRESS],
         )
       })
     })
