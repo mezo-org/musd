@@ -198,14 +198,16 @@ const {
 );
 
 // Perform redemption
-await troveManager.redeemCollateral(
+if (truncatedAmount > 0) {
+  await troveManager.redeemCollateral(
     truncatedAmount,
     firstRedemptionHint,
     upperPartialRedemptionHint,
     lowerPartialRedemptionHint,
     partialRedemptionHintNICR,
     maxIterations
-);
+  );
+}
 ```
 
 #### Common Issues and Solutions
