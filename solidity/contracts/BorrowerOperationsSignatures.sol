@@ -141,20 +141,38 @@ contract BorrowerOperationsSignatures is
     mapping(address => uint256) private nonces;
     address public activePoolAddress;
     IBorrowerOperations public borrowerOperations;
+    address public collSurplusPoolAddress;
+    address public defaultPoolAddress;
     IInterestRateManager public interestRateManager;
+    address public stabilityPoolAddress;
 
     event ActivePoolAddressChanged(address _activePoolAddress);
     event BorrowerOperationsAddressChanged(
         address _newBorrowerOperationsAddress
     );
+    event CollSurplusPoolAddressChanged(address _newCollSurplusPoolAddress);
+    event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
     event InterestRateManagerAddressChanged(
         address _newInterestRateManagerAddress
     );
+    event StabilityPoolAddressChanged(address _newStabilityPoolAddress);
 
     modifier properRecipient(address _recipient) {
         require(
             _recipient != activePoolAddress,
             "BorrowerOperationsSignatures: recipient must not be the active pool"
+        );
+        require(
+            _recipient != collSurplusPoolAddress,
+            "BorrowerOperationsSignatures: recipient must not be the coll surplus pool"
+        );
+        require(
+            _recipient != defaultPoolAddress,
+            "BorrowerOperationsSignatures: recipient must not be the default pool"
+        );
+        require(
+            _recipient != stabilityPoolAddress,
+            "BorrowerOperationsSignatures: recipient must not be the stability pool"
         );
         _;
     }
@@ -172,29 +190,58 @@ contract BorrowerOperationsSignatures is
     function setAddresses(
         address _activePoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _interestRateManagerAddress,
+        address _stabilityPoolAddress
     ) external onlyOwner {
         checkContract(_activePoolAddress);
         checkContract(_borrowerOperationsAddress);
+        checkContract(_collSurplusPoolAddress);
+        checkContract(_defaultPoolAddress);
         checkContract(_interestRateManagerAddress);
+        checkContract(_stabilityPoolAddress);
 
         // slither-disable-start missing-zero-check
         activePoolAddress = _activePoolAddress;
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
+        collSurplusPoolAddress = _collSurplusPoolAddress;
+        defaultPoolAddress = _defaultPoolAddress;
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        stabilityPoolAddress = _stabilityPoolAddress;
         // slither-disable-end missing-zero-check
 
         emit ActivePoolAddressChanged(_activePoolAddress);
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
+        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
+        emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
+        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
 
         renounceOwnership();
     }
 
-    function setActivePool(address _activePoolAddress) external {
+    function setPoolAddresses(
+        address _activePoolAddress,
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _stabilityPoolAddress
+    ) external {
         require(
             activePoolAddress == address(0),
             "BorrowerOperationsSignatures: The active pool is already set"
+        );
+        require(
+            collSurplusPoolAddress == address(0),
+            "BorrowerOperationsSignatures: The coll surplus pool is already set"
+        );
+        require(
+            defaultPoolAddress == address(0),
+            "BorrowerOperationsSignatures: The default pool is already set"
+        );
+        require(
+            stabilityPoolAddress == address(0),
+            "BorrowerOperationsSignatures: The stability pool is already set"
         );
         require(
             msg.sender == borrowerOperations.governableVariables().council(),
@@ -202,10 +249,21 @@ contract BorrowerOperationsSignatures is
         );
 
         checkContract(_activePoolAddress);
+        checkContract(_collSurplusPoolAddress);
+        checkContract(_defaultPoolAddress);
+        checkContract(_stabilityPoolAddress);
 
-        // slither-disable-next-line missing-zero-check
+        // slither-disable-start missing-zero-check
         activePoolAddress = _activePoolAddress;
+        collSurplusPoolAddress = _collSurplusPoolAddress;
+        defaultPoolAddress = _defaultPoolAddress;
+        stabilityPoolAddress = _stabilityPoolAddress;
+        // slither-disable-end missing-zero-check
+
         emit ActivePoolAddressChanged(_activePoolAddress);
+        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
+        emit DefaultPoolAddressChanged(_defaultPoolAddress);
+        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
     }
 
     function addCollWithSignature(

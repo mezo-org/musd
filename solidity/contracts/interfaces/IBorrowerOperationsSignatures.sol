@@ -6,10 +6,18 @@ interface IBorrowerOperationsSignatures {
     function setAddresses(
         address _activePoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _interestRateManagerAddress,
+        address _stabilityPoolAddress
     ) external;
 
-    function setActivePool(address _activePoolAddress) external;
+    function setPoolAddresses(
+        address _activePoolAddress,
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _stabilityPoolAddress
+    ) external;
 
     function addCollWithSignature(
         address _upperHint,
