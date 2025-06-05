@@ -3091,6 +3091,29 @@ describe("TroveManager in Normal Mode", () => {
           performRedemption(contracts, bob, alice, redemptionAmount),
         ).to.be.revertedWith("TroveManager: Only one trove in the system")
       })
+
+      it("reverts if no trove can be partially redeemed against without going below minimum net debt", async () => {
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        const redemptionAmount = to1e18("10")
+        await expect(
+          performRedemption(contracts, carol, alice, redemptionAmount),
+        ).to.be.revertedWith("TroveManager: Unable to redeem any amount")
+      })
     })
 
     context("Emitted Events", () => {
