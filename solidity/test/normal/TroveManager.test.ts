@@ -2320,6 +2320,29 @@ describe("TroveManager in Normal Mode", () => {
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
     })
 
+    it("redeems as much as possible if a partial redemption would put the last trove below minimum debt", async () => {
+      await setupRedemptionTroves()
+
+      // Alice and Bob's net debt + 300 mUSD.  A partial redemption of 300 mUSD would put Carol below minimum net debt
+      const redemptionAmount = to1e18("6330")
+
+      const redemptionTx = await performRedemption(
+        contracts,
+        dennis,
+        dennis,
+        redemptionAmount,
+      )
+      const { collateralFee } = await getEmittedRedemptionValues(redemptionTx)
+
+      // Check that Dennis received 6030 mUSD worth of collateral
+      await updateWalletSnapshot(contracts, dennis, "after")
+      const currentPrice = await contracts.priceFeed.fetchPrice()
+      const expectedCollateral =
+        (to1e18("6030") * to1e18("1")) / currentPrice - collateralFee
+      const actualCollateral = dennis.btc.after - dennis.btc.before
+      expect(actualCollateral).to.be.closeTo(expectedCollateral, 1000)
+    })
+
     it("doesnt perform the final partial redemption in the sequence if the hint is out-of-date", async () => {
       await setupRedemptionTroves()
 
@@ -3067,6 +3090,29 @@ describe("TroveManager in Normal Mode", () => {
         await expect(
           performRedemption(contracts, bob, alice, redemptionAmount),
         ).to.be.revertedWith("TroveManager: Only one trove in the system")
+      })
+
+      it("reverts if no trove can be partially redeemed against without going below minimum net debt", async () => {
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        const redemptionAmount = to1e18("10")
+        await expect(
+          performRedemption(contracts, carol, alice, redemptionAmount),
+        ).to.be.revertedWith("TroveManager: Unable to redeem any amount")
       })
     })
 

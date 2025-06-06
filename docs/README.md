@@ -153,6 +153,75 @@ Alice now has $950 debt backed by $1250 collateral (132% ratio).
 
 Someone's full debt can be cancelled in this way. For example, if Carol redeemed $1000 instead of $50, then Alice's debt would be fully paid, and she would be left with $300 worth of collateral. The remaining collateral is sent to the `CollSurplusPool`. Alice can collect it by calling `BorrowerOperations.claimCollateral`.
 
+#### Prerequisites
+- The Total Collateral Ratio (TCR) must be above the Minimum Collateral Ratio (MCR)
+- The redeemer must have sufficient MUSD balance
+- The redemption amount must be greater than zero
+
+#### Partial Redemptions
+
+Most redemptions include a partial redemption, because the redeemed amount rarely matches a series of Troves' entire debt exactly.
+
+After a partial redemption, the Trove—with its collateral and debt reduced—is re-inserted into the sorted list and remains active.
+
+Caveat: a partial redemption must never leave a Trove with less than the protocol’s minimum debt. If redeeming the final Trove in the sequence would push its debt below that floor, the system redeems only the maximum amount that keeps the Trove at or above the minimum, and any unused MUSD is returned. This permissible amount can be pre-calculated when generating redemption hints, as discussed later.
+
+#### Calculating Redemption Hints
+
+The system calculates hints by:
+1. Finding the first trove with ICR >= MCR
+2. Simulating the redemption to determine the final state
+3. Computing the nominal ICR for partial redemptions
+4. Finding the correct position in the sorted troves list
+
+See the code below for an example:
+```typescript
+// Get redemption hints
+const {
+    firstRedemptionHint,        // First trove to redeem from
+    partialRedemptionHintNICR,  // Nominal ICR of the last trove after partial redemption
+    truncatedAmount            // Maximum amount that can be redeemed
+} = await hintHelpers.getRedemptionHints(
+    redemptionAmount,
+    currentPrice,
+    maxIterations
+);
+
+// Get insert position hints
+const { 
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint 
+} = await sortedTroves.findInsertPosition(
+    partialRedemptionHintNICR,
+    redeemerAddress,
+    redeemerAddress
+);
+
+// Perform redemption
+if (truncatedAmount > 0) {
+  await troveManager.redeemCollateral(
+    truncatedAmount,
+    firstRedemptionHint,
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint,
+    partialRedemptionHintNICR,
+    maxIterations
+  );
+}
+```
+
+#### Common Issues and Solutions
+
+1. **Redemption Reverts**
+  - If no collateral can be drawn (all troves below MCR)
+  - If partial redemption would leave a trove below minimum debt
+  - If hints are outdated (another transaction modified the system)
+
+2. **Partial Redemption Failures**
+  - Ensure hints are up to date
+  - Consider splitting large redemptions into smaller amounts
+  - Use the `truncatedAmount` from `getRedemptionHints` to know the maximum redeemable amount
+
 ## Supporting Ideas
 
 ### Gas Compensation
