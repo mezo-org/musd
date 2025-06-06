@@ -2,6 +2,8 @@
 
 pragma solidity 0.8.24;
 
+import "./IGovernableVariables.sol";
+
 // Common interface for the Trove Manager.
 interface IBorrowerOperations {
     // --- Events ---
@@ -153,6 +155,8 @@ interface IBorrowerOperations {
         address _borrower,
         address _recipient
     ) external;
+
+    function governableVariables() external view returns (IGovernableVariables);
 
     function getBorrowingFee(uint256 _debt) external view returns (uint);
 

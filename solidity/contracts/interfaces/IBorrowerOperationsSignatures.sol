@@ -4,8 +4,19 @@ pragma solidity 0.8.24;
 
 interface IBorrowerOperationsSignatures {
     function setAddresses(
+        address _activePoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _interestRateManagerAddress,
+        address _stabilityPoolAddress
+    ) external;
+
+    function setPoolAddresses(
+        address _activePoolAddress,
+        address _collSurplusPoolAddress,
+        address _defaultPoolAddress,
+        address _stabilityPoolAddress
     ) external;
 
     function addCollWithSignature(
