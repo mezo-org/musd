@@ -1,0 +1,35 @@
+{
+  "address": "0xA94DD662E2A247493fACCeab9f2459AAF90778Ee",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "prmX",
+          "type": "uint256"
+        }
+      ],
+      "name": "bar",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "x",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x4eb58f27a209b85537c348d17b3107fab2da7450fc58fd62dca6eb6c0ab25817",
+  "numDeployments": 1,
+  "implementation": "0xce4b16b81A28d785FEEB7b1D56a9B97d450D3443",
+  "devdoc": "Contract deployed as upgradable proxy"
+}

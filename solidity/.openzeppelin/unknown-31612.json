@@ -70,6 +70,11 @@
       "address": "0x560AC4Ea44Fb7EB2D4d3c00608CB1CAb2613d389",
       "txHash": "0x3d434ed62ba70a93e8f26ecc6c36d91a78534aae2cc944d77c38d86c5d360bb6",
       "kind": "transparent"
+    },
+    {
+      "address": "0xA94DD662E2A247493fACCeab9f2459AAF90778Ee",
+      "txHash": "0x4eb58f27a209b85537c348d17b3107fab2da7450fc58fd62dca6eb6c0ab25817",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -3703,6 +3708,30 @@
             }
           ]
         }
+      }
+    },
+    "61df0d14564f2ff65655ee9370179d5db622c1f76c2d362f8905fac039c71353": {
+      "address": "0xce4b16b81A28d785FEEB7b1D56a9B97d450D3443",
+      "txHash": "0x738e2cd3a86b5e844e9058f87df4aea3f3aa1835c9ba496431e04010879c751c",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "x",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "Foo",
+            "src": "contracts/Foo.sol:5"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {}
       }
     }
   }
