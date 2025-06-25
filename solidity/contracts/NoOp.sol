@@ -11,4 +11,4 @@ contract NoOp {
     function noOp() external {
         revert("does nothing");
     }
-} 
+}
