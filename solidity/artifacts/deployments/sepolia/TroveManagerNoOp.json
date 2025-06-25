@@ -1,0 +1,50 @@
+{
+  "address": "0x00A5504eFB14373FAF38cB6AB4fc03fDb7762ebE",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "noOp",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x33e330dd24a62849900d8df484b3ca5395d428de5f8d8bc2b8b290b5a9e0876c",
+  "receipt": {
+    "to": null,
+    "from": "0x123694886DBf5Ac94DDA07135349534536D14cAf",
+    "contractAddress": "0x00A5504eFB14373FAF38cB6AB4fc03fDb7762ebE",
+    "transactionIndex": 81,
+    "gasUsed": "89317",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xfb4dcf2144901510d043ef23cacc43b2204f3b3ffb09d5f4bab8d3f98084f58c",
+    "transactionHash": "0x33e330dd24a62849900d8df484b3ca5395d428de5f8d8bc2b8b290b5a9e0876c",
+    "logs": [],
+    "blockNumber": 8628443,
+    "cumulativeGasUsed": "10247445",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "42e46a63bb50ad909ed33aa1ac5062f2",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.24+commit.e11b9ed9\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"noOp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"The noOp function is to ensure the extcodesize is non-zero as      this is a requirement for MUSD system contract.\",\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Empty contract with no functionality. Used as a temporary         system contract for MUSD on Ethereum before the bridge from         Mezo to Ethereum is implemented.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/NoOp.sol\":\"NoOp\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[]},\"sources\":{\"contracts/NoOp.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0\\n\\npragma solidity 0.8.24;\\n\\n/// @notice Empty contract with no functionality. Used as a temporary\\n///         system contract for MUSD on Ethereum before the bridge from\\n///         Mezo to Ethereum is implemented.\\n/// @dev The noOp function is to ensure the extcodesize is non-zero as\\n///      this is a requirement for MUSD system contract.\\ncontract NoOp {\\n    function noOp() external {\\n        revert(\\\"does nothing\\\");\\n    }\\n} \",\"keccak256\":\"0xc496c4052d73492c67d9f414421869ff77f211e8454a63f89edd90d9ec261773\",\"license\":\"GPL-3.0\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b5060a68061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063678d39c614602d575b600080fd5b60336035565b005b60405162461bcd60e51b815260206004820152600c60248201526b646f6573206e6f7468696e6760a01b604482015260640160405180910390fdfea2646970667358221220722cf627bfeec48c20c255a15fc2dd1e69216d3460aca2f637db48316339ed2764736f6c63430008180033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063678d39c614602d575b600080fd5b60336035565b005b60405162461bcd60e51b815260206004820152600c60248201526b646f6573206e6f7468696e6760a01b604482015260640160405180910390fdfea2646970667358221220722cf627bfeec48c20c255a15fc2dd1e69216d3460aca2f637db48316339ed2764736f6c63430008180033",
+  "devdoc": {
+    "details": "The noOp function is to ensure the extcodesize is non-zero as      this is a requirement for MUSD system contract.",
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "notice": "Empty contract with no functionality. Used as a temporary         system contract for MUSD on Ethereum before the bridge from         Mezo to Ethereum is implemented.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
