@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
+
+import "./IGovernableVariables.sol";
 
 // Common interface for the Trove Manager.
 interface IBorrowerOperations {
@@ -44,8 +46,10 @@ interface IBorrowerOperations {
         uint256 _principal,
         uint256 _interest,
         uint256 _coll,
-        uint256 stake,
-        uint8 operation
+        uint256 _stake,
+        uint16 _interestRate,
+        uint256 _lastInterestUpdateTime,
+        uint8 _operation
     );
     event BorrowingFeePaid(address indexed _borrower, uint256 _fee);
     event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
@@ -75,6 +79,14 @@ interface IBorrowerOperations {
     function proposeMinNetDebt(uint256 _minNetDebt) external;
 
     function approveMinNetDebt() external;
+
+    function proposeBorrowingRate(uint256 _fee) external;
+
+    function approveBorrowingRate() external;
+
+    function proposeRedemptionRate(uint256 _fee) external;
+
+    function approveRedemptionRate() external;
 
     function addColl(address _upperHint, address _lowerHint) external payable;
 
@@ -143,6 +155,8 @@ interface IBorrowerOperations {
         address _borrower,
         address _recipient
     ) external;
+
+    function governableVariables() external view returns (IGovernableVariables);
 
     function getBorrowingFee(uint256 _debt) external view returns (uint);
 

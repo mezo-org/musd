@@ -24,11 +24,9 @@ import {
 
 export function waitConfirmationsNumber(networkName: string): number {
   switch (networkName) {
+    case "mainnet":
+      return 6
     case "matsnet":
-      return 6
-    case "mezo":
-      return 6
-    case "sepolia":
       return 6
     default:
       return 1
@@ -43,6 +41,9 @@ type ExternalAddresses = {
 
 export const EXTERNAL_ADDRESSES: ExternalAddresses = {
   matsnet: {
+    PriceOracleCaller: "0x7b7c000000000000000000000000000000000015",
+  },
+  mainnet: {
     PriceOracleCaller: "0x7b7c000000000000000000000000000000000015",
   },
 }

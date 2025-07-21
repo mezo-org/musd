@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -50,6 +50,8 @@ contract BorrowerOperations is
         bool isRecoveryMode;
         uint256 newNICR;
         uint256 maxBorrowingCapacity;
+        uint16 interestRate;
+        uint256 finalMaxBorrowingCapacity;
     }
 
     struct LocalVariables_openTrove {
@@ -61,6 +63,7 @@ contract BorrowerOperations is
         uint256 NICR;
         uint256 stake;
         uint256 arrayIndex;
+        uint16 interestRate;
     }
 
     struct LocalVariables_refinance {
@@ -142,12 +145,12 @@ contract BorrowerOperations is
         refinancingFeePercentage = 20;
         minNetDebt = 1800e18;
 
-        borrowingRate = DECIMAL_PRECISION / 200; // 0.5%
+        borrowingRate = DECIMAL_PRECISION / 1000; // 0.1%
         proposedBorrowingRate = borrowingRate;
         // solhint-disable-next-line not-rely-on-time
         proposedBorrowingRateTime = block.timestamp;
 
-        redemptionRate = DECIMAL_PRECISION / 200; // 0.5%
+        redemptionRate = (DECIMAL_PRECISION * 3) / 400; // 0.75%
         proposedRedemptionRate = redemptionRate;
         // solhint-disable-next-line not-rely-on-time
         proposedRedemptionRateTime = block.timestamp;
@@ -671,9 +674,10 @@ contract BorrowerOperations is
             _requireNewTCRisAboveCCR(newTCR);
         }
 
+        vars.interestRate = contractsCache.interestRateManager.interestRate();
         contractsCache.troveManager.setTroveInterestRate(
             _borrower,
-            contractsCache.interestRateManager.interestRate()
+            vars.interestRate
         );
 
         // Set the trove struct's properties
@@ -741,14 +745,18 @@ contract BorrowerOperations is
         // slither-disable-start reentrancy-events
         emit TroveCreated(_borrower, vars.arrayIndex);
 
+        // solhint-disable not-rely-on-time
         emit TroveUpdated(
             _borrower,
             vars.compositeDebt,
             0,
             msg.value,
             vars.stake,
+            vars.interestRate,
+            block.timestamp,
             uint8(BorrowerOperation.openTrove)
         );
+        // solhint-enable not-rely-on-time
         emit BorrowingFeePaid(_borrower, vars.fee);
         // slither-disable-end reentrancy-events
     }
@@ -802,7 +810,6 @@ contract BorrowerOperations is
                 (msg.sender == stabilityPoolAddress &&
                     msg.value > 0 &&
                     _mUSDChange == 0) ||
-                msg.sender == address(this) ||
                 msg.sender == borrowerOperationsSignaturesAddress
         );
 
@@ -822,6 +829,9 @@ contract BorrowerOperations is
 
         vars.debt = contractsCache.troveManager.getTroveDebt(_borrower);
         vars.coll = contractsCache.troveManager.getTroveColl(_borrower);
+        vars.interestRate = contractsCache.troveManager.getTroveInterestRate(
+            _borrower
+        );
 
         // Get the trove's old ICR before the adjustment, and what its new ICR will be after the adjustment
         vars.oldICR = LiquityMath._computeCR(vars.coll, vars.debt, vars.price);
@@ -887,14 +897,14 @@ contract BorrowerOperations is
                 .troveManager
                 .getTroveMaxBorrowingCapacity(_borrower);
 
-            uint256 finalMaxBorrowingCapacity = LiquityMath._min(
+            vars.finalMaxBorrowingCapacity = LiquityMath._min(
                 currentMaxBorrowingCapacity,
                 newMaxBorrowingCapacity
             );
 
             contractsCache.troveManager.setTroveMaxBorrowingCapacity(
                 _borrower,
-                finalMaxBorrowingCapacity
+                vars.finalMaxBorrowingCapacity
             );
         }
 
@@ -905,6 +915,7 @@ contract BorrowerOperations is
         );
         sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
+        // solhint-disable not-rely-on-time
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
@@ -912,8 +923,11 @@ contract BorrowerOperations is
             vars.newInterest,
             vars.newColl,
             vars.stake,
+            vars.interestRate,
+            block.timestamp,
             uint8(BorrowerOperation.adjustTrove)
         );
+        // solhint-enable not-rely-on-time
         // slither-disable-next-line reentrancy-events
         emit BorrowingFeePaid(_borrower, vars.fee);
 
@@ -974,6 +988,8 @@ contract BorrowerOperations is
         // slither-disable-next-line reentrancy-events
         emit TroveUpdated(
             _borrower,
+            0,
+            0,
             0,
             0,
             0,
@@ -1066,10 +1082,7 @@ contract BorrowerOperations is
             vars.newRate
         );
 
-        vars.troveManagerCached.setTroveInterestRate(
-            _borrower,
-            vars.interestRateManagerCached.interestRate()
-        );
+        vars.troveManagerCached.setTroveInterestRate(_borrower, vars.newRate);
 
         vars.maxBorrowingCapacity = _calculateMaxBorrowingCapacity(
             vars.troveManagerCached.getTroveColl(_borrower),
@@ -1086,14 +1099,18 @@ contract BorrowerOperations is
 
         // slither-disable-start reentrancy-events
         emit RefinancingFeePaid(_borrower, fee);
+        // solhint-disable not-rely-on-time
         emit TroveUpdated(
             _borrower,
             newPrincipal,
             newInterest,
             newColl,
             vars.troveManagerCached.updateStakeAndTotalStakes(_borrower),
+            vars.newRate,
+            block.timestamp,
             uint8(BorrowerOperation.refinanceTrove)
         );
+        // solhint-enable not-rely-on-time
         // slither-disable-end reentrancy-events
     }
 

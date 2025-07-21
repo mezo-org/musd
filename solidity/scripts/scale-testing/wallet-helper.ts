@@ -42,12 +42,12 @@ export default class WalletHelper {
     const encryptedKeys = JSON.parse(fs.readFileSync(encryptedKeysFile, "utf8"))
     let loadedCount = 0
 
-    for (const entry of encryptedKeys) {
-      // If addresses are specified, only load those
-      if (addresses && !addresses.includes(entry.address)) {
-        continue
-      }
+    // Only process the requested addresses
+    const keysToProcess = addresses
+      ? encryptedKeys.filter((entry) => addresses.includes(entry.address))
+      : encryptedKeys
 
+    for (const entry of keysToProcess) {
       try {
         // Decrypt the wallet
         const wallet = await ethers.Wallet.fromEncryptedJson(
@@ -83,5 +83,12 @@ export default class WalletHelper {
    */
   public getAllWallets(): Map<string, ethers.Wallet> {
     return this.walletsByAddress
+  }
+
+  /**
+   * Clear all loaded wallets
+   */
+  public clearWallets(): void {
+    this.walletsByAddress.clear()
   }
 }

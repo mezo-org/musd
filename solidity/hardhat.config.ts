@@ -13,9 +13,37 @@ dotenv.config({
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
+const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+  ? [process.env.MAINNET_PRIVATE_KEY]
+  : []
+
+const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL
+  ? process.env.MAINNET_RPC_URL
+  : ""
+
 const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
   ? [process.env.MATSNET_PRIVATE_KEY]
   : []
+
+const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL
+  ? process.env.ETHEREUM_RPC_URL
+  : ""
+
+const ETHEREUM_PRIVATE_KEY = process.env.ETHEREUM_PRIVATE_KEY
+  ? [process.env.ETHEREUM_PRIVATE_KEY]
+  : []
+
+const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY
+  ? [process.env.SEPOLIA_PRIVATE_KEY]
+  : []
+
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL
+  ? process.env.SEPOLIA_RPC_URL
+  : ""
+
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+  ? process.env.ETHERSCAN_API_KEY
+  : ""
 
 const config: HardhatUserConfig = {
   mocha: {
@@ -31,21 +59,43 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  paths: {
+    artifacts: "./build",
+    deployments: "./artifacts/deployments",
+  },
   typechain: {
     outDir: "typechain",
   },
   networks: {
+    mainnet: {
+      url: MAINNET_RPC_URL,
+      chainId: 31612,
+      accounts: MAINNET_PRIVATE_KEY,
+      tags: ["etherscan"],
+    },
     matsnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
     },
     matsnet_fuzz: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["allowStubs", "etherscan"],
+      tags: ["etherscan"],
+    },
+    sepolia: {
+      url: SEPOLIA_RPC_URL,
+      chainId: 11155111,
+      accounts: SEPOLIA_PRIVATE_KEY,
+      tags: ["etherscan"],
+    },
+    ethereum: {
+      url: ETHEREUM_RPC_URL,
+      accounts: ETHEREUM_PRIVATE_KEY,
+      chainId: 1,
+      tags: ["etherscan"],
     },
     hardhat: {
       initialBaseFeePerGas: 0,
@@ -105,26 +155,46 @@ const config: HardhatUserConfig = {
           balance: "1000000000000000000009",
         },
       ],
-      tags: ["allowStubs"],
-    },
-  },
-  external: {
-    deployments: {
-      sepolia: ["./external/sepolia"],
-      mainnet: ["./external/mainnet"],
     },
   },
   etherscan: {
     apiKey: {
+      mainnet: "empty",
       matsnet: "empty",
+      sepolia: ETHERSCAN_API_KEY,
+      ethereum: ETHERSCAN_API_KEY,
     },
     customChains: [
+      {
+        network: "mainnet",
+        chainId: 31612,
+        urls: {
+          apiURL: "https://api.explorer.mezo.org/api",
+          browserURL: "https://explorer.mezo.org",
+        },
+      },
       {
         network: "matsnet",
         chainId: 31611,
         urls: {
           apiURL: "https://api.explorer.test.mezo.org/api",
           browserURL: "https://explorer.test.mezo.org",
+        },
+      },
+      {
+        network: "sepolia",
+        chainId: 11155111,
+        urls: {
+          apiURL: "https://api-sepolia.etherscan.io/api",
+          browserURL: "https://sepolia.etherscan.io",
+        },
+      },
+      {
+        network: "ethereum",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/api",
+          browserURL: "https://etherscan.io",
         },
       },
     ],
@@ -139,7 +209,12 @@ const config: HardhatUserConfig = {
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
-    strict: false,
+    strict: true,
+    except: [
+      "EchidnaTest",
+      "BorrowerOperationsV2",
+      "BorrowerOperationsFuzzTester",
+    ],
   },
   gasReporter: {
     enabled: true,

@@ -2320,6 +2320,29 @@ describe("TroveManager in Normal Mode", () => {
       expect(carol.trove.debt.after - carol.trove.debt.before).to.equal(0n)
     })
 
+    it("redeems as much as possible if a partial redemption would put the last trove below minimum debt", async () => {
+      await setupRedemptionTroves()
+
+      // Alice and Bob's net debt + 300 mUSD.  A partial redemption of 300 mUSD would put Carol below minimum net debt
+      const redemptionAmount = to1e18("6330")
+
+      const redemptionTx = await performRedemption(
+        contracts,
+        dennis,
+        dennis,
+        redemptionAmount,
+      )
+      const { collateralFee } = await getEmittedRedemptionValues(redemptionTx)
+
+      // Check that Dennis received 6030 mUSD worth of collateral
+      await updateWalletSnapshot(contracts, dennis, "after")
+      const currentPrice = await contracts.priceFeed.fetchPrice()
+      const expectedCollateral =
+        (to1e18("6030") * to1e18("1")) / currentPrice - collateralFee
+      const actualCollateral = dennis.btc.after - dennis.btc.before
+      expect(actualCollateral).to.be.closeTo(expectedCollateral, 1000)
+    })
+
     it("doesnt perform the final partial redemption in the sequence if the hint is out-of-date", async () => {
       await setupRedemptionTroves()
 
@@ -2384,6 +2407,80 @@ describe("TroveManager in Normal Mode", () => {
       expect(
         alice.trove.collateral.after - alice.trove.collateral.before,
       ).to.equal(0n)
+    })
+
+    it("doesn't touch Troves with ICR < 110% even if they are out of order in SortedTroves due to interest", async () => {
+      // Open a trove for Alice with a high ICR so we don't go into recovery mode
+      await openTrove(contracts, {
+        musdAmount: "20000",
+        ICR: "500",
+        sender: alice.wallet,
+      })
+
+      // Open a trove for Bob with a lower ICR and no interest
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: bob.wallet,
+      })
+
+      // Open a trove for Carol with the same ICR as Bob but a high interest rate
+      await setInterestRate(contracts, council, 5000)
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: carol.wallet,
+      })
+
+      // Open a trove for Dennis with the same ICR as Bob and Carol but no interest
+      await setInterestRate(contracts, council, 0)
+      await openTrove(contracts, {
+        musdAmount: "2000",
+        ICR: "200",
+        sender: dennis.wallet,
+      })
+      // Fast-forward time so that Carol's trove is out of order in the sorted list due to interest
+      await fastForwardTime(365 * 24 * 60 * 60) // 1 year in seconds
+
+      // Drop the price so that Dennis and Bob are at 110% ICR and Carol is below due to interest
+      await dropPrice(contracts, deployer, dennis, to1e18("110"))
+
+      // Attempt a redemption
+      await updateTroveSnapshots(contracts, [bob, carol, dennis], "before")
+
+      // Fully redeem two troves (Dennis and Bob)
+      const redemptionAmount =
+        dennis.trove.debt.before +
+        bob.trove.debt.before -
+        2n * (await contracts.troveManager.MUSD_GAS_COMPENSATION())
+      const redemptionTx = await performRedemption(
+        contracts,
+        alice,
+        dennis,
+        redemptionAmount,
+      )
+      const { attemptedMUSDAmount, actualMUSDAmount } =
+        await getEmittedRedemptionValues(redemptionTx)
+
+      // Check that the redemption succeeded
+      expect(attemptedMUSDAmount).to.equal(actualMUSDAmount)
+
+      await updateTroveSnapshots(
+        contracts,
+        [alice, bob, carol, dennis],
+        "after",
+      )
+
+      // Check that Bob and Dennis's troves are fully redeemed
+      expect(await checkTroveClosedByRedemption(contracts, bob)).to.equal(true)
+      expect(await checkTroveClosedByRedemption(contracts, dennis)).to.equal(
+        true,
+      )
+
+      // Carol's trove should be untouched
+      expect(await checkTroveClosedByRedemption(contracts, carol)).to.equal(
+        false,
+      )
     })
 
     it("finds the last Trove with ICR == 110% even if there is more than one", async () => {
@@ -2993,6 +3090,29 @@ describe("TroveManager in Normal Mode", () => {
         await expect(
           performRedemption(contracts, bob, alice, redemptionAmount),
         ).to.be.revertedWith("TroveManager: Only one trove in the system")
+      })
+
+      it("reverts if no trove can be partially redeemed against without going below minimum net debt", async () => {
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: alice.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: bob.wallet,
+        })
+        await openTrove(contracts, {
+          musdAmount: "1800",
+          ICR: "200",
+          sender: carol.wallet,
+        })
+
+        const redemptionAmount = to1e18("10")
+        await expect(
+          performRedemption(contracts, carol, alice, redemptionAmount),
+        ).to.be.revertedWith("TroveManager: Unable to redeem any amount")
       })
     })
 

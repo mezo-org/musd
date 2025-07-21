@@ -4,7 +4,7 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -88,7 +88,6 @@ contract TroveManager is
         uint256 totalPrincipalToRedistribute;
         uint256 totalInterestToRedistribute;
         uint256 totalCollToRedistribute;
-        uint256 totalCollSurplus;
     }
 
     struct LocalVariables_LiquidationSequence {
@@ -253,6 +252,7 @@ contract TroveManager is
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit DefaultPoolAddressChanged(_defaultPoolAddress);
         emit GasPoolAddressChanged(_gasPoolAddress);
+        emit InterestRateManagerAddressChanged(_interestRateManagerAddress);
         emit MUSDTokenAddressChanged(_musdTokenAddress);
         emit PCVAddressChanged(_pcvAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
@@ -371,6 +371,12 @@ contract TroveManager is
                 currentBorrower
             );
 
+            // Skip troves with ICR < MCR
+            if (getCurrentICR(currentBorrower, totals.price) < MCR) {
+                currentBorrower = nextUserToCheck;
+                continue;
+            }
+
             SingleRedemptionValues
                 memory singleRedemption = _redeemCollateralFromTrove(
                     contractsCache,
@@ -393,6 +399,8 @@ contract TroveManager is
                 singleRedemption.principal +
                 singleRedemption.interest;
 
+            // Previous write to this value would hit `continue` statement
+            // slither-disable-next-line write-after-write
             currentBorrower = nextUserToCheck;
         }
         require(
@@ -459,12 +467,6 @@ contract TroveManager is
     ) external override returns (uint256 index) {
         _requireCallerIsBorrowerOperations();
         return _addTroveOwnerToArray(_borrower);
-    }
-
-    function applyPendingRewards(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
-
-        return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
     function closeTrove(address _borrower) external override {
@@ -703,12 +705,6 @@ contract TroveManager is
             totals.totalInterestToRedistribute,
             totals.totalCollToRedistribute
         );
-        if (totals.totalCollSurplus > 0) {
-            activePoolCached.sendCollateral(
-                address(collSurplusPool),
-                totals.totalCollSurplus
-            );
-        }
 
         // Update system snapshots
         _updateSystemSnapshotsExcludeCollRemainder(
@@ -718,8 +714,8 @@ contract TroveManager is
 
         vars.liquidatedColl =
             totals.totalCollInSequence -
-            totals.totalCollGasCompensation -
-            totals.totalCollSurplus;
+            totals.totalCollGasCompensation;
+
         emit Liquidation(
             totals.totalPrincipalInSequence,
             totals.totalInterestInSequence,
@@ -933,6 +929,8 @@ contract TroveManager is
                 trove.interestOwed,
                 trove.coll,
                 trove.stake,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
                 uint8(TroveManagerOperation.applyPendingRewards)
             );
         }
@@ -1113,6 +1111,8 @@ contract TroveManager is
             0,
             0,
             0,
+            0,
+            0,
             uint8(TroveManagerOperation.liquidate)
         );
         return singleLiquidation;
@@ -1213,6 +1213,7 @@ contract TroveManager is
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         // slither-disable-next-line uninitialized-local
         LocalVariables_redeemCollateralFromTrove memory vars;
+        Trove storage trove = Troves[_borrower];
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
         vars.mUSDLot = LiquityMath._min(
             _maxMUSDamount,
@@ -1231,11 +1232,11 @@ contract TroveManager is
 
         // solhint-disable not-rely-on-time
         vars.interestPayment =
-            Troves[_borrower].interestOwed +
+            trove.interestOwed +
             InterestRateMath.calculateInterestOwed(
-                Troves[_borrower].principal,
-                Troves[_borrower].interestRate,
-                Troves[_borrower].lastInterestUpdateTime,
+                trove.principal,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
                 block.timestamp
             );
         // solhint-enable not-rely-on-time
@@ -1264,6 +1265,8 @@ contract TroveManager is
                 0,
                 0,
                 0,
+                0,
+                0,
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         } else {
@@ -1274,7 +1277,7 @@ contract TroveManager is
                 vars.newColl,
                 vars.newPrincipal -
                     InterestRateMath.calculateInterestOwed(
-                        Troves[_borrower].principal,
+                        trove.principal,
                         redeemCollateralVars.interestRate,
                         block.timestamp - 600,
                         block.timestamp
@@ -1312,15 +1315,17 @@ contract TroveManager is
             );
 
             _updateTroveDebt(_borrower, vars.mUSDLot);
-            Troves[_borrower].coll = vars.newColl;
+            trove.coll = vars.newColl;
             _updateStakeAndTotalStakes(_borrower);
 
             emit TroveUpdated(
                 _borrower,
-                Troves[_borrower].principal,
-                Troves[_borrower].interestOwed,
+                trove.principal,
+                trove.interestOwed,
                 vars.newColl,
-                Troves[_borrower].stake,
+                trove.stake,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
                 uint8(TroveManagerOperation.redeemCollateral)
             );
         }
@@ -1656,10 +1661,6 @@ contract TroveManager is
         newTotals.totalCollToRedistribute =
             oldTotals.totalCollToRedistribute +
             singleLiquidation.collToRedistribute;
-
-        newTotals.totalCollSurplus =
-            oldTotals.totalCollSurplus +
-            singleLiquidation.collSurplus;
 
         return newTotals;
     }

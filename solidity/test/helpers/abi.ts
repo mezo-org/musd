@@ -1,5 +1,5 @@
 export const TROVE_UPDATED_ABI = [
-  "event TroveUpdated(address indexed borrower, uint256 principal, uint256 interest, uint256 coll, uint256 stake, uint8 operation)",
+  "event TroveUpdated(address indexed _borrower, uint256 _principal, uint256 _interest, uint256 _coll, uint256 _stake, uint16 _interestRate, uint256 _lastInterestUpdateTime, uint8 _operation)",
 ]
 
 export const LIQUIDATION_ABI = [

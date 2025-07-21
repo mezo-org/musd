@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "../BorrowerOperations.sol";
 import "./IBorrowerOperationsFuzzTester.sol";

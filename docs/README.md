@@ -345,6 +345,75 @@ Flow of Funds
 5. Borrowers excess BTC is sent to the CollSurplusPool
 6. Liquidation reserve is burnt
 
+#### Prerequisites
+- The Total Collateral Ratio (TCR) must be above the Minimum Collateral Ratio (MCR)
+- The redeemer must have sufficient MUSD balance
+- The redemption amount must be greater than zero
+
+#### Partial Redemptions
+
+Most redemptions include a partial redemption, because the redeemed amount rarely matches a series of Troves' entire debt exactly.
+
+After a partial redemption, the Trove—with its collateral and debt reduced—is re-inserted into the sorted list and remains active.
+
+Caveat: a partial redemption must never leave a Trove with less than the protocol’s minimum debt. If redeeming the final Trove in the sequence would push its debt below that floor, the system redeems only the maximum amount that keeps the Trove at or above the minimum, and any unused MUSD is returned. This permissible amount can be pre-calculated when generating redemption hints, as discussed later.
+
+#### Calculating Redemption Hints
+
+The system calculates hints by:
+1. Finding the first trove with ICR >= MCR
+2. Simulating the redemption to determine the final state
+3. Computing the nominal ICR for partial redemptions
+4. Finding the correct position in the sorted troves list
+
+See the code below for an example:
+```typescript
+// Get redemption hints
+const {
+    firstRedemptionHint,        // First trove to redeem from
+    partialRedemptionHintNICR,  // Nominal ICR of the last trove after partial redemption
+    truncatedAmount            // Maximum amount that can be redeemed
+} = await hintHelpers.getRedemptionHints(
+    redemptionAmount,
+    currentPrice,
+    maxIterations
+);
+
+// Get insert position hints
+const { 
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint 
+} = await sortedTroves.findInsertPosition(
+    partialRedemptionHintNICR,
+    redeemerAddress,
+    redeemerAddress
+);
+
+// Perform redemption
+if (truncatedAmount > 0) {
+  await troveManager.redeemCollateral(
+    truncatedAmount,
+    firstRedemptionHint,
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint,
+    partialRedemptionHintNICR,
+    maxIterations
+  );
+}
+```
+
+#### Common Issues and Solutions
+
+1. **Redemption Reverts**
+  - If no collateral can be drawn (all troves below MCR)
+  - If partial redemption would leave a trove below minimum debt
+  - If hints are outdated (another transaction modified the system)
+
+2. **Partial Redemption Failures**
+  - Ensure hints are up to date
+  - Consider splitting large redemptions into smaller amounts
+  - Use the `truncatedAmount` from `getRedemptionHints` to know the maximum redeemable amount
+
 ## Supporting Ideas
 
 ### Gas Compensation
@@ -486,7 +555,7 @@ graph TD
 
 ### Core Smart Contracts
 
-`MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers MUSD tokens.
+`MUSD.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612. The contract mints, burns and transfers mUSD tokens.
 
 `BorrowerOperations.sol` - contains the basic operations by which borrowers interact with their Trove: Trove creation, collateral top-up / withdrawal, stablecoin issuance and repayment. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move collateral/Tokens between Pools or between Pool <> user, where necessary.
 
@@ -530,7 +599,7 @@ graph TD
 
 ### Borrower Operations - `BorrowerOperations.sol`
 
-`openTrove(uint _MUSDAmount, address _upperHint, address _lowerHint)`: payable function that creates a Trove for the caller with the requested debt, and the collateral received. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation.
+`openTrove(uint _debtAmount, address _upperHint, address _lowerHint)`: payable function that creates a Trove for the caller with the requested debt, and the collateral received. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation.
 
 `addColl(address _upperHint, address _lowerHint))`: payable function that adds the received collateral to the caller's active Trove.
 

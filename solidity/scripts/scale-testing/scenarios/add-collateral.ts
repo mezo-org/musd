@@ -56,6 +56,12 @@ async function main() {
     `Selected ${testAccounts.length} accounts with existing troves for testing`,
   )
 
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
+  )
+
   // Load wallets for these accounts
   const addresses = testAccounts.map((account) => account.address)
   const loadedWallets = await walletHelper.loadEncryptedWallets(addresses)
@@ -225,7 +231,11 @@ async function main() {
 
   // Update all Trove states again to ensure data is current
   console.log("\nUpdating Trove states for all accounts...")
-  await stateManager.updateTroveStates(troveManagerAddress)
+  await stateManager.updateTroveStates(
+    troveManagerAddress,
+    testAccounts.map((a) => a.address),
+    200,
+  )
 
   console.log("Test completed!")
 }

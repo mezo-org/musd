@@ -1,0 +1,40 @@
+{
+  "testId": "close-trove-test",
+  "timestamp": "2025-05-20T18:15:29.626Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 2,
+    "failed": 1,
+    "skipped": 0,
+    "gasUsed": "1500000",
+    "transactions": [
+      {
+        "success": true,
+        "hash": "0xb9c4ad1da5a9c9f714c8403dc874c3e69735ec252e5675f5ca299d407ce95e08",
+        "account": "0xEB932870E3cc98d354d6dd977f2cb9531b12E6f9",
+        "collateralReturned": "0.000563697141055461",
+        "debtRepaid": "2990.662131998123988303",
+        "gasUsed": "750000",
+        "duration": 4103
+      },
+      {
+        "success": false,
+        "account": "0x6af2a89085815E28401d0Db10f137D94e1203C59",
+        "error": "transaction execution reverted (action=\"sendTransaction\", data=null, reason=null, invocation=null, revert=null, transaction={ \"data\": \"\", \"from\": \"0x6af2a89085815E28401d0Db10f137D94e1203C59\", \"to\": \"0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90\" }, receipt={ \"_type\": \"TransactionReceipt\", \"blobGasPrice\": null, \"blobGasUsed\": null, \"blockHash\": \"0x106fb370cd02afd3aaa27f98dcd7d4acb5de3a8b17320dfc8dc985127437cea8\", \"blockNumber\": 4670098, \"contractAddress\": null, \"cumulativeGasUsed\": \"2296823\", \"from\": \"0x6af2a89085815E28401d0Db10f137D94e1203C59\", \"gasPrice\": \"11\", \"gasUsed\": \"750000\", \"hash\": \"0x96d52a76220e485e98bf9d7e337c60f605bc7cb39190b0eab1cde780b36c30fd\", \"index\": 4, \"logs\": [  ], \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"root\": null, \"status\": 0, \"to\": \"0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90\" }, code=CALL_EXCEPTION, version=6.13.2)"
+      },
+      {
+        "success": true,
+        "hash": "0x99d587695bc3f0e8dc4579cfd59f8d7dc77dfa9a80eb00f7dc9eb5041acbcf7b",
+        "account": "0x2FDC91333684AaFcD1F00Ae1C44B0831c20a6b56",
+        "collateralReturned": "0.000849175997477646",
+        "debtRepaid": "3221.789957394980602199",
+        "gasUsed": "750000",
+        "duration": 4389
+      }
+    ]
+  }
+}

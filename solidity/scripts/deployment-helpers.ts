@@ -12,7 +12,13 @@ async function getDeploymentAddress(contractName: string): Promise<string> {
   const networkName = network.name === "unknown" ? "hardhat" : network.name
 
   // Path to deployment file
-  const deploymentDir = path.join(__dirname, "..", "deployments", networkName)
+  const deploymentDir = path.join(
+    __dirname,
+    "..",
+    "artifacts",
+    "deployments",
+    networkName,
+  )
   const deploymentFile = path.join(deploymentDir, `${contractName}.json`)
 
   if (!fs.existsSync(deploymentFile)) {

@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/NoOp.sol": {
+      "content": "// SPDX-License-Identifier: GPL-3.0\n\npragma solidity 0.8.24;\n\n/// @notice Empty contract with no functionality. Used as a temporary\n///         system contract for MUSD on Ethereum before the bridge from\n///         Mezo to Ethereum is implemented.\n/// @dev The noOp function is to ensure the extcodesize is non-zero as\n///      this is a requirement for MUSD system contract.\ncontract NoOp {\n    function noOp() external {\n        revert(\"does nothing\");\n    }\n} "
+    }
+  },
+  "settings": {
+    "evmVersion": "london",
+    "optimizer": {
+      "enabled": true,
+      "runs": 100
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "storageLayout",
+          "devdoc",
+          "userdoc",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

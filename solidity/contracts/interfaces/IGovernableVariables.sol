@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 interface IGovernableVariables {
     event FeeExemptAccountAdded(address _account);
