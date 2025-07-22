@@ -25,7 +25,7 @@ abstract contract LiquityBase is BaseMath, ILiquityBase {
     uint256 public constant CCR = 1.5e18; // 150%
 
     // Amount of mUSD to be locked in gas pool on opening troves
-    uint256 public constant MUSD_GAS_COMPENSATION = 200e18;
+    uint256 public constant MUSD_GAS_COMPENSATION = 2e18;
 
     uint256 public constant PERCENT_DIVISOR = 200; // dividing by 200 yields 0.5%
 

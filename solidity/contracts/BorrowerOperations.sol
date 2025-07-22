@@ -96,7 +96,7 @@ contract BorrowerOperations is
     }
 
     string public constant name = "BorrowerOperations";
-    uint256 public constant MIN_NET_DEBT_MIN = 50e18;
+    uint256 public constant MIN_NET_DEBT_MIN = 25e18;
 
     // Connected contract declarations
     ITroveManager public troveManager;
@@ -143,7 +143,7 @@ contract BorrowerOperations is
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         refinancingFeePercentage = 20;
-        minNetDebt = 1800e18;
+        minNetDebt = 25e18;
 
         borrowingRate = DECIMAL_PRECISION / 1000; // 0.1%
         proposedBorrowingRate = borrowingRate;
@@ -376,7 +376,7 @@ contract BorrowerOperations is
     function proposeMinNetDebt(uint256 _minNetDebt) external onlyGovernance {
         require(
             _minNetDebt >= MIN_NET_DEBT_MIN,
-            "Minimum Net Debt must be at least $50."
+            "Minimum Net Debt must be at least $25."
         );
         proposedMinNetDebt = _minNetDebt;
         // solhint-disable-next-line not-rely-on-time
