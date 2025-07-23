@@ -34,9 +34,26 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   )
   const stabilityPool = await deployments.get("StabilityPool")
 
+  if (isFuzzTestingNetwork) {
+    const musdTest = await getValidDeployment("MUSDTester")
+    if (musdTest) {
+      log(`Using MUSDTester at ${musdTest.address}`)
+      return
+    }
+    await getOrDeploy("MUSDTester")
+    await execute(
+      "MUSDTester",
+      "initialize",
+      troveManager.address,
+      stabilityPool.address,
+      borrowerOperations.address,
+      interestRateManager.address,
+    )
+    return
+  }
   // Short-circuit. On Hardhat, we do not use the real token contract for tests.
   // Instead, the MUSDTester is resolved as MUSD.
-  if (isHardhatNetwork || isFuzzTestingNetwork) {
+  if (isHardhatNetwork) {
     await getOrDeploy("MUSDTester")
     await execute(
       "MUSDTester",
