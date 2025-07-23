@@ -36,7 +36,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // Short-circuit. On Hardhat, we do not use the real token contract for tests.
   // Instead, the MUSDTester is resolved as MUSD.
-  if (isHardhatNetwork) {
+  if (isHardhatNetwork || isFuzzTestingNetwork) {
     await getOrDeploy("MUSDTester")
     await execute(
       "MUSDTester",
