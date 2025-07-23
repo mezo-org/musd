@@ -16,7 +16,7 @@ import {
 const TEST_ID = "open-troves-test"
 const NUM_ACCOUNTS = 20 // Number of accounts to use
 const MIN_BTC_BALANCE = "0.0005" // Minimum BTC balance required
-const MUSD_DEBT_AMOUNT = 2200 // Amount of MUSD debt to create - just over the minimum debt
+const MUSD_DEBT_AMOUNT = 26 // Amount of MUSD debt to create - just over the minimum debt
 const BATCH_SIZE = 10 // Number of transactions to send in parallel
 
 // Collateral ratios to test (150%, 200%, 250%, 300%, 350%)
@@ -161,7 +161,12 @@ async function main() {
           verbose: true,
         })
 
-        if (upperHint === ZeroAddress && lowerHint === ZeroAddress) {
+        const numTroves = await sortedTroves.getSize()
+        if (
+          numTroves > 0 &&
+          upperHint === ZeroAddress &&
+          lowerHint === ZeroAddress
+        ) {
           // Bail if no hints are found
           console.log(
             `No hints found for account ${account.address}, skipping transaction`,

@@ -9,7 +9,7 @@ async function getContracts() {
   const troveManagerAddress = await getDeploymentAddress("TroveManager")
   const hintHelpersAddress = await getDeploymentAddress("HintHelpers")
   const sortedTrovesAddress = await getDeploymentAddress("SortedTroves")
-  const musdAddress = await getDeploymentAddress("MUSD")
+  const musdAddress = await getDeploymentAddress("MUSDTester")
   const mockAggregatorAddress = await getDeploymentAddress("MockAggregator")
 
   console.log(`Using BorrowerOperations at: ${borrowerOperationsAddress}`)
@@ -38,7 +38,7 @@ async function getContracts() {
     "SortedTroves",
     sortedTrovesAddress,
   )
-  const musdToken = await ethers.getContractAt("MUSD", musdAddress)
+  const musdToken = await ethers.getContractAt("MUSDTester", musdAddress)
   const mockAggregator = await ethers.getContractAt(
     "MockAggregator",
     mockAggregatorAddress,

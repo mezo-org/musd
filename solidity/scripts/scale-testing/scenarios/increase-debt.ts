@@ -15,7 +15,7 @@ import {
 // Configuration
 const TEST_ID = "increase-debt-test"
 const NUM_ACCOUNTS = 5 // Number of accounts to use
-const MUSD_AMOUNTS = ["100", "200", "300", "400", "500"] // MUSD amounts to borrow
+const MUSD_AMOUNTS = ["1", "2", "3", "4", "5"] // MUSD amounts to borrow
 const BATCH_SIZE = 5 // Number of transactions to send in parallel
 
 async function main() {
