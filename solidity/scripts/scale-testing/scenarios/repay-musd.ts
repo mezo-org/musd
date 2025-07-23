@@ -55,7 +55,7 @@ async function main() {
   // Select accounts for testing - accounts that HAVE troves AND MUSD
   const testAccounts = stateManager.getAccounts({
     hasTrove: true,
-    minMusdBalance: "50", // Minimum MUSD balance to be able to repay
+    minMusdBalance: "5", // Minimum MUSD balance to be able to repay
     notUsedInTest: TEST_ID,
     limit: NUM_ACCOUNTS,
   })

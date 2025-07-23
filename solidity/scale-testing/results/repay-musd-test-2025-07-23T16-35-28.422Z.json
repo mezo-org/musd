@@ -1,0 +1,54 @@
+{
+  "testId": "repay-musd-test",
+  "timestamp": "2025-07-23T16:35:28.422Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 5,
+    "repaymentPercentages": [
+      10,
+      20,
+      30,
+      40,
+      50
+    ],
+    "batchSize": 5
+  },
+  "results": {
+    "successful": 0,
+    "failed": 5,
+    "skipped": 0,
+    "gasUsed": "0",
+    "transactions": [
+      {
+        "success": false,
+        "account": "0xD01b607792e881F3B6546E62b3776d68B29D1787",
+        "repaymentPercentage": 40,
+        "error": "Cannot maintain minimum debt requirement"
+      },
+      {
+        "success": false,
+        "account": "0x238a190BCd231A8B1e3bac56450307b59a42277A",
+        "repaymentPercentage": 30,
+        "error": "Cannot maintain minimum debt requirement"
+      },
+      {
+        "success": false,
+        "account": "0xd5E88091668F51F7539730B1B2205F52A0AB3a62",
+        "repaymentPercentage": 20,
+        "error": "Cannot maintain minimum debt requirement"
+      },
+      {
+        "success": false,
+        "account": "0xF60f1958511549BF1BBf86236DdE7A1d734cD431",
+        "repaymentPercentage": 10,
+        "error": "Cannot maintain minimum debt requirement"
+      },
+      {
+        "success": false,
+        "account": "0xBE9b9f321C488f5bDd495cf57Fe77bD9Ea21Bd0b",
+        "repaymentPercentage": 50,
+        "error": "Cannot maintain minimum debt requirement"
+      }
+    ]
+  }
+}
