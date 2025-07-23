@@ -1,5 +1,5 @@
 {
-  "address": "0x4eD875fE83738271E5d4Ff5A4e4f91c616459F90",
+  "address": "0xB30a386FC0BcaDD35C487F55F11C82C5D67038b5",
   "abi": [
     {
       "inputs": [],
@@ -159,12 +159,38 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "address",
+          "name": "_governableVariablesAddress",
+          "type": "address"
+        }
+      ],
+      "name": "GovernableVariablesAddressChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "uint64",
           "name": "version",
           "type": "uint64"
         }
       ],
       "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_interestRateManagerAddress",
+          "type": "address"
+        }
+      ],
+      "name": "InterestRateManagerAddressChanged",
       "type": "event"
     },
     {
@@ -409,13 +435,25 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "stake",
+          "name": "_stake",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "_interestRate",
+          "type": "uint16"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_lastInterestUpdateTime",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint8",
-          "name": "operation",
+          "name": "_operation",
           "type": "uint8"
         }
       ],
@@ -749,6 +787,19 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governableVariables",
+      "outputs": [
+        {
+          "internalType": "contract IGovernableVariables",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -1263,64 +1314,9 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_activePoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_borrowerOperationsSignaturesAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_collSurplusPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_defaultPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_gasPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_interestRateManagerAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_musdTokenAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_pcvAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_priceFeedAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_sortedTrovesAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_stabilityPoolAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_troveManagerAddress",
-          "type": "address"
+          "internalType": "address[13]",
+          "name": "_addresses",
+          "type": "address[13]"
         }
       ],
       "name": "setAddresses",
@@ -1440,8 +1436,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x4e20c4db908af5afd9a97808294f00b05c28d115c60cc4b2bc91ffb3df797617",
+  "transactionHash": "0x766bde835f379417940dcfe8e436eea617d33268d8a5657d644f11382498951f",
   "numDeployments": 1,
-  "implementation": "0xBb632Fe7a098E0c5b2760F5c93D89804Ee2a7675",
+  "implementation": "0x659ac39D919F038eA9f63006DfC2298372969bf0",
   "devdoc": "Contract deployed as upgradable proxy"
 }
