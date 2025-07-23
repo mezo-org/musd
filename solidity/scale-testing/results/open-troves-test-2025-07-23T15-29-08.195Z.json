@@ -1,0 +1,126 @@
+{
+  "testId": "open-troves-test",
+  "timestamp": "2025-07-23T15:29:08.195Z",
+  "network": "matsnet_fuzz",
+  "config": {
+    "numAccounts": 20,
+    "minBtcBalance": "0.0005",
+    "collateralRatios": [
+      150,
+      200,
+      250,
+      300,
+      350
+    ],
+    "musdDebtAmount": 26,
+    "batchSize": 10
+  },
+  "results": {
+    "successful": 0,
+    "failed": 0,
+    "skipped": 20,
+    "gasUsed": "0",
+    "transactions": [
+      {
+        "success": false,
+        "account": "0x67b18de70e97a2b9399af7370A1d3e3DF5d49Afd",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xBE9b9f321C488f5bDd495cf57Fe77bD9Ea21Bd0b",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x238a190BCd231A8B1e3bac56450307b59a42277A",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x361797bc78cD4cFF5862C8b61A6B737fe16ab696",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xD01b607792e881F3B6546E62b3776d68B29D1787",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xF60f1958511549BF1BBf86236DdE7A1d734cD431",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xd5E88091668F51F7539730B1B2205F52A0AB3a62",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x0Ee40E643509C95F8598AF41B04c4b5EFFF7Fd42",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x8d0d61428100796f37692f36Aff70Cd3f262790C",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xeF9ea6236f349De6acc4ecDD002036dE202eEA3e",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xDB51f9ff2D4800F2C3725B3d81B7D5a4ad955c7e",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xa68e20C56D6148f939F933256a86eC646284d2D4",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x5825281c80A259a885e6e088Bc985b36fe8688eb",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xE96D59e3EBC8b10df638dbdd77c83065861B4765",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xF97342713Ac26a198117E4E5CC1a6c7C34572E95",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xC6285966130142a046f7503272ee735513f9d18B",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x356E471bCEC5AC59F8C483A99e1A0338bba2c108",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0xddF9611FAA104B5Add6a4C0799c02d337E1f929f",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x55be6e93c32dD77f39D04e1dF919f7f6277E055F",
+        "error": "no hints found - skipped"
+      },
+      {
+        "success": false,
+        "account": "0x19D6e5fD2557A2537224c04b63D9dC9e101a98D8",
+        "error": "no hints found - skipped"
+      }
+    ]
+  }
+}
