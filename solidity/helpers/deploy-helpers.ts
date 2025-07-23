@@ -123,9 +123,10 @@ export async function fetchAllDeployedContracts(
   const mockAggregator: MockAggregator =
     await getDeployedContract("MockAggregator")
 
-  const musd = isHardhatNetwork
-    ? await getDeployedContract("MUSDTester")
-    : await getDeployedContract("MUSD")
+  const musd =
+    isHardhatNetwork || isFuzzTestingNetwork
+      ? await getDeployedContract("MUSDTester")
+      : await getDeployedContract("MUSD")
 
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")

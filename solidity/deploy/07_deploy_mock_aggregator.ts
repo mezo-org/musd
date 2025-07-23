@@ -15,4 +15,4 @@ func.tags = ["MockAggregator"]
 
 // Only execute for hardhat
 func.skip = async (hre: HardhatRuntimeEnvironment): Promise<boolean> =>
-  hre.network.name !== "hardhat"
+  hre.network.name !== "hardhat" && hre.network.name !== "matsnet_fuzz"
