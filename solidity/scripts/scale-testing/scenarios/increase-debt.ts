@@ -283,7 +283,7 @@ async function main() {
 
   // Update MUSD balances
   console.log("Updating MUSD balances for all accounts...")
-  const musdAddress = await getDeploymentAddress("MUSD")
+  const musdAddress = await getDeploymentAddress("MUSDTester")
   await stateManager.updateMusdBalances(musdAddress)
 
   // Update BTC balances
