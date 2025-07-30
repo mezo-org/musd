@@ -32,6 +32,29 @@ MUSD has the following parameters:
 
 - There will be a minimum collateralization ratio (CR) for microloans that is higher than the minimum for MUSD (e.g. 115%).
 - If the user's CR falls below this threshold, the loan is eligible for liquidation.
-- The `liquidate` function marks the user's trove as closed by liquidation, withdraws the user's collateral from the contract’s main trove, and sells it. The proceeds are used to pay down the user’s portion of the debt in the main trove.  Exact mechanism to be discussed later.
+- Liquidation marks the user's trove as closed by liquidation, withdraws the user's collateral from the contract’s main trove, and sells it. The proceeds are used to pay down the user’s portion of the debt in the main trove.  Exact mechanism to be discussed later.
 - **Example:** If the user deposited $50 of collateral and the value drops to $28.75, `liquidate` would sell the collateral for $28.75, pay off the $25 debt, and have $3.75 left over. This excess can be used as an incentive for liquidators.
 - After liquidation, the user's collateral cannot be reclaimed by them.
+
+### Collateralization, Liquidation Buffer, and Catastrophic Scenarios
+
+- As the price of collateral falls, individual microloans get liquidated when they drop below the minimum CR (e.g. 115%, providing a 5% buffer over MUSD’s 110% minimum). This buffer is intended to allow the system to sell the user’s collateral and cover the corresponding debt before the main trove is jeopardized.
+- In scenarios where there is a highly overcollateralized main trove with a number of lower CR microloans, the liquidation of these lower CR microloans helps to keep the main trove healthy by continuously paying down its debt.
+- This setup works except in a scenario where the initial $2,000 loan itself is at risk of liquidation, and it is the main factor pulling down the average CR.
+- To mitigate catastrophic scenarios, one approach is to initially open the $2,000 loan with a high collateralization ratio (for example, 500%). This provides a buffer, so that even if the price drops severely (e.g. to 20% of its original value), the main trove is still protected up to that point.
+- By also imposing a maximum on the collateralization ratio of microloans (equal to the main trove’s current CR), it would prevent microloans from ever being more overcollateralized than the main trove. This would in theory ensure that there cannot be a situation where the pool is wiped out due to a single main trove liquidation while some microloans are fully collateralized.
+
+#### Considerations with Interest Rate Drift
+
+- The main trove and individual microloans may have different interest rates; for example, the protocol might pay 1% on the main trove and charge microloan users 2% or 3%. This causes microloans’ effective CR to decline faster than the main trove’s, which over time could allow a microloan to exceed the CR of the main trove if the price drops and new loans open at a higher CR.
+- One solution is to implement a **dynamic collateralization cap** for new microloans: at the time of opening, the collateralization ratio of any microloan cannot exceed the current CR of the main trove.
+- There are two design options for compensating for risk and protocol costs:
+  - Use a calculated buffer based on expected average loan hold time, acknowledging that some microloans may never be repaid and will need to be liquidated.
+  - Alternatively, use a higher origination fee (rather than a higher ongoing interest rate) to cover protocol expenses and risk, which can discourage very short-term or low-value microloans.
+- Additionally, it is possible to use a combination of a dynamic interest rate buffer and a higher origination fee, or to set the microloan and main trove interest rates to be equal and use the origination fee to control protocol revenue and user incentives.
+
+> **Open design question:**  
+> Which approach makes the most sense:  
+> (1) Charging a higher interest rate on microloans (with a buffer to compensate for interest drift),  
+> (2) Charging a higher origination fee up-front,  
+> or (3) setting the interest rates equal and using just the origination fee to compensate the protocol?
