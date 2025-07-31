@@ -9,8 +9,8 @@
 ## Background on MUSD
 
 MUSD has the following parameters:
-- minimum debt of 1800 musd
-- 200 musd gas compensation added to initial debt that is refunded when the trove is closed. this is used as liquidation reward if the user is liquidated and is not actual debt in the usual sense.
+- Minimum debt of 1800 MUSD
+- 200 MUSD gas compensation added to initial debt that is refunded when the trove is closed. this is used as liquidation reward if the user is liquidated and is not actual debt in the usual sense.
 - 0.1% origination fee
 - 20% of origination fee charged for refinancing
 - Maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. This is set at the time of loan origination and only increases when the loan is refinanced.
