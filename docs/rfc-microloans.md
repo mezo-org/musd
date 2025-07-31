@@ -21,8 +21,9 @@ MUSD has the following parameters:
 
 - Create a new protocol, called Microloans, allowing users to borrow smaller amounts (for example, $25).
 - The Microloans contract takes out a loan from MUSD for the minimum amount (e.g. 1,800 MUSD) at an initial safe collateralization ratio (e.g. 200%).
-- When a user wants to borrow (for example, $25), the system accepts collateral from the user above the MUSD minimum CR (e.g. 200%), adds the collateral to its main trove, and increases the trove’s debt by the requested amount.  
-  **Example:** The user deposits $50 worth of collateral and borrows an additional $25.
+- When a user wants to borrow a smaller amount (e.g. $25), the system accepts collateral from the user, adds the collateral to its main trove, and increases the trove’s debt by the requested amount. 
+  **Note:** The collateral amount required to open a microloan must meet a minimum CR that is higher than the MUSD minimum (exact amount TBD).
+  **Example:** The user deposits $50 worth of collateral and borrows an additional $25 (200% CR).  The Microloans contract adds $50 worth of collateral to its trove and borrows 25 MUSD which it then sends to the user.
 - Users pay an origination fee when their loan is opened and accumulate ongoing interest, which is tracked as part of their debt. When the user wants to close the loan, they repay their original borrowed amount, the origination fee, and any accrued interest. Repaying this amount allows them to withdraw all their collateral.
 - When a user closes their microloan, the contract uses the MUSD repayment to pay down the associated debt in the main trove and returns the corresponding collateral to the user.
 
