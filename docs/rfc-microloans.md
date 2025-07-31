@@ -26,6 +26,11 @@ MUSD has the following parameters:
   **Example:** The user deposits $50 worth of collateral and borrows an additional $25 (200% CR).  The Microloans contract adds $50 worth of collateral to its trove and borrows 25 MUSD which it then sends to the user.
 - Users pay an origination fee when their loan is opened and accumulate ongoing interest, which is tracked as part of their debt. When the user wants to close the loan, they repay their original borrowed amount, the origination fee, and any accrued interest. Repaying this amount allows them to withdraw all their collateral.
 - When a user closes their microloan, the contract uses the MUSD repayment to pay down the associated debt in the main trove and returns the corresponding collateral to the user.
+- Loan adjustments (adding or withdrawing collateral, increasing or decreasing debt) work much the same as opening or closing.
+  - Additional collateral is added to the main trove.  Note that their may be some limitations on maximum CR for microloans that will be discussed later.
+  - Withdrawn collateral is sent to the user.
+  - Increasing debt causes the Microloans contract to borrow more MUSD and send it to the user.
+  - Decreasing debt pays down debt on the main trove, with the same caveat as adding collateral (CR cannot exceed the maximum).
 
 ### Liquidations
 
