@@ -110,3 +110,12 @@ On calling `liquidate`:
 - This setup works except in a scenario where the initial $2,000 loan itself is at risk of liquidation, and it is the main factor pulling down the average CR.
 - To mitigate catastrophic scenarios, one approach is to initially open the $2,000 loan with a high collateralization ratio (for example, 500%). This provides a buffer, so that even if the price drops severely (e.g. to 20% of its original value), the main trove is still protected up to that point.
 - By also imposing a maximum on the collateralization ratio of microloans (equal or less than the main trove’s current CR), it would prevent microloans from ever being more overcollateralized than the main trove. This would in theory ensure that there cannot be a situation where the pool is wiped out due to a single main trove liquidation while some microloans are fully collateralized.
+
+### Fee Exemption and Maximum Borrowing Capacity
+
+As mentioned earlier, MUSD sets a maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. 
+This is set at the time of loan origination and only increases when the loan is refinanced.  Because the Microloans contract
+will need to frequently increase its debt, it may need to call `refinance` at times in order to increase its maximum borrowing capacity.
+Normally, this would come with a fee charged on the entire debt of the trove.  This would result in an unfair fee being
+passed on to Microloans users, so the simplest solution is to make the Microloans contract fee exempt in MUSD.  This means it will
+not pay a fee for borrowing or refinancing which makes dynamically sizing its trove much cheaper and simpler.
