@@ -130,6 +130,118 @@ trove operations to only those that would improve the TCR (such as adding collat
 protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
 to offset user actions.
 
+### Test Vectors and Numerical Examples
+
+This section provides concrete numerical examples for key interactions between Microloans and MUSD.  These examples can be used to verify the design before implementation and to test the system once built.
+
+##### Assumptions for All Examples
+- BTC price: $100,000
+- MUSD minimum debt: 1,800 MUSD
+- MUSD gas compensation: 200 MUSD
+- MUSD interest rate: 1%
+- MUSD minimum CR: 110%
+- Microloans minimum CR: 115%
+- Microloans origination fee: 0.5%
+- Microloans interest rate: 5% APR
+- Main trove initial CR: 300%
+
+##### Test Vector 1: Initial State Setup
+
+**Inputs:**
+- BTC price: $100,000
+- Desired main trove CR: 300%
+- MUSD minimum debt: 1,800 MUSD
+- MUSD gas compensation: 200 MUSD
+
+**Calculations:**
+- Required BTC collateral = (1,800 MUSD + 200 MUSD) * 300% / 100,000 = 0.06 (note no origination fee since Microloans is fee exempt)
+- Main trove debt = 1,800 MUSD (minimum)
+- Main trove collateral = 0.06 BTC
+- Main trove CR = (0.06 BTC × $100,000) / 2,000 MUSD = 300%
+
+**Expected State:**
+```
+Main Trove:
+- Collateral: 0.06 BTC ($6000)
+- Debt: 2000 MUSD
+- CR: 300%
+- Max borrowing capacity: ~5454.54 MUSD (at 110% CR)
+```
+
+#### Test Vector 2: Opening a Microloan
+
+**Inputs:**
+- User wants to borrow: 25 MUSD
+- BTC price: $100,000
+- Microloans minimum CR: 115%
+- Origination fee: 0.5%
+
+**Calculations:**
+- Origination fee = 25 MUSD * 0.5% = 0.125 MUSD
+- Total debt = 25 MUSD + 0.125 MUSD = 25.125 MUSD
+- Required BTC collateral = (25.125 MUSD * 115%) / $100,000 = 0.0002889375 BTC
+
+**Expected State After Opening:**
+```
+Main Trove:
+- Collateral: 0.0602889375 BTC
+- Debt: 2,025 MUSD (note the origination fee is not included)
+- CR: 297.7%
+
+User MicroTrove:
+- Collateral:  0.0002889375 BTC
+- Debt: 25.125 MUSD
+- CR: 115%
+- Interest rate: 5% APR
+```
+
+#### Test Vector 3: Adding Collateral to Microloan
+
+**Inputs:**
+- User adds: 0.0001 BTC ($10)
+- Current BTC price: $100,000
+
+**Calculations:**
+- New user collateral = 0.0002889375 BTC + 0.0001 BTC = 0.0003889375 BTC
+- New user CR = (0.0003889375 * 100,000) / 25.125) * 100% = 154.8%
+
+**Expected State After Adding Collateral:**
+```
+Main Trove:
+- Collateral: 0.0603889375 BTC
+- Debt: 2025 MUSD
+- CR: 298.2%
+
+User MicroTrove:
+- Collateral: 0.0003889375 BTC
+- Debt: 25.125 MUSD
+- CR: 154.8%
+```
+
+#### Test Vector 4: Increasing Debt on Microloan
+
+TODO
+
+#### Test Vector 5: Interest Accrual
+
+TODO
+
+#### Test Vector 6: Liquidation Scenario
+
+TODO
+
+#### Test Vector 7: Closing a Microloan
+
+TODO
+
+#### Test Vector 8: Recovery Mode Scenario
+
+TODO
+
+#### Test Vector 10: Refinancing Scenario
+
+TODO
+
 ### Future Work
 
 #### Promotions
@@ -161,3 +273,4 @@ the terms of the Microloans can be variable.  Some examples:
 - What are the fees?
 - What are the other parameters (minimum/maximum CR for microloans)?
 - What happens if there are changes in MUSD that impact Microloans?  For example, suppose the global interest rate is increased.  Would we then increase the interest rate on Microloans?
+- What happens to fees collected (such as origination fees and interest)?
