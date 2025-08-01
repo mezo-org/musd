@@ -49,18 +49,37 @@ Additionally, liquidations will work slightly differently in Microloans, althoug
 
 ### Implementation
 
-- Create a new protocol, called Microloans, allowing users to borrow smaller amounts (for example, $25).
-- The Microloans contract takes out a loan from MUSD for the minimum amount (e.g. 1,800 MUSD) at an initial safe collateralization ratio (e.g. 200%).
-- When a user wants to borrow a smaller amount (e.g. $25), the system accepts collateral from the user, adds the collateral to its main trove, and increases the trove’s debt by the requested amount. 
-  **Note:** The collateral amount required to open a microloan must meet a minimum CR that is higher than the MUSD minimum (exact amount TBD).
-  **Example:** The user deposits $50 worth of collateral and borrows an additional $25 (200% CR).  The Microloans contract adds $50 worth of collateral to its trove and borrows 25 MUSD which it then sends to the user.
-- Users pay an origination fee when their loan is opened and accumulate ongoing interest, which is tracked as part of their debt. When the user wants to close the loan, they repay their original borrowed amount, the origination fee, and any accrued interest. Repaying this amount allows them to withdraw all their collateral.
-- When a user closes their microloan, the contract uses the MUSD repayment to pay down the associated debt in the main trove and returns the corresponding collateral to the user.
-- Loan adjustments (adding or withdrawing collateral, increasing or decreasing debt) work much the same as opening or closing.
-  - Additional collateral is added to the main trove.  Note that their may be some limitations on maximum CR for microloans that will be discussed later.
-  - Withdrawn collateral is sent to the user.
-  - Increasing debt causes the Microloans contract to borrow more MUSD and send it to the user.
-  - Decreasing debt pays down debt on the main trove, with the same caveat as adding collateral (CR cannot exceed the maximum).
+#### Initial State
+
+- The Microloans contract takes out a loan from MUSD for the minimum amount (e.g. 1,800 MUSD) at an initial safe collateralization ratio (e.g. 300%).
+
+#### Opening a Microloan
+
+- A user wants to borrow a smaller amount (e.g. $25).
+- The system accepts collateral from the user (e.g. $50 worth for a 200% CR loan).
+**Note:** The collateral amount required to open a microloan must meet a minimum CR that is higher than the MUSD minimum (exact amount TBD).
+- The system adds the collateral to its main trove and increases the main trove’s debt by the requested amount. 
+- The system sends the borrowed MUSD to the user and creates a MicroTrove to track their collateral and debt.
+- In addition to the amount borrowed, an origination fee will be added to the user's initial debt.
+- An ongoing fixed interest rate will be also be charged on the user's debt.
+
+#### Closing a Microloan
+
+- A user wants to close their Microloan.
+- The system accepts MUSD from the user equal to their debt including any interest accrued.
+- This MUSD is used to decrease the debt in the main trove.
+- The user's original collateral amount is withdrawn from the main trove.
+- The user's collateral is sent back to the user and the MicroTrove is marked as Closed.
+
+#### Adjusting a Microloan
+
+Loan adjustments (adding or withdrawing collateral, increasing or decreasing debt) work much the same as opening or closing:
+- Additional collateral is added to the main trove.
+- Withdrawn collateral is sent to the user.
+- Increasing debt causes the Microloans contract to borrow more MUSD and send it to the user.
+- Decreasing debt pays down debt on the main trove.
+
+Note that these actions are subject to some limitations due to CR constraints, to be discussed later.
 
 ### Liquidations
 
