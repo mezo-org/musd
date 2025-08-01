@@ -83,17 +83,24 @@ Note that these actions are subject to some limitations due to CR constraints, t
 
 ### Liquidations
 
-- There will be a minimum collateralization ratio (CR) for microloans that is higher than the minimum for MUSD (e.g. 115%).
+- There will be a minimum collateralization ratio (CR) for microloans that is higher than the minimum for MUSD.  This is to
+provide a buffer so that the microloans can be liquidated *before* the main trove is at risk of liquidation.
 - If the user's CR falls below this threshold, the loan is eligible for liquidation.
-- Liquidation means:
-  - The user's trove is marked as closed by liquidation and they can no longer reclaim their collateral.
-  - The user's collateral is withdrawn from the main trove and sold (mechanism TBD).
-  - Proceeds used to pay down the user's portion of the trove's debt.
-  - Additional proceeds can be used for liquidation incentives and/or protocol revenue.
-  - **Example:** If the user deposited $50 of collateral and the value drops to $28.75, `liquidate` would sell the collateral for $28.75, pay off the $25 debt, and have $3.75 left over. This excess can be used as an incentive for liquidators.
-- Possible liquidation mechanisms:
-  - public `liquidate` function that distributes some amount of the collateral excess to the caller and "sells" the rest
-  - "selling" could either use the existing MUSD/BTC pool, or it could mean that the caller of `liquidate` must pay the MUSD debt, essentially buying BTC at a discount
+- Once a loan is liquidated, the user's trove is marked as closed by liquidation, and they can no longer reclaim their collateral.
+
+#### Liquidation Mechanism
+
+There is a public `liquidate` function callable by anyone that can supply:
+- A MicroTrove address that is eligible for liquidation
+- MUSD equal to the MicroTrove's debt
+
+On calling `liquidate`:
+- The MUSD from the caller is used to pay down the main trove's debt by the MicroTrove's debt amount
+- The MicroTrove's collateral is sent to the caller.  Note this should be profitable for the caller as the trove is overcollateralized.
+- For example if the user deposited $50 of collateral to borrow $25 and the value of the collateral drops to $28.75:
+  - Caller provides $25 of collateral to `liquidate`
+  - `liquidate` pays down the outstanding debt and sends $28.75 worth of collateral to the caller, netting a profit of $3.75.
+- The user's trove is marked as closed by liquidation.
 
 ### Collateralization, Liquidation Buffer, and Catastrophic Scenarios
 
