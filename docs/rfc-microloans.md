@@ -155,3 +155,9 @@ the terms of the Microloans can be variable.  Some examples:
 - Loans backed by other forms of collateral (would require additional risk management logic).
 
 ### Open Questions
+
+- What should be the collateralization ratio of the main trove when it is initially opened?
+- Who will run the liquidation bot?  We can run it or we can open source it and allow others to handle the operation.
+- What are the fees?
+- What are the other parameters (minimum/maximum CR for microloans)?
+- What happens if there are changes in MUSD that impact Microloans?  For example, suppose the global interest rate is increased.  Would we then increase the interest rate on Microloans?
