@@ -51,6 +51,7 @@ Additionally, liquidations will work slightly differently in Microloans, althoug
 
 #### Initial State
 
+- The Microloans contract is added to the fee exempt array in MUSD.  This allows it to borrow MUSD without paying a fee.
 - The Microloans contract takes out a loan from MUSD for the minimum amount (e.g. 1,800 MUSD) at an initial safe collateralization ratio (e.g. 300%).
 
 #### Opening a Microloan
