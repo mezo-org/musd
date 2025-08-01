@@ -130,4 +130,20 @@ trove operations to only those that would improve the TCR (such as adding collat
 protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
 to offset user actions.
 
+### Future Work
 
+#### Promotions
+
+We could allow for users to "promote" their microloans to full MUSD troves.  They could do this by hand by closing their
+Microloan and opening a trove in MUSD, but for convenience we could provide a mechanism that would do it for them.  
+
+For example, say a user has a microtrove with $50 in debt and $100 worth of collateral. They show up with $2900 worth of 
+collateral (picked so that their promoted trove is at 150% CR with minimum debt, this could be any other amount that results
+in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD trove:
+
+- Contract accepts the $2900 of collateral and withdraws the user's $100 of collateral from its trove.
+- Contract calls openTroveWithSignature with the borrower as the _borrower parameter and itself as the _recipient.
+- Contract receives 2000 MUSD, uses 50 of it to decrease its debt (from the microtrove) and sends the remaining 1950 to the user.
+- The user now has their desired position: 2000 in MUSD debt (plus some fees) backed by 3k of collateral.
+
+### Open Questions
