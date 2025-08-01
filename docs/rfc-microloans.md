@@ -82,14 +82,14 @@ Loan adjustments (adding or withdrawing collateral, increasing or decreasing deb
 
 Note that these actions are subject to some limitations due to CR constraints, to be discussed later.
 
-### Liquidations
+#### Liquidations
 
 - There will be a minimum collateralization ratio (CR) for microloans that is higher than the minimum for MUSD.  This is to
 provide a buffer so that the microloans can be liquidated *before* the main trove is at risk of liquidation.
 - If the user's CR falls below this threshold, the loan is eligible for liquidation.
 - Once a loan is liquidated, the user's trove is marked as closed by liquidation, and they can no longer reclaim their collateral.
 
-#### Liquidation Mechanism
+##### Liquidation Mechanism
 
 There is a public `liquidate` function callable by anyone that can supply:
 - A MicroTrove address that is eligible for liquidation
@@ -103,7 +103,9 @@ On calling `liquidate`:
   - `liquidate` pays down the outstanding debt and sends $28.75 worth of collateral to the caller, netting a profit of $3.75.
 - The user's trove is marked as closed by liquidation.
 
-### Collateralization, Liquidation Buffer, and Catastrophic Scenarios
+### Limitations
+
+#### Collateralization, Liquidation Buffer, and Catastrophic Scenarios
 
 - As the price of collateral falls, individual microloans get liquidated when they drop below the minimum CR (e.g. 115%, providing a 5% buffer over MUSD’s 110% minimum). This buffer is intended to allow the system to sell the user’s collateral and cover the corresponding debt before the main trove is jeopardized.
 - In scenarios where there is a highly overcollateralized main trove with a number of lower CR microloans, the liquidation of these lower CR microloans helps to keep the main trove healthy by continuously paying down its debt.
@@ -111,7 +113,7 @@ On calling `liquidate`:
 - To mitigate catastrophic scenarios, one approach is to initially open the $2,000 loan with a high collateralization ratio (for example, 500%). This provides a buffer, so that even if the price drops severely (e.g. to 20% of its original value), the main trove is still protected up to that point.
 - By also imposing a maximum on the collateralization ratio of microloans (equal or less than the main trove’s current CR), it would prevent microloans from ever being more overcollateralized than the main trove. This would in theory ensure that there cannot be a situation where the pool is wiped out due to a single main trove liquidation while some microloans are fully collateralized.
 
-### Fee Exemption and Maximum Borrowing Capacity
+#### Fee Exemption and Maximum Borrowing Capacity
 
 As mentioned earlier, MUSD sets a maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. 
 This is set at the time of loan origination and only increases when the loan is refinanced.  Because the Microloans contract
@@ -120,10 +122,12 @@ Normally, this would come with a fee charged on the entire debt of the trove.  T
 passed on to Microloans users, so the simplest solution is to make the Microloans contract fee exempt in MUSD.  This means it will
 not pay a fee for borrowing or refinancing which makes dynamically sizing its trove much cheaper and simpler.
 
-### Recovery Mode
+#### Recovery Mode
 
 When the total system collateralization ratio (TCR) of MUSD falls below 150%, the system enters recovery mode.  This limits
 trove operations to only those that would improve the TCR (such as adding collateral).  Actions that would reduce the TCR
 (like borrowing more MUSD) are not allowed until the system leaves recovery mode.  To account for this, the Microloans 
 protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
 to offset user actions.
+
+
