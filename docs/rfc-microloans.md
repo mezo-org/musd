@@ -149,7 +149,9 @@ in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD tr
 #### Additional Loan Structures
 
 A similar design allows for arbitrary loan structures to be built on top of MUSD.  As long as the main trove is kept healthy,
-the terms of the Microloans can be variable.  For example, fixed duration loans could be created that are eligible for liquidation 
-if not repaid within a certain amount of time.
+the terms of the Microloans can be variable.  Some examples:
+- Fixed duration loans that can be liquidated past a certain date.
+- Variable interest rate loans.
+- Loans backed by other forms of collateral (would require additional risk management logic).
 
 ### Open Questions
