@@ -119,3 +119,11 @@ will need to frequently increase its debt, it may need to call `refinance` at ti
 Normally, this would come with a fee charged on the entire debt of the trove.  This would result in an unfair fee being
 passed on to Microloans users, so the simplest solution is to make the Microloans contract fee exempt in MUSD.  This means it will
 not pay a fee for borrowing or refinancing which makes dynamically sizing its trove much cheaper and simpler.
+
+### Recovery Mode
+
+When the total system collateralization ratio (TCR) of MUSD falls below 150%, the system enters recovery mode.  This limits
+trove operations to only those that would improve the TCR (such as adding collateral).  Actions that would reduce the TCR
+(like borrowing more MUSD) are not allowed until the system leaves recovery mode.  To account for this, the Microloans 
+protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
+to offset user actions.
