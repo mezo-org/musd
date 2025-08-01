@@ -146,4 +146,10 @@ in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD tr
 - Contract receives 2000 MUSD, uses 50 of it to decrease its debt (from the microtrove) and sends the remaining 1950 to the user.
 - The user now has their desired position: 2000 in MUSD debt (plus some fees) backed by 3k of collateral.
 
+#### Additional Loan Structures
+
+A similar design allows for arbitrary loan structures to be built on top of MUSD.  As long as the main trove is kept healthy,
+the terms of the Microloans can be variable.  For example, fixed duration loans could be created that are eligible for liquidation 
+if not repaid within a certain amount of time.
+
 ### Open Questions
