@@ -220,11 +220,60 @@ User MicroTrove:
 
 #### Test Vector 4: Increasing Debt on Microloan
 
-TODO
+**Inputs:**
+- User wants to borrow additional: 5 MUSD
+- BTC price: $100,000
+- Origination fee: 0.5%
+- Starting from state after adding collateral (Test Vector 3)
+
+**Calculations:**
+- Additional origination fee = 5 MUSD * 0.5% = 0.025 MUSD
+- Additional total debt = 5 MUSD + 0.025 MUSD = 5.025 MUSD
+- New total user debt = 25.125 MUSD + 5.025 MUSD = 30.15 MUSD
+- New user CR = (0.0003889375 BTC * $100,000) / 30.15 MUSD * 100% = 129.0%
+
+**Expected State After Increasing Debt:**
+```
+Main Trove:
+- Collateral: 0.0603889375 BTC ($6,038.89)
+- Debt: 2,030.025 MUSD (2025 + 5.025)
+- CR: 297.5%
+
+User MicroTrove:
+- Collateral: 0.0003889375 BTC ($38.89)
+- Debt: 30.15 MUSD
+- CR: 129.0%
+```
 
 #### Test Vector 5: Interest Accrual
 
-TODO
+**Inputs:**
+- Time elapsed: 1 year
+- User debt: 30.15 MUSD (from Test Vector 4)
+- Microloan interest rate: 5% APR (simple interest, no compounding)
+- Main trove interest rate: 1% APR (simple interest, no compounding)
+- BTC price: $100,000
+
+**Calculations:**
+- Microloan interest accrued = 30.15 MUSD * 5% = 1.5075 MUSD
+- New total user debt = 30.15 MUSD + 1.5075 MUSD = 31.6575 MUSD
+- Main trove interest accrued = 2,030.025 MUSD * 1% = 20.30025 MUSD
+- New main trove debt = 2,030.025 MUSD + 20.30025 MUSD = 2,050.32525 MUSD
+- New user CR = (0.0003889375 BTC * $100,000) / 31.6575 MUSD * 100% = 122.8%
+- New main trove CR = (0.0603889375 BTC * $100,000) / 2,050.32525 MUSD * 100% = 294.5%
+
+**Expected State After Interest Accrual:**
+```
+Main Trove:
+- Collateral: 0.0603889375 BTC ($6,038.89)
+- Debt: 2,050.32525 MUSD (2030.025 + 20.30025)
+- CR: 294.5%
+
+User MicroTrove:
+- Collateral: 0.0003889375 BTC ($38.89)
+- Debt: 31.6575 MUSD
+- CR: 122.8%
+```
 
 #### Test Vector 6: Liquidation Scenario
 
