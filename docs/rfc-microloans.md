@@ -474,3 +474,4 @@ the terms of the Microloans can be variable.  Some examples:
 - What are the other parameters (minimum/maximum CR for microloans)?
 - What happens if there are changes in MUSD that impact Microloans?  For example, suppose the global interest rate is increased.  Would we then increase the interest rate on Microloans?
 - What happens to fees collected (such as origination fees and interest)?
+- Should we use some of the 2000 MUSD initially borrowed to fund microloans?  That would make things more efficient but require a bit more calculation.
