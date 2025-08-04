@@ -348,7 +348,48 @@ Microloans System:
 
 #### Test Vector 8: Recovery Mode Scenario
 
-TODO
+**Inputs:**
+- BTC price drops to: $98,000
+- Starting from state after interest accrual (Test Vector 5)
+- MUSD system TCR falls to: 149% (below 150% threshold)
+- User debt: 31.6575 MUSD
+- User collateral: 0.0003889375 BTC
+- Main trove debt: 2,050.30 MUSD
+
+**Calculations:**
+- New collateral value = 0.0003889375 BTC * $98,000 = $38.11
+- New user CR = ($38.11 / 31.6575 MUSD) * 100% = 120.4%
+- New main trove collateral value = 0.0603889375 BTC * $98,000 = $5,918.12
+- New main trove CR = ($5,918.12 / 2,050.30 MUSD) * 100% = 288.6%
+- Both troves remain healthy (above 115% and 110% respectively)
+
+**Recovery Mode Behavior:**
+- MUSD system enters recovery mode (TCR < 150%)
+- Microloans system detects recovery mode
+- Any operations that would decrease TCR are blocked
+- User attempts to borrow additional 5 MUSD → **BLOCKED**
+- User attempts to add collateral → **ALLOWED**
+- User attempts to repay debt → **ALLOWED**
+
+**Expected State During Recovery Mode:**
+```
+Main Trove:
+- Collateral: 0.0603889375 BTC ($5,918.12)
+- Debt: 2,050.30 MUSD
+- CR: 288.6%
+
+User MicroTrove:
+- Collateral: 0.0003889375 BTC ($38.11)
+- Debt: 31.6575 MUSD
+- CR: 120.4%
+
+System Status:
+- MUSD TCR: 149% (recovery mode)
+- Microloans: Restricted operations
+- New borrowing: BLOCKED
+- Collateral addition: ALLOWED
+- Debt repayment: ALLOWED
+```
 
 #### Test Vector 10: Refinancing Scenario
 
