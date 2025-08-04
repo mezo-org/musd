@@ -391,9 +391,56 @@ System Status:
 - Debt repayment: ALLOWED
 ```
 
-#### Test Vector 10: Refinancing Scenario
+#### Test Vector 9: Refinancing Scenario
 
-TODO
+**Inputs:**
+- Starting from initial state (Test Vector 1)
+- BTC price: $100,000
+- Main trove max borrowing capacity: 5,454.54 MUSD (at 110% CR)
+- Each microloan: 100 MUSD at 115% CR
+- Origination fee: 0.5%
+
+**Calculations:**
+- Available capacity for microloans: 5,454.54 MUSD - 2,000 MUSD = 3,454.54 MUSD
+- Max microloans before refinance: 3,454.54 MUSD / 100 MUSD = 34.54 loans
+- We can create 34 full microloans (3,400 MUSD total)
+- 35th microloan would require 3,500 MUSD > 3,454.54 MUSD available capacity
+
+**State After 34 Microloans:**
+```
+Main Trove:
+- Collateral: 0.06 BTC + (34 * 0.00115 BTC) = 0.0991 BTC ($9,910)
+- Debt: 2,000 MUSD + 3,400 MUSD = 5,400 MUSD
+- CR: 183.5%
+- Max borrowing capacity: 5,454.54 MUSD (unchanged)
+```
+
+**55th Microloan Attempt:**
+- User wants to borrow: 100 MUSD
+- Required collateral: (100 MUSD * 115%) / $100,000 = 0.00115 BTC
+- New main trove debt would be: 5,400 MUSD + 100 MUSD = 5,500 MUSD
+- New main trove CR would be: ($9,910 + $115) / 5,500 MUSD * 100% = 182.3%
+- Since 5,500 MUSD > 5,454.54 MUSD capacity, refinance is needed
+
+**Refinancing Process:**
+- Add user's 0.00115 BTC collateral to main trove
+- Call `refinance()` on BorrowerOperations (fee exempt)
+- New max borrowing capacity = ($10,025 / 110%) = 9,113.64 MUSD
+- Now can borrow the additional 100 MUSD
+
+**Expected State After Refinancing and 35th Microloan:**
+```
+Main Trove:
+- Collateral: 0.10025 BTC ($10,025)
+- Debt: 5,500 MUSD
+- CR: 182.3%
+- Max borrowing capacity: 9,113.64 MUSD (increased from 5,454.54 MUSD)
+
+35th User MicroTrove:
+- Collateral: 0.00115 BTC ($115)
+- Debt: 100.5 MUSD (includes 0.5% origination fee)
+- CR: 115%
+```
 
 ### Future Work
 
