@@ -311,7 +311,40 @@ User MicroTrove:
 
 #### Test Vector 7: Closing a Microloan
 
-TODO
+**Inputs:**
+- User wants to close their microloan
+- Starting from state after interest accrual (Test Vector 5)
+- User debt: 31.6575 MUSD (includes origination fees and interest)
+- User collateral: 0.0003889375 BTC
+- BTC price: $100,000
+
+**Calculations:**
+- User pays: 31.6575 MUSD
+- User receives: 0.0003889375 BTC ($38.89)
+- Main trove debt reduction: 30 MUSD (only the borrowed amount)
+- Fees collected by microloans system: 1.6575 MUSD (origination fees + interest)
+- Main trove debt after repayment: 2,050.30 MUSD - 30 MUSD = 2,020.30 MUSD
+
+**Expected State After Closing:**
+```
+Main Trove:
+- Collateral: 0.06 BTC ($6,000)
+- Debt: 2,020.30 MUSD
+- CR: 297.0%
+
+User MicroTrove:
+- Status: Closed
+- Collateral: 0 BTC
+- Debt: 0 MUSD
+- CR: 0%
+
+Microloans System:
+- Fees collected: 1.6575 MUSD (0.125 + 0.025 + 1.5075)
+  - Origination fee from initial loan: 0.125 MUSD
+  - Origination fee from debt increase: 0.025 MUSD
+  - Interest accrued: 1.5075 MUSD
+- Note that in this case the fees collected do not outpace the interest accrued by the microloans system, but as the amount borrowed for microloans increases this gap will decrease and eventually flip to become a surplus.
+```
 
 #### Test Vector 8: Recovery Mode Scenario
 
