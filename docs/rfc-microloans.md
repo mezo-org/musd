@@ -185,7 +185,7 @@ Main Trove:
 ```
 Main Trove:
 - Collateral: 0.0602889375 BTC
-- Debt: 2,025 MUSD (note the origination fee is not included)
+- Debt: 2,025 MUSD (only the borrowed amount, no origination fee)
 - CR: 297.7%
 
 User MicroTrove:
@@ -236,12 +236,12 @@ User MicroTrove:
 ```
 Main Trove:
 - Collateral: 0.0603889375 BTC ($6,038.89)
-- Debt: 2,030.025 MUSD (2025 + 5.025)
+- Debt: 2,030 MUSD (2025 + 5, only the borrowed amount)
 - CR: 297.5%
 
 User MicroTrove:
 - Collateral: 0.0003889375 BTC ($38.89)
-- Debt: 30.15 MUSD
+- Debt: 30.15 MUSD (includes origination fees)
 - CR: 129.0%
 ```
 
@@ -257,16 +257,16 @@ User MicroTrove:
 **Calculations:**
 - Microloan interest accrued = 30.15 MUSD * 5% = 1.5075 MUSD
 - New total user debt = 30.15 MUSD + 1.5075 MUSD = 31.6575 MUSD
-- Main trove interest accrued = 2,030.025 MUSD * 1% = 20.30025 MUSD
-- New main trove debt = 2,030.025 MUSD + 20.30025 MUSD = 2,050.32525 MUSD
+- Main trove interest accrued = 2,030 MUSD * 1% = 20.30 MUSD
+- New main trove debt = 2,030 MUSD + 20.30 MUSD = 2,050.30 MUSD
 - New user CR = (0.0003889375 BTC * $100,000) / 31.6575 MUSD * 100% = 122.8%
-- New main trove CR = (0.0603889375 BTC * $100,000) / 2,050.32525 MUSD * 100% = 294.5%
+- New main trove CR = (0.0603889375 BTC * $100,000) / 2,050.30 MUSD * 100% = 294.5%
 
 **Expected State After Interest Accrual:**
 ```
 Main Trove:
 - Collateral: 0.0603889375 BTC ($6,038.89)
-- Debt: 2,050.32525 MUSD (2030.025 + 20.30025)
+- Debt: 2,050.30 MUSD (2030 + 20.30)
 - CR: 294.5%
 
 User MicroTrove:
@@ -277,7 +277,37 @@ User MicroTrove:
 
 #### Test Vector 6: Liquidation Scenario
 
-TODO
+**Inputs:**
+- Starting from state after interest accrual (Test Vector 5)
+- BTC price drops to: $93,604
+- User debt: 31.6575 MUSD
+- User collateral: 0.0003889375 BTC
+- Microloans minimum CR: 115%
+
+**Calculations:**
+- New collateral value = 0.0003889375 BTC * $93,604 = $36.40
+- New user CR = ($36.40 / 31.6575 MUSD) * 100% = 114.98%
+- Since 114.98% < 115% (microloans minimum CR), loan is eligible for liquidation
+
+**Liquidation Execution:**
+- Liquidator provides: 31.6575 MUSD
+- Liquidator receives: 0.0003889375 BTC ($36.40)
+- Liquidator profit = $36.40 - $31.6575 = $4.74
+- Main trove debt decreases by: 30 MUSD (only the borrowed amount, not the fees)
+
+**Expected State After Liquidation:**
+```
+Main Trove:
+- Collateral: 0.06 BTC ($5,616.24)
+- Debt: 2,020.30 MUSD (2050.30 - 30)
+- CR: 278.2%
+
+User MicroTrove:
+- Status: Liquidated
+- Collateral: 0 BTC
+- Debt: 0 MUSD
+- CR: 0%
+```
 
 #### Test Vector 7: Closing a Microloan
 
