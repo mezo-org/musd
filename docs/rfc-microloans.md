@@ -138,7 +138,7 @@ This section provides concrete numerical examples for key interactions between M
 - BTC price: $100,000
 - MUSD minimum debt: 1,800 MUSD
 - MUSD gas compensation: 200 MUSD
-- MUSD interest rate: 1%
+- MUSD interest rate: 1% APR
 - MUSD minimum CR: 110%
 - Microloans minimum CR: 115%
 - Microloans issuance fee: 0.5%
