@@ -13,7 +13,7 @@ MUSD has the following parameters:
 - Minimum debt of 1800 MUSD
 - 200 MUSD gas compensation added to initial debt that is refunded when the trove is closed. this is used as liquidation reward if the user is liquidated and is not actual debt in the usual sense.
 - 0.1% issuance fee
-- 20% of issuance fee charged for refinancing
+- 0.02% refinance fee (calculated as 20% of the issuance fee)
 - Maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. This is set at the time of loan issuance and only increases when the loan is refinanced.
 - Minimum collateralization ratio of 110%. Below this, troves are eligible for liquidation.
 - Minimum system collateralization ratio of 150%. Below this, the system enters recovery mode, and no operations that would decrease trove CR (such as borrowing more) are allowed until the system leaves recovery mode.
