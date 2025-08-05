@@ -127,8 +127,15 @@ not pay a fee for borrowing or refinancing which makes dynamically sizing its tr
 
 When the total system collateralization ratio (TCR) of MUSD falls below 150%, the system enters recovery mode.  This limits
 trove operations to only those that would improve the TCR (such as adding collateral).  Actions that would reduce the TCR
-(like borrowing more MUSD) are not allowed until the system leaves recovery mode.  To account for this, the Microloans 
-protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
+(like borrowing more MUSD) are not allowed until the system leaves recovery mode.  
+
+More specifically, only the following adjustments are allowed:
+- Collateral increase
+- Debt repayment
+- Collateral increase with debt repayment
+- Debt increase combined with a collateral increase that leaves the trove's CR >= 150% and improves the trove's CR
+
+To account for this, the Microloans protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
 to offset user actions.
 
 ### Test Vectors and Numerical Examples
