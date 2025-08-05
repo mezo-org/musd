@@ -209,7 +209,7 @@ describe("GovernableVariables", () => {
       )
     })
 
-    it.only("makes an account exempt from borrowing fees when borrowing more", async () => {
+    it("makes an account exempt from borrowing fees when borrowing more", async () => {
       await contracts.governableVariables
         .connect(council.wallet)
         .addFeeExemptAccount(dennis.wallet)
@@ -234,11 +234,9 @@ describe("GovernableVariables", () => {
       })
 
       const additionalAmount = to1e18("500")
-      await contracts.borrowerOperations.withdrawMUSD(
-        additionalAmount,
-        dennis.wallet,
-        dennis.wallet,
-      )
+      await contracts.borrowerOperations
+        .connect(dennis.wallet)
+        .withdrawMUSD(additionalAmount, dennis.wallet, dennis.wallet)
 
       await updateTroveSnapshot(contracts, dennis, "after")
 
