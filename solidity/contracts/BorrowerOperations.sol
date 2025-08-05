@@ -57,7 +57,6 @@ contract BorrowerOperations is
         uint256 price;
         uint256 fee;
         uint256 netDebt;
-        uint256 compositeDebt;
         uint256 ICR;
         uint256 NICR;
         uint256 stake;
@@ -646,17 +645,17 @@ contract BorrowerOperations is
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
-        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
+        uint256 compositeDebt = vars.netDebt + MUSD_GAS_COMPENSATION;
 
         // if BTC overwrite the asset value
         vars.ICR = LiquityMath._computeCR(
             msg.value,
-            vars.compositeDebt,
+            compositeDebt,
             vars.price
         );
         vars.NICR = LiquityMath._computeNominalCR(
             msg.value,
-            vars.compositeDebt
+            compositeDebt
         );
 
         if (isRecoveryMode) {
@@ -666,7 +665,7 @@ contract BorrowerOperations is
             uint256 newTCR = _getNewTCRFromTroveChange(
                 msg.value,
                 true,
-                vars.compositeDebt,
+                compositeDebt,
                 true,
                 vars.price
             ); // bools: coll increase, debt increase
@@ -689,7 +688,7 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveDebt(
             _borrower,
-            vars.compositeDebt
+            compositeDebt
         );
 
         // solhint-disable not-rely-on-time
@@ -747,7 +746,7 @@ contract BorrowerOperations is
         // solhint-disable not-rely-on-time
         emit TroveUpdated(
             _borrower,
-            vars.compositeDebt,
+            compositeDebt,
             0,
             msg.value,
             vars.stake,
