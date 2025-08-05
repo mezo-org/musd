@@ -51,7 +51,6 @@ contract BorrowerOperations is
         uint256 newNICR;
         uint256 maxBorrowingCapacity;
         uint16 interestRate;
-        uint256 finalMaxBorrowingCapacity;
     }
 
     struct LocalVariables_openTrove {
@@ -899,14 +898,14 @@ contract BorrowerOperations is
                 .troveManager
                 .getTroveMaxBorrowingCapacity(_borrower);
 
-            vars.finalMaxBorrowingCapacity = LiquityMath._min(
+            uint256 finalMaxBorrowingCapacity = LiquityMath._min(
                 currentMaxBorrowingCapacity,
                 newMaxBorrowingCapacity
             );
 
             contractsCache.troveManager.setTroveMaxBorrowingCapacity(
                 _borrower,
-                vars.finalMaxBorrowingCapacity
+                finalMaxBorrowingCapacity
             );
         }
 
