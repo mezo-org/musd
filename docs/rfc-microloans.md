@@ -12,9 +12,9 @@ MUSD has the following parameters:
 
 - Minimum debt of 1800 MUSD
 - 200 MUSD gas compensation added to initial debt that is refunded when the trove is closed. this is used as liquidation reward if the user is liquidated and is not actual debt in the usual sense.
-- 0.1% origination fee
-- 20% of origination fee charged for refinancing
-- Maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. This is set at the time of loan origination and only increases when the loan is refinanced.
+- 0.1% issuance fee
+- 20% of issuance fee charged for refinancing
+- Maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. This is set at the time of loan issuance and only increases when the loan is refinanced.
 - Minimum collateralization ratio of 110%. Below this, troves are eligible for liquidation.
 - Minimum system collateralization ratio of 150%. Below this, the system enters recovery mode, and no operations that would decrease trove CR (such as borrowing more) are allowed until the system leaves recovery mode.
 
@@ -61,7 +61,7 @@ Additionally, liquidations will work slightly differently in Microloans, althoug
 **Note:** The collateral amount required to open a microloan must meet a minimum CR that is higher than the MUSD minimum (exact amount TBD).
 - The system adds the collateral to its main trove and increases the main trove’s debt by the requested amount. 
 - The system sends the borrowed MUSD to the user and creates a MicroTrove to track their collateral and debt.
-- In addition to the amount borrowed, an origination fee will be added to the user's initial debt.
+- In addition to the amount borrowed, an issuance fee will be added to the user's initial debt.
 - An ongoing fixed interest rate will be also be charged on the user's debt.
 
 #### Closing a Microloan
@@ -116,7 +116,7 @@ On calling `liquidate`:
 #### Fee Exemption and Maximum Borrowing Capacity
 
 As mentioned earlier, MUSD sets a maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. 
-This is set at the time of loan origination and only increases when the loan is refinanced.  Because the Microloans contract
+This is set at the time of loan issuance and only increases when the loan is refinanced.  Because the Microloans contract
 will need to frequently increase its debt, it may need to call `refinance` at times in order to increase its maximum borrowing capacity.
 Normally, this would come with a fee charged on the entire debt of the trove.  This would result in an unfair fee being
 passed on to Microloans users, so the simplest solution is to make the Microloans contract fee exempt in MUSD.  This means it will
@@ -141,7 +141,7 @@ This section provides concrete numerical examples for key interactions between M
 - MUSD interest rate: 1%
 - MUSD minimum CR: 110%
 - Microloans minimum CR: 115%
-- Microloans origination fee: 0.5%
+- Microloans issuance fee: 0.5%
 - Microloans interest rate: 5% APR
 - Main trove initial CR: 300%
 
@@ -154,7 +154,7 @@ This section provides concrete numerical examples for key interactions between M
 - MUSD gas compensation: 200 MUSD
 
 **Calculations:**
-- Required BTC collateral = (1,800 MUSD + 200 MUSD) * 300% / 100,000 = 0.06 (note no origination fee since Microloans is fee exempt)
+- Required BTC collateral = (1,800 MUSD + 200 MUSD) * 300% / 100,000 = 0.06 (note no issuance fee since Microloans is fee exempt)
 - Main trove debt = 1,800 MUSD (minimum)
 - Main trove collateral = 0.06 BTC
 - Main trove CR = (0.06 BTC × $100,000) / 2,000 MUSD = 300%
@@ -174,10 +174,10 @@ Main Trove:
 - User wants to borrow: 25 MUSD
 - BTC price: $100,000
 - Microloans minimum CR: 115%
-- Origination fee: 0.5%
+- Issuance fee: 0.5%
 
 **Calculations:**
-- Origination fee = 25 MUSD * 0.5% = 0.125 MUSD
+- Issuance fee = 25 MUSD * 0.5% = 0.125 MUSD
 - Total debt = 25 MUSD + 0.125 MUSD = 25.125 MUSD
 - Required BTC collateral = (25.125 MUSD * 115%) / $100,000 = 0.0002889375 BTC
 
@@ -185,7 +185,7 @@ Main Trove:
 ```
 Main Trove:
 - Collateral: 0.0602889375 BTC
-- Debt: 2,025 MUSD (only the borrowed amount, no origination fee)
+- Debt: 2,025 MUSD (only the borrowed amount, no issuance fee)
 - CR: 297.7%
 
 User MicroTrove:
@@ -223,11 +223,11 @@ User MicroTrove:
 **Inputs:**
 - User wants to borrow additional: 5 MUSD
 - BTC price: $100,000
-- Origination fee: 0.5%
+- Issuance fee: 0.5%
 - Starting from state after adding collateral (Test Vector 3)
 
 **Calculations:**
-- Additional origination fee = 5 MUSD * 0.5% = 0.025 MUSD
+- Additional issuance fee = 5 MUSD * 0.5% = 0.025 MUSD
 - Additional total debt = 5 MUSD + 0.025 MUSD = 5.025 MUSD
 - New total user debt = 25.125 MUSD + 5.025 MUSD = 30.15 MUSD
 - New user CR = (0.0003889375 BTC * $100,000) / 30.15 MUSD * 100% = 129.0%
@@ -241,7 +241,7 @@ Main Trove:
 
 User MicroTrove:
 - Collateral: 0.0003889375 BTC ($38.89)
-- Debt: 30.15 MUSD (includes origination fees)
+- Debt: 30.15 MUSD (includes issuance fees)
 - CR: 129.0%
 ```
 
@@ -314,7 +314,7 @@ User MicroTrove:
 **Inputs:**
 - User wants to close their microloan
 - Starting from state after interest accrual (Test Vector 5)
-- User debt: 31.6575 MUSD (includes origination fees and interest)
+- User debt: 31.6575 MUSD (includes issuance fees and interest)
 - User collateral: 0.0003889375 BTC
 - BTC price: $100,000
 
@@ -322,7 +322,7 @@ User MicroTrove:
 - User pays: 31.6575 MUSD
 - User receives: 0.0003889375 BTC ($38.89)
 - Main trove debt reduction: 30 MUSD (only the borrowed amount)
-- Fees collected by microloans system: 1.6575 MUSD (origination fees + interest)
+- Fees collected by microloans system: 1.6575 MUSD (issuance fees + interest)
 - Main trove debt after repayment: 2,050.30 MUSD - 30 MUSD = 2,020.30 MUSD
 
 **Expected State After Closing:**
@@ -340,8 +340,8 @@ User MicroTrove:
 
 Microloans System:
 - Fees collected: 1.6575 MUSD (0.125 + 0.025 + 1.5075)
-  - Origination fee from initial loan: 0.125 MUSD
-  - Origination fee from debt increase: 0.025 MUSD
+  - Issuance fee from initial loan: 0.125 MUSD
+  - Issuance fee from debt increase: 0.025 MUSD
   - Interest accrued: 1.5075 MUSD
 - Note that in this case the fees collected do not outpace the interest accrued by the microloans system, but as the amount borrowed for microloans increases this gap will decrease and eventually flip to become a surplus.
 ```
@@ -398,7 +398,7 @@ System Status:
 - BTC price: $100,000
 - Main trove max borrowing capacity: 5,454.54 MUSD (at 110% CR)
 - Each microloan: 100 MUSD at 115% CR
-- Origination fee: 0.5%
+- Issuance fee: 0.5%
 
 **Calculations:**
 - Available capacity for microloans: 5,454.54 MUSD - 2,000 MUSD = 3,454.54 MUSD
@@ -438,7 +438,7 @@ Main Trove:
 
 35th User MicroTrove:
 - Collateral: 0.00115 BTC ($115)
-- Debt: 100.5 MUSD (includes 0.5% origination fee)
+- Debt: 100.5 MUSD (includes 0.5% issuance fee)
 - CR: 115%
 ```
 
@@ -473,5 +473,5 @@ the terms of the Microloans can be variable.  Some examples:
 - What are the fees?
 - What are the other parameters (minimum/maximum CR for microloans)?
 - What happens if there are changes in MUSD that impact Microloans?  For example, suppose the global interest rate is increased.  Would we then increase the interest rate on Microloans?
-- What happens to fees collected (such as origination fees and interest)?
+- What happens to fees collected (such as issuance fees and interest)?
 - Should we use some of the 2000 MUSD initially borrowed to fund microloans?  That would make things more efficient but require a bit more calculation.
