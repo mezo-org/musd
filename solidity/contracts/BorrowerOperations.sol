@@ -648,15 +648,8 @@ contract BorrowerOperations is
         uint256 compositeDebt = vars.netDebt + MUSD_GAS_COMPENSATION;
 
         // if BTC overwrite the asset value
-        vars.ICR = LiquityMath._computeCR(
-            msg.value,
-            compositeDebt,
-            vars.price
-        );
-        vars.NICR = LiquityMath._computeNominalCR(
-            msg.value,
-            compositeDebt
-        );
+        vars.ICR = LiquityMath._computeCR(msg.value, compositeDebt, vars.price);
+        vars.NICR = LiquityMath._computeNominalCR(msg.value, compositeDebt);
 
         if (isRecoveryMode) {
             _requireICRisAboveCCR(vars.ICR);
@@ -686,10 +679,7 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveColl(_borrower, msg.value);
         // slither-disable-next-line unused-return
-        contractsCache.troveManager.increaseTroveDebt(
-            _borrower,
-            compositeDebt
-        );
+        contractsCache.troveManager.increaseTroveDebt(_borrower, compositeDebt);
 
         // solhint-disable not-rely-on-time
         contractsCache.troveManager.setTroveLastInterestUpdateTime(
@@ -821,9 +811,9 @@ contract BorrowerOperations is
 
         // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
-            vars.fee = governableVariables.isAccountFeeExempt(_borrower) ?
-            0
-            : _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
+            vars.fee = governableVariables.isAccountFeeExempt(_borrower)
+                ? 0
+                : _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
             vars.netDebtChange += vars.fee; // The raw debt change includes the fee
         }
 
