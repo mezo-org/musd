@@ -92,7 +92,7 @@ provide a buffer so that the microloans can be liquidated *before* the main trov
 ##### Liquidation Mechanism
 
 There is a public `liquidate` function callable by anyone that can supply:
-- A MicroTrove address that is eligible for liquidation
+- A borrower address that is eligible for liquidation
 - MUSD equal to the MicroTrove's debt
 
 On calling `liquidate`:
