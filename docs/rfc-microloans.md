@@ -63,6 +63,7 @@ Additionally, liquidations will work slightly differently in Microloans, althoug
 - The system sends the borrowed MUSD to the user and creates a MicroTrove to track their collateral and debt.
 - In addition to the amount borrowed, an issuance fee will be added to the user's initial debt.
 - An ongoing fixed interest rate will be also be charged on the user's debt.
+**Note:**A given address may only have one Microtrove at a time.  However, an address may have an MUSD trove and a Microtrove simultaneously.
 
 #### Closing a Microloan
 
