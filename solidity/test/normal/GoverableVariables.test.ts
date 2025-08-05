@@ -178,7 +178,7 @@ describe("GovernableVariables", () => {
       ).to.equal(false)
     })
 
-    it("makes an account exempt from borrowing fees", async () => {
+    it("makes an account exempt from borrowing fees when opening a trove", async () => {
       await contracts.governableVariables
         .connect(council.wallet)
         .addFeeExemptAccount(dennis.wallet)
@@ -206,6 +206,44 @@ describe("GovernableVariables", () => {
 
       expect(dennis.trove.debt.after).to.equal(
         musdAmount + MUSD_GAS_COMPENSATION,
+      )
+    })
+
+    it.only("makes an account exempt from borrowing fees when borrowing more", async () => {
+      await contracts.governableVariables
+        .connect(council.wallet)
+        .addFeeExemptAccount(dennis.wallet)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .proposeBorrowingRate((to1e18(1) * 50n) / 10000n)
+
+      const timeToIncrease = 7 * 24 * 60 * 60 // 7 days in seconds
+      await fastForwardTime(timeToIncrease)
+
+      await contracts.borrowerOperations
+        .connect(council.wallet)
+        .approveBorrowingRate()
+
+      const musdAmount = to1e18("10,000")
+
+      await openTrove(contracts, {
+        sender: dennis.wallet,
+        musdAmount,
+        ICR: "200",
+      })
+
+      const additionalAmount = to1e18("500")
+      await contracts.borrowerOperations.withdrawMUSD(
+        additionalAmount,
+        dennis.wallet,
+        dennis.wallet,
+      )
+
+      await updateTroveSnapshot(contracts, dennis, "after")
+
+      expect(dennis.trove.debt.after).to.equal(
+        musdAmount + additionalAmount + MUSD_GAS_COMPENSATION,
       )
     })
 
