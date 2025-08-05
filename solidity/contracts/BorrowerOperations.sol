@@ -823,7 +823,9 @@ contract BorrowerOperations is
 
         // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
-            vars.fee = _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
+            vars.fee = governableVariables.isAccountFeeExempt(_borrower) ?
+            0
+            : _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
             vars.netDebtChange += vars.fee; // The raw debt change includes the fee
         }
 
