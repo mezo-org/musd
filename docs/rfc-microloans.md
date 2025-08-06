@@ -104,6 +104,53 @@ On calling `liquidate`:
   - `liquidate` pays down the outstanding debt and sends $28.75 worth of collateral to the caller, netting a profit of $3.75.
 - The user's trove is marked as closed by liquidation.
 
+#### Interest Collection Mechanism
+
+Microloans uses a simple interest approach similar to MUSD V2, with interest calculated linearly on the principal debt amount (no compounding).
+
+##### Individual MicroTrove Data
+
+Each MicroTrove stores:
+- `principalDebt`: Original borrowed amount plus any additional borrowing
+- `storedInterest`: Previously accrued but unpaid interest
+- `interestRate`: Fixed APR rate (e.g., 5%)
+- `lastUpdateTimestamp`: Timestamp of last interest calculation
+
+##### Interest Calculation
+
+Interest is calculated precisely based on elapsed time:
+
+newInterest = principalDebt * interestRate * (currentTimestamp - lastUpdateTimestamp) / secondsInYear
+totalDebt = principalDebt + storedInterest + newInterest
+
+##### Interest Updates
+
+Interest is recalculated and stored during:
+- Any loan operation (borrow, repay, adjust collateral)
+- Liquidation events
+- Loan closure
+
+The update process:
+1. Calculate `newInterest` using formula above
+2. Add `newInterest` to `storedInterest`
+3. Update `lastUpdateTimestamp` to current time
+4. Use `totalDebt` for all CR and liquidation calculations
+
+##### Repayment Priority
+
+When users repay debt, payments are applied in order:
+1. First to accumulated interest (`storedInterest + newInterest`)
+2. Then to principal debt
+
+##### System-Level Tracking
+
+The Microloans contract maintains:
+- Aggregate interest numerator for all active microloans
+- System-wide interest tracking for fee collection
+- Total outstanding principal across all microloans
+
+This approach provides predictable costs for users while maintaining gas efficiency and avoiding compounding complexity.
+
 #### Monitoring and Alerting
 
 ##### Key Metrics to Monitor
