@@ -164,7 +164,7 @@ export async function setupDeploymentBoilerplate(
 ) {
   const { network } = hre
   const { log } = deployments
-  const { deployer } = await helpers.signers.getNamedSigners()
+  const { deployer, governance } = await helpers.signers.getNamedSigners()
 
   const getValidDeployment = async (
     contractName: string,
@@ -267,6 +267,7 @@ export async function setupDeploymentBoilerplate(
     deploy,
     deployProxy,
     deployer,
+    governance,
     deployments,
     execute,
     getOrDeploy,
