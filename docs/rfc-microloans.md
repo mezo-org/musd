@@ -113,8 +113,7 @@ On calling `liquidate`:
 - This setup works except in a scenario where the initial $2,000 loan itself is at risk of liquidation, and it is the main factor pulling down the average CR.
 - To mitigate catastrophic scenarios, one approach is to initially open the $2,000 loan with a high collateralization ratio (for example, 500%). This provides a buffer, so that even if the price drops severely (e.g. to 20% of its original value), the main trove is still protected up to that point.
 - By also imposing a maximum on the collateralization ratio of microloans (equal or less than the main trove’s current CR), it would prevent microloans from ever being more overcollateralized than the main trove. This would in theory ensure that there cannot be a situation where the pool is wiped out due to a single main trove liquidation while some microloans are fully collateralized.
-
-TODO: is a liquidation cascade possible here?
+**Note:** It is still possible for the main trove to be liquidated.  All microloans up to that point should be liquidated by then, but for the system to continue functioning the main trove would need to be reopened.  The details of this process are TBD.
 
 #### Fee Exemption and Maximum Borrowing Capacity
 
