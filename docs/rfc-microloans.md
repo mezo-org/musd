@@ -114,6 +114,8 @@ On calling `liquidate`:
 - To mitigate catastrophic scenarios, one approach is to initially open the $2,000 loan with a high collateralization ratio (for example, 500%). This provides a buffer, so that even if the price drops severely (e.g. to 20% of its original value), the main trove is still protected up to that point.
 - By also imposing a maximum on the collateralization ratio of microloans (equal or less than the main trove’s current CR), it would prevent microloans from ever being more overcollateralized than the main trove. This would in theory ensure that there cannot be a situation where the pool is wiped out due to a single main trove liquidation while some microloans are fully collateralized.
 
+TODO: is a liquidation cascade possible here?
+
 #### Fee Exemption and Maximum Borrowing Capacity
 
 As mentioned earlier, MUSD sets a maximum borrowing capacity set to the amount of debt that would create a 110% CR loan. 
@@ -477,9 +479,16 @@ the terms of the Microloans can be variable.  Some examples:
 ### Open Questions
 
 - What should be the collateralization ratio of the main trove when it is initially opened?
-- Who will run the liquidation bot?  We can run it or we can open source it and allow others to handle the operation.
+- Who will run the liquidation bot?  We can run it, or we can open source it and allow others to handle the operation.
+  - Note that if we want others to run the bot we will need to monitor profitability of liquidations more closely.
 - What are the fees?
 - What are the other parameters (minimum/maximum CR for microloans)?
 - What happens if there are changes in MUSD that impact Microloans?  For example, suppose the global interest rate is increased.  Would we then increase the interest rate on Microloans?
 - What happens to fees collected (such as issuance fees and interest)?
 - Should we use some of the 2000 MUSD initially borrowed to fund microloans?  That would make things more efficient but require a bit more calculation.
+- How will we handle the situation where we want to call refinance and either of the following have happened:
+  - The price has fallen such that maxBorrowingCapacity will be lower than needed when recalculated.
+  - The global interest rate has risen.
+- What happens in the case that the main trove is liquidated?
+- What is the governance model?
+- What does the upgrade path look like?
