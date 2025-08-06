@@ -489,5 +489,5 @@ the terms of the Microloans can be variable.  Some examples:
   - The price has fallen such that maxBorrowingCapacity will be lower than needed when recalculated.
   - The global interest rate has risen.
 - What happens in the case that the main trove is liquidated?
-- What is the governance model?
+- What is the governance model?  What access controls do we want to put in place?
 - What does the upgrade path look like?
