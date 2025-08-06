@@ -528,6 +528,8 @@ Main Trove:
 - CR: 115%
 ```
 
+**Note:**Even with a price drop that causes maxBorrowingCapacity to fall in absolute terms, a refinance should still provide enough room to cover all active microloan debt since they are all have CR >= 115%.
+
 ### Future Work
 
 #### Promotions
@@ -562,9 +564,7 @@ the terms of the Microloans can be variable.  Some examples:
 - What happens if there are changes in MUSD that impact Microloans?  For example, suppose the global interest rate is increased.  Would we then increase the interest rate on Microloans?
 - What happens to fees collected (such as issuance fees and interest)?
 - Should we use some of the 2000 MUSD initially borrowed to fund microloans?  That would make things more efficient but require a bit more calculation.
-- How will we handle the situation where we want to call refinance and either of the following have happened:
-  - The price has fallen such that maxBorrowingCapacity will be lower than needed when recalculated.
-  - The global interest rate has risen.
+- How will we handle the situation where we want to call refinance and the interest rate in MUSD has changed?
 - What happens in the case that the main trove is liquidated?
 - What is the governance model?  What access controls do we want to put in place?
 - What does the upgrade path look like?
