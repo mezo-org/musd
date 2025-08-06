@@ -126,7 +126,7 @@ totalDebt = principalDebt + storedInterest + newInterest
 ##### Interest Updates
 
 Interest is recalculated and stored during:
-- Any loan operation (borrow, repay, adjust collateral)
+- Any loan operation (borrow, repay, adjust collateral, etc.)
 - Liquidation events
 - Loan closure
 
@@ -144,12 +144,14 @@ When users repay debt, payments are applied in order:
 
 ##### System-Level Tracking
 
-The Microloans contract maintains:
-- Aggregate interest numerator for all active microloans
-- System-wide interest tracking for fee collection
-- Total outstanding principal across all microloans
+For system CR calculations, the contract maintains:
+- `totalMicroloanPrincipal`: Sum of all active microloan principal debt
+- `totalStoredInterest`: Sum of all previously accrued interest
+- `lastSystemUpdate`: Timestamp of last system-wide interest update
 
-This approach provides predictable costs for users while maintaining gas efficiency and avoiding compounding complexity.
+System CR = (mainTroveCollateral) / (mainTroveDebt + totalMicroloanPrincipal + totalStoredInterest + calculatedNewInterest)
+
+**Note**:This will be missing some interest that has yet to be accrued, but it should give a *close enough* CR while avoiding extra complexity.
 
 #### Monitoring and Alerting
 
