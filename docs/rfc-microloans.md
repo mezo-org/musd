@@ -104,6 +104,33 @@ On calling `liquidate`:
   - `liquidate` pays down the outstanding debt and sends $28.75 worth of collateral to the caller, netting a profit of $3.75.
 - The user's trove is marked as closed by liquidation.
 
+#### Monitoring and Alerting
+
+##### Key Metrics to Monitor
+
+###### System Health Metrics
+- Main trove CR (alert if < 200%)
+- Total system CR
+- Number of active microloans
+- Total outstanding microloan debt
+- Available borrowing capacity remaining
+
+###### Risk Metrics
+- Number of microloans near liquidation threshold (120% CR)
+- Price volatility indicators
+- Liquidation profitability margins (gas cost vs. reward)
+
+###### Operational Metrics
+- Failed liquidation attempts
+- Oracle price feed health
+
+##### Critical Alerts
+
+###### Immediate Action Required
+- Main trove CR drops below 150%
+- Oracle price feed failure or stale data
+- Liquidation bot errors / downtime
+
 ### Limitations
 
 #### Collateralization, Liquidation Buffer, and Catastrophic Scenarios
