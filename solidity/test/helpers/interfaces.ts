@@ -11,6 +11,7 @@ import {
   GovernableVariables,
   HintHelpers,
   InterestRateManager,
+  Microloans,
   MockAggregator,
   MUSDTester,
   PCV,
@@ -36,6 +37,7 @@ export interface TestingAddresses {
   sortedTroves: string
   stabilityPool: string
   troveManager: string
+  microloans: string
   alice: string
   bob: string
   carol: string
@@ -114,6 +116,7 @@ export interface Contracts {
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
   troveManager: TroveManagerTester
+  microloans: Microloans
 }
 
 export interface User {
