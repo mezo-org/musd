@@ -379,6 +379,7 @@ User MicroTrove:
 - Liquidator receives: 0.0003889375 BTC ($36.40)
 - Liquidator profit = $36.40 - $31.6575 = $4.74
 - Main trove debt decreases by: 30 MUSD (only the borrowed amount, not the fees)
+- Fees collected after liquidation: 1.6575 MUSD
 
 **Expected State After Liquidation:**
 ```
@@ -500,7 +501,7 @@ Main Trove:
 - Max borrowing capacity: 5,454.54 MUSD (unchanged)
 ```
 
-**55th Microloan Attempt:**
+**35th Microloan Attempt:**
 - User wants to borrow: 100 MUSD
 - Required collateral: (100 MUSD * 115%) / $100,000 = 0.00115 BTC
 - New main trove debt would be: 5,400 MUSD + 100 MUSD = 5,500 MUSD
