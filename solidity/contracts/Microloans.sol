@@ -8,6 +8,11 @@ import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ITroveManager.sol";
 
 contract Microloans is Ownable2StepUpgradeable {
+    event MainTroveOpened(
+        uint256 initialDebtAmount,
+        uint256 initialCollateralAmount
+    );
+
     IBorrowerOperations public borrowerOperations;
     ITroveManager public troveManager;
 
@@ -20,6 +25,9 @@ contract Microloans is Ownable2StepUpgradeable {
         IBorrowerOperations _borrowerOperations,
         ITroveManager _troveManager
     ) external initializer {
+        __Ownable2Step_init();
+        __Ownable_init(msg.sender);
+
         borrowerOperations = _borrowerOperations;
         troveManager = _troveManager;
     }
@@ -29,6 +37,8 @@ contract Microloans is Ownable2StepUpgradeable {
         address _upperHint,
         address _lowerHint
     ) external payable onlyOwner {
+        emit MainTroveOpened(_initialDebtAmount, msg.value);
+
         borrowerOperations.openTrove{value: msg.value}(
             _initialDebtAmount,
             _upperHint,
