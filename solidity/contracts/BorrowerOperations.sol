@@ -645,7 +645,7 @@ contract BorrowerOperations is
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
-        uint256 compositeDebt = vars.netDebt + MUSD_GAS_COMPENSATION;
+        uint256 compositeDebt = _getCompositeDebt(vars.netDebt);
 
         // if BTC overwrite the asset value
         vars.ICR = LiquityMath._computeCR(msg.value, compositeDebt, vars.price);
