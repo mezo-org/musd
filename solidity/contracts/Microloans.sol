@@ -8,13 +8,13 @@ import "./interfaces/IBorrowerOperations.sol";
 import "./interfaces/ITroveManager.sol";
 
 contract Microloans is Ownable2StepUpgradeable {
+    IBorrowerOperations public borrowerOperations;
+    ITroveManager public troveManager;
+
     event MainTroveOpened(
         uint256 initialDebtAmount,
         uint256 initialCollateralAmount
     );
-
-    IBorrowerOperations public borrowerOperations;
-    ITroveManager public troveManager;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
