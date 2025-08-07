@@ -153,6 +153,20 @@ System CR = (mainTroveCollateral) / (mainTroveDebt + totalMicroloanPrincipal + t
 
 **Note**:This will be missing some interest that has yet to be accrued, but it should give a *close enough* CR while avoiding extra complexity.
 
+#### Promotions
+
+We will allow for users to "promote" their microloans to full MUSD troves.  This will allow for users to test the waters
+with microloans and then seamlessly upgrade without losing their position.  
+
+For example, say a user has a microtrove with $50 in debt and $100 worth of collateral. They show up with $2900 worth of
+collateral (picked so that their promoted trove is at 150% CR with minimum debt, this could be any other amount that results
+in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD trove:
+
+- Contract accepts the $2900 of collateral and withdraws the user's $100 of collateral from its trove.
+- Contract calls openTroveWithSignature with the borrower as the _borrower parameter and itself as the _recipient.
+- Contract receives 2000 MUSD, uses 50 of it to decrease its debt (from the microtrove) and sends the remaining 1950 to the user.
+- The user now has their desired position: 2000 in MUSD debt (plus some fees) backed by 3k of collateral.
+
 #### Monitoring and Alerting
 
 ##### Key Metrics to Monitor
@@ -531,20 +545,6 @@ Main Trove:
 **Note:**Even with a price drop that causes maxBorrowingCapacity to fall in absolute terms, a refinance should still provide enough room to cover all active microloan debt since they are all have CR >= 115%.
 
 ### Future Work
-
-#### Promotions
-
-We could allow for users to "promote" their microloans to full MUSD troves.  They could do this by hand by closing their
-Microloan and opening a trove in MUSD, but for convenience we could provide a mechanism that would do it for them.  
-
-For example, say a user has a microtrove with $50 in debt and $100 worth of collateral. They show up with $2900 worth of 
-collateral (picked so that their promoted trove is at 150% CR with minimum debt, this could be any other amount that results
-in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD trove:
-
-- Contract accepts the $2900 of collateral and withdraws the user's $100 of collateral from its trove.
-- Contract calls openTroveWithSignature with the borrower as the _borrower parameter and itself as the _recipient.
-- Contract receives 2000 MUSD, uses 50 of it to decrease its debt (from the microtrove) and sends the remaining 1950 to the user.
-- The user now has their desired position: 2000 in MUSD debt (plus some fees) backed by 3k of collateral.
 
 #### Additional Loan Structures
 
