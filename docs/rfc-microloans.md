@@ -608,3 +608,4 @@ the terms of the Microloans can be variable.  Some examples:
 - What is the governance model?  What access controls do we want to put in place?
 - What does the upgrade path look like?
 - Should we have a rollback/pause mechanism?
+- What do we do if the main trove gets redeemed against?
