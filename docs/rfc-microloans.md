@@ -106,22 +106,52 @@ On calling `liquidate`:
 
 #### Interest Collection Mechanism
 
-Microloans uses a simple interest approach similar to MUSD V2, with interest calculated linearly on the principal debt amount (no compounding).
+Microloans uses a simple interest approach similar to MUSD V2, with interest calculated linearly on the principal debt amount (no compounding). 
+Interest rates are set as a spread over the MUSD base rate and adjust automatically when MUSD rates change.  This is because the main trove is
+subject to MUSD interest rates and must call `refinance` at times to increase its `maxBorrowingCapacity`.
+
+##### Interest Rate Management
+
+The microloan interest rate is calculated as:
+```
+microloanRate = musdBaseRate + spread
+```
+
+Where the spread compensates for operational complexity and smaller loan sizes (e.g., 4% spread).
+
+Global rate history is maintained to handle rate changes:
+- `currentRate`: Current microloan interest rate
+- `rateHistory[]`: Array of historical rate changes with timestamps
+- When MUSD rates change, a new entry is added to `rateHistory` and `currentRate` is updated
 
 ##### Individual MicroTrove Data
 
 Each MicroTrove stores:
 - `principalDebt`: Original borrowed amount plus any additional borrowing
 - `storedInterest`: Previously accrued but unpaid interest
-- `interestRate`: Fixed APR rate (e.g., 5%)
 - `lastUpdateTimestamp`: Timestamp of last interest calculation
 
 ##### Interest Calculation
 
-Interest is calculated precisely based on elapsed time:
+Interest is calculated by iterating through rate periods since the last update:
 
-newInterest = principalDebt * interestRate * (currentTimestamp - lastUpdateTimestamp) / secondsInYear
-totalDebt = principalDebt + storedInterest + newInterest
+```
+totalInterest = 0
+periodStart = lastUpdateTimestamp
+
+for each rate change after lastUpdateTimestamp:
+    periodEnd = rateChange.timestamp
+    rate = previous rate (or initial rate for first period)
+    periodInterest = principalDebt * rate * (periodEnd - periodStart) / secondsInYear
+    totalInterest += periodInterest
+    periodStart = periodEnd
+
+// Final period at current rate
+finalInterest = principalDebt * currentRate * (currentTimestamp - periodStart) / secondsInYear
+totalInterest += finalInterest
+
+totalDebt = principalDebt + storedInterest + totalInterest
+```
 
 ##### Interest Updates
 
@@ -129,12 +159,21 @@ Interest is recalculated and stored during:
 - Any loan operation (borrow, repay, adjust collateral, etc.)
 - Liquidation events
 - Loan closure
+- Rate changes (optional optimization)
 
 The update process:
-1. Calculate `newInterest` using formula above
+1. Calculate `newInterest` using the rate period formula above
 2. Add `newInterest` to `storedInterest`
 3. Update `lastUpdateTimestamp` to current time
 4. Use `totalDebt` for all CR and liquidation calculations
+
+##### Rate Change Process
+
+When MUSD rates change:
+1. Calculate new microloan rate: `newRate = newMUSDRate + spread`
+2. Add entry to `rateHistory`: `{rate: currentRate, timestamp: block.timestamp}`
+3. Update `currentRate` to `newRate`
+4. All subsequent interest calculations will use the new rate structure
 
 ##### Repayment Priority
 
@@ -151,7 +190,7 @@ For system CR calculations, the contract maintains:
 
 System CR = (mainTroveCollateral) / (mainTroveDebt + totalMicroloanPrincipal + totalStoredInterest + calculatedNewInterest)
 
-**Note**:This will be missing some interest that has yet to be accrued, but it should give a *close enough* CR while avoiding extra complexity.
+**Note**: This will be missing some interest that has yet to be accrued, but it should give a *close enough* CR while avoiding extra complexity.
 
 #### Promotions
 
