@@ -192,6 +192,38 @@ System CR = (mainTroveCollateral) / (mainTroveDebt + totalMicroloanPrincipal + t
 
 **Note**: This will be missing some interest that has yet to be accrued, but it should give a *close enough* CR while avoiding extra complexity.
 
+#### Fee Management
+
+Fees collected from microloans (including issuance fees and interest payments) are accumulated in the contract's MUSD balance and tracked for transparency and future governance decisions.
+
+##### Fee Tracking
+
+The contract maintains detailed accounting of fees collected:
+
+```solidity
+uint256 public totalFeesCollected;        // Total MUSD accumulated from all fees
+uint256 public totalInterestCollected;    // MUSD from interest payments
+uint256 public totalIssuanceFeesCollected; // MUSD from issuance fees
+```
+
+##### Fee Collection Process
+
+When fees are collected:
+1. **Interest payments**: When users pay interest or close loans, interest amounts are added to `totalInterestCollected` and `totalFeesCollected`
+2. **Issuance fees**: When users open loans or increase debt, issuance fees are added to `totalIssuanceFeesCollected` and `totalFeesCollected`
+3. **Balance management**: All fees remain in the contract's MUSD balance, providing operational flexibility
+
+##### Future Fee Utilization
+
+The initial implementation focuses on fee accumulation and tracking. Future governance decisions may implement fee utilization mechanisms such as:
+
+- **Fee withdrawal**: Allow governance to withdraw accumulated fees to a treasury or other designated addresses
+- **Fee reinvestment**: Use accumulated fees to strengthen the main trove by adding collateral or paying down debt
+- **Fee distribution**: Distribute fees to stakeholders according to governance-defined criteria
+- **Protocol development**: Use fees to fund ongoing development and maintenance
+
+This approach provides maximum flexibility while maintaining full transparency of fee collection and system profitability.
+
 #### Promotions
 
 We will allow for users to "promote" their microloans to full MUSD troves.  This will allow for users to test the waters
