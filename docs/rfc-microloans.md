@@ -300,6 +300,76 @@ More specifically, only the following adjustments are allowed:
 To account for this, the Microloans protocol would also need to have a recovery mode with the same restrictions as it will not be able to adjust its trove
 to offset user actions.
 
+#### Redemption Risk Management
+
+The MUSD system allows users to redeem MUSD tokens for BTC at $1 worth of BTC per MUSD (minus redemption fees). Redemptions target troves in ascending CR order, consuming multiple troves sequentially until the redemption amount is satisfied. This creates an **existential threat** to the Microloans system, as no CR can protect against sufficiently large redemptions.
+
+##### The Fundamental Vulnerability
+
+The main trove can be redeemed against regardless of its collateralization ratio if the redemption is large enough to consume all lower-CR troves first.
+
+**Threat Scenarios:**
+
+1. **Whale Redemption**: A large holder redeems enough MUSD to exhaust multiple troves
+2. **Market Panic**: Widespread redemptions during market stress
+3. **Arbitrage Cascade**: Multiple arbitrageurs simultaneously exploit peg deviation
+4. **Coordinated Attack**: Malicious actors specifically targeting the Microloans system
+
+**Example - Whale Redemption:**
+System state:
+- Main trove initial debt: 2,000 MUSD debt at 500% CR (0.10 BTC collateral)
+- Other troves: 100,000 MUSD total debt at an average CR of 200% (2 BTC collateral)
+- Active microloans: 10,000 MUSD debt at 200% average CR (0.2 BTC user collateral)
+- Overall main trove position: 12,000 MUSD debt at an average CR of 250%
+
+Whale redeems 102,000 MUSD:
+- All system troves consumed, including the "safe" 500% CR main trove
+- **Result**: 0.018 BTC in user collateral claims with zero backing
+- **Impact**: Complete loss of user funds, system insolvency
+
+##### Why Traditional Mitigation Fails
+
+**High Collateralization Ratio**: Provides no protection against large redemptions that consume the entire system.
+
+**Collateral Buffers**: Cannot be maintained large enough to withstand whale-sized redemptions without making the system economically unviable.
+
+**Monitoring and Alerts**: Cannot prevent redemptions that execute faster than response time.
+
+##### Potential Mitigation Approaches
+
+**Note**: All approaches have significant trade-offs and may not be economically or technically feasible.
+
+**1. Redemption Size Limits**
+- Impose per-transaction or per-block redemption caps
+- **Problems**: Breaks core MUSD functionality, creates arbitrage inefficiencies, can be circumvented with multiple transactions
+
+**2. Emergency Circuit Breakers**  
+- Pause redemptions when they threaten critical infrastructure
+- **Problems**: Undermines peg stability mechanism, requires real-time monitoring, governance intervention delays
+
+**3. Distributed Architecture**
+- Split microloans across multiple independent troves
+- **Problems**: Increases complexity, gas costs, still vulnerable to system-wide redemptions
+
+**4. Insurance Reserves**
+- Maintain BTC reserves outside the trove system
+- **Problems**: Capital inefficient, requires ongoing funding, governance of insurance fund
+
+**5. Redemption Penalties for Large Sizes**
+- Increase redemption fees for larger redemptions
+- **Problems**: May not deter determined actors, complicates fee structure
+
+##### Recommended Approach
+
+**Accept and Disclose Risk**: Given the fundamental nature of this vulnerability and the impracticality of most mitigation strategies, the most honest approach may be to:
+
+1. **Clearly document** that large redemptions pose an existential risk to user funds
+2. **Implement basic monitoring** to detect unusual redemption activity
+3. **Maintain emergency governance procedures** for potential intervention
+4. **Consider this risk** in all product positioning and user communications
+
+**This represents a fundamental systemic risk that cannot be eliminated through operational measures alone.**
+
 ### Test Vectors and Numerical Examples
 
 This section provides concrete numerical examples for key interactions between Microloans and MUSD.  These examples can be used to verify the design before implementation and to test the system once built.
