@@ -302,73 +302,85 @@ to offset user actions.
 
 #### Redemption Risk Management
 
-The MUSD system allows users to redeem MUSD tokens for BTC at $1 worth of BTC per MUSD (minus redemption fees). Redemptions target troves in ascending CR order, consuming multiple troves sequentially until the redemption amount is satisfied. This creates an **existential threat** to the Microloans system, as no CR can protect against sufficiently large redemptions.
+The MUSD system allows users to redeem MUSD tokens for BTC at $1 worth of BTC per MUSD (minus redemption fees). Redemptions target troves in ascending collateralization ratio order, reducing both debt and collateral proportionally from each targeted trove. This poses a significant risk to the Microloans system when the main trove has a low collateralization ratio relative to other system troves.
 
-##### The Fundamental Vulnerability
+##### The Redemption Risk
 
-The main trove can be redeemed against regardless of its collateralization ratio if the redemption is large enough to consume all lower-CR troves first.
+**Core Vulnerability**: If the main trove becomes one of the lowest CR troves in the system, redemptions will target it, reducing the collateral backing microloans while the outstanding microloan obligations remain unchanged.
 
-**Threat Scenarios:**
+**Risk Scenarios:**
 
-1. **Whale Redemption**: A large holder redeems enough MUSD to exhaust multiple troves
-2. **Market Panic**: Widespread redemptions during market stress
-3. **Arbitrage Cascade**: Multiple arbitrageurs simultaneously exploit peg deviation
-4. **Coordinated Attack**: Malicious actors specifically targeting the Microloans system
+1. **Market-driven CR compression**: Market volatility causes the main trove CR to fall below other system troves
+2. **Operational mismanagement**: Failure to maintain adequate collateral buffer in main trove  
+3. **Large-scale redemptions**: Significant redemption activity when main trove has relatively low CR
 
-**Example - Whale Redemption:**
-System state:
-- Main trove initial debt: 2,000 MUSD debt at 500% CR (0.10 BTC collateral)
-- Other troves: 100,000 MUSD total debt at an average CR of 200% (2 BTC collateral)
-- Active microloans: 10,000 MUSD debt at 200% average CR (0.2 BTC user collateral)
-- Overall main trove position: 12,000 MUSD debt at an average CR of 250%
+**Example - Main Trove Redemption:**
+Initial state:
+- Main trove: 3,000 MUSD debt, 0.036 BTC collateral (CR = 120% at $100k BTC)
+- Active microloans: 1,000 MUSD total debt backed by 0.012 BTC user collateral
+- Other system troves: Average CR of 150%+
 
-Whale redeems 102,000 MUSD:
-- All system troves consumed, including the "safe" 500% CR main trove
-- **Result**: 0.018 BTC in user collateral claims with zero backing
-- **Impact**: Complete loss of user funds, system insolvency
+User redeems 2,000 MUSD → targets main trove as lowest CR:
+- Main trove debt reduced to: 1,000 MUSD
+- Main trove collateral reduced to: 0.016 BTC (proportional reduction)
+- **Problem**: Outstanding microloans still expect 0.012 BTC collateral
+- **Available backing**: Only 0.016 BTC for 1,000 MUSD debt + 0.012 BTC user claims
+- **Shortfall**: System cannot fully back microloan collateral obligations
 
-##### Why Traditional Mitigation Fails
+##### Risk Factors
 
-**High Collateralization Ratio**: Provides no protection against large redemptions that consume the entire system.
+**Main Trove Becomes Target When:**
+- Market conditions compress its CR below system average
+- Insufficient collateral management allows CR to drift down
+- System-wide recovery events cause CR convergence
+- Interest accrual outpaces collateral appreciation
 
-**Collateral Buffers**: Cannot be maintained large enough to withstand whale-sized redemptions without making the system economically unviable.
+**Redemption Impact Severity:**
+- **Partial redemption**: Creates undercollateralized position for microloans
+- **Large redemption**: Can severely reduce available backing
+- **Complete redemption**: Would eliminate all backing (though requires main trove to be fully consumed)
 
-**Monitoring and Alerts**: Cannot prevent redemptions that execute faster than response time.
+##### Mitigation Strategies
 
-##### Potential Mitigation Approaches
+**Primary Defense: Collateral Ratio Management**
 
-**Note**: All approaches have significant trade-offs and may not be economically or technically feasible.
+1. **High Initial CR**: Open main trove at 400-500% CR to provide substantial buffer above typical system levels
+2. **Active Monitoring**: Track main trove CR relative to system average and percentile rankings  
+3. **Proactive Collateral Addition**: Use accumulated fees to add collateral when CR approaches risk thresholds
+4. **Emergency Procedures**: Governance intervention capability for critical situations
 
-**1. Redemption Size Limits**
-- Impose per-transaction or per-block redemption caps
-- **Problems**: Breaks core MUSD functionality, creates arbitrage inefficiencies, can be circumvented with multiple transactions
+**Operational Safeguards:**
 
-**2. Emergency Circuit Breakers**  
-- Pause redemptions when they threaten critical infrastructure
-- **Problems**: Undermines peg stability mechanism, requires real-time monitoring, governance intervention delays
+- **CR Thresholds**: Define specific CR levels that trigger different response actions
+- **Fee Reinvestment**: Systematic use of collected fees to strengthen main trove position
+- **System Monitoring**: Track redemption activity and main trove ranking within system
+- **User Communication**: Clear disclosure of redemption risks to microloan users
 
-**3. Distributed Architecture**
-- Split microloans across multiple independent troves
-- **Problems**: Increases complexity, gas costs, still vulnerable to system-wide redemptions
+**Risk Thresholds (Suggested):**
+- **Green Zone (CR > 300%)**: Normal operations
+- **Yellow Zone (200% < CR < 300%)**: Increased monitoring, prepare collateral addition
+- **Red Zone (CR < 200% or bottom quartile)**: Emergency collateral addition, consider pausing new microloans
+- **Critical Zone (CR < 150%)**: Emergency procedures, halt new origination
 
-**4. Insurance Reserves**
-- Maintain BTC reserves outside the trove system
-- **Problems**: Capital inefficient, requires ongoing funding, governance of insurance fund
+##### Limitations of Mitigation
 
-**5. Redemption Penalties for Large Sizes**
-- Increase redemption fees for larger redemptions
-- **Problems**: May not deter determined actors, complicates fee structure
+**Cannot Eliminate Risk**: Even high initial CR provides limited protection if:
+- Market conditions cause system-wide CR compression
+- Sustained periods prevent effective collateral management  
+- Large redemptions target the main trove persistently
 
-##### Recommended Approach
+**Economic Constraints**: 
+- Extremely high CR reduces capital efficiency
+- Fee revenue may be insufficient for adequate collateral additions
+- Market conditions may make BTC acquisition expensive
 
-**Accept and Disclose Risk**: Given the fundamental nature of this vulnerability and the impracticality of most mitigation strategies, the most honest approach may be to:
+##### Risk Assessment
 
-1. **Clearly document** that large redemptions pose an existential risk to user funds
-2. **Implement basic monitoring** to detect unusual redemption activity
-3. **Maintain emergency governance procedures** for potential intervention
-4. **Consider this risk** in all product positioning and user communications
+**Likelihood**: Medium (depends on market conditions and operational management)
+**Impact**: Partial to complete loss of microloan collateral backing  
+**Mitigation Effectiveness**: Moderate with active management, low during market stress
 
-**This represents a fundamental systemic risk that cannot be eliminated through operational measures alone.**
+**This risk requires ongoing operational attention and cannot be eliminated through design alone.**
 
 ### Test Vectors and Numerical Examples
 
