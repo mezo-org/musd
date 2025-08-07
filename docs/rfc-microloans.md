@@ -307,10 +307,58 @@ The MUSD system allows users to redeem MUSD tokens for BTC at $1 worth of BTC pe
 ##### The Redemption Risk
 
 Redemptions against the main trove affect its collateral balance, potentially creating a situation where there is not enough collateral to back existing users' microloans.
-In the simplest case, a full redemption against the main trove leaves it with no collateral balance and no funds to return to users.  Partial redemptions would have a 
-similar effect if enough collateral was redeemed.
+
+There are two main cases: full redemptions and partial redemptions.
+
+A partial redemption is when the redemption amount does not full consume the debt of the trove, allowing the trove to remain open with reduced collateral and debt.
+For an example of how this could result in loss of user funds, see [Test Vector 10](#test-vector-10-redemption-scenario).
+
+A full redemption is when the trove's entire debt is redeemed against.  This results in the trove being closed and its surplus collateral (from being overcollateralized)
+is sent to the `CollSurplusPool` where it must be claimed with a call to `BorrowerOperations.claimCollateral()`.  This would effectively break the system until the main
+trove could be reopened.
 
 ##### Mitigation Strategies
+
+**Primary Defense: CR Management**
+
+Because troves are redeemed against in ICR order, we can reduce the redemption risk for the main trove by keeping its CR
+high relative to the other troves in the system.
+
+1. **High Initial CR**: Open main trove at 400-500% CR to provide substantial buffer above typical system levels
+2. **High MCR for Microloans**: Since the CR of the main trove is the average of the initial trove and all microloans, the MCR for microloans should be set such that the main trove CR remains high relative to the other troves.
+3. **Active Monitoring**: Track main trove CR relative to system average and percentile rankings
+4. **Emergency Procedures**: Governance intervention capability for critical situations.  For example, pausing the system to allow for emergency collateral to be added.
+
+**Secondary Defense: Emergency Pause Mechanism**
+
+A pause functionality provides critical protection when redemptions create undercollateralization:
+
+1. **Automatic Triggers**: System can automatically pause when backing ratio falls below threshold
+2. **Manual Override**: Governance can manually pause when detecting concerning redemption patterns
+3. **Operations Restricted**: During pause, block new microloans and withdrawals while allowing deposits
+4. **Collateral Recovery**: Use accumulated fees or emergency funding to restore full backing before unpausing
+
+**Benefits of Pause Approach:**
+- **No value destruction**: Unlike liquidations, redemptions don't destroy collateral - it's still recoverable
+- **Time for response**: Prevents cascading effects while governance addresses shortfall
+- **Maintains system integrity**: Shows proactive protection rather than reactive damage control
+- **User confidence**: Demonstrates commitment to making users whole
+
+**Operational Safeguards**
+1. **CR Thresholds**: Define specific CR levels that trigger different response actions
+2. **Backing Ratio Monitoring**: Track available collateral vs. user claims in real-time
+3. **User Communication**: Clear disclosure of redemption risks and pause procedures to microloan users
+4. **System Monitoring**: Track redemption activity and main trove ranking within system
+5. **Emergency Procedures**: Pre-defined governance processes for pause activation and collateral restoration
+
+##### Limitations of Mitigation
+
+**Cannot Eliminate Risk**: Even a very high CR does not guarantee protection as large enough redemptions may target the main trove regardless of initial positioning.
+
+**Pause Limitations**: 
+- Requires governance action and funding to resolve shortfalls
+- May create temporary liquidity constraints for users
+- Depends on having sufficient fee reserves or emergency funding sources
 
 ### Test Vectors and Numerical Examples
 
@@ -626,6 +674,67 @@ Main Trove:
 ```
 
 **Note:**Even with a price drop that causes maxBorrowingCapacity to fall in absolute terms, a refinance should still provide enough room to cover all active microloan debt since they are all have CR >= 115%.
+
+#### Test Vector 10: Redemption Scenario
+
+**Inputs:**
+- Starting from state after refinancing and 35th microloan (Test Vector 9)
+- BTC price: $100,000
+- Additional system trove: 10,000 MUSD debt at 200% CR (0.2 BTC collateral)
+- Redemption amount: 3,500 MUSD
+
+**System State Before Redemption:**
+```
+Main Trove:
+- Collateral: 0.10025 BTC ($10,025)
+- Debt: 5,500 MUSD
+- CR: 182.3%
+
+Other System Trove:
+- Collateral: 0.2 BTC ($20,000)  
+- Debt: 10,000 MUSD
+- CR: 200%
+
+Active Microloans:
+- Total user collateral: 35 * 0.00115 BTC = 0.04025 BTC ($4,025)
+- Total user debt: 35 * 100.5 MUSD = 3,517.5 MUSD
+```
+
+**Redemption Targeting:**
+Since the main trove has the lowest CR (182.3% < 200%), the 3,500 MUSD redemption targets it first.
+
+**Calculations:**
+- Redemption consumes: 3,500 MUSD debt
+- Proportional collateral reduction: 3,500 MUSD / 5,500 MUSD = 63.64% of main trove
+- Collateral redeemed: 0.10025 BTC * 63.64% = 0.06379 BTC ($6,379)
+- Remaining main trove collateral: 0.10025 BTC - 0.06379 BTC = 0.03646 BTC ($3,646)
+- Remaining main trove debt: 5,500 MUSD - 3,500 MUSD = 2,000 MUSD
+
+**Expected State After Redemption:**
+```
+Main Trove:
+- Collateral: 0.03646 BTC ($3,646)
+- Debt: 2,000 MUSD
+- CR: 182.3% (unchanged, proportional reduction)
+
+Other System Trove:
+- Collateral: 0.2 BTC ($20,000) (unchanged)
+- Debt: 10,000 MUSD (unchanged)
+- CR: 200% (unchanged)
+
+Active Microloans (unchanged):
+- Total user collateral claims: 0.04025 BTC ($4,025)
+- Total user debt: 3,517.5 MUSD
+
+System Analysis:
+- Available collateral: 0.03646 BTC ($3,646)
+- User collateral claims: 0.04025 BTC ($4,025)
+- Shortfall: 0.00379 BTC ($379)
+- Backing ratio: $3,646 / $4,025 = 90.6%
+```
+
+**Impact:**
+The redemption creates an undercollateralized position where the main trove cannot fully back outstanding microloan collateral claims. Users collectively face a potential loss of $379 (9.4% shortfall) if they all attempted to withdraw simultaneously.
 
 ### Future Work
 
