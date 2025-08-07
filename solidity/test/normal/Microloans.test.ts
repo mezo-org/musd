@@ -2,7 +2,13 @@ import { helpers } from "hardhat"
 import { expect } from "chai"
 
 import { ContractTransactionResponse } from "ethers"
-import { setupTests, getOpenTroveTotalDebt, User, Contracts } from "../helpers"
+import {
+  setupTests,
+  getOpenTroveTotalDebt,
+  User,
+  Contracts,
+  TroveStatus,
+} from "../helpers"
 import { ZERO_ADDRESS } from "../../helpers/constants"
 import { Microloans } from "../../typechain"
 import { to1e18 } from "../utils"
@@ -73,10 +79,9 @@ describe("Microloans in Normal Mode", () => {
       })
 
       it("should open the main trove", async () => {
-        // TODO: Define TS constants for trove status
         expect(
           await contracts.troveManager.getTroveStatus(microloansAddress),
-        ).to.equal(1)
+        ).to.equal(TroveStatus.Active)
       })
 
       it("should emit MainTroveOpened event", async () => {
