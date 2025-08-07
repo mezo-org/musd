@@ -51,14 +51,12 @@ contract BorrowerOperations is
         uint256 newNICR;
         uint256 maxBorrowingCapacity;
         uint16 interestRate;
-        uint256 finalMaxBorrowingCapacity;
     }
 
     struct LocalVariables_openTrove {
         uint256 price;
         uint256 fee;
         uint256 netDebt;
-        uint256 compositeDebt;
         uint256 ICR;
         uint256 NICR;
         uint256 stake;
@@ -647,18 +645,11 @@ contract BorrowerOperations is
         _requireAtLeastMinNetDebt(vars.netDebt);
 
         // ICR is based on the composite debt, i.e. the requested amount + borrowing fee + gas comp.
-        vars.compositeDebt = _getCompositeDebt(vars.netDebt);
+        uint256 compositeDebt = _getCompositeDebt(vars.netDebt);
 
         // if BTC overwrite the asset value
-        vars.ICR = LiquityMath._computeCR(
-            msg.value,
-            vars.compositeDebt,
-            vars.price
-        );
-        vars.NICR = LiquityMath._computeNominalCR(
-            msg.value,
-            vars.compositeDebt
-        );
+        vars.ICR = LiquityMath._computeCR(msg.value, compositeDebt, vars.price);
+        vars.NICR = LiquityMath._computeNominalCR(msg.value, compositeDebt);
 
         if (isRecoveryMode) {
             _requireICRisAboveCCR(vars.ICR);
@@ -667,7 +658,7 @@ contract BorrowerOperations is
             uint256 newTCR = _getNewTCRFromTroveChange(
                 msg.value,
                 true,
-                vars.compositeDebt,
+                compositeDebt,
                 true,
                 vars.price
             ); // bools: coll increase, debt increase
@@ -688,10 +679,7 @@ contract BorrowerOperations is
         // slither-disable-next-line unused-return
         contractsCache.troveManager.increaseTroveColl(_borrower, msg.value);
         // slither-disable-next-line unused-return
-        contractsCache.troveManager.increaseTroveDebt(
-            _borrower,
-            vars.compositeDebt
-        );
+        contractsCache.troveManager.increaseTroveDebt(_borrower, compositeDebt);
 
         // solhint-disable not-rely-on-time
         contractsCache.troveManager.setTroveLastInterestUpdateTime(
@@ -748,7 +736,7 @@ contract BorrowerOperations is
         // solhint-disable not-rely-on-time
         emit TroveUpdated(
             _borrower,
-            vars.compositeDebt,
+            compositeDebt,
             0,
             msg.value,
             vars.stake,
@@ -823,7 +811,9 @@ contract BorrowerOperations is
 
         // If the adjustment incorporates a principal increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) {
-            vars.fee = _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
+            vars.fee = governableVariables.isAccountFeeExempt(_borrower)
+                ? 0
+                : _triggerBorrowingFee(contractsCache.musd, _mUSDChange);
             vars.netDebtChange += vars.fee; // The raw debt change includes the fee
         }
 
@@ -897,14 +887,14 @@ contract BorrowerOperations is
                 .troveManager
                 .getTroveMaxBorrowingCapacity(_borrower);
 
-            vars.finalMaxBorrowingCapacity = LiquityMath._min(
+            uint256 finalMaxBorrowingCapacity = LiquityMath._min(
                 currentMaxBorrowingCapacity,
                 newMaxBorrowingCapacity
             );
 
             contractsCache.troveManager.setTroveMaxBorrowingCapacity(
                 _borrower,
-                vars.finalMaxBorrowingCapacity
+                finalMaxBorrowingCapacity
             );
         }
 
