@@ -24,6 +24,15 @@ describe("Microloans in Normal Mode", () => {
     microloansAddress = await microloans.getAddress()
   })
 
+  const computeCollateralAmount = async (musdAmount: bigint) => {
+    // 200% ICR
+    const ICR = to1e18("200") / 100n // 1e18 = 100%
+
+    const price = await contracts.priceFeed.fetchPrice()
+    const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
+    return (ICR * totalDebt) / price
+  }
+
   describe("openTrove()", () => {
     context("when called by a third party", () => {
       it("reverts", async () => {
@@ -40,6 +49,7 @@ describe("Microloans in Normal Mode", () => {
 
     context("when called by the governance", () => {
       const musdAmount = to1e18("1800")
+
       let collateralAmount: bigint
       let tx: ContractTransactionResponse
 
@@ -49,11 +59,7 @@ describe("Microloans in Normal Mode", () => {
         const lowerHint = ZERO_ADDRESS
         const upperHint = ZERO_ADDRESS
 
-        const ICR = to1e18("200") / 100n // 1e18 = 100%
-
-        const price = await contracts.priceFeed.fetchPrice()
-        const totalDebt = await getOpenTroveTotalDebt(contracts, musdAmount)
-        collateralAmount = (ICR * totalDebt) / price
+        collateralAmount = await computeCollateralAmount(musdAmount)
 
         tx = await microloans
           .connect(deployer.wallet)
