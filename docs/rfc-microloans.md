@@ -274,7 +274,16 @@ in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD tr
 - This setup works except in a scenario where the initial $2,000 loan itself is at risk of liquidation, and it is the main factor pulling down the average CR.
 - To mitigate catastrophic scenarios, one approach is to initially open the $2,000 loan with a high collateralization ratio (for example, 500%). This provides a buffer, so that even if the price drops severely (e.g. to 20% of its original value), the main trove is still protected up to that point.
 - By also imposing a maximum on the collateralization ratio of microloans (equal or less than the main trove’s current CR), it would prevent microloans from ever being more overcollateralized than the main trove. This would in theory ensure that there cannot be a situation where the pool is wiped out due to a single main trove liquidation while some microloans are fully collateralized.
-**Note:** It is still possible for the main trove to be liquidated.  All microloans up to that point should be liquidated by then, but for the system to continue functioning the main trove would need to be reopened.  The details of this process are TBD.
+
+**Note:** It is still possible for the main trove to be liquidated.  All microloans up to that point should be liquidated by then, but for the system to continue functioning the main trove would need to be reopened.
+
+**Main Trove Liquidation Response**
+
+If the main trove gets liquidated, the system faces a critical failure state requiring immediate intervention:
+
+1. **Automatic System Pause**: System automatically pauses all operations when main trove liquidation is detected
+2. **Governance Recapitalization**: Requires emergency governance action to add new collateral backing
+3. **System Reset**: Before unpausing, governance must ensure adequate collateral coverage for all user claims
 
 #### Fee Exemption and Maximum Borrowing Capacity
 
@@ -753,6 +762,5 @@ the terms of the Microloans can be variable.  Some examples:
   - Note that if we want others to run the bot we will need to monitor profitability of liquidations more closely.
 - What are the fees?
 - What are the other parameters (minimum/maximum CR for microloans)?
-- What happens in the case that the main trove is liquidated?
 - What is the governance model?  What access controls do we want to put in place?
 - What does the upgrade path look like?
