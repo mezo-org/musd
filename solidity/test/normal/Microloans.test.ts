@@ -9,7 +9,7 @@ import { to1e18 } from "../utils"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
-describe.only("Microloans in Normal Mode", () => {
+describe("Microloans in Normal Mode", () => {
   let alice: User
   let deployer: User
 
@@ -39,16 +39,14 @@ describe.only("Microloans in Normal Mode", () => {
     await gov.addFeeExemptAccount(microloansAddress)
   })
 
-  const computeCollateralAmount = async (
-    musdAmount: bigint,
-    collateralizationRatio: number,
-  ) => {
-    const ICR = to1e18(collateralizationRatio) / 100n // 1e18 = 100%
-
+  const getMainTroveState = async () => {
     const price = await contracts.priceFeed.fetchPrice()
-    const totalDebt = await contracts.troveManager.getCompositeDebt(musdAmount)
-
-    return (ICR * totalDebt) / price
+    return {
+      collateral: await troveManager.getTroveColl(microloansAddress),
+      debt: await troveManager.getTroveDebt(microloansAddress),
+      cr: await troveManager.getCurrentICR(microloansAddress, price),
+      capacity: troveManager.getTroveMaxBorrowingCapacity(microloansAddress),
+    }
   }
 
   describe("openTrove()", () => {
@@ -66,24 +64,28 @@ describe.only("Microloans in Normal Mode", () => {
     })
 
     context("when called by the governance", () => {
-      const musdAmount = to1e18("1800")
-      const collateralizationRatio = 300
+      // [RFC-1] Test Vector 1: Initial State Setup
+      //
+      // Main Trove:
+      //  - Collateral: 0.06 BTC ($6000)
+      //  - Debt: 2000 MUSD
+      //  - CR: 300%
+      //  - Max borrowing capacity: ~5454.54 MUSD (at 110% CR)
+      const musdMinDebt = to1e18("1800")
+      const collateral = to1e18("0.06")
+      const debt = to1e18("2000")
+      const CR = 300
+      const maxBorrowingCapacity = to1e18("5454.54")
 
-      let collateralAmount: bigint
       let tx: ContractTransactionResponse
 
       before(async () => {
         await createSnapshot()
 
-        collateralAmount = await computeCollateralAmount(
-          musdAmount,
-          collateralizationRatio,
-        )
-
         tx = await microloans
           .connect(deployer.wallet)
-          .openMainTrove(musdAmount, ZERO_ADDRESS, ZERO_ADDRESS, {
-            value: collateralAmount,
+          .openMainTrove(musdMinDebt, ZERO_ADDRESS, ZERO_ADDRESS, {
+            value: collateral,
           })
       })
 
@@ -100,30 +102,16 @@ describe.only("Microloans in Normal Mode", () => {
       it("should emit MainTroveOpened event", async () => {
         await expect(tx)
           .to.emit(microloans, "MainTroveOpened")
-          .withArgs(musdAmount, collateralAmount)
+          .withArgs(musdMinDebt, collateral)
       })
 
-      it("should have expected main trove parameters", async () => {
-        // Per RFC-1: Microloans test vectors
-        //
-        // Main Trove:
-        //  - Collateral: 0.06 BTC ($6000)
-        //  - Debt: 2000 MUSD
-        //  - CR: 300%
-        //  - Max borrowing capacity: ~5454.54 MUSD (at 110% CR)
-        const collateral = await troveManager.getTroveColl(microloansAddress)
-        const debt = await troveManager.getTroveDebt(microloansAddress)
-        const cr = await troveManager.getCurrentICR(
-          microloansAddress,
-          await contracts.priceFeed.fetchPrice(),
-        )
-        const capacity =
-          await troveManager.getTroveMaxBorrowingCapacity(microloansAddress)
+      it("should have expected main trove state", async () => {
+        const t = await getMainTroveState()
 
-        expect(collateral).to.equal("60000000000000000") // 0.06 BTC
-        expect(debt).to.equal(to1e18("2000"))
-        expect(cr).to.equal(to1e18("3"))
-        expect(capacity).to.be.closeTo(to1e18("5454"), to1e18("1"))
+        expect(t.collateral).to.equal(collateral)
+        expect(t.debt).to.equal(debt)
+        expect(t.cr).to.equal(to1e18(CR) / 100n)
+        expect(t.capacity).to.be.closeTo(maxBorrowingCapacity, to1e18("0.01"))
       })
     })
   })
