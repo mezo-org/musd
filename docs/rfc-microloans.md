@@ -104,6 +104,39 @@ On calling `liquidate`:
   - `liquidate` pays down the outstanding debt and sends $28.75 worth of collateral to the caller, netting a profit of $3.75.
 - The user's trove is marked as closed by liquidation.
 
+#### Minimum Collateralization Ratio Analysis
+
+The minimum CR for microloans must provide sufficient buffer to ensure microloans can be liquidated before the main trove reaches MUSD's 110% liquidation threshold.
+
+##### Buffer Logic
+
+- MUSD liquidation threshold: 110% CR
+- Proposed microloan liquidation threshold: 120% CR
+- **10% buffer** between microloan liquidation and main trove risk
+
+This 10% buffer mirrors MUSD's own design, where the 110% threshold provides a ~10% buffer above the point where liquidation becomes unprofitable (100% backing).
+
+##### Buffer Adequacy Assessment
+
+Historical data shows the fastest 10% BTC price drop (May 19, 2021) occurred over approximately 15 minutes, providing sufficient time for liquidation execution on 
+Mezo's ~5-second block times.
+
+##### Critical Execution Requirements
+1. **Liquidation bot detection**: 1-2 blocks (~5-10s)
+2. **Transaction confirmation**: 1-2 blocks (5-10s)
+3. **MUSD acquisition**: Liquidator must obtain MUSD via swap or existing holdings
+4. **Slippage management**: Large liquidations could impact MUSD/BTC prices
+
+##### Risk Factors
+
+**Conditions that could exhaust the 10% buffer:**
+1. **Flash crashes**: Extreme volatility exceeding historical precedent
+2. **Cascading liquidations**: Multiple protocols liquidating simultaneously
+3. **MUSD liquidity constraints**: Insufficient liquidity for liquidation amounts
+4. **Network congestion**: High gas prices or transaction delays during volatility
+
+The 120% minimum CR provides a reasonable balance between user capital efficiency and system safety, assuming proper liquidation infrastructure and monitoring.
+
 #### Interest Collection Mechanism
 
 Microloans uses a simple interest approach similar to MUSD V2, with interest calculated linearly on the principal debt amount (no compounding). 
@@ -818,5 +851,4 @@ the terms of the Microloans can be variable.  Some examples:
 - Who will run the liquidation bot?  We can run it, or we can open source it and allow others to handle the operation.
   - Note that if we want others to run the bot we will need to monitor profitability of liquidations more closely.
 - What are the fees?
-- What are the other parameters (minimum/maximum CR for microloans)?
 - What does the upgrade path look like?
