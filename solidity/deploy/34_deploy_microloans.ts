@@ -13,15 +13,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     governance,
   } = await setupDeploymentBoilerplate(hre)
 
-  const { borrowerOperations, troveManager } = await fetchAllDeployedContracts(
-    isHardhatNetwork,
-    isFuzzTestingNetwork,
-  )
+  const { musd, borrowerOperations, troveManager, priceFeed } =
+    await fetchAllDeployedContracts(isHardhatNetwork, isFuzzTestingNetwork)
 
   await getOrDeployProxy("Microloans", {
     initializerArgs: [
+      await musd.getAddress(),
       await borrowerOperations.getAddress(),
       await troveManager.getAddress(),
+      await priceFeed.getAddress(),
     ],
     proxyOpts: {
       kind: "transparent",
