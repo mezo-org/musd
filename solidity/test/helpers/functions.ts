@@ -533,7 +533,7 @@ export async function openTrove(contracts: Contracts, inputs: OpenTroveParams) {
   // open minimum debt amount unless extraMUSDAmount is specificed.
   // if (!params.musdAmount) params.musdAmount = (await contracts.borrowerOperations.minNetDebt()) + 1n // add 1 to avoid rounding issues
 
-  // ICR default of 150%
+  // ICR default of 200%
   if (params.ICR === undefined) params.ICR = "200"
   const ICR = to1e18(params.ICR) / 100n // 1e18 = 100%
 
