@@ -45,7 +45,8 @@ describe("Microloans in Normal Mode", () => {
       collateral: await troveManager.getTroveColl(microloansAddress),
       debt: await troveManager.getTroveDebt(microloansAddress),
       cr: await troveManager.getCurrentICR(microloansAddress, price),
-      capacity: troveManager.getTroveMaxBorrowingCapacity(microloansAddress),
+      capacity:
+        await troveManager.getTroveMaxBorrowingCapacity(microloansAddress),
     }
   }
 
