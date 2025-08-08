@@ -238,6 +238,63 @@ in a valid MUSD trove) and want to "promote" their microtrove to a $2000 MUSD tr
 - Contract receives 2000 MUSD, uses 50 of it to decrease its debt (from the microtrove) and sends the remaining 1950 to the user.
 - The user now has their desired position: 2000 in MUSD debt (plus some fees) backed by 3k of collateral.
 
+#### Governance
+
+The Microloans protocol should adopt a governance structure similar to MUSD's three-tier model, adapted for the specific needs of microloans management.
+
+##### Proposed Three-Tier Structure
+
+**1. Owner (Bootstrap Phase)**
+- **Purpose**: Contract deployment and initial setup
+- **Powers**: 
+  - Initialize contracts and set addresses
+  - Set initial council/treasury roles  
+  - Configure fee exemption for Microloans contract in MUSD
+  - **Self-destruct**: Renounce ownership after setup completion
+- **Duration**: Temporary (renounced after deployment)
+
+**2. Council (Primary Governance)**
+- **Purpose**: Protocol parameter management and routine operations
+- **Powers**:
+  - Parameter management (interest rates, CRs, fees) with time delays
+  - Emergency pause/unpause operations
+  - Fee collection and utilization decisions
+  - Main trove management (e.g. collateral adjustments)
+  - Liquidation bot configuration and monitoring
+- **Implementation**: Multi-sig wallet
+
+**3. Treasury (Financial Operations)**  
+- **Purpose**: Financial management and emergency response
+- **Powers**:
+  - Emergency collateral provision for undercollateralization events
+  - Fee withdrawal and treasury management  
+  - Emergency funding for system recapitalization
+  - Protocol revenue distribution decisions
+- **Implementation**: Separate multi-sig wallet from Council
+
+##### Security Mechanisms
+
+**Time Delays (7-day standard)**:
+```solidity
+// Parameter changes require propose-approve pattern
+function proposeInterestRateSpread(uint256 _spread) external onlyGovernance
+function approveInterestRateSpread() external onlyGovernance // 7-day delay
+
+function proposeMinimumCR(uint256 _mcr) external onlyGovernance  
+function approveMinimumCR() external onlyGovernance // 7-day delay
+```
+
+**Emergency Powers (Immediate execution)**:
+```solidity
+function emergencyPause() external onlyGovernance // No delay for critical situations
+function addEmergencyCollateral(uint256 _amount) external onlyTreasury // No delay
+```
+
+**Progressive Permissions**:
+- **Routine operations**: Require Council OR Treasury (`onlyGovernance`)
+- **Financial operations**: Treasury-specific functions for fund management
+- **Emergency responses**: Immediate execution for critical system protection
+
 #### Monitoring and Alerting
 
 ##### Key Metrics to Monitor
@@ -762,5 +819,4 @@ the terms of the Microloans can be variable.  Some examples:
   - Note that if we want others to run the bot we will need to monitor profitability of liquidations more closely.
 - What are the fees?
 - What are the other parameters (minimum/maximum CR for microloans)?
-- What is the governance model?  What access controls do we want to put in place?
 - What does the upgrade path look like?
