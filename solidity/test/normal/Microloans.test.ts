@@ -55,7 +55,7 @@ describe("Microloans in Normal Mode", () => {
     }
   }
 
-  describe("openTrove()", () => {
+  describe("openMainTrove()", () => {
     context("when called by a third party", () => {
       it("reverts", async () => {
         await expect(
