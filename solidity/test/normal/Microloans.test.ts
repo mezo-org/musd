@@ -56,8 +56,8 @@ describe("Microloans in Normal Mode", () => {
   }
 
   describe("openMainTrove()", () => {
-    context("when called by a third party", () => {
-      it("reverts", async () => {
+    context("expected reverts", () => {
+      it("should revert when called by a third party", async () => {
         await expect(
           microloans
             .connect(alice.wallet)
