@@ -2,7 +2,13 @@ import { helpers } from "hardhat"
 import { expect } from "chai"
 
 import { ContractTransactionResponse } from "ethers"
-import { setupTests, User, Contracts, TroveStatus } from "../helpers"
+import {
+  setupTests,
+  User,
+  Contracts,
+  TroveStatus,
+  TestingAddresses,
+} from "../helpers"
 import { ZERO_ADDRESS } from "../../helpers/constants"
 import { Microloans, TroveManager } from "../../typechain"
 import { to1e18 } from "../utils"
@@ -17,14 +23,12 @@ describe("Microloans in Normal Mode", () => {
   let microloans: Microloans
   let troveManager: TroveManager
 
-  let microloansAddress: string
+  let addresses: TestingAddresses
 
   before(async () => {
-    ;({ alice, deployer, contracts } = await setupTests())
+    ;({ alice, deployer, contracts, addresses } = await setupTests())
 
     microloans = contracts.microloans
-    microloansAddress = await microloans.getAddress()
-
     troveManager = contracts.troveManager
 
     // BTC price at $100k to align with RFC-1: Microloans test vectors
@@ -36,17 +40,18 @@ describe("Microloans in Normal Mode", () => {
     const gov = contracts.governableVariables.connect(deployer.wallet)
     await gov.startChangingRoles(deployer.address, deployer.address)
     await gov.finalizeChangingRoles()
-    await gov.addFeeExemptAccount(microloansAddress)
+    await gov.addFeeExemptAccount(addresses.microloans)
   })
 
   const getMainTroveState = async () => {
     const price = await contracts.priceFeed.fetchPrice()
     return {
-      collateral: await troveManager.getTroveColl(microloansAddress),
-      debt: await troveManager.getTroveDebt(microloansAddress),
-      cr: await troveManager.getCurrentICR(microloansAddress, price),
-      capacity:
-        await troveManager.getTroveMaxBorrowingCapacity(microloansAddress),
+      collateral: await troveManager.getTroveColl(addresses.microloans),
+      debt: await troveManager.getTroveDebt(addresses.microloans),
+      cr: await troveManager.getCurrentICR(addresses.microloans, price),
+      capacity: await troveManager.getTroveMaxBorrowingCapacity(
+        addresses.microloans,
+      ),
     }
   }
 
@@ -95,9 +100,9 @@ describe("Microloans in Normal Mode", () => {
       })
 
       it("should open the main trove", async () => {
-        expect(await troveManager.getTroveStatus(microloansAddress)).to.equal(
-          TroveStatus.Active,
-        )
+        expect(
+          await troveManager.getTroveStatus(addresses.microloans),
+        ).to.equal(TroveStatus.Active)
       })
 
       it("should emit MainTroveOpened event", async () => {
