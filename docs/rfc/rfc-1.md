@@ -827,12 +827,58 @@ Active Microloans (unchanged):
 System Analysis:
 - Available collateral: 0.06525 BTC ($6,525)
 - User collateral claims: 0.04025 BTC ($4,025)
-- Surplus: 0.025 BTC ($2,500)
+- Collateral available after user claims: 0.025 BTC ($2,500)
 - Backing ratio: $4,025 / $4,025 = 100%
 ```
 
-**Impact:**
-The redemption actually improves the system's backing position. The main trove can still fully cover all outstanding microloan collateral claims with a $2,500 surplus. Users face no losses and can withdraw their full collateral amounts.
+The main trove can still fully cover all outstanding microloan collateral claims.
+
+**System State After All User Claims:**
+
+When all 35 users repay their debts and withdraw their collateral:
+
+**User Repayments:**
+- Each user repays: 100.5 MUSD 
+- Total MUSD received by microloans contract: 35 * 100.5 = 3,517.5 MUSD
+- User principal portion: 35 * 100 = 3,500 MUSD (would normally repay main trove debt)
+- Fee portion: 35 * 0.5 = 17.5 MUSD (microloans keeps as revenue)
+
+**User Collateral Withdrawals:**
+- Each user withdraws: 0.00115 BTC
+- Total collateral withdrawn: 35 * 0.00115 = 0.04025 BTC ($4,025)
+- Remaining main trove collateral: 0.06525 - 0.04025 = 0.025 BTC ($2,500)
+
+**Final System State:**
+```
+Main Trove:
+- Collateral: 0.025 BTC ($2,500) 
+- Debt: 2,000 MUSD
+- CR: ($2,500 / $2,000) = 125%
+
+Microloans Contract:
+- MUSD balance: 3,517.5 MUSD (from user repayments)
+- BTC balance: 0 BTC (all returned to users)
+- Outstanding user debt: 0 MUSD
+- Revenue earned: 17.5 MUSD (fees)
+```
+
+**Net Protocol Position After Redemption Event:**
+- MUSD available: 3,517.5 MUSD (from user repayments)
+- MUSD owed to main trove: 2,000 MUSD (initial main trove debt)
+- **Net MUSD gain from initial position: 3,517.5 MUSD**
+- BTC available: 0 BTC
+- BTC collateral: 0.025 BTC
+- **Net BTC loss from initial position: 0.06 - 0.025 = 0.035 BTC ($3500)**
+- **Total Net gain: 17.5 MUSD (from fees)**
+
+**Economic Analysis:**
+The protocol breaks even from the redemption event because:
+1. Users still owed the microloans contract their full debt (3,517.5 MUSD)
+2. But the main trove debt was reduced by 3,500 MUSD through redemption
+3. This creates a 1,500 MUSD "surplus" for the protocol
+4. Plus the normal 17.5 MUSD in fee revenue
+
+**This shows the redemption scenario is actually breakeven for the protocol, not costly.** 
 
 ### Future Work
 
