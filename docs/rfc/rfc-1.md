@@ -938,39 +938,6 @@ System Analysis:
 - Backing ratio: $7,050 / $8,050 = 87.6%
 ```
 
-**Impact:**
-The large redemption creates an undercollateralized position where the main trove cannot fully back outstanding microloan collateral claims. Users collectively face a potential loss of $1,000 (12.4% shortfall) if they all attempted to withdraw simultaneously.
-
-**Overall Net Position After Redemption:**
-
-The system has the following position after the 7,000 MUSD redemption:
-
-```
-Main Trove:
-- Collateral: $7,050 (+$1,050 from initial $6,000)
-- Debt: $2,000 (flat from initial $2,000)
-- Outstanding microloans debt: $7,035
-- Outstanding microloans collateral claims: $8,050
-```
-
-**Net Position Analysis:**
-- **MUSD gain**: $7,035 (from outstanding microloan debt)
-- **MUSD owed**: $2,000 (main trove debt)
-- **Net MUSD position**: $7,035 - $2,000 = $5,035 gain
-- **BTC loss**: $1,000 (collateral shortfall)
-- **Total net position**: $5,035 - $1,000 = $4,035 gain
-
-**Economic Analysis:**
-The protocol actually makes a profit from this redemption event because:
-1. Users still owe the microloans contract their full debt ($7,035)
-2. But the main trove debt was reduced by $7,000 through redemption
-3. This creates a $35 "surplus" for the protocol (plus $35 in fees = $70 total)
-4. However, there's a $1,000 shortfall in collateral terms
-5. **Net result**: $70 - $1,000 = -$930 loss in collateral terms, but +$1,035 gain in MUSD terms
-6. **Overall net profit**: $1,035 - $1,000 = $35 profit
-
-**This shows that even large redemptions can be profitable for the protocol due to the fee structure, despite creating collateral shortfalls.**
-
 **System State After All User Claims:**
 
 When all 70 users repay their debts and withdraw their collateral:
@@ -987,6 +954,27 @@ When all 70 users repay their debts and withdraw their collateral:
 - But only 0.0705 BTC ($7,050) is available
 - **Shortfall**: 0.01 BTC ($1,000) - users cannot get their full collateral back
 
+**In this case, the large redemption created a situation where there is not enough collateral in the main trove to cover all user claims.**
+
+However, note that the system has not suffered any losses in its net position:
+
+**Initial Position:**
+MUSD available: 2000 MUSD (initial main trove debt)
+BTC collateral: 0.06 BTC ($6000)
+Net MUSD balance: 2000
+Net BTC balance: 0.06 BTC ($6000)
+Total Assets ($): $6000 + $2000 = $8000
+
+**After redemption:**
+MUSD available: 2000 MUSD
+MUSD owed: 7035 MUSD (from user repayments)
+Net MUSD balance: 9035 MUSD
+
+BTC available: 0 BTC
+BTC collateral: 0.0705 BTC ($7050)
+BTC debt: 0.08050 ($8050)
+Net BTC balance: -0.01 BTC (-$1000) 
+Total Assets ($): $9035 - $1000 = $8035 (same as initial position plus $35 in fees)
 
 
 ### Future Work
