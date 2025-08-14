@@ -410,7 +410,7 @@ Redemptions against the main trove affect its collateral balance, potentially cr
 There are two main cases: full redemptions and partial redemptions.
 
 A partial redemption is when the redemption amount does not full consume the debt of the trove, allowing the trove to remain open with reduced collateral and debt.
-For an example of how this could result in loss of user funds, see [Test Vector 10](#test-vector-10-redemption-scenario).
+For an example of how this could result in loss of user funds, see [Test Vector 11](#test-vector-11-large-redemption-scenario).
 
 A full redemption is when the trove's entire debt is redeemed against.  This results in the trove being closed and its surplus collateral (from being overcollateralized)
 is sent to the `CollSurplusPool` where it must be claimed with a call to `BorrowerOperations.claimCollateral()`.  This would effectively break the system until the main
@@ -418,15 +418,44 @@ trove could be reopened.
 
 ##### Mitigation Strategies
 
-**Primary Defense: CR Management**
+**Primary Defense: Collateral Shortfall Management**
 
-Because troves are redeemed against in ICR order, we can reduce the redemption risk for the main trove by keeping its CR
-high relative to the other troves in the system.
+The protocol implements a monitoring and replacement system to ensure users can always withdraw their full collateral, even after redemptions reduce the main trove's collateral balance.
 
-1. **High Initial CR**: Open main trove at 400-500% CR to provide substantial buffer above typical system levels
-2. **High MCR for Microloans**: Since the CR of the main trove is the average of the initial trove and all microloans, the MCR for microloans should be set such that the main trove CR remains high relative to the other troves.
-3. **Active Monitoring**: Track main trove CR relative to system average and percentile rankings
-4. **Emergency Procedures**: Governance intervention capability for critical situations.  For example, pausing the system to allow for emergency collateral to be added.
+**Monitoring System**
+The protocol continuously tracks:
+- **Total User Collateral Claims**: Sum of all active microloan collateral amounts
+- **Available Main Trove Collateral**: Current BTC balance in the main trove
+- **Current Shortfall**: `Max(0, User Claims - Available Collateral)`
+
+**Shortfall Detection and Replacement**
+When a redemption occurs against the main trove:
+1. **Calculate the shortfall** after the redemption
+2. **If shortfall > 0**, trigger collateral replacement
+3. **Replace exactly the shortfall amount** from the backup pool
+
+**Example Flow**
+**Before redemption:**
+- User claims: 0.0805 BTC
+- Available collateral: 0.1405 BTC
+- Shortfall: 0 BTC
+
+**After 0.07 BTC redemption:**
+- User claims: 0.0805 BTC (unchanged)
+- Available collateral: 0.0705 BTC
+- Shortfall: 0.01 BTC
+- **Action**: Replace 0.01 BTC from backup pool
+
+**After replacement:**
+- User claims: 0.0805 BTC
+- Available collateral: 0.0805 BTC
+- Shortfall: 0 BTC
+
+**Implementation Details**
+- **Replacement source**: Governance-controlled treasury or accumulated fees
+- **Trigger threshold**: Any shortfall > 0 (or could set minimum threshold)
+- **Timing**: Immediate upon redemption detection
+- **Repayment**: Backup pool gets repaid in MUSD as users close their microloans
 
 **Secondary Defense: Emergency Pause Mechanism**
 
