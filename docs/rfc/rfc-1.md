@@ -479,12 +479,16 @@ When the main trove is fully redeemed against (entire debt consumed), the trove 
 
 **Example Recovery Scenario:**
 - Main trove had 0.1405 BTC collateral and 9,000 MUSD debt
+- User collateral claims: 0.0805 BTC ($8,050)
+- Initial collateral requirement: 0.06 BTC ($6,000)
 - Full redemption of 9,000 MUSD consumes 0.09 BTC collateral
-- Surplus collateral: 0.1405 - 0.09 = 0.0505 BTC sent to `CollSurplusPool`
-- Recovery process claims 0.0505 BTC and reopens trove with:
+- Remaining collateral: 0.1405 - 0.09 = 0.0505 BTC sent to `CollSurplusPool`
+- **Shortfall calculation**: Initial collateral ($6,000) + User claims ($8,050) - Available ($5,050) = $9,000 shortfall
+- **Backup pool provides**: 0.09 BTC to cover the shortfall
+- Recovery process claims 0.0505 BTC from `CollSurplusPool` and reopens trove with:
   - Debt: 2,000 MUSD
-  - Collateral: 0.0505 BTC
-  - CR: 252.5% (at $100,000 BTC price)
+  - Collateral: 0.1405 BTC (0.0505 recovered + 0.09 from backup pool)
+  - CR: 702.5% (at $100,000 BTC price)
 
 **Tertiary Defense: Emergency Pause Mechanism**
 
