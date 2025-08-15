@@ -462,7 +462,31 @@ See [Test Vector 12](#test-vector-12-redemption-with-collateral-shortfall-mitiga
 - **Timing**: Immediate upon redemption detection
 - **Repayment**: Backup pool gets repaid in MUSD as users close their microloans
 
-**Secondary Defense: Emergency Pause Mechanism**
+**Secondary Defense: Full Redemption Recovery**
+
+When the main trove is fully redeemed against (entire debt consumed), the trove is closed and its surplus collateral is sent to the `CollSurplusPool`. The system must recover this collateral and reopen the main trove to continue operations.
+
+**Full Redemption Recovery Process:**
+
+1. **Detection**: System detects that main trove has been closed due to full redemption
+2. **Automatic Pause**: System automatically pauses all microloan operations
+3. **Collateral Recovery**: Call `BorrowerOperations.claimCollateral()` to recover surplus collateral from `CollSurplusPool`
+4. **Trove Reconstruction**: Use recovered collateral to reopen the main trove with initial parameters:
+   - Initial debt: 2,000 MUSD (minimum)
+   - Initial collateral: Recovered amount (should be ≥ 0.06 BTC)
+   - Initial CR: Based on recovered collateral amount
+5. **System Resume**: Unpause microloan operations once main trove is restored
+
+**Example Recovery Scenario:**
+- Main trove had 0.1405 BTC collateral and 9,000 MUSD debt
+- Full redemption of 9,000 MUSD consumes 0.09 BTC collateral
+- Surplus collateral: 0.1405 - 0.09 = 0.0505 BTC sent to `CollSurplusPool`
+- Recovery process claims 0.0505 BTC and reopens trove with:
+  - Debt: 2,000 MUSD
+  - Collateral: 0.0505 BTC
+  - CR: 252.5% (at $100,000 BTC price)
+
+**Tertiary Defense: Emergency Pause Mechanism**
 
 A pause functionality provides critical protection when redemptions create undercollateralization:
 
