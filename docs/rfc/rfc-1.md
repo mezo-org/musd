@@ -426,7 +426,7 @@ The protocol implements a monitoring and replacement system to ensure users can 
 The protocol continuously tracks:
 - **Total User Collateral Claims**: Sum of all active microloan collateral amounts
 - **Available Main Trove Collateral**: Current BTC balance in the main trove
-- **Current Shortfall**: `Max(0, User Claims - Available Collateral)`
+- **Current Shortfall**: `Max(0, User Claims + Initial Collateral - Available Collateral)` where "Initial Collateral" is the collateral used to open the main trove
 
 **Shortfall Detection and Replacement**
 When a redemption occurs against the main trove:
@@ -436,19 +436,22 @@ When a redemption occurs against the main trove:
 
 **Example Flow**
 **Before redemption:**
+- Initial collateral: 0.06 BTC
 - User claims: 0.0805 BTC
 - Available collateral: 0.1405 BTC
 - Shortfall: 0 BTC
 
 **After 0.07 BTC redemption:**
+- Initial collateral: 0.06 BTC (unchanged)
 - User claims: 0.0805 BTC (unchanged)
 - Available collateral: 0.0705 BTC
-- Shortfall: 0.01 BTC
-- **Action**: Replace 0.01 BTC from backup pool
+- Shortfall: 0.07 BTC
+- **Action**: Replace 0.07 BTC from backup pool
 
 **After replacement:**
+- Initial collateral: 0.06 BTC
 - User claims: 0.0805 BTC
-- Available collateral: 0.0805 BTC
+- Available collateral: 0.1405 BTC
 - Shortfall: 0 BTC
 
 **Implementation Details**
@@ -480,8 +483,6 @@ A pause functionality provides critical protection when redemptions create under
 5. **Emergency Procedures**: Pre-defined governance processes for pause activation and collateral restoration
 
 ##### Limitations of Mitigation
-
-**Cannot Eliminate Risk**: Even a very high CR does not guarantee protection as large enough redemptions may target the main trove regardless of initial positioning.
 
 **Pause Limitations**: 
 - Requires governance action and funding to resolve shortfalls
