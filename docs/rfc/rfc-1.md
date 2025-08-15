@@ -494,20 +494,20 @@ When the main trove is fully redeemed against (entire debt consumed), the trove 
 
 See [Test Vector 13](#test-vector-13-full-redemption-recovery) for a detailed example.
 
-**Tertiary Defense: Emergency Pause Mechanism**
+**Emergency Safety Net: Pause Mechanism**
 
-A pause functionality provides critical protection when redemptions create undercollateralization:
+A pause functionality serves as a final safety net for extreme scenarios that exceed the primary mitigation strategies:
 
-1. **Automatic Triggers**: System can automatically pause when backing ratio falls below threshold
-2. **Manual Override**: Governance can manually pause when detecting concerning redemption patterns
+1. **Automatic Triggers**: System can automatically pause when backup pool is exhausted or critical thresholds are breached
+2. **Manual Override**: Governance can manually pause when detecting concerning patterns or unexpected situations
 3. **Operations Restricted**: During pause, block new microloans and withdrawals while allowing deposits
-4. **Collateral Recovery**: Use accumulated fees or emergency funding to restore full backing before unpausing
+4. **Emergency Response**: Provides time for governance to assess and address the situation before resuming operations
 
-**Benefits of Pause Approach:**
-- **No value destruction**: Unlike liquidations, redemptions don't destroy collateral - it's still recoverable
-- **Time for response**: Prevents cascading effects while governance addresses shortfall
-- **Maintains system integrity**: Shows proactive protection rather than reactive damage control
-- **User confidence**: Demonstrates commitment to making users whole
+**Benefits of Safety Net Approach:**
+- **Last resort protection**: Catches scenarios that primary mitigations don't cover
+- **Governance response time**: Allows time for assessment and action in extreme cases
+- **System integrity**: Prevents cascading failures during unexpected events
+- **User confidence**: Demonstrates commitment to protecting user funds even in worst-case scenarios
 
 **Operational Safeguards**
 1. **CR Thresholds**: Define specific CR levels that trigger different response actions
