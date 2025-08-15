@@ -454,6 +454,8 @@ When a redemption occurs against the main trove:
 - Available collateral: 0.1405 BTC
 - Shortfall: 0 BTC
 
+See [Test Vector 12](#test-vector-12-redemption-with-collateral-shortfall-mitigation) for a more detailed example.
+
 **Implementation Details**
 - **Replacement source**: Governance-controlled treasury or accumulated fees
 - **Trigger threshold**: Any shortfall > 0 (or could set minimum threshold)
@@ -1005,6 +1007,103 @@ BTC collateral: 0.0705 BTC ($7050)
 BTC debt: 0.08050 ($8050)
 Net BTC balance: -0.01 BTC (-$1000) 
 Total Assets ($): $9035 - $1000 = $8035 (same as initial position plus $35 in fees)
+
+#### Test Vector 12: Redemption with Collateral Shortfall Mitigation
+
+**Inputs:**
+- Same scenario as Test Vector 11 (large redemption scenario)
+- Collateral shortfall mitigation strategy is active
+- Governance treasury provides replacement collateral
+
+**System State Before Redemption:**
+```
+Main Trove:
+- Collateral: 0.1405 BTC ($14,050)
+- Debt: 9,000 MUSD
+- CR: 156.1%
+
+Governance Treasury:
+- BTC: 0.07 BTC ($7,000) (available for replacement)
+- MUSD: 0 MUSD
+
+Active Microloans:
+- Total user collateral claims: 0.0805 BTC ($8,050)
+- Total user debt: 7,035 MUSD
+```
+
+**Redemption Event (7,000 MUSD):**
+- Redemption consumes: 7,000 MUSD debt
+- Redemption consumes: 0.07 BTC collateral
+- Remaining main trove collateral: 0.0705 BTC ($7,050)
+- Remaining main trove debt: 2,000 MUSD
+
+**Shortfall Detection and Replacement:**
+- User collateral claims: 0.0805 BTC
+- Initial collateral requirement: 0.06 BTC
+- Total required: 0.1405 BTC
+- Available main trove collateral: 0.0705 BTC
+- **Shortfall: 0.07 BTC**
+- **Action**: Governance treasury provides 0.07 BTC replacement
+
+**State After Replacement:**
+```
+Main Trove:
+- Collateral: 0.1405 BTC ($14,050) (0.0705 + 0.07 replacement)
+- Debt: 2,000 MUSD
+- CR: 702.5%
+
+Governance Treasury:
+- BTC: 0 BTC ($0) (0.07 - 0.07 replacement)
+- MUSD: 0 MUSD
+
+Active Microloans (unchanged):
+- Total user collateral claims: 0.0805 BTC ($8,050)
+- Total user debt: 7,035 MUSD
+```
+
+**User Repayments and Treasury Repayment:**
+When all 70 users close their microloans:
+
+**User Repayments:**
+- Each user repays: 100.5 MUSD
+- Total MUSD received: 70 × 100.5 = 7,035 MUSD
+- **Allocation**: 2,000 MUSD to main trove debt, 7,000 MUSD to treasury repayment
+
+**User Collateral Withdrawals:**
+- Each user withdraws: 0.00115 BTC
+- Total collateral withdrawn: 70 × 0.00115 = 0.0805 BTC ($8,050)
+- Remaining main trove collateral: 0.1405 - 0.0805 = 0.06 BTC
+
+**Final System State:**
+```
+Main Trove:
+- Collateral: 0.06 BTC ($6,000)
+- Debt: 2,000 MUSD (unchanged)
+- CR: 300% (back to initial state)
+
+Governance Treasury:
+- BTC: 0 BTC (unchanged)
+- MUSD: 7,000 MUSD (from user repayments)
+
+Microloans Contract:
+- MUSD balance: 2000 MUSD
+- BTC balance: 0 BTC
+- Outstanding user debt: 0 MUSD
+- Revenue earned: 35 MUSD (fees)
+```
+
+**Economic Analysis:**
+- **Treasury net position**: +7,000 MUSD, -0.07 BTC (effectively sold 0.07 BTC for 7,000 MUSD)
+- **Main trove**: Returns to initial state (2000 MUSD debt, 0.06 BTC collateral)
+- **Users**: All received their full collateral back
+- **Protocol**: Earned 35 MUSD in fees
+
+**Key Benefits of Mitigation Strategy:**
+1. **No user losses**: All users received their full collateral despite the redemption
+2. **Treasury profit**: The treasury effectively sold BTC at par value (0.07 BTC for 7,000 MUSD)
+3. **System integrity**: The protocol maintained its backing ratio throughout the process
+4. **Automatic recovery**: The system naturally recovered through user repayments
+5. **State preservation**: The main trove returns to its initial position, ready for future operations
 
 
 ### Future Work
