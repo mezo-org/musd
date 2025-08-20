@@ -1,5 +1,8 @@
 # RFC-1: Microloans
 
+>[!WARNING]
+> This document was superseded by [RFC-2: Lending Arbitrage Microloans](./rfc-2.md).
+
 ## Background
 
 - MUSD's minimum loan size of 1800 excludes many users. Some may want to borrow smaller amounts to try out the system before taking out a larger loan, or they simply may not need to borrow that much MUSD.
