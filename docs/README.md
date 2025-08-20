@@ -1,6 +1,6 @@
 # Mezo USD
 
-MUSD is a stablecoin that is minted by creating a loan against the borrowers crytpo assets, this is known as a Collateralized Debt Position (CDP).
+MUSD is a stablecoin that is minted by creating a loan against the borrower's crytpo assets, this is known as a Collateralized Debt Position (CDP).
 
 MUSD is based on [Threshold USD](https://github.com/Threshold-USD/dev) which is a fork of [Liquity](https://github.com/liquity/dev) for the [Mezo Network](https://mezo.org).
 
@@ -18,10 +18,10 @@ The primary components are how the...
 
 A user opens up a position by calling `BorrowerOperations.openTrove`, providing BTC, and requesting MUSD. The BTC is routed to the `ActivePool`, where it stays until a user either...
 
-- withdraws (via `BorrowerOperations.withdrawColl`)
-- pays off their debt (via `BorrowerOperations.closeTrove`)
-- is redeemed against (via `TroveManager.redeemCollateral`)
-- gets liquidated (via `TroveManager.liquidate`)
+- withdraws (via `BorrowerOperations.withdrawColl`).
+- pays off their debt (via `BorrowerOperations.closeTrove`).
+- is redeemed against (via `TroveManager.redeemCollateral`).
+- gets liquidated (via `TroveManager.liquidate`).
 
 Liquidated positions are either paid for by the `StabilityPool`, in which case the BTC is transferred there, or the debt and collateral are absorbed and redistributed to other users, in which case the BTC is transferred to the `DefaultPool`.
 
@@ -29,15 +29,15 @@ Liquidated positions are either paid for by the `StabilityPool`, in which case t
 
 We maintain the **price floor of $1** through arbitrage, an external USD <-> BTC price oracle, and the ability to redeem MUSD for BTC $1 for $1 (via `TroveManager.redeemCollateral`). Imagine that MUSD was trading for $0.80 on an exchange and that bitcoin is selling for 1 BTC = $100k. A arbitrageur with $800 could:
 
-1. Trade $800 for 1000 MUSD
-1. Redeem 1000 MUSD for 0.01 BTC ($1000 worth of BTC)
-1. Sell 0.01 BTC for $1000
+1. Trade $800 for 1000 MUSD.
+1. Redeem 1000 MUSD for 0.01 BTC ($1000 worth of BTC).
+1. Sell 0.01 BTC for $1000.
 
 The arbitrageur started with $800 and ended with $1000 (ignoring fees). This trade _buys_ MUSD and _burns_ it (for the backing BTC), causing upwards price pressure. This trade continues to be effective until the price resets to $1.
 
 We maintain a **price ceiling of $1.10** via the minimum 110% collateralization ratio. Imagine that MUSD for trading for $1.20 on an exchange, and that bitcoin is selling for 1 BTC = $100k. An arbitrageur with $100k could:
 
-1. Buy 1 BTC (worth $100k)
+1. Buy 1 BTC (worth $100k).
 1. Open up a trove with 1 BTC as collateral, and the maximum 90,909 MUSD as debt.
 1. Sell 90,909 MUSD for $109,091.
 
@@ -66,7 +66,7 @@ The MUSD CDP is a part of the Mezo ecosystem. The interest and fees from MUSD fl
 
 In Liquity v1 deposits to the Stability Pool earn the LQTY token, this resulted in lots of mint and deposits to the Stability Pool. In MUSD there are no direct incentives for depositing into the Stability Pool, it is not anticipated that borrowers will deposit into the Stability Pool.
 
-The Stability Pool is initallly populated with a bootstrapping loan. This can only leave the Stability Pool via liquidations.
+The Stability Pool is initally populated with a bootstrapping loan. This can only leave the Stability Pool via liquidations.
 
 ![Minting the protocol bootstrap loan](images/protocolLoan.png)
 
@@ -88,30 +88,30 @@ Over time as the protocol accrues interest and fees the bootstrap loan gets repa
 
 #### Distributing fees with an active Protocol Loan
 
-When the protocol is initialised with the fee recipient and an active protocol loan the following occurs.
+When the protocol is initialized with the fee recipient and an active protocol loan the following occurs:
 
 ![Active Protocol Loan and Fees](images/feesAndActiveProtocolLoan.png)
 
 Flow of Funds
 
-1. A user transaction triggers an event that results in a fee or interest collection events
-2. MUSD is minted and sent to the PCV contract
-3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address
-4. A portion of the accrued MUSD is sent to the fee recipient
+1. A user transaction triggers an event that results in a fee or interest collection event.
+2. MUSD is minted and sent to the PCV contract.
+3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address.
+4. A portion of the accrued MUSD is sent to the fee recipient.
 5. A portion of the MUSD is burnt to reduce the protocol loan.
 
 #### Distributing fees when the Protocol Loan has been repaid
 
-When the protocol is initialised with a fee recipient and the protocol loan has been repaid then the following occurs.
+When the protocol is initialized with a fee recipient and the protocol loan has been repaid then the following occurs:
 
 ![Repaid Protocol Loan and Fees](images/feesAndRepaidProtocolLoan.png)
 
 Flow of Funds
 
-1. A user transaction triggers an event that results in a fee or interest collection events
-2. MUSD is minted and sent to the PCV contract
-3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address
-4. A portion of the accrued MUSD is sent to the fee recipient
+1. A user transaction triggers an event that results in a fee or interest collection event.
+2. MUSD is minted and sent to the PCV contract.
+3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address.
+4. A portion of the accrued MUSD is sent to the fee recipient.
 5. A portion of the MUSD is deposited into the Stability Pool.
 
 #### Distribution of MUSD
@@ -123,18 +123,18 @@ To illustrate how the MUSD is distributed, assume the feeSplitPercentage is set 
 - Protocol Loan
   - feeRecipient is not set.
     - 100% of the amount pays down the loan.
-  - feeRecipient is set
-    - Loan repayment <= outstanding loan
+  - feeRecipient is set.
+    - Loan repayment <= outstanding loan.
       - 60% is used as a repayment of the Protocol loan.
       - 40% is sent to the feeRecipient.
-    - Loan repayment > outstanding loan
+    - Loan repayment > outstanding loan.
       - Protocol loan is repaid.
       - 40% is sent to the feeRecipient.
       - Excess loan repayment amount is deposited into the Stability Pool.
 - Protocol Loan has been repaid
-  - feeRecipient is not set
+  - feeRecipient is not set.
     - 100% of the amount is deposited into the Stability Pool.
-  - feeRecipient is set
+  - feeRecipient is set.
     - 60% is deposited into the Stability Pool.
     - 40% is sent to the feeRecipient.
 
@@ -144,15 +144,15 @@ The feeRecipient address in the PCV contract can be changed via governance.
 
 #### Withdrawing MUSD
 
-Withdrawing MUSD from the PCV contract is different to distributing MUSD. The call to withdraw MUSD can only be called after the protocol loan has been repaid, this withdraws MUSD to the contract owner, council address or treasury address rather than the fee recipient address.
+Withdrawing MUSD from the PCV contract is different to distributing MUSD. The call to withdraw MUSD can only be called after the protocol loan has been repaid. This withdraws MUSD to the contract owner, council or treasury address rather than the fee recipient address.
 
 ![Withdrawing MUSD from the PCV contract](images/withdrawingMUSDfromPCV.png)
 
 Flow of Funds
 
-1. Governance requests withdrawing MUSD from the Stability Pool
-2. MUSD is transferred from the Stability Pool to PCV
-3. Governance withdraws MUSD
+1. Governance requests withdrawing MUSD from the Stability Pool.
+2. MUSD is transferred from the Stability Pool to PCV.
+3. Governance withdraws MUSD.
 
 ### Immutability and Upgradability
 
@@ -178,30 +178,30 @@ When the Stability Pool has sufficent funds to cover the liquidated loan/s debt,
 
 Flow of Funds
 
-1. Liquidator sends liquidation request to Trove Manager
-2. Liquidator receives gas compensation (MUSD)
-3. Stability Pool burns the MUSD required to buy the debt
-4. Liquidator receives 0.5% of the liquidated BTC
-5. Remaining BTC collateral is sent from the Active Pool to the Stability Pool
+1. Liquidator sends liquidation request to Trove Manager.
+2. Liquidator receives gas compensation (MUSD).
+3. Stability Pool burns the MUSD required to buy the debt.
+4. Liquidator receives 0.5% of the liquidated BTC.
+5. Remaining BTC collateral is sent from the Active Pool to the Stability Pool.
 
-Anyone can deposit into the Stabily Pool and proportionately acquire discounted BTC when a liquidation occurs, however it is not expected that users will deposit into the Stability Pool. Unlike Liquity v1 there are no direct incentives for depositing into the Stability Pool. This means the yield from being a Stability Pool depositor would be purely based on the liquidations that occur.
+Anyone can deposit into the Stability Pool and proportionately acquire discounted BTC when a liquidation occurs, however it is not expected that users will deposit into the Stability Pool. Unlike Liquity v1 there are no direct incentives for depositing into the Stability Pool. This means the yield from being a Stability Pool depositor would be purely based on the liquidations that occur.
 
 The liquidity source for the Stability Pool is intended to initially be from the [protocol loan](#protocol-bootstrap-loan) and for this balance to grow over time through interest and fees.
 
 #### Liquidation greater than the Stability Pool balance
 
-If there are insufficent funds in the Stability Pool to cover the liquidated loan/s debt, the Stability Pool covers as much debt as it can, burning MUSD in exchange for the collatearl. The remaining debt and collateral is proportionately redistrubuted across the remaining loans.
+If there are insufficient funds in the Stability Pool to cover the liquidated loan/s debt, the Stability Pool covers as much debt as it can, burning MUSD in exchange for the collateral. The remaining debt and collateral is proportionately redistributed across the remaining loans.
 
 ![Liquidation partially using the Stability Pool flow](images/liquidationPartiallyUsingStabilityPool.png)
 
 Flow of Funds
 
-1. Liquidator sends liquidation request to Trove Manager
-2. Liquidator receives gas compensation (MUSD)
-3. Stability Pool burns the MUSD required to buy the debt
-4. Liquidator receives 0.5% of the liquidated BTC
-5. BTC is sent from the Active Pool to the Stability Pool
-6. BTC for debt that cant be covered by the Stability Pool is sent to the Default Pool
+1. Liquidator sends liquidation request to Trove Manager.
+2. Liquidator receives gas compensation (MUSD).
+3. Stability Pool burns the MUSD required to buy the debt.
+4. Liquidator receives 0.5% of the liquidated BTC.
+5. BTC is sent from the Active Pool to the Stability Pool.
+6. BTC for debt that can't be covered by the Stability Pool is sent to the Default Pool.
 7. When active loans next have a borrower operation, redemption or liquidation they take on a proportionate amount of the liquidated debt and collateral which results in their share of the liquidated BTC being moved back to the Active Pool.
 
 #### Liquidation when the Stability Pool is empty.
@@ -212,15 +212,15 @@ If the Stability Pool is empty, we redistribute both the debt and collateral. Al
 
 Flow of Funds
 
-1. Liquidator sends liquidation request to Trove Manager
-2. Liquidator receives gas compensation (MUSD)
-3. Liquidator receives 0.5% of the liquidated BTC
+1. Liquidator sends liquidation request to Trove Manager.
+2. Liquidator receives gas compensation (MUSD).
+3. Liquidator receives 0.5% of the liquidated BTC.
 4. BTC is sent from the ActivePool to the DefaultPool for proportionate redistribution to other loans.
 5. When active loans next have a borrower operation, redemption or liquidation they take on a proportionate amount of the liquidated debt and collateral which results in their share of the liquidated BTC being moved back to the Active Pool.
 
-The pending debt does not accrue interest until it has been applied to a borrowers loan.
+The pending debt does not accrue interest until it has been applied to a borrower's loan.
 
-Note that when a redistribution of debt and collateral from a liquidated loan is done across the other loans, no external liquidty source is required.
+Note that when a redistribution of debt and collateral from a liquidated loan is done across the other loans, no external liquidity source is required.
 
 #### Liquidations and Protocol Owned Liquidity
 
@@ -234,20 +234,20 @@ In the early days of Liquity v1 the protocol almost had to deal with a stress te
 
 The protocol loan is intended to help mitigate this circumstance.
 
-If this scenario was to arise early into the life of MUSD where a $100M liquidation emptied the Stability Pool. This might leave $109M of BTC in the Stability Pool and insufficent BTC in the Active Pool to honour redemptions for all of the circulating MUSD. In this event the governance process that manages the PCV contract would withdraw the BTC from the Stability Pool and open a loan to borrow MUSD against BTC to get the BTC back into the Active Pool so that redemptions are able to honour requests. The borrowed MUSD would then be deposited into the Stability Pool.
+If this scenario was to arise early into the life of MUSD where a $100M liquidation emptied the Stability Pool, this might leave $109M of BTC in the Stability Pool and insufficient BTC in the Active Pool to honour redemptions for all of the circulating MUSD. In this event the governance process that manages the PCV contract would withdraw the BTC from the Stability Pool and open a loan to borrow MUSD against BTC to get the BTC back into the Active Pool so that redemptions are able to honour requests. The borrowed MUSD would then be deposited into the Stability Pool.
 
 ![Rebalancing large liquidation into MUSD](images/rebalancingLargeLiquidationIntoMUSD.png)
 
 Flow of Funds
 
-1. Governance requests withdrawing BTC from Stability Pool
-2. BTC is transferred from Stability Pool to PCV
-3. Governance withdraws BTC
-4. Governance deposits BTC into Borrower Operations to open a loan
-5. MUSD Borrow fee is sent to PCV
-6. MUSD is sent to governance
-7. Governance deposits MUSD back into PCV
-8. PCV transfers MUSD back to Stability Pool
+1. Governance requests withdrawing BTC from Stability Pool.
+2. BTC is transferred from Stability Pool to PCV.
+3. Governance withdraws BTC.
+4. Governance deposits BTC into Borrower Operations to open a loan.
+5. MUSD Borrow fee is sent to PCV.
+6. MUSD is sent to governance.
+7. Governance deposits MUSD back into PCV.
+8. PCV transfers MUSD back to Stability Pool.
 
 This would result in a decrease in the total MUSD in the Stability Pool as the collateralisation requirements to open at a safe collateralisation level. However it is important to note that the Stability Pool balance would be replenished over time through interest and fees.
 
@@ -261,19 +261,19 @@ When the protocol's Stability Pool deposit is used to offset liquidations, that 
 
 Flow of Funds
 
-1. Governance requests withdrawing BTC from Stability Pool
-2. BTC is transferred from Stability Pool to PCV
-3. Governance withdraws BTC
-4. Governance swaps BTC
-5. Governance recieves MUSD
-6. Governance deposits MUSD back into PCV
-7. PCV transfers MUSD back to Stability Pool
+1. Governance requests withdrawing BTC from Stability Pool.
+2. BTC is transferred from Stability Pool to PCV.
+3. Governance withdraws BTC.
+4. Governance swaps BTC.
+5. Governance recieves MUSD.
+6. Governance deposits MUSD back into PCV.
+7. PCV transfers MUSD back to Stability Pool.
 
 Initially this process would be manually executed via a governance multisig and eventually automated with a smart contract once routing liqudity on Mezo has matured. This is to ensure the Protocol Owned Liquidity does not get raided by MEV while the infrastructure for the new chain matures.
 
 #### Liquidations and the last loan
 
-The system requires atleast one active loan, if there is only one loan in the system it can not be liquidated. Liquidations require there to be other troves to distribute the debt and collateral to if the Stability Pool is empty.
+The system requires at least one active loan, if there is only one loan in the system it can not be liquidated. Liquidations require there to be other troves to distribute the debt and collateral to if the Stability Pool is empty.
 
 ### Stability Pool
 
@@ -295,8 +295,8 @@ The trove with the lowest collateral ratio (but above the 110% liquidation thres
 
 For example, say that...
 
-- Alice has $1000 debt backed by $1300 collateral (130% ratio)
-- Bob has $1000 debt backed by $2000 collatearl (200% ratio)
+- Alice has $1000 debt backed by $1300 collateral (130% ratio).
+- Bob has $1000 debt backed by $2000 collatearl (200% ratio).
 
 Carol redeems $50. Alice's debt and collateral are reduced by $50. Carol receives `$50 * .995 = $49.75` worth of BTC, and the protocol receives `$50 * .005 = $0.25` as a redemption fee.
 
@@ -304,7 +304,7 @@ Alice now has $950 debt backed by $1250 collateral (132% ratio).
 
 Someone's full debt can be cancelled in this way. For example, if Carol redeemed $1000 instead of $50, then Alice's debt would be fully paid, and she would be left with $300 worth of collateral. The remaining collateral is sent to the `CollSurplusPool`. Alice can collect it by calling `BorrowerOperations.claimCollateral`.
 
-The `minNetDebt` value is used to prevent the list of active loans being filled up with nearly empty troves, filling the sorted loans list with lots of nearly empty troves could be used to cause redemption requests to fail by running out of gas. Note that the redemption amount must leave the loan with a debt level greater than the `minNetDebt` value, this is initialised at 1800 MUSD but can be changed through governance, it can be increased or reduced as low as 50 MUSD.
+The `minNetDebt` value is used to prevent the list of active loans being filled up with nearly empty troves, filling the sorted loans list with lots of nearly empty troves could be used to cause redemption requests to fail by running out of gas. Note that the redemption amount must leave the loan with a debt level greater than the `minNetDebt` value, this is initialized at 1800 MUSD but can be changed through governance, it can be increased or reduced as low as 50 MUSD.
 
 #### Partial Loan Redemption
 
@@ -314,10 +314,10 @@ When the redemption amount is less than the debt of the loan with the lowest col
 
 Flow of Funds
 
-1. Redeemer deposits MUSD into Borrower Operation contract
-2. MUSD is burnt
-3. BTC is sent to the Redeemer
-4. Redemption fee is sent to PCV
+1. Redeemer deposits MUSD into Borrower Operation contract.
+2. MUSD is burnt.
+3. BTC is sent to the Redeemer.
+4. Redemption fee is sent to PCV.
 
 #### Full Loan Redemption
 
@@ -327,12 +327,12 @@ When the redemption amount is greater than a loans value, that loan become fully
 
 Flow of Funds
 
-1. Redeemer deposits MUSD into BorrowerOperation contract and fully redeems a borrowers debt
-2. MUSD is burnt
-3. BTC is sent to the Redeemer
-4. Redemption fee is sent to PCV
-5. Borrowers excess BTC is sent to the CollSurplusPool
-6. Liquidation reserve is burnt
+1. Redeemer deposits MUSD into BorrowerOperation contract and fully redeems a borrowers debt.
+2. MUSD is burnt.
+3. BTC is sent to the Redeemer.
+4. Redemption fee is sent to PCV.
+5. Borrowers excess BTC is sent to the CollSurplusPool.
+6. Liquidation reserve is burnt.
 
 #### Prerequisites
 - The Total Collateral Ratio (TCR) must be above the Minimum Collateral Ratio (MCR)
@@ -451,10 +451,10 @@ For example, if `rewardSnapshots[_borrower].collateral < L_Collateral`, then the
 
 There are two primary risks for borrowers
 
-- Liquidation Risk
-- Redemption Risk
-- Bad Debt
-- Depegging
+- Liquidation Risk.
+- Redemption Risk.
+- Bad Debt.
+- Depegging.
 
 ### Liquidation Risk
 
