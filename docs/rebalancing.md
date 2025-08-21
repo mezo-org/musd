@@ -139,6 +139,8 @@ Future improvements should consider:
 2. **Automated Execution**: Smart contracts for swaps and deposits
 3. **MEV Protection**
 
+Note that depending on the burden of manual rebalancing it may not be worth automating.
+
 ## Open Questions
 - Do we need to perform this on a cadenced schedule or can we just do it based off of alerting?
 - What are the thresholds for BTC exposure or MUSD position size that would trigger a rebalance?
