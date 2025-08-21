@@ -68,11 +68,17 @@ Confirm Stability Pool balance restored.
 This procedure should have been triggered either as a regularly scheduled maintenance task or in response to one of the alerts
 mentioned above.  In the case of an alert, verify the state on-chain before moving forward.
 
-To check the Stability Pool balances:
-```solidity
-uint256 pcvMUSDBalance = stabilityPool.getCompoundedMUSDDeposit(pcvAddress);
-uint256 pcvCollateralGain = stabilityPool.getDepositorCollateralGain(pcvAddress);
-```
+To check the PCV Stability Pool position's MUSD balance:
+1. Go to the [StabilityPool contract](https://explorer.mezo.org/address/0x73245Eff485aB3AAc1158B3c4d8f4b23797B0e32?tab=read_proxy)
+2. Find the function `getCompoundedMUSDDeposit`
+3. Enter the PCV address (`0x391EcC7ffEFc48cff41D0F2Bb36e38b82180B993` for mainnet) for `_depositor` and click "Read"
+
+To check the Stability Pool position's BTC balance (called "collateral gain"):
+1. Go to the [StabilityPool contract](https://explorer.mezo.org/address/0x73245Eff485aB3AAc1158B3c4d8f4b23797B0e32?tab=read_proxy)
+2. Find the function `getDepositorCollateralGain`
+3. Enter the PCV address (`0x391EcC7ffEFc48cff41D0F2Bb36e38b82180B993` for mainnet) for `_depositor` and click "Read"
+
+Note that the results are in 18 decimal precision so you will need to divide by 1e18 to get the value in floating point format.
 
 ### Step 2: Withdraw BTC from Stability Pool
 
