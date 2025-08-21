@@ -115,11 +115,10 @@ pcv.depositToStabilityPool(musdAmount);
 
 ### Step 7: Verification
 
-Confirm Stability Pool balance restored.
-```solidity
-uint256 newPCVMUSDBalance = stabilityPool.getCompoundedMUSDDeposit(pcvAddress);
-uint256 newPCVCollateralGain = stabilityPool.getDepositorCollateralGain(pcvAddress);
-```
+Confirm Stability Pool balance restored by following the same steps from step 1 to get MUSD and BTC balances.
+
+Expected MUSD balance: ~15M
+Expected BTC balance: ~0
 
 ## Risk Considerations
 
