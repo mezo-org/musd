@@ -21,7 +21,7 @@ As liquidations occur:
 ## When to Perform
 
 This procedure should be performed:
-- **Monthly**: As part of regular protocol maintenance
+- **Monthly**: As part of regular protocol maintenance.  If no liquidations occurred, no rebalancing is needed.
 - **After significant liquidation events**: When Stability Pool MUSD balance drops below 80% of initial deposit (12M given the reduction)
 - **When BTC exposure exceeds risk tolerance**: When PCV's BTC holdings exceed 20% of the total deposit value
 
