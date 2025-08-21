@@ -142,3 +142,9 @@ Future improvements should consider:
 ## Open Questions
 - Do we need to perform this on a cadenced schedule or can we just do it based off of alerting?
 - What are the thresholds for BTC exposure or MUSD position size that would trigger a rebalance?
+
+## References
+- [Mainnet Deployment Artifacts](https://github.com/mezo-org/musd/tree/main/solidity/artifacts/deployments/mainnet)
+- [Stability Pool Contract](https://explorer.mezo.org/address/0x73245Eff485aB3AAc1158B3c4d8f4b23797B0e32)
+- [MUSD Contract](https://explorer.mezo.org/token/0xdD468A1DDc392dcdbEf6db6e34E89AA338F9F186)
+- [PCV Contract](https://explorer.mezo.org/address/0x391EcC7ffEFc48cff41D0F2Bb36e38b82180B993)
