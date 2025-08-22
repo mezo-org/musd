@@ -30,6 +30,35 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Hide previous Claude comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get all comments from the Claude Code bot on this PR
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+            --jq '.[] | select(.performed_via_github_app.name == "Claude") | .node_id' \
+          | while read -r comment_id; do
+            if [ -n "$comment_id" ]; then
+              echo "Hiding comment: $comment_id"
+              gh api \
+                --method POST \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                /graphql \
+                -f query='
+                  mutation {
+                    minimizeComment(input: {subjectId: "'$comment_id'", classifier: OUTDATED}) {
+                      minimizedComment {
+                        isMinimized
+                      }
+                    }
+                  }'
+            fi
+          done
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@beta
