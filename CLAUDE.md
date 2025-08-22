@@ -130,7 +130,8 @@ The project is a pnpm monorepo with two main packages:
 
 - Create logical, cohesive commits for each implementation step
 - Use descriptive commit messages explaining the "why" not just the "what"
-- Run all linting, type-checking, and tests before committing
+- Run linting (`pnpm format`), compilation (`pnpm build`), and unit tests (`pnpm test`) before committing
+- Scale testing, invariant tests, and coverage reports are not required for every commit
 - Don't mix convention changes with functional changes
 
 ## Integration Notes
