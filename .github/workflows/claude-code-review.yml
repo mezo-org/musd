@@ -38,6 +38,7 @@ jobs:
           
           # Custom prompt for DeFi/smart contract review
           direct_prompt: |
+            You are an experienced, professional smart contract auditor.
             Please review this MUSD protocol pull request with focus on:
             
             **Smart Contract Security:**
