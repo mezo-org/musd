@@ -1,0 +1,73 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Focus on core smart contract and test files
+    paths:
+      - "solidity/contracts/**/*.sol"
+      - "solidity/test/**/*.ts"
+      - "solidity/deploy/**/*.ts"
+      - "solidity/scripts/**/*.ts"
+      - "solidity/helpers/**/*.ts"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+          # Custom prompt for DeFi/smart contract review
+          direct_prompt: |
+            Please review this MUSD protocol pull request with focus on:
+            
+            **Smart Contract Security:**
+            - Access controls and authorization patterns
+            - Reentrancy vulnerabilities
+            - Liquidation logic correctness
+            
+            **DeFi Protocol Considerations:**
+            - Collateralization ratio calculations
+            - Interest rate math accuracy
+            - State consistency across pool contracts
+            - Gas optimization for liquidators
+            - Recovery mode behavior
+            
+            **Code Quality:**
+            - Solidity best practices (0.8.24)
+            - OpenZeppelin upgradeable pattern usage
+            - Error handling and custom errors
+            - Test coverage for edge cases
+            
+            **Protocol-Specific:**
+            - Trove state management
+            - Stability pool mechanics
+            - Liquidation processes
+            
+            Be _succinct_ but thorough on security concerns. Use <details></details> 
+            blocks for implementation suggestions to keep the review focused.
+
+          # Allow Claude to run basic linting and compilation checks
+          allowed_tools: "Bash(cd solidity && pnpm format),Bash(cd solidity && pnpm build)"
+          
+          # Use sticky comments for cleaner PR experience
+          use_sticky_comment: true
