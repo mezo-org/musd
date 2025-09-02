@@ -1,0 +1,103 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Focus on core smart contract and test files
+    paths:
+      - "solidity/contracts/**/*.sol"
+      - "solidity/test/**/*.ts"
+      - "solidity/deploy/**/*.ts"
+      - "solidity/scripts/**/*.ts"
+      - "solidity/helpers/**/*.ts"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Hide previous Claude comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get all comments from the Claude Code bot on this PR
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+            --jq '.[] | select(.performed_via_github_app.name == "Claude") | .node_id' \
+          | while read -r comment_id; do
+            if [ -n "$comment_id" ]; then
+              echo "Hiding comment: $comment_id"
+              gh api \
+                --method POST \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                /graphql \
+                -f query='
+                  mutation {
+                    minimizeComment(input: {subjectId: "'$comment_id'", classifier: OUTDATED}) {
+                      minimizedComment {
+                        isMinimized
+                      }
+                    }
+                  }'
+            fi
+          done
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+          # Custom prompt for DeFi/smart contract review
+          direct_prompt: |
+            You are an experienced, professional smart contract auditor.
+            Please review this MUSD protocol pull request with focus on:
+            
+            **Smart Contract Security:**
+            - Access controls and authorization patterns
+            - Reentrancy vulnerabilities
+            - Liquidation logic correctness
+            
+            **DeFi Protocol Considerations:**
+            - Collateralization ratio calculations
+            - Interest rate math accuracy
+            - State consistency across pool contracts
+            - Gas optimization for liquidators
+            - Recovery mode behavior
+            
+            **Code Quality:**
+            - Solidity best practices (0.8.24)
+            - OpenZeppelin upgradeable pattern usage
+            - Error handling and custom errors
+            - Test coverage for edge cases
+            
+            **Protocol-Specific:**
+            - Trove state management
+            - Stability pool mechanics
+            - Liquidation processes
+            
+            Be _succinct_ but thorough on security concerns. Use <details></details> 
+            blocks for implementation suggestions to keep the review focused.
+
+          # Allow Claude to run basic linting and compilation checks
+          allowed_tools: "Bash(cd solidity && pnpm format),Bash(cd solidity && pnpm build)"
+          
+          # Use sticky comments for cleaner PR experience
+          use_sticky_comment: true
