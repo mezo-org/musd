@@ -20,6 +20,7 @@ import {
   GovernableVariables,
   HintHelpers,
   InterestRateManager,
+  Microloans,
   MockAggregator,
   MUSDTester,
   PCV,
@@ -58,6 +59,7 @@ export async function deployment() {
     await getDeployedContract("StabilityPool")
   const troveManager: TroveManagerTester =
     await getDeployedContract("TroveManagerTester")
+  const microloans: Microloans = await getDeployedContract("Microloans")
 
   const contracts: Contracts = {
     activePool,
@@ -76,6 +78,7 @@ export async function deployment() {
     sortedTroves,
     stabilityPool,
     troveManager,
+    microloans,
   }
 
   return contracts
@@ -230,6 +233,7 @@ export async function getAddresses(contracts: Contracts, users: Users) {
     sortedTroves: await contracts.sortedTroves.getAddress(),
     stabilityPool: await contracts.stabilityPool.getAddress(),
     troveManager: await contracts.troveManager.getAddress(),
+    microloans: await contracts.microloans.getAddress(),
     // users
     alice: users.alice.wallet.address,
     bob: users.bob.wallet.address,
