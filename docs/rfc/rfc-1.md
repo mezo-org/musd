@@ -1023,22 +1023,22 @@ When all 70 users repay their debts and withdraw their collateral:
 However, note that the system has not suffered any losses in its net position:
 
 **Initial Position:**
-MUSD available: 2000 MUSD (initial main trove debt)
-BTC collateral: 0.06 BTC ($6000)
-Net MUSD balance: 2000
-Net BTC balance: 0.06 BTC ($6000)
-Total Assets ($): $6000 + $2000 = $8000
+- MUSD available: 2000 MUSD (initial main trove debt)
+- BTC collateral: 0.06 BTC ($6000)
+- Net MUSD balance: 2000
+- Net BTC balance: 0.06 BTC ($6000)
+- Total Assets ($): $6000 + $2000 = $8000
 
 **After redemption:**
-MUSD available: 2000 MUSD
-MUSD owed: 7035 MUSD (from user repayments)
-Net MUSD balance: 9035 MUSD
+- MUSD available: 2000 MUSD
+- MUSD owed: 7035 MUSD (from user repayments)
+- Net MUSD balance: 9035 MUSD
 
-BTC available: 0 BTC
-BTC collateral: 0.0705 BTC ($7050)
-BTC debt: 0.08050 ($8050)
-Net BTC balance: -0.01 BTC (-$1000) 
-Total Assets ($): $9035 - $1000 = $8035 (same as initial position plus $35 in fees)
+- BTC available: 0 BTC
+- BTC collateral: 0.0705 BTC ($7050)
+- BTC debt: 0.08050 ($8050)
+- Net BTC balance: -0.01 BTC (-$1000) 
+- Total Assets ($): $9035 - $1000 = $8035 (same as initial position plus $35 in fees)
 
 #### Test Vector 12: Redemption with Collateral Shortfall Mitigation
 
