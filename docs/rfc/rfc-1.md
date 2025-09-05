@@ -843,7 +843,7 @@ Main Trove:
 **Inputs:**
 - Starting from state after refinancing and 35th microloan (Test Vector 9)
 - BTC price: $100,000
-- Additional system trove: 10,000 MUSD debt at 200% CR (0.2 BTC collateral)
+- Other System Trove: 10,000 MUSD debt at 200% CR (0.2 BTC collateral)
 - Redemption amount: 3,500 MUSD
 
 **System State Before Redemption:**
@@ -949,7 +949,7 @@ The protocol breaks even from the redemption event because:
 **Inputs:**
 - Starting from state after refinancing and 35th microloan (Test Vector 9)
 - BTC price: $100,000
-- Additional system trove: 10,000 MUSD debt at 200% CR (0.2 BTC collateral)
+- Other System Trove: 10,000 MUSD debt at 200% CR (0.2 BTC collateral)
 - Add 35 more microloans (36th through 70th)
 - Redemption amount: 7,000 MUSD
 
