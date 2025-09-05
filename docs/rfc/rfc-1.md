@@ -436,20 +436,20 @@ When a redemption occurs against the main trove:
 
 **Example Flow**
 **Before redemption:**
-- Initial collateral: 0.06 BTC
+- Initial collateral (from opening the main trove): 0.06 BTC
 - User claims: 0.0805 BTC
 - Available collateral: 0.1405 BTC
 - Shortfall: 0 BTC
 
 **After 0.07 BTC redemption:**
-- Initial collateral: 0.06 BTC (unchanged)
+- Initial collateral (from opening the main trove): 0.06 BTC (unchanged)
 - User claims: 0.0805 BTC (unchanged)
 - Available collateral: 0.0705 BTC
 - Shortfall: 0.07 BTC
 - **Action**: Replace 0.07 BTC from backup pool
 
 **After replacement:**
-- Initial collateral: 0.06 BTC
+- Initial collateral (from opening the main trove): 0.06 BTC
 - User claims: 0.0805 BTC
 - Available collateral: 0.1405 BTC
 - Shortfall: 0 BTC
@@ -473,7 +473,7 @@ When the main trove is fully redeemed against (entire debt consumed), the trove 
 3. **Collateral Recovery**: Call `BorrowerOperations.claimCollateral()` to recover surplus collateral from `CollSurplusPool`
 4. **Trove Reconstruction**: Use recovered collateral to reopen the main trove with initial parameters:
    - Initial debt: 2,000 MUSD (minimum)
-   - Initial collateral: Recovered amount (should be ≥ 0.06 BTC)
+   - Initial collateral (from opening the main trove): Recovered amount (should be ≥ 0.06 BTC)
    - Initial CR: Based on recovered collateral amount
 5. **Backup Pool Compensation**: Send 2,000 MUSD from contract balance to backup pool (representing the cancelled debt)
 6. **System Resume**: Unpause microloan operations once main trove is restored
@@ -481,10 +481,10 @@ When the main trove is fully redeemed against (entire debt consumed), the trove 
 **Example Recovery Scenario:**
 - Main trove had 0.1405 BTC collateral and 9,000 MUSD debt
 - User collateral claims: 0.0805 BTC ($8,050)
-- Initial collateral requirement: 0.06 BTC ($6,000)
+- Initial collateral (from opening the main trove) requirement: 0.06 BTC ($6,000)
 - Full redemption of 9,000 MUSD consumes 0.09 BTC collateral
 - Remaining collateral: 0.1405 - 0.09 = 0.0505 BTC sent to `CollSurplusPool`
-- **Shortfall calculation**: Initial collateral ($6,000) + User claims ($8,050) - Available ($5,050) = $9,000 shortfall
+- **Shortfall calculation**: Initial collateral (from opening the main trove) ($6,000) + User claims ($8,050) - Available ($5,050) = $9,000 shortfall
 - **Backup pool provides**: 0.09 BTC to cover the shortfall
 - Recovery process claims 0.0505 BTC from `CollSurplusPool` and reopens trove with:
   - Debt: 2,000 MUSD
@@ -1071,7 +1071,7 @@ Active Microloans:
 
 **Shortfall Detection and Replacement:**
 - User collateral claims: 0.0805 BTC
-- Initial collateral requirement: 0.06 BTC
+- Initial collateral (from opening the main trove) requirement: 0.06 BTC
 - Total required: 0.1405 BTC
 - Available main trove collateral: 0.0705 BTC
 - **Shortfall: 0.07 BTC**
@@ -1169,7 +1169,7 @@ Active Microloans:
 
 **Shortfall Detection and Replacement:**
 - User collateral claims: 0.0805 BTC
-- Initial collateral requirement: 0.06 BTC
+- Initial collateral (from opening the main trove) requirement: 0.06 BTC
 - Total required: 0.1405 BTC
 - Available collateral: 0.0505 BTC (in CollSurplusPool)
 - **Shortfall: 0.09 BTC**
