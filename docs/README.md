@@ -457,7 +457,7 @@ For example, if `rewardSnapshots[_borrower].collateral < L_Collateral`, then the
 
 ## Borrower Risks
 
-There are two primary risks for borrowers
+There are four primary risks for borrowers
 
 - Liquidation Risk.
 - Redemption Risk.
