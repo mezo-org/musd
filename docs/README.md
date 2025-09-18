@@ -487,7 +487,7 @@ If Bob is fully redeemed against this means that he would no longer have a loan 
 
 The redemption cancels the debt of the borrower on a dollar with dollar basis as their BTC gets redeemed.
 
-So Bob had 1 BTC of his collateral redeemed which also cancelled his 200k of debt. Bob still has the MUSD he borrowed and is able to withdraw the remaining 1 BTC of excess collateral. It is important to note that when Bob is redeemed against he loses the upside exposure of the BTC that was redeemed.
+So Bob had 2 BTC of his collateral redeemed which also cancelled his 200k of debt. Bob still has the MUSD he borrowed and is able to withdraw the remaining 1 BTC of excess collateral. It is important to note that when Bob is redeemed against he loses the upside exposure of the BTC that was redeemed.
 
 ### Bad Debt
 
