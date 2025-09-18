@@ -233,7 +233,7 @@ Note that when a redistribution of debt and collateral from a liquidated loan is
 
 The Stability Pool is initially seeded with a [bootstrap loan](#protocol-bootstrap-loan) against the protocol's future fees, over time the MUSD minted as part of this loan is converted into Protocol Owned Liquidity through fees and interest being burnt by the PCV contract.
 
-BTC acquired by the protocol through liquidations may be converted back into MUSD and redeposited into the Stablity Pool depending on the maturity and state of the protocol at the time of liquidation.
+BTC acquired by the protocol through liquidations may be converted back into MUSD and redeposited into the Stability Pool depending on the maturity and state of the protocol at the time of liquidation.
 
 ##### Rebalancing Large Liquidations
 
@@ -311,7 +311,8 @@ Alice now has $950 debt backed by $1250 collateral (132% ratio).
 
 Someone's full debt can be cancelled in this way. For example, if Carol redeemed $1000 instead of $50, then Alice's debt would be fully paid, and she would be left with $300 worth of collateral. The remaining collateral is sent to the `CollSurplusPool`. Alice can collect it by calling `BorrowerOperations.claimCollateral`.
 
-The `minNetDebt` value is used to prevent the list of active loans being filled up with nearly empty troves, filling the sorted loans list with lots of nearly empty troves could be used to cause redemption requests to fail by running out of gas. Note that the redemption amount must leave the loan with a debt level greater than the `minNetDebt` value, this is initialized at 1800 MUSD but can be changed through governance, it can be increased or reduced as low as 50 MUSD.
+Note that the redemption amount must leave the loan with a debt level greater than the minNetDebt value, which is set to 1800 MUSD to prevent the sorted loans list from being
+filled with nearly empty troves that could cause redemption requests to fail by running out of gas
 
 #### Partial Loan Redemption
 
