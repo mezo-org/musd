@@ -225,7 +225,7 @@ Flow of Funds
 4. BTC is sent from the ActivePool to the DefaultPool for proportionate redistribution to other loans.
 5. When active loans next have a borrower operation, redemption or liquidation they take on a proportionate amount of the liquidated debt and collateral which results in their share of the liquidated BTC being moved back to the Active Pool.
 
-The pending debt does not accrue interest until it has been applied to a borrower's loan.
+The pending debt does not accrue interest until it has been applied to a borrower's loan.  This happens automatically and seamlessly - any interaction with their trove triggers the redistribution to be applied to their actual balances.
 
 Note that when a redistribution of debt and collateral from a liquidated loan is done across the other loans, no external liquidity source is required.
 
