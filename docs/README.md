@@ -335,12 +335,12 @@ When the redemption amount is greater than a loans value, that loan become fully
 
 Flow of Funds
 
-1. Redeemer deposits MUSD into BorrowerOperation contract and fully redeems a borrowers debt.
+1. Redeemer deposits MUSD into BorrowerOperation contract and fully redeems a borrower's debt.
 2. MUSD is burnt.
 3. BTC is sent to the Redeemer.
 4. Redemption fee is sent to PCV.
 5. Borrowers excess BTC is sent to the CollSurplusPool.
-6. Liquidation reserve is burnt.
+6. 200 MUSD gas compensation reserve is burnt.
 
 #### Prerequisites
 - The Total Collateral Ratio (TCR) must be above the Minimum Collateral Ratio (MCR)
