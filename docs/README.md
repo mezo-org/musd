@@ -322,7 +322,7 @@ When the redemption amount is less than the debt of the loan with the lowest col
 
 Flow of Funds
 
-1. Redeemer deposits MUSD into Borrower Operation contract.
+1. Redeemer deposits MUSD into TroveManager contract.
 2. MUSD is burnt.
 3. BTC is sent to the Redeemer.
 4. Redemption fee is sent to PCV.
