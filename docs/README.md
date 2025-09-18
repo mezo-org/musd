@@ -192,6 +192,13 @@ The liquidity source for the Stability Pool is intended to initially be from the
 
 If there are insufficient funds in the Stability Pool to cover the liquidated loan/s debt, the Stability Pool covers as much debt as it can, burning MUSD in exchange for the collateral. The remaining debt and collateral is proportionately redistributed across the remaining loans.
 
+Impact on Active Borrowers: When debt and collateral are redistributed, each active borrower receives both additional debt and additional collateral proportional to their
+existing collateral. Since liquidations occur at 110% collateralization, borrowers receive $1.10 worth of BTC for every $1 of debt added. While this doesn't cause immediate
+financial harm, it does:
+- Lower their collateralization ratio
+- Increase their total debt obligation for future repayment
+- Require them to hold more MUSD to eventually close their position
+
 ![Liquidation partially using the Stability Pool flow](images/liquidationPartiallyUsingStabilityPool.png)
 
 Flow of Funds
