@@ -1,8 +1,8 @@
-# mUSD V2: Simple Interest Approach
+# MUSD: Simple Interest Approach
 
 ## Overview
 
-This document outlines a block-based simple interest approach to manage debt and calculate interest in mUSD V2. The system uses linear interest calculations to minimize complexity while maintaining accurate debt tracking.
+This document outlines a block-based simple interest approach to manage debt and calculate interest in MUSD. The system uses linear interest calculations to minimize complexity while maintaining accurate debt tracking.
 
 ## Key Concepts
 
@@ -16,7 +16,7 @@ This document outlines a block-based simple interest approach to manage debt and
 
 For the system, we maintain:
 
-- The sum of each principal multiplied by its rate (aggreated interest numerator)
+- The sum of each principal multiplied by its rate (aggregated interest numerator)
 - Timestamp of the last update
 - The total accrued principal and interest in the active pool
 
