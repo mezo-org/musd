@@ -137,13 +137,21 @@ style: |
 
 # Developer Deep Dive: Pending Rewards
 
-## Critical Concept for Integration
+## Critical Integration Concept
 
-- **What**: Debt & collateral redistributed when Stability Pool insufficient
-- **When Applied**: Next trove interaction (any borrower operation)
-- **Code Impact**:
-  - Wrong: getTroveDebt() (stored amounts only)
-  - Right: getEntireDebtAndColl() (includes pending)
+```typescript
+// ❌ WRONG - Only shows stored amounts
+const storedDebt = await troveManager.getTroveDebt(userAddress)
+
+// ✅ CORRECT - Includes pending rewards from redistributions
+const [entireDebt, entireColl] = await troveManager.getEntireDebtAndColl(userAddress)
+
+// Check if trove is active
+const status = await troveManager.getTroveStatus(userAddress)
+const isActive = status === 1
+```
+
+**Key**: Pending rewards auto-applied on next trove interaction
 
 ![bg right:30%](placeholder-pending-rewards.png)
 
@@ -151,14 +159,27 @@ style: |
 
 # Developer Deep Dive: Hint Generation
 
-## Gas Optimization Essential
+## Gas Optimization: O(n) → O(1)
+
+```typescript
+// Calculate expected total debt (debt + fees + gas compensation)
+const gasComp = await troveManager.MUSD_GAS_COMPENSATION()
+const fee = await borrowerOperations.getBorrowingFee(debtAmount)
+const totalDebt = debtAmount + fee + gasComp
+
+// Generate hints for gas optimization
+const nicr = (assetAmount * to1e18(100)) / totalDebt
+const numTrials = (await sortedTroves.getSize()) * 15n
+
+const { 0: approxHint } = await hintHelpers.getApproxHint(nicr, numTrials, 42)
+const { 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(
+  nicr, approxHint, approxHint
+)
+```
+
+**Critical**: Always generate fresh hints before transactions
 
 ![bg right:30%](placeholder-hint-generation.png)
-
-- **Why Important**: Troves in sorted list by CR, finding insertion point expensive
-- **Solution**: Hints narrow search from O(n) to O(1) gas
-- **Implementation**: HintHelpers with code examples
-- **Freshness**: Always generate fresh hints before transactions
 
 ---
 
@@ -174,16 +195,27 @@ style: |
 
 # User Journey 1: Opening a Trove
 
-## Code Demo
+## Core Concepts
+- **ICR** (Individual), **TCR** (Total Collateralization Ratio)
+- **Hints** for gas optimization
+- **Gas compensation** automatically handled
 
-- **User Action**: Deposit collateral, borrow mUSD
-- **openTrove Function**:
-  - debtAmount, assetAmount, collateralization ratio
-  - ICR (Individual Collateralization Ratio), TCR (Total Collateralization Ratio)
-  - upperHint and lowerHint for efficient trove placement
-  - HintHelpers for hint generation
-  - Gas compensation
-  - Borrowing capacity
+```typescript
+// Amount of MUSD to borrow and BTC collateral to deposit
+const debtAmount = to1e18(2000)    // 2000 MUSD
+const assetAmount = to1e18(10)     // 10 BTC
+
+// Simple approach - no hints (higher gas cost)
+const upperHint = ZERO_ADDRESS
+const lowerHint = ZERO_ADDRESS
+
+await borrowerOperations.openTrove(
+  debtAmount,
+  upperHint,
+  lowerHint,
+  { value: assetAmount }
+)
+```
 
 ![bg right:25%](placeholder-opening-trove.png)
 
