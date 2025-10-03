@@ -1,43 +1,86 @@
 ---
 marp: true
-theme: gaia
+theme: default
 class: lead
 paginate: true
 size: 16:9
-backgroundColor: #fff
-backgroundImage: url('https://marp.app/assets/hero-background.svg')
 header: '**mUSD Hackathon**'
 footer: '🚀 **Building on Mezo Bitcoin**'
 style: |
   section {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 28px;
+    padding: 60px;
   }
   h1 {
     color: #1f2937;
-    border-bottom: 3px solid #3b82f6;
-    padding-bottom: 0.2em;
+    font-size: 3em;
+    margin-bottom: 0.5em;
+    border-bottom: 4px solid #3b82f6;
+    padding-bottom: 0.3em;
   }
   h2 {
     color: #374151;
+    font-size: 1.8em;
+    margin-bottom: 0.8em;
+    margin-top: 0.5em;
   }
   strong {
     color: #1f2937;
   }
-  code {
-    background-color: #f3f4f6;
-    padding: 0.2em 0.4em;
-    border-radius: 3px;
-    font-size: 0.9em;
-  }
-  pre {
-    background-color: #1f2937;
-    color: #f9fafb;
-    padding: 1em;
-    border-radius: 8px;
-    margin: 1em 0;
+  ul {
+    font-size: 1.1em;
+    line-height: 1.6;
   }
   ul li {
-    margin: 0.3em 0;
+    margin: 0.5em 0;
+  }
+  code {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    padding: 0.3em 0.5em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  }
+  pre {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #e2e8f0;
+    padding: 1.5em;
+    border-radius: 12px;
+    margin: 1em 0;
+    font-size: 0.7em;
+    line-height: 1.5;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    overflow-x: auto;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+  }
+  /* Syntax highlighting */
+  .hljs-keyword { color: #8b5cf6; }
+  .hljs-string { color: #10b981; }
+  .hljs-comment { color: #6b7280; }
+  .hljs-number { color: #f59e0b; }
+  .hljs-function { color: #3b82f6; }
+
+  /* Better spacing for slides with code */
+  section:has(pre) {
+    padding: 40px;
+  }
+  section:has(pre) h1 {
+    font-size: 2.2em;
+    margin-bottom: 0.3em;
+  }
+  section:has(pre) ul {
+    font-size: 1em;
+    margin-bottom: 1em;
+  }
+  section:has(pre) p {
+    font-size: 1em;
   }
 ---
 
@@ -53,9 +96,9 @@ style: |
 
 # What is mUSD?
 
-- **Stablecoin** minted by creating loans against crypto collateral
+- **Stablecoin** minted by creating loans against BTC
 - **System Purpose**:
-  - Borrowing against collateral
+  - Borrowing against BTC
   - Maintain mUSD peg as stablecoin
 - **Key User Actions**:
   - Opening, adjusting, and closing troves
