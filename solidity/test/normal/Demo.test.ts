@@ -7,6 +7,7 @@ import {
   getEmittedRedemptionValues,
   NO_GAS,
   openTrove,
+  setInterestRate,
   setupTests,
   updatePendingSnapshot,
   updateTroveSnapshot,
@@ -27,6 +28,8 @@ describe.only("Demo", () => {
   let contracts: Contracts
 
   async function setupDefaultTroves() {
+    await setInterestRate(contracts, council, 0) // 0% interest rate to make calculations easier
+
     // open two troves so that we don't go into recovery mode
     await openTrove(contracts, {
       musdAmount: "5000",
