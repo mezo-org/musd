@@ -75,13 +75,14 @@
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="7" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="7" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="custody">Custody</h1>
 <ul>
-<li><strong>User opens a position by calling <code>openTrove</code> and providing BTC</strong></li>
-<li><strong>MUSD is sent to the user and BTC is routed to the ActivePool until the user:</strong>
+<li><strong>BTC collateral is held in the ActivePool</strong></li>
+<li><strong>MUSD is minted and sent to the borrower</strong></li>
+<li><strong>Collateral is released when:</strong>
 <ul>
-<li>Withdraws collateral (only possible if their CR is &gt; min)</li>
-<li>Closes their trove by paying off their debt</li>
-<li>Is redeemed against</li>
-<li>Gets liquidated</li>
+<li>Debt is fully repaid</li>
+<li>Trove is liquidated</li>
+<li>Trove is redeemed against</li>
+<li>User withdraws (if sufficiently collateralized)</li>
 </ul>
 </li>
 </ul>
@@ -91,6 +92,13 @@
 <ul>
 <li><strong>Under-collateralized troves (under 110% CR) are eligible for liquidation</strong></li>
 <li><strong>Public liquidate function can be called by anyone</strong></li>
+<li><strong>Liquidation rewards</strong>
+<ul>
+<li>200 MUSD flat fee</li>
+<li>0.5% of collateral</li>
+</ul>
+</li>
+<li><strong>Stability Pool and redistribution</strong></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="9" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="9" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
@@ -145,7 +153,7 @@
 <h1 id="gas-compensation">Gas Compensation</h1>
 <ul>
 <li><strong>When a user opens up a trove, an extra flat $200 MUSD is minted for gas compensation, sent to the GasPool, and added to the borrower's debt.</strong></li>
-<li><strong>This debt is included when calculating the user's collateral ratio.</strong></li>
+<li><strong>This debt is included when calculating the user's collateralization ratio.</strong></li>
 <li><strong>When a trove is liquidated, the liquidator is sent the 200 MUSD as compensation</strong></li>
 <li><strong>In all other situations (redemption, closing a trove, repaying debt), the last 200 MUSD of debt is paid from the Gas Pool</strong></li>
 <li><strong>Effectively, this is a hold on 200 MUSD that is returned as long as a trove is not liquidated</strong></li>
@@ -154,14 +162,16 @@
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="15" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="15" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="recovery-mode">Recovery Mode</h1>
 <ul>
-<li><strong>If the Total Collateral Ratio (TCR), the value of all of the collateral divided by the total debt, of the system ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.</strong></li>
+<li><strong>If the Total Collateralization Ratio (TCR) ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.</strong></li>
 <li><strong>RM restrictions:</strong>
 <ul>
 <li>We require that newly opened troves have at least 150% (the CCR) collateral, rather than the normal 110%.</li>
 <li>We do not charge a borrowing rate.</li>
-<li>We do not allow users to close troves.</li>
-<li>Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves and is above 150%.</li>
-<li>Users cannot refinance their trove.</li>
+<li>User actions must increase their collateralization ratio.
+<ul>
+<li>Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves.</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -169,9 +179,9 @@
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="16" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="16" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="pending-funds">Pending Funds</h1>
 <ul>
-<li><strong>If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral among active troves</strong></li>
-<li><strong>All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral.</strong></li>
-<li><strong>As a gas optimization, we track the these funds as &quot;pending&quot;</strong></li>
+<li><strong>Liquidations that exceed Stability Pool capacity get redistributed</strong></li>
+<li><strong>Your trove receives proportional share of liquidated debt and collateral</strong></li>
+<li><strong>Tracked as &quot;pending&quot; for gas efficiency - applied when you next use your trove</strong></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="17" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="17" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
@@ -204,8 +214,8 @@
 <ul>
 <li><strong>Remember that some debt and collateral may not be recorded on the trove struct until pending rewards are applied</strong></li>
 <li><strong>Check to make sure you are using the right functions to include pending rewards</strong></li>
-<li>Wrong: getTroveDebt() (stored amounts only)</li>
-<li>Right: getEntireDebtAndColl() (includes pending)</li>
+<li><strong>Wrong: getTroveDebt() (stored amounts only)</strong></li>
+<li><strong>Right: getEntireDebtAndColl() (includes pending)</strong></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="25" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="25" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">

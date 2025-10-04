@@ -65,12 +65,13 @@ size: 16:9
 
 # Custody
 
-- **User opens a position by calling `openTrove` and providing BTC**
-- **MUSD is sent to the user and BTC is routed to the ActivePool until the user:**
-  - Withdraws collateral (only possible if their CR is > min)
-  - Closes their trove by paying off their debt
-  - Is redeemed against
-  - Gets liquidated
+- **BTC collateral is held in the ActivePool**
+- **MUSD is minted and sent to the borrower**
+- **Collateral is released when:**
+  - Debt is fully repaid
+  - Trove is liquidated
+  - Trove is redeemed against
+  - User withdraws (if sufficiently collateralized)
 
 ---
 
@@ -78,6 +79,10 @@ size: 16:9
 
 - **Under-collateralized troves (under 110% CR) are eligible for liquidation**
 - **Public liquidate function can be called by anyone**
+- **Liquidation rewards**
+  - 200 MUSD flat fee
+  - 0.5% of collateral
+- **Stability Pool and redistribution**
 
 ---
 
@@ -126,7 +131,7 @@ size: 16:9
 # Gas Compensation
 
 - **When a user opens up a trove, an extra flat $200 MUSD is minted for gas compensation, sent to the GasPool, and added to the borrower's debt.**
-- **This debt is included when calculating the user's collateral ratio.**
+- **This debt is included when calculating the user's collateralization ratio.**
 - **When a trove is liquidated, the liquidator is sent the 200 MUSD as compensation**
 - **In all other situations (redemption, closing a trove, repaying debt), the last 200 MUSD of debt is paid from the Gas Pool**
 - **Effectively, this is a hold on 200 MUSD that is returned as long as a trove is not liquidated**
@@ -135,21 +140,20 @@ size: 16:9
 
 # Recovery Mode
 
-- **If the Total Collateral Ratio (TCR), the value of all of the collateral divided by the total debt, of the system ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.**
+- **If the Total Collateralization Ratio (TCR) ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.**
 - **RM restrictions:**
   - We require that newly opened troves have at least 150% (the CCR) collateral, rather than the normal 110%.
   - We do not charge a borrowing rate.
-  - We do not allow users to close troves.
-  - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves and is above 150%.
-  - Users cannot refinance their trove.
+  - User actions must increase their collateralization ratio.
+    - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves.
 
 ---
 
 # Pending Funds
 
-- **If the Stability Pool has insufficient funds to cover all of the trove debt, we redistribute both the debt and collateral among active troves**
-- **All of the debt and collateral is sent to the Default Pool, where a user's ownership of the default pool is equal to their proprotional ownership of all deposited collateral.**
-- **As a gas optimization, we track the these funds as "pending"**
+- **Liquidations that exceed Stability Pool capacity get redistributed**
+- **Your trove receives proportional share of liquidated debt and collateral**
+- **Tracked as "pending" for gas efficiency - applied when you next use your trove**
 
 ---
 
@@ -188,8 +192,8 @@ size: 16:9
 
 - **Remember that some debt and collateral may not be recorded on the trove struct until pending rewards are applied**
 - **Check to make sure you are using the right functions to include pending rewards**
-- Wrong: getTroveDebt() (stored amounts only)
-- Right: getEntireDebtAndColl() (includes pending)
+- **Wrong: getTroveDebt() (stored amounts only)**
+- **Right: getEntireDebtAndColl() (includes pending)**
 
 ---
 
