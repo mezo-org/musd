@@ -32,7 +32,14 @@ size: 16:9
 ---
 
 # System Overview
-*(Visual: System Overview pic)*
+
+**Token**: MUSD
+
+**Core Protocol**: BorrowerOperations, TroveManager, StabilityPool
+
+**Asset Pools**: ActivePool, DefaultPool, CollSurplusPool, GasPool
+
+**Supporting**: PriceFeed, SortedTroves, HintHelpers, InterestRateManager, PCV
 
 ---
 
@@ -61,19 +68,19 @@ Sell 90,909 MUSD for $109,091
 
 # Custody
 
-- **user opens a position by calling `openTrove` and providing BTC**
+- **User opens a position by calling `openTrove` and providing BTC**
 - **MUSD is sent to the user and BTC is routed to the ActivePool until the user:**
-  - withdraws collateral (only possible if their CR is > min)
-  - closes their trove by paying off their debt
-  - is redeemed against
-  - gets liquidated
+  - Withdraws collateral (only possible if their CR is > min)
+  - Closes their trove by paying off their debt
+  - Is redeemed against
+  - Gets liquidated
 
 ---
 
 # Liquidations
 
 - **Under-collateralized troves (under 110% CR) are eligible for liquidation**
-- **public liquidate function can be called by anyone**
+- **Public liquidate function can be called by anyone**
 
 ---
 
@@ -149,27 +156,22 @@ Alice is now left with $9000 in debt backed by $11,000 of BTC
 ---
 
 # Opening a Trove
-*(Visual: demo/code)*
 
 ---
 
 # Adjusting a Trove
-*(Visual: demo/code)*
 
 ---
 
 # Closing a Trove
-*(Visual: demo/code)*
 
 ---
 
 # Liquidation
-*(Visual demo/code)*
 
 ---
 
 # Redemption
-*(Visual: demo/code)*
 
 ---
 

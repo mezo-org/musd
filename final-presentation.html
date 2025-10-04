@@ -41,7 +41,10 @@
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="4" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="4" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="system-overview">System Overview</h1>
-<p><em>(Visual: System Overview pic)</em></p>
+<p><strong>Token</strong>: MUSD</p>
+<p><strong>Core Protocol</strong>: BorrowerOperations, TroveManager, StabilityPool</p>
+<p><strong>Asset Pools</strong>: ActivePool, DefaultPool, CollSurplusPool, GasPool</p>
+<p><strong>Supporting</strong>: PriceFeed, SortedTroves, HintHelpers, InterestRateManager, PCV</p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="5" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="5" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="economic-model-overview">Economic Model Overview</h1>
@@ -67,13 +70,13 @@ Sell 90,909 MUSD for $109,091</p>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="7" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="7" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="custody">Custody</h1>
 <ul>
-<li><strong>user opens a position by calling <code>openTrove</code> and providing BTC</strong></li>
+<li><strong>User opens a position by calling <code>openTrove</code> and providing BTC</strong></li>
 <li><strong>MUSD is sent to the user and BTC is routed to the ActivePool until the user:</strong>
 <ul>
-<li>withdraws collateral (only possible if their CR is &gt; min)</li>
-<li>closes their trove by paying off their debt</li>
-<li>is redeemed against</li>
-<li>gets liquidated</li>
+<li>Withdraws collateral (only possible if their CR is &gt; min)</li>
+<li>Closes their trove by paying off their debt</li>
+<li>Is redeemed against</li>
+<li>Gets liquidated</li>
 </ul>
 </li>
 </ul>
@@ -82,7 +85,7 @@ Sell 90,909 MUSD for $109,091</p>
 <h1 id="liquidations">Liquidations</h1>
 <ul>
 <li><strong>Under-collateralized troves (under 110% CR) are eligible for liquidation</strong></li>
-<li><strong>public liquidate function can be called by anyone</strong></li>
+<li><strong>Public liquidate function can be called by anyone</strong></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="9" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="9" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
@@ -159,23 +162,18 @@ Alice is now left with $9000 in debt backed by $11,000 of BTC</p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="17" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="17" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="opening-a-trove">Opening a Trove</h1>
-<p><em>(Visual: demo/code)</em></p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="18" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="18" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="adjusting-a-trove">Adjusting a Trove</h1>
-<p><em>(Visual: demo/code)</em></p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="19" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="19" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="closing-a-trove">Closing a Trove</h1>
-<p><em>(Visual: demo/code)</em></p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="20" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="20" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="liquidation">Liquidation</h1>
-<p><em>(Visual demo/code)</em></p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="21" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="21" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="redemption">Redemption</h1>
-<p><em>(Visual: demo/code)</em></p>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="22" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="22" style="--paginate:true;--theme:default;" data-marpit-pagination-total="27" data-size="16:9">
 <h1 id="critical-integration-concepts">Critical Integration Concepts</h1>
