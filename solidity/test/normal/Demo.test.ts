@@ -69,7 +69,7 @@ describe.only("Demo", () => {
     /**
      * Hints are used to find the correct insert position in the sorted troves
      * list.
-     * Vault operations called without hints will have a worst case gas cost of
+     * Trove operations called without hints will have a worst case gas cost of
      * O(n) where n is the number of troves.
      */
     const upperHint = ZERO_ADDRESS
@@ -292,7 +292,7 @@ describe.only("Demo", () => {
       await contracts.troveManager.MUSD_GAS_COMPENSATION(),
     )
 
-    // Bob receives 0.5% of Alice's collateral as a additional compensation
+    // Bob receives 0.5% of Alice's collateral as additional compensation
     expect(bob.btc.after - bob.btc.before).to.be.equal(collGasCompensation)
   })
 
