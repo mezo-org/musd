@@ -20,7 +20,7 @@ size: 16:9
 
 # What is MUSD?
 
-- **mUSD is a stablecoin minted by creating loans against borrower's crypto assets**
+- **MUSD is a stablecoin minted by creating loans against borrower's crypto assets**
 - **What is the system solving?**
   - Borrowing against collateral
   - Maintain MUSD peg as stablecoin
@@ -50,19 +50,16 @@ size: 16:9
 # Maintaining the Peg
 
 - **Price floor: $1-for-$1 redemptions**
-
-MUSD trading for $0.80 on an exchange
-BTC selling for $100k
-Buy 1000 MUSD with $800
-Redeem 1000 MUSD for 0.01 BTC
-Sell 0.01 BTC for $1000
+  - MUSD trading for $0.80 on an exchange, BTC price $100k
+  - Buy 1000 MUSD with $800
+  - Redeem 1000 MUSD for 0.01 BTC
+  - Sell 0.01 BTC for $1000
 
 - **Price ceiling: 110% minimum collateralization ratio**
-
-MUSD trading for $1.20 on an exchange
-Buy 1 BTC for $100k
-Open a loan with 1 BTC collateral and the maximum 90,909 MUSD as debt
-Sell 90,909 MUSD for $109,091
+  - MUSD trading for $1.20 on an exchange
+  - Buy 1 BTC for $100k
+  - Open a loan with 1 BTC collateral and the maximum 90,909 MUSD as debt
+  - Sell 90,909 MUSD for $109,091
 
 ---
 
@@ -89,10 +86,11 @@ Sell 90,909 MUSD for $109,091
 - **Anyone may call TroveManager.redeemCollateral to burn MUSD and receive BTC, $1 for $1 (minus the redemption fee)**
 - **Trove with the lowest CR above 110% has an equivalent amount of debt cancelled, and that amount of BTC is transferred to the redeeming user**
 
-Alice has $10,000 of debt backed by $12,000 worth of BTC.
-Bob redeems $1000 worth of MUSD
-Bob receives $1000 worth of Alice's BTC
-Alice is now left with $9000 in debt backed by $11,000 of BTC
+- **Example:**
+  - Alice has $10,000 of debt backed by $12,000 worth of BTC
+  - Bob redeems $1000 worth of MUSD
+  - Bob receives $1000 worth of Alice's BTC
+  - Alice is now left with $9000 in debt backed by $11,000 of BTC
 
 ---
 
