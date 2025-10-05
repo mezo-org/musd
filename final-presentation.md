@@ -142,8 +142,8 @@ size: 16:9
 
 - **If the Total Collateralization Ratio (TCR) ever falls below the Critical Collateral Ratio (CCR) of 150%, we enter into Recovery Mode.**
 - **RM restrictions:**
-  - We require that newly opened troves have at least 150% (the CCR) collateral, rather than the normal 110%.
-  - We do not charge a borrowing rate.
+  - We require that newly opened troves have at least 150% CR, rather than the normal 110%.
+  - We do not charge a borrowing fee.
   - User actions must increase their collateralization ratio.
     - Debt increases must be in combination with collateral increases such that the trove's collateral ratio improves.
 
