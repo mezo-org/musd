@@ -157,26 +157,6 @@ size: 16:9
 
 ---
 
-# Opening a Trove
-
----
-
-# Adjusting a Trove
-
----
-
-# Closing a Trove
-
----
-
-# Liquidation
-
----
-
-# Redemption
-
----
-
 # Critical Integration Concepts
 
 ---
@@ -203,6 +183,26 @@ size: 16:9
 - **Set at trove creation based on global rate, kept for trove lifetime**
 - **Interest is recorded on trove structs on user operation, similar to pending rewards**
 - **Note some functions virtually accrue interest when needed**
+
+---
+
+# Opening a Trove
+
+---
+
+# Adjusting a Trove
+
+---
+
+# Closing a Trove
+
+---
+
+# Liquidation
+
+---
+
+# Redemption
 
 ---
 
