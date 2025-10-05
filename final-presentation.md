@@ -11,9 +11,10 @@ size: 16:9
 
 # Overview
 
-- **High level overview**
-- **Code examples for common user interactions**
-- **Critical integration concepts**
+- **System Overview**
+- **Economic Model**
+- **System Mechanics**
+- **Code Examples**
 - **Questions**
 
 ---
@@ -43,11 +44,23 @@ size: 16:9
 
 ---
 
-# Economic Model Overview
+# Maintaining the Peg
+
+## Two mechanisms keep MUSD stable
+
+**Liquidations** - Price ceiling via 110% minimum CR
+- Under-collateralized troves eligible for liquidation
+- Public liquidate function, anyone can call
+- **Liquidation rewards**: 200 MUSD flat fee + 0.5% of collateral
+- Stability Pool and redistribution
+
+**Redemptions** - Price floor via $1-for-$1 exchange
+- Anyone can burn MUSD and receive BTC at $1 value (minus 0.75% fee)
+- Targets lowest CR troves above 110%
 
 ---
 
-# Maintaining the Peg
+# Peg Arbitrage Examples
 
 - **Price floor: $1-for-$1 redemptions**
   - MUSD trading for $0.80 on an exchange, BTC price $100k
@@ -75,66 +88,31 @@ size: 16:9
 
 ---
 
-# Liquidations
+# Fee Economics
 
-- **Under-collateralized troves (under 110% CR) are eligible for liquidation**
-- **Public liquidate function can be called by anyone**
-- **Liquidation rewards**
-  - 200 MUSD flat fee
-  - 0.5% of collateral
-- **Stability Pool and redistribution**
+**Fee Types:**
+- **Borrowing Rate**: 0.1% added as debt to the loan
+- **Redemption Rate**: 0.75% taken out of the collateral being redeemed
+- **Interest Rate**: 1% fixed
+- **Refinancing Rate**: 20% of the borrowing rate
 
----
-
-# Redemptions
-
-- **Anyone may call TroveManager.redeemCollateral to burn MUSD and receive BTC, $1 for $1 (minus the redemption fee)**
-- **Trove with the lowest CR above 110% has an equivalent amount of debt cancelled, and that amount of BTC is transferred to the redeeming user**
-
-- **Example:**
-  - Alice has $10,000 of debt backed by $12,000 worth of BTC
-  - Bob redeems $1000 worth of MUSD
-  - Bob receives $1000 worth of Alice's BTC
-  - Alice is now left with $9000 in debt backed by $11,000 of BTC
+**Bootstrap Loan & Distribution:**
+- Stability Pool initially populated with bootstrap loan against future fees
+- Fees → PCV → split between bootstrap loan repayment and fee recipients
+- Once bootstrap loan paid, 100% fees go to recipients
 
 ---
 
-# Fees
-
-- **Borrowing Rate: 0.1% added as debt to the loan**
-- **Redemption Rate: 0.75% taken out of the collateral being redeemed**
-- **Interest Rate: 1% fixed**
-- **Refinancing Rate: 20% of the borrowing rate**
-
----
-
-# Bootstrap loan
-
-- **Stability Pool is initially populated with a bootstrap loan minted against future fees**
-- **This can only leave the Stability Pool via liquidations until the debt is paid**
-- **Fees collected by the protocol are used to pay down the bootstrap loan**
-
----
-
-# PCV and Fee Distribution
-
-- **Fees collected are sent to the PCV (Protocol Controlled Value) contract**
-- **Governance can call a function to distribute the fees**
-- **Until the bootstrap loan is paid, a portion of the fees are used to pay down the loan, with the remainder being sent to a specified fee recipient**
-
----
-
-# Supporting Ideas
+# System Mechanics
 
 ---
 
 # Gas Compensation
 
-- **When a user opens up a trove, an extra flat $200 MUSD is minted for gas compensation, sent to the GasPool, and added to the borrower's debt.**
-- **This debt is included when calculating the user's collateralization ratio.**
-- **When a trove is liquidated, the liquidator is sent the 200 MUSD as compensation**
-- **In all other situations (redemption, closing a trove, repaying debt), the last 200 MUSD of debt is paid from the Gas Pool**
-- **Effectively, this is a hold on 200 MUSD that is returned as long as a trove is not liquidated**
+- **Opening a trove**: Extra 200 MUSD minted and added to your debt
+- **Liquidation**: Liquidator receives the 200 MUSD as reward
+- **All other actions**: 200 MUSD paid from GasPool, not your balance
+- **Result**: 200 MUSD hold that's returned unless you get liquidated
 
 ---
 
@@ -164,7 +142,7 @@ size: 16:9
 # Hint Generation
 
 - **Problem: Troves in sorted list by CR, finding insertion point expensive**
-- **Solution: Hints narrow search from O(n) to O(1) gas**
+- **Solution: Hints narrow search**
 
 ---
 

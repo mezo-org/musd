@@ -298,7 +298,7 @@ describe.only("Demo", () => {
 
   it("redeemCollateral()", async () => {
     const redemptionAmount = to1e18("50")
-    const maxIterations = 0
+    const maxIterations = 0 // The number of troves to be considered in a redemption sequence, 0 for no limit
 
     /** Hints for redeemCollateral
      * _firstRedemptionHint: first Trove in the system with ICR >= 110%
