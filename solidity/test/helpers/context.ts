@@ -24,6 +24,7 @@ import {
   MUSDTester,
   PCV,
   PriceFeed,
+  ReversibleCallOptionManager,
   SortedTroves,
   StabilityPool,
   TroveManagerTester,
@@ -53,6 +54,8 @@ export async function deployment() {
   const musd: MUSDTester = await getDeployedContract("MUSDTester")
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
+  const reversibleCallOptionManager: ReversibleCallOptionManager = 
+    await getDeployedContract("ReversibleCallOptionManager")
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
   const stabilityPool: StabilityPool =
     await getDeployedContract("StabilityPool")
@@ -73,6 +76,7 @@ export async function deployment() {
     musd,
     pcv,
     priceFeed,
+    reversibleCallOptionManager,
     sortedTroves,
     stabilityPool,
     troveManager,

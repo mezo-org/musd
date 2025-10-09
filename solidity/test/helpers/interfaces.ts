@@ -15,6 +15,7 @@ import {
   MUSDTester,
   PCV,
   PriceFeed,
+  ReversibleCallOptionManager,
   SortedTroves,
   StabilityPool,
   TroveManagerTester,
@@ -111,6 +112,7 @@ export interface Contracts {
   musd: MUSDTester
   pcv: PCV
   priceFeed: PriceFeed
+  reversibleCallOptionManager: ReversibleCallOptionManager
   sortedTroves: SortedTroves
   stabilityPool: StabilityPool
   troveManager: TroveManagerTester

@@ -3,7 +3,7 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import "./dependencies/CheckContract.sol";
 import "./dependencies/LiquityBase.sol";
@@ -34,14 +34,12 @@ contract ReversibleCallOptionManager is
     // ============ State Variables ============
 
     ITroveManager public troveManager;
-    IPriceFeed public priceFeed;
-    IActivePool public activePool;
     IMUSD public musdToken;
     address public gasPoolAddress;
 
     // Backstop parameters
-    uint256 public constant DECIMAL_PRECISION = 1e18;
-    uint256 public constant MUSD_GAS_COMPENSATION = 200e18; // Gas compensation from LiquityBase
+    // Note: DECIMAL_PRECISION, MUSD_GAS_COMPENSATION, priceFeed, and activePool 
+    // are inherited from LiquityBase
     uint256 public constant MIN_LAMBDA = 5e16; // 5% minimum
     uint256 public constant MAX_LAMBDA = 5e17; // 50% maximum
     uint256 public constant MIN_MATURITY = 30 minutes;
@@ -49,10 +47,10 @@ contract ReversibleCallOptionManager is
     
     // Early termination factor (0 < k_re < 1)
     // Borrower pays: C_re = λ × C_t0 × (1 + I_L) × k_re
-    uint256 public k_re = 8e17; // 0.8 (80%)
+    uint256 public k_re;
 
     // Safety margin for lambda calculation
-    uint256 public safetyMargin = 1e17; // 10%
+    uint256 public safetyMargin;
 
     // ============ Enums ============
 
@@ -171,6 +169,10 @@ contract ReversibleCallOptionManager is
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
+        
+        // Set default parameters
+        k_re = 8e17; // 0.8 (80%)
+        safetyMargin = 1e17; // 10%
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -223,10 +225,7 @@ contract ReversibleCallOptionManager is
 
         // Get current trove state
         uint256 price = priceFeed.fetchPrice();
-        uint256 currentICR = troveManager.getCurrentICR(_borrower, price);
-        
-        // Require health factor < 1 (ICR < MCR)
-        require(currentICR <= MCR, "RCO: Trove is healthy");
+        require(troveManager.getCurrentICR(_borrower, price) <= MCR, "RCO: Trove is healthy");
 
         // Get trove collateral and debt
         (
@@ -237,60 +236,34 @@ contract ReversibleCallOptionManager is
             ,
         ) = troveManager.getEntireDebtAndColl(_borrower);
         
-        uint256 totalDebt = principal + interest;
         uint256 collateralValue = (coll * price) / DECIMAL_PRECISION;
 
-        // Calculate optimal lambda or use custom
-        // Calculate lambda using: λ = (Expected Liquidation Loss + Safety Margin) / C_t0
-        uint256 lambda;
-        
-            // Risk-Adjusted Collateral Formula
-            // Expected Liquidation Loss = max(0, C_t0 - L × C_t0 × P_recover)
-            uint256 liquidationThreshold = 85e16; // L = 0.85 (85%)
-            uint256 recoveryFraction = 90e16; // P_recover = 0.90 (90% recovery expected)
-            
-            uint256 liquidationValue = (liquidationThreshold * collateralValue) / DECIMAL_PRECISION;
-            uint256 recoveryValue = (liquidationValue * recoveryFraction) / DECIMAL_PRECISION;
-            
-            uint256 expectedLoss = collateralValue > recoveryValue ? collateralValue - recoveryValue : 0;
-            
-            // Safety Margin = α × C_t0 (α ∼ 0.1–0.2)
-            uint256 alpha = safetyMargin; // Use existing safetyMargin parameter as α
-            uint256 safetyMarginAmount = (alpha * collateralValue) / DECIMAL_PRECISION;
-            
-            // λ = (Expected Liquidation Loss + Safety Margin) / C_t0
-            uint256 totalRisk = expectedLoss + safetyMarginAmount;
-            lambda = (totalRisk * DECIMAL_PRECISION) / collateralValue;
-            
-            // Clamp to valid range
-            if (lambda < MIN_LAMBDA) lambda = MIN_LAMBDA;
-            if (lambda > MAX_LAMBDA) lambda = MAX_LAMBDA;
-        
+        // Calculate lambda using risk-adjusted formula
+        uint256 lambda = _calculateLambda(collateralValue);
 
         // Calculate required premium: φ = λ × C_t0
         uint256 requiredPremium = (lambda * collateralValue) / DECIMAL_PRECISION;
         require(msg.value >= requiredPremium, "RCO: Insufficient premium");
 
-        // Get interest rate
-        uint16 interestRate = troveManager.getTroveInterestRate(_borrower);
+        // Calculate maturity time once
+        uint256 maturityTime = block.timestamp + _maturityDuration;
 
         // Create option
-        BackstopOption memory option = BackstopOption({
+        options[_borrower] = BackstopOption({
             borrower: _borrower,
             supporter: msg.sender,
             collateralAtStart: collateralValue,
-            debtAtStart: totalDebt,
+            debtAtStart: principal + interest,
             lambda: lambda,
             premiumPaid: msg.value,
-            strikeCR: MCR, // Strike at MCR
+            strikeCR: MCR,
             startTime: block.timestamp,
-            maturityTime: block.timestamp + _maturityDuration,
-            interestRate: uint256(interestRate),
+            maturityTime: maturityTime,
+            interestRate: uint256(troveManager.getTroveInterestRate(_borrower)),
             phase: OptionPhase.PreMaturity,
             exists: true
         });
 
-        options[_borrower] = option;
         supporterBalances[msg.sender] += msg.value;
         totalPremiumsCollected[msg.sender] += msg.value;
 
@@ -300,7 +273,7 @@ contract ReversibleCallOptionManager is
             lambda,
             msg.value,
             MCR,
-            option.maturityTime
+            maturityTime
         );
 
         emit LambdaCalculated(_borrower, lambda);
@@ -483,6 +456,45 @@ contract ReversibleCallOptionManager is
     }
 
     // ============ Lambda Calculation ============
+
+    /**
+     * @notice Calculate lambda using Risk-Adjusted Collateral Formula
+     * λ = (Expected Loss + Safety Margin) / C_t0
+     * 
+     * @param _collateralValue Current collateral value in USD
+     * @return lambda Risk-adjusted premium factor (scaled by DECIMAL_PRECISION)
+     */
+    function _calculateLambda(uint256 _collateralValue) internal pure returns (uint256) {
+        // Risk-Adjusted Collateral Formula
+        // Assumes 85% liquidation threshold with 90% recovery
+        uint256 liquidationThreshold = 85e16; // 85%
+        uint256 recoveryFraction = 90e16; // 90%
+        
+        // Expected value at liquidation
+        uint256 liquidationValue = (liquidationThreshold * _collateralValue) / DECIMAL_PRECISION;
+        
+        // Expected recovery from liquidation
+        uint256 recoveryValue = (liquidationValue * recoveryFraction) / DECIMAL_PRECISION;
+        
+        // Expected loss = Initial Value - Recovery Value
+        uint256 expectedLoss = _collateralValue > recoveryValue ? _collateralValue - recoveryValue : 0;
+        
+        // Add safety margin to account for market volatility
+        // Using fixed 10% safety margin
+        uint256 safetyMarginAmount = (10e16 * _collateralValue) / DECIMAL_PRECISION;
+        
+        // Total risk = Expected Loss + Safety Margin
+        uint256 totalRisk = expectedLoss + safetyMarginAmount;
+        
+        // λ = Total Risk / Initial Collateral Value
+        uint256 lambda = (totalRisk * DECIMAL_PRECISION) / _collateralValue;
+        
+        // Clamp to valid range [MIN_LAMBDA, MAX_LAMBDA]
+        if (lambda < MIN_LAMBDA) lambda = MIN_LAMBDA;
+        if (lambda > MAX_LAMBDA) lambda = MAX_LAMBDA;
+        
+        return lambda;
+    }
 
     /**
      * @notice Calculate optimal lambda (λ*) using adapted Black-Scholes

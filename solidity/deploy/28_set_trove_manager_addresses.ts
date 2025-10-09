@@ -19,6 +19,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     musd,
     pcv,
     priceFeed,
+    reversibleCallOptionManager,
     sortedTroves,
     stabilityPool,
   } = await fetchAllDeployedContracts(isHardhatNetwork, isFuzzTestingNetwork)
@@ -37,6 +38,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await priceFeed.getAddress(),
     await sortedTroves.getAddress(),
     await stabilityPool.getAddress(),
+    await reversibleCallOptionManager.getAddress(),
   )
 }
 
@@ -53,6 +55,7 @@ func.dependencies = [
   "MUSD",
   "PCV",
   "PriceFeed",
+  "ReversibleCallOptionManager",
   "SortedTroves",
   "StabilityPool",
   "TroveManager",

@@ -242,6 +242,7 @@ contract EchidnaTest {
             address(collSurplusPool),
             address(defaultPool),
             address(interestRateManager),
+            address(0), // reversibleCallOptionManagerAddress
             address(stabilityPool),
             address(troveManager)
         );
@@ -277,6 +278,7 @@ contract EchidnaTest {
             address(musd),
             address(pcv),
             address(priceFeed),
+            address(0), // reversibleCallOptionManagerAddress
             address(sortedTroves),
             address(stabilityPool)
         );
