@@ -287,7 +287,8 @@ contract EchidnaTest {
             address(troveManager),
             address(stabilityPool),
             address(borrowerOperations),
-            address(interestRateManager)
+            address(interestRateManager),
+            address(0) // reversibleCallOptionManagerAddress - not used in Echidna tests
         );
         sortedTroves.setParams(
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,

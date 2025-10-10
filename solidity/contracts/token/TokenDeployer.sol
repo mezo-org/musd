@@ -68,7 +68,8 @@ contract TokenDeployer {
             _troveManagerAddress,
             _stabilityPoolAddress,
             _borrowerOperationsAddress,
-            _interestRateManagerAddress
+            _interestRateManagerAddress,
+            address(0) // reversibleCallOptionManagerAddress - set to zero for now
         );
 
         MUSD(token).transferOwnership(GOVERNANCE);

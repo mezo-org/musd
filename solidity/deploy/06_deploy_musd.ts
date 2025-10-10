@@ -33,6 +33,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     isHardhatNetwork ? "TroveManagerTester" : "TroveManager",
   )
   const stabilityPool = await deployments.get("StabilityPool")
+  const rcoManager = await deployments.get("ReversibleCallOptionManager")
 
   // Short-circuit. On Hardhat, we do not use the real token contract for tests.
   // Instead, the MUSDTester is resolved as MUSD.
@@ -45,6 +46,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       stabilityPool.address,
       borrowerOperations.address,
       interestRateManager.address,
+      rcoManager.address
     )
     return
   }
@@ -106,6 +108,7 @@ func.tags = ["MUSD"]
 func.dependencies = [
   "BorrowerOperations",
   "InterestRateManager",
+  "ReversibleCallOptionManager",
   "StabilityPool",
   "TroveManager",
 ]

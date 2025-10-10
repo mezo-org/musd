@@ -36,9 +36,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await musd.getAddress(),
     await pcv.getAddress(),
     await priceFeed.getAddress(),
+    await reversibleCallOptionManager.getAddress(),
     await sortedTroves.getAddress(),
     await stabilityPool.getAddress(),
-    await reversibleCallOptionManager.getAddress(),
   )
 }
 
