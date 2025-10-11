@@ -1,5 +1,5 @@
 {
-  "address": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+  "address": "0x5A23F1f590b03320571f76F064e8EF1408da876E",
   "abi": [
     {
       "inputs": [],
@@ -705,19 +705,6 @@
           "type": "uint256"
         }
       ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_borrower",
-          "type": "address"
-        }
-      ],
-      "name": "applyPendingRewards",
-      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -1499,6 +1486,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "reversibleCallOptionManagerAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
@@ -1572,6 +1572,11 @@
         {
           "internalType": "address",
           "name": "_priceFeedAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_reversibleCallOptionManagerAddress",
           "type": "address"
         },
         {
@@ -1793,8 +1798,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x40ea6d038c058f873026005830929482b035e88e3643cc14828c59fed4e1298f",
-  "numDeployments": 2,
-  "implementation": "0x110f0CcC400375d72734aF82b168708593113A34",
+  "transactionHash": "0xc7dd3610ba21cff80b7f2a62cefe1b6c8afe84db7c62382da9097d995cb68a2d",
+  "numDeployments": 1,
+  "implementation": "0x6874f396E3AD88135B68534803Afd0B0655e0925",
   "devdoc": "Contract deployed as upgradable proxy"
 }

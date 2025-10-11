@@ -1,5 +1,5 @@
 {
-  "address": "0x6552059B6eFc6aA4AE3ea45f28ED4D92acE020cD",
+  "address": "0xABcC986E1699a8DF6203b15517741119905eF99E",
   "abi": [
     {
       "inputs": [],
@@ -357,8 +357,8 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x0530ed79d3a07945dee61a415a6e45a4ab89740ec0e6b9f103dd10de673e7886",
+  "transactionHash": "0x0e6e9ce66a658724c1d8a4794ded7a13486a16bf21d1d3ec4c1c350ac1938832",
   "numDeployments": 1,
-  "implementation": "0x4EDC83c5C5B0C41A594371485554B95280653f94",
+  "implementation": "0xbaD548485aBBB7C6127eF75a60557A71c40e0290",
   "devdoc": "Contract deployed as upgradable proxy"
 }

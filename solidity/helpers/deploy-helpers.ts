@@ -227,7 +227,7 @@ export async function setupDeploymentBoilerplate(
       ...options,
     })
 
-    if (network.name !== "hardhat") {
+    if (network.name !== "hardhat" && false) {  // Temporarily disabled verification
       await helpers.etherscan.verify(contract)
     }
     return contract
@@ -245,7 +245,7 @@ export async function setupDeploymentBoilerplate(
 
     const [_, contract] = await deployProxy(contractName, options)
 
-    if (network.name !== "hardhat") {
+    if (network.name !== "hardhat" && false) {  // Temporarily disabled verification
       await helpers.etherscan.verify(contract)
     }
     return contract

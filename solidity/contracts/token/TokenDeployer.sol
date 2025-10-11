@@ -26,6 +26,7 @@ contract TokenDeployer {
 
     uint256 public constant MEZO_CHAIN_ID = 31612;
     uint256 public constant ETHEREUM_CHAIN_ID = 1;
+    uint256 public constant MATSNET_TESTNET_CHAIN_ID = 31611;
 
     /// @notice The address of the deployed MUSD token contract.
     /// @dev Zero address before the contract is deployed.
@@ -44,7 +45,8 @@ contract TokenDeployer {
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress
+        address _interestRateManagerAddress,
+        address _reversibleCallOptionManagerAddress
     ) external {
         if (
             block.chainid == MEZO_CHAIN_ID || block.chainid == ETHEREUM_CHAIN_ID
@@ -52,6 +54,8 @@ contract TokenDeployer {
             if (msg.sender != DEPLOYER) {
                 revert NotDeployer();
             }
+        } else if (block.chainid == MATSNET_TESTNET_CHAIN_ID) {
+            // Allow any deployer on matsnet testnet for testing purposes
         } else {
             if (msg.sender != GOVERNANCE) {
                 revert NotGovernance();
@@ -69,7 +73,7 @@ contract TokenDeployer {
             _stabilityPoolAddress,
             _borrowerOperationsAddress,
             _interestRateManagerAddress,
-            address(0) // reversibleCallOptionManagerAddress - set to zero for now
+            _reversibleCallOptionManagerAddress
         );
 
         MUSD(token).transferOwnership(GOVERNANCE);

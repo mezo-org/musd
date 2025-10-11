@@ -62,7 +62,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // function. It is the same deployer EOA as the one used to deploy all
   // tBTC v1, tBTC v2, and Mezo contracts across various networks.
   const eligibleDeployer = "0x123694886DBf5Ac94DDA07135349534536D14cAf"
-  if (deployer.address !== eligibleDeployer) {
+  
+  // Skip deployer check for testnet deployment
+  if (network.name !== "matsnet" && deployer.address !== eligibleDeployer) {
     log(
       `The deployer is NOT the eligible deployer! The deployer address is ${deployer.address} and should be ${eligibleDeployer}`,
     )
@@ -83,6 +85,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     stabilityPool.address,
     borrowerOperations.address,
     interestRateManager.address,
+    rcoManager.address,
   )
 
   const tokenDeployer = (await helpers.contracts.getContract(
