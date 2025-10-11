@@ -71,18 +71,11 @@ describe("ReversibleCallOptionManager - initializeOption", () => {
       .startChangingRoles(council.address, treasury.address)
     await contracts.pcv.connect(deployer.wallet).finalizeChangingRoles()
     
-    // Set addresses for ReversibleCallOptionManager
-    await contracts.reversibleCallOptionManager
-      .connect(deployer.wallet)
-      .setAddresses(
-        addresses.troveManager,
-        addresses.priceFeed,
-        addresses.activePool,
-        addresses.musd,
-        addresses.gasPool
-      )
+    // Note: ReversibleCallOptionManager addresses are already set during deployment
+    // and the contract renounces ownership after setAddresses is called, so we can't call it again
     
     // Add ReversibleCallOptionManager to MUSD burn list (needed for exercise function)
+    // Note: This should already be done during MUSD initialization with the 5-parameter version
     // await contracts.musd
     //   .connect(deployer.wallet)
     //   .addToBurnList(await contracts.reversibleCallOptionManager.getAddress())
@@ -634,8 +627,6 @@ describe("ReversibleCallOptionManager - initializeOption", () => {
     });
   })
 
-  
-
   describe("exercise", () => {
     it("should allow the supporter to exercise the option at maturity when profitable", async () => {
       // Give Bob lots of ETH for premium payments
@@ -965,5 +956,4 @@ describe("ReversibleCallOptionManager - initializeOption", () => {
     })
   })
 
-  
 })
