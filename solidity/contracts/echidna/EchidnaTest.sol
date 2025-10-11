@@ -242,6 +242,7 @@ contract EchidnaTest {
             address(collSurplusPool),
             address(defaultPool),
             address(interestRateManager),
+            address(0), // reversibleCallOptionManagerAddress
             address(stabilityPool),
             address(troveManager)
         );
@@ -277,6 +278,7 @@ contract EchidnaTest {
             address(musd),
             address(pcv),
             address(priceFeed),
+            address(0), // reversibleCallOptionManagerAddress
             address(sortedTroves),
             address(stabilityPool)
         );
@@ -285,7 +287,8 @@ contract EchidnaTest {
             address(troveManager),
             address(stabilityPool),
             address(borrowerOperations),
-            address(interestRateManager)
+            address(interestRateManager),
+            address(0) // reversibleCallOptionManagerAddress - not used in Echidna tests
         );
         sortedTroves.setParams(
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff,

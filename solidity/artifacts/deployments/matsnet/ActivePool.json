@@ -1,5 +1,5 @@
 {
-  "address": "0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51",
+  "address": "0x3CC419197a98339208b3eDD34614d4fCD6967E5E",
   "abi": [
     {
       "inputs": [],
@@ -393,6 +393,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "reversibleCallOptionManagerAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
@@ -430,6 +443,11 @@
         {
           "internalType": "address",
           "name": "_interestRateManagerAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_reversibleCallOptionManagerAddress",
           "type": "address"
         },
         {
@@ -492,8 +510,8 @@
       "type": "receive"
     }
   ],
-  "transactionHash": "0x5db05b8196989c10c1fada95fdcfbefc7de19974517047a21147c0eb1795f368",
+  "transactionHash": "0xf08be2b9d8d5a799d19e652301eb882cd4d9b60b78744b0fc7149a65c74e7d18",
   "numDeployments": 1,
-  "implementation": "0xbFc8201773bC17cc17e34a9EB4056cd5B7358192",
+  "implementation": "0xC2754199707fc04af3bbd335e547134da1F1a0D1",
   "devdoc": "Contract deployed as upgradable proxy"
 }

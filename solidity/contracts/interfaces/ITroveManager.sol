@@ -97,6 +97,7 @@ interface ITroveManager {
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
+        address _reversibleCallOptionManagerAddress,
         address _sortedTrovesAddress,
         address _stabilityPoolAddress
     ) external;

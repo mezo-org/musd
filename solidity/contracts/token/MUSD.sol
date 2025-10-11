@@ -28,7 +28,8 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress
+        address _interestRateManagerAddress,
+        address _rcoManagerAddress
     ) external onlyOwner {
         require(!initialized, "Already initialized");
         initialized = true;
@@ -37,7 +38,8 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
             _troveManagerAddress,
             _stabilityPoolAddress,
             _borrowerOperationsAddress,
-            _interestRateManagerAddress
+            _interestRateManagerAddress,
+            _rcoManagerAddress
         );
     }
 
@@ -110,7 +112,8 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
         address _troveManagerAddress,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
-        address _interestRateManagerAddress
+        address _interestRateManagerAddress,
+        address _rcoManagerAddress
     ) public onlyOwner {
         checkContract(_troveManagerAddress);
         checkContract(_stabilityPoolAddress);
@@ -129,6 +132,9 @@ contract MUSD is ERC20Permit, Ownable, CheckContract, IMUSD {
 
         addToMintList(_interestRateManagerAddress);
         emit InterestRateManagerAddressAdded(_interestRateManagerAddress);
+
+        addToBurnList(_rcoManagerAddress);
+        emit RCOManagerAddressAdded(_rcoManagerAddress);
     }
 
     function nonces(

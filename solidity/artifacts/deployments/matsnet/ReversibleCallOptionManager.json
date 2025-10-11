@@ -1,5 +1,5 @@
 {
-  "address": "0x156d201e2Df6403316C3D0c3755Fd3E0822F99B5",
+  "address": "0xDf9888ae4a82d128AF982efBe6406Fbf7843BC3b",
   "abi": [
     {
       "inputs": [],
@@ -39,125 +39,9 @@
       "type": "error"
     },
     {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newActivePoolAddress",
-          "type": "address"
-        }
-      ],
-      "name": "ActivePoolAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newBorrowerOperationsAddress",
-          "type": "address"
-        }
-      ],
-      "name": "BorrowerOperationsAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_depositor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_collateral",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_MUSDLoss",
-          "type": "uint256"
-        }
-      ],
-      "name": "CollateralGainWithdrawn",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_to",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "CollateralSent",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newDefaultPoolAddress",
-          "type": "address"
-        }
-      ],
-      "name": "DefaultPoolAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_depositor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_P",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_S",
-          "type": "uint256"
-        }
-      ],
-      "name": "DepositSnapshotUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint128",
-          "name": "_currentEpoch",
-          "type": "uint128"
-        }
-      ],
-      "name": "EpochUpdated",
-      "type": "event"
+      "inputs": [],
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error"
     },
     {
       "anonymous": false,
@@ -176,13 +60,149 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
-          "name": "_newMUSDTokenAddress",
+          "name": "borrower",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "actualLambda",
+          "type": "uint256"
         }
       ],
-      "name": "MUSDTokenAddressChanged",
+      "name": "LambdaCalculated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "supporter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "premiumLost",
+          "type": "uint256"
+        }
+      ],
+      "name": "OptionDefaulted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "supporter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "collateralValue",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "debtValue",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "profit",
+          "type": "uint256"
+        }
+      ],
+      "name": "OptionExercised",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "supporter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "lambda",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "premiumPaid",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "strikeCR",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maturityTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "OptionInitialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "terminationFee",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "supporterRefund",
+          "type": "uint256"
+        }
+      ],
+      "name": "OptionTerminated",
       "type": "event"
     },
     {
@@ -210,133 +230,17 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "_P",
-          "type": "uint256"
-        }
-      ],
-      "name": "PUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newPriceFeedAddress",
-          "type": "address"
-        }
-      ],
-      "name": "PriceFeedAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_S",
+          "name": "k_re",
           "type": "uint256"
         },
         {
           "indexed": false,
-          "internalType": "uint128",
-          "name": "_epoch",
-          "type": "uint128"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint128",
-          "name": "_scale",
-          "type": "uint128"
-        }
-      ],
-      "name": "SUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint128",
-          "name": "_currentScale",
-          "type": "uint128"
-        }
-      ],
-      "name": "ScaleUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newSortedTrovesAddress",
-          "type": "address"
-        }
-      ],
-      "name": "SortedTrovesAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "_newBalance",
+          "name": "safetyMargin",
           "type": "uint256"
         }
       ],
-      "name": "StabilityPoolCollateralBalanceUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_newBalance",
-          "type": "uint256"
-        }
-      ],
-      "name": "StabilityPoolMUSDBalanceUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_newTroveManagerAddress",
-          "type": "address"
-        }
-      ],
-      "name": "TroveManagerAddressChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_depositor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_newDeposit",
-          "type": "uint256"
-        }
-      ],
-      "name": "UserDepositChanged",
+      "name": "ParametersUpdated",
       "type": "event"
     },
     {
@@ -367,7 +271,59 @@
     },
     {
       "inputs": [],
+      "name": "MAX_LAMBDA",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_MATURITY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "MCR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_LAMBDA",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_MATURITY",
       "outputs": [
         {
           "internalType": "uint256",
@@ -393,33 +349,7 @@
     },
     {
       "inputs": [],
-      "name": "P",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "PERCENT_DIVISOR",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "SCALE_FACTOR",
       "outputs": [
         {
           "internalType": "uint256",
@@ -457,42 +387,16 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "borrowerOperations",
-      "outputs": [
+      "inputs": [
         {
-          "internalType": "contract IBorrowerOperations",
-          "name": "",
+          "internalType": "address",
+          "name": "_borrower",
           "type": "address"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "currentEpoch",
-      "outputs": [
-        {
-          "internalType": "uint128",
-          "name": "",
-          "type": "uint128"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "currentScale",
-      "outputs": [
-        {
-          "internalType": "uint128",
-          "name": "",
-          "type": "uint128"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "defaultOption",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -516,27 +420,12 @@
           "type": "address"
         }
       ],
-      "name": "depositSnapshots",
+      "name": "earlyTerminations",
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "S",
+          "name": "",
           "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "P",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint128",
-          "name": "scale",
-          "type": "uint128"
-        },
-        {
-          "internalType": "uint128",
-          "name": "epoch",
-          "type": "uint128"
         }
       ],
       "stateMutability": "view",
@@ -546,91 +435,23 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "",
+          "name": "_borrower",
           "type": "address"
         }
       ],
-      "name": "deposits",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint128",
-          "name": "",
-          "type": "uint128"
-        },
-        {
-          "internalType": "uint128",
-          "name": "",
-          "type": "uint128"
-        }
-      ],
-      "name": "epochToScaleToSum",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "exercise",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [],
-      "name": "getCollateralBalance",
+      "name": "gasPoolAddress",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
         {
           "internalType": "address",
-          "name": "_depositor",
-          "type": "address"
-        }
-      ],
-      "name": "getCompoundedMUSDDeposit",
-      "outputs": [
-        {
-          "internalType": "uint256",
           "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_depositor",
           "type": "address"
-        }
-      ],
-      "name": "getDepositorCollateralGain",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -663,8 +484,148 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getTotalMUSDDeposits",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        }
+      ],
+      "name": "getOption",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "borrower",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "supporter",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "collateralAtStart",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "debtAtStart",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "lambda",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "premiumPaid",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "strikeCR",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maturityTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "interestRate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum ReversibleCallOptionManager.OptionPhase",
+              "name": "phase",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct ReversibleCallOptionManager.BackstopOption",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        }
+      ],
+      "name": "getOptionPhase",
+      "outputs": [
+        {
+          "internalType": "enum ReversibleCallOptionManager.OptionPhase",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_supporter",
+          "type": "address"
+        }
+      ],
+      "name": "getSupporterStats",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalPremiums",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "exercises",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "terminations",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        }
+      ],
+      "name": "getTerminationFee",
       "outputs": [
         {
           "internalType": "uint256",
@@ -683,6 +644,24 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maturityDuration",
+          "type": "uint256"
+        }
+      ],
+      "name": "initializeOption",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "interestRateManager",
       "outputs": [
@@ -696,8 +675,27 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        }
+      ],
+      "name": "isOptionActive",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
-      "name": "lastCollateralError_Offset",
+      "name": "k_re",
       "outputs": [
         {
           "internalType": "uint256",
@@ -710,20 +708,7 @@
     },
     {
       "inputs": [],
-      "name": "lastMUSDLossError_Offset",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "musd",
+      "name": "musdToken",
       "outputs": [
         {
           "internalType": "contract IMUSD",
@@ -737,24 +722,75 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_principalToOffset",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_interestToOffset",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_collToAdd",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
-      "name": "offset",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "options",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "supporter",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collateralAtStart",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "debtAtStart",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lambda",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "premiumPaid",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "strikeCR",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maturityTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "interestRate",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum ReversibleCallOptionManager.OptionPhase",
+          "name": "phase",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "exists",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -784,19 +820,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "provideToSP",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "renounceOwnership",
       "outputs": [],
@@ -804,35 +827,43 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "safetyMargin",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
-          "name": "_activePoolAddress",
+          "name": "_troveManager",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_borrowerOperationsAddress",
+          "name": "_priceFeed",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_musdTokenAddress",
+          "name": "_activePool",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_priceFeedAddress",
+          "name": "_musdToken",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_sortedTrovesAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_troveManagerAddress",
+          "name": "_gasPool",
           "type": "address"
         }
       ],
@@ -842,13 +873,88 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "sortedTroves",
-      "outputs": [
+      "inputs": [
         {
-          "internalType": "contract ISortedTroves",
+          "internalType": "uint256",
+          "name": "_k_re",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_safetyMargin",
+          "type": "uint256"
+        }
+      ],
+      "name": "setParameters",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "name": "successfulExercises",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "supporterBalances",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_borrower",
+          "type": "address"
+        }
+      ],
+      "name": "terminateEarly",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "totalPremiumsCollected",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -881,43 +987,12 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_upperHint",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_lowerHint",
-          "type": "address"
-        }
-      ],
-      "name": "withdrawCollateralGainToTrove",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdrawFromSP",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "stateMutability": "payable",
       "type": "receive"
     }
   ],
-  "transactionHash": "0x978c7524162e96988a97e4a451f649ea587f38196b3f6f2a523e4689285302a6",
+  "transactionHash": "0xc839478914f576f77315c87034c2ec7237c9aee66d5deaef8f94c8595fc8531b",
   "numDeployments": 1,
-  "implementation": "0xaE73F1f5f4b0aB486b4d04827F960A4372767f25",
+  "implementation": "0x5f2d1AA27B4149e975DF849aB8acA9E65C048f28",
   "devdoc": "Contract deployed as upgradable proxy"
 }

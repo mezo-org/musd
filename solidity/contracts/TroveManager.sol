@@ -154,6 +154,7 @@ contract TroveManager is
     address public gasPoolAddress;
     IMUSD public musdToken;
     IPCV public override pcv;
+    address public reversibleCallOptionManagerAddress;
     // A doubly linked list of Troves, sorted by their sorted by their collateral ratios
     ISortedTroves public sortedTroves;
     IStabilityPool public override stabilityPool;
@@ -218,6 +219,7 @@ contract TroveManager is
         address _musdTokenAddress,
         address _pcvAddress,
         address _priceFeedAddress,
+        address _reversibleCallOptionManagerAddress,
         address _sortedTrovesAddress,
         address _stabilityPoolAddress
     ) external override onlyOwner {
@@ -230,6 +232,9 @@ contract TroveManager is
         checkContract(_musdTokenAddress);
         checkContract(_pcvAddress);
         checkContract(_priceFeedAddress);
+        if (_reversibleCallOptionManagerAddress != address(0)) {
+            checkContract(_reversibleCallOptionManagerAddress);
+        }
         checkContract(_sortedTrovesAddress);
         checkContract(_stabilityPoolAddress);
 
@@ -243,6 +248,7 @@ contract TroveManager is
         musdToken = IMUSD(_musdTokenAddress);
         pcv = IPCV(_pcvAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
+        reversibleCallOptionManagerAddress = _reversibleCallOptionManagerAddress;
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
         stabilityPool = IStabilityPool(_stabilityPoolAddress);
         // slither-disable-end missing-zero-check
@@ -470,12 +476,12 @@ contract TroveManager is
     }
 
     function closeTrove(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
+        _requireCallerIsBorrowerOperationsOrReversibleCallOptionManager();
         return _closeTrove(_borrower, Status.closedByOwner);
     }
 
     function removeStake(address _borrower) external override {
-        _requireCallerIsBorrowerOperations();
+        _requireCallerIsBorrowerOperationsOrReversibleCallOptionManager();
         return _removeStake(_borrower);
     }
 
@@ -1548,6 +1554,14 @@ contract TroveManager is
         require(
             msg.sender == address(borrowerOperations),
             "TroveManager: Caller is not the BorrowerOperations contract"
+        );
+    }
+
+    function _requireCallerIsBorrowerOperationsOrReversibleCallOptionManager() internal view {
+        require(
+            msg.sender == address(borrowerOperations) ||
+                msg.sender == reversibleCallOptionManagerAddress,
+            "TroveManager: Caller is not the BorrowerOperations contract or ReversibleCallOptionManager"
         );
     }
 
