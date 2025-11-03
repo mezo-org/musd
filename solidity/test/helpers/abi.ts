@@ -27,3 +27,11 @@ export const PCV_ABI = [
   "event RecipientRemoved(address _recipient)",
   "event PCVFeePaid(address _recipient, uint256 _amount)",
 ]
+
+export enum TroveStatus {
+  NonExistent,
+  Active,
+  ClosedByOwner,
+  ClosedByLiquidation,
+  ClosedByRedemption,
+}
