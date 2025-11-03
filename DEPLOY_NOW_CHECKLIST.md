@@ -25,7 +25,7 @@ git push origin main
 npm install -g @railway/cli
 
 # Login to Railway
-railway login
+railway login doesn't work
 
 # Navigate to payment service
 cd payment-service

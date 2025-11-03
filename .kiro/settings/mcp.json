@@ -9,6 +9,10 @@
     },
     "stripe": {
       "url": "https://mcp.stripe.com"
+    },
+    "Neon": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote@latest", "https://mcp.neon.tech/mcp"]
     }
   }
 }
