@@ -40,7 +40,7 @@ export class OnrampService {
         throw new AppError(400, 'Invalid wallet address format');
       }
 
-      // Get or create user
+      // Get or create user (with race condition handling)
       let user: User | null = null;
       if (userId) {
         user = await this.userRepository.findOne({ where: { id: userId } });
@@ -49,11 +49,24 @@ export class OnrampService {
       }
 
       if (!user) {
-        user = this.userRepository.create({
-          walletAddress,
-        });
-        await this.userRepository.save(user);
-        logger.info('Created new user', { userId: user.id, walletAddress });
+        try {
+          user = this.userRepository.create({
+            walletAddress,
+          });
+          await this.userRepository.save(user);
+          logger.info('Created new user', { userId: user.id, walletAddress });
+        } catch (error: any) {
+          // Handle race condition - another request may have created the user
+          if (error.code === 'SQLITE_CONSTRAINT' || error.errno === 19) {
+            user = await this.userRepository.findOne({ where: { walletAddress } });
+            if (!user) {
+              throw error; // Re-throw if still not found
+            }
+            logger.info('User already exists (race condition handled)', { userId: user.id, walletAddress });
+          } else {
+            throw error;
+          }
+        }
       }
 
       // Create Stripe onramp session

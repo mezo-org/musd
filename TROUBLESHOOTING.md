@@ -59,21 +59,65 @@ npm install <package-name> --legacy-peer-deps
 ### 4. Stripe Payment Errors
 
 **Symptoms:**
-- "Failed to create onramp session" error
+- "Error: Failed to create onramp session" error (as shown in screenshot)
 - 500 errors in payment service logs
+- Alert dialog shows "localhost:5175 says: Error: Failed to create onramp session"
 
-**Solution:**
+**Root Cause:**
+The payment service is trying to call Stripe's Crypto Onramp API without proper configuration or access.
+
+**Solutions:**
+
+**Solution 1: Configure Stripe API Keys (Required)**
 1. Get Stripe API keys from https://dashboard.stripe.com/test/apikeys
 2. Update `payment-service/.env`:
    ```
-   STRIPE_SECRET_KEY=sk_test_your_key
-   STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+   STRIPE_SECRET_KEY=sk_test_your_actual_key_here
+   STRIPE_PUBLISHABLE_KEY=pk_test_your_actual_key_here
    ```
 3. Update `dapp/.env`:
    ```
-   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_actual_key_here
    ```
-4. Restart both services
+4. Restart both services:
+   ```bash
+   # Terminal 1: Restart payment service
+   cd payment-service
+   npm run dev
+
+   # Terminal 2: Restart dapp
+   cd dapp
+   npm run dev
+   ```
+
+**Solution 2: Request Stripe Crypto Onramp Access**
+Stripe Crypto Onramp is currently in private beta:
+1. Go to https://dashboard.stripe.com/
+2. Navigate to "Crypto" section in the sidebar
+3. Click "Request Access" for Crypto Onramp
+4. Fill out the form explaining your use case
+5. Wait for approval (can take a few days to weeks)
+
+**Solution 3: Use Test Mode Until Approved**
+While waiting for Stripe Crypto access, the payment service will show this error. This is expected behavior. Once deployed with proper Stripe configuration and Crypto Onramp access, the error will be resolved.
+
+**Verification:**
+After configuring Stripe keys, check the payment service logs:
+```bash
+cd payment-service
+npm run dev
+```
+
+You should see:
+```
+[info]: Stripe initialized successfully
+[info]: Server running on port 3001
+```
+
+Instead of:
+```
+[error]: Stripe configuration error
+```
 
 ---
 
