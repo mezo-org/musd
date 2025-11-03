@@ -2,17 +2,25 @@
   "mcpServers": {
     "fetch": {
       "command": "uvx",
-      "args": ["mcp-server-fetch"],
+      "args": [
+        "mcp-server-fetch"
+      ],
       "env": {},
-      "disabled": true,
+      "disabled": false,
       "autoApprove": []
     },
     "stripe": {
-      "url": "https://mcp.stripe.com"
+      "url": "https://mcp.stripe.com",
+      "disabled": false
     },
     "Neon": {
       "command": "npx",
-      "args": ["-y", "mcp-remote@latest", "https://mcp.neon.tech/mcp"]
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://mcp.neon.tech/mcp"
+      ],
+      "disabled": false
     }
   }
 }
