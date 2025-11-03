@@ -22,7 +22,7 @@ const ERC20_ABI = [
  * User signs with Bitcoin wallet, smart account executes transaction
  */
 export const useSendMUSD = () => {
-  const { sendTransaction, isPending, error } = useSendTransaction()
+  const { sendTransaction } = useSendTransaction()
 
   const sendMUSD = async (to: string, amount: string) => {
     if (!to || !amount) {
@@ -40,21 +40,15 @@ export const useSendMUSD = () => {
       args: [to as `0x${string}`, parseUnits(amount, 18)],
     })
 
-    // Send transaction
+    // Send transaction with 3 arguments (to, value, data)
     // User will sign with their Bitcoin wallet
     // Smart account will execute the transaction
-    const hash = await sendTransaction({
-      to: MUSD_TOKEN_ADDRESS,
-      data,
-      value: 0n,
-    })
+    const hash = await sendTransaction(MUSD_TOKEN_ADDRESS, 0n, data)
 
     return hash
   }
 
   return {
     sendMUSD,
-    isPending,
-    error,
   }
 }
