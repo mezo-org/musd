@@ -22,7 +22,7 @@ export const useWalletInfo = () => {
     bitcoin: {
       address: btcAddress,
       balance: btcBalance, // in satoshis
-      balanceBTC: btcBalance ? btcBalance / 100000000 : 0,
+      balanceBTC: btcBalance ? Number(btcBalance) / 100000000 : 0,
     },
     matsnet: {
       address: matsnetAddress,
