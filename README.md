@@ -2,7 +2,7 @@
 
 > **Mezo Hackathon Submission** - Enabling Bitcoin holders to transact with USD stability using Mezo's smart account abstraction
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)(LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Mezo](https://img.shields.io/badge/Mezo-Passport%200.12.0-orange.svg)](https://mezo.org/)
 [![Deployed](https://img.shields.io/badge/Deployed-Matsnet-green.svg)](https://matsnet.mezo.org/)
 
