@@ -1,8 +1,49 @@
 # Deployment Checklist
 
+## Deployment Options
+
+Choose your deployment strategy:
+
+### Option 1: Quick Start (Vercel + Railway)
+**Recommended for:** Fast deployment, easy setup, good for most use cases
+- **Frontend**: Vercel (free tier available)
+- **Backend**: Railway or Heroku
+- **RPC**: Public Mezo RPC (free)
+- **Guide**: See `VERCEL_DEPLOYMENT.md`
+
+### Option 2: Premium Infrastructure (Boar Network)
+**Recommended for:** Projects requiring personalized service, global infrastructure
+- **Frontend**: Vercel or Netlify
+- **Backend**: Railway or Heroku
+- **RPC**: Boar Network (premium, multi-region, WebSocket support)
+- **Guide**: See `BOAR_DEPLOYMENT.md`
+
+### Option 3: Enterprise (Spectrum Nodes)
+**Recommended for:** High-traffic production, 99.9% SLA, advanced monitoring
+- **Frontend**: Vercel or custom hosting
+- **Backend**: Railway, Heroku, or AWS
+- **RPC**: Spectrum Nodes (170+ networks, dedicated infrastructure)
+- **Guide**: See `SPECTRUM_DEPLOYMENT.md`
+
+---
+
 ## Pre-Deployment
 
-### 1. Spectrum Nodes Setup
+### 1. RPC Configuration (Choose One)
+
+#### Option A: Public RPC (Free)
+- [ ] Use public Mezo RPC endpoint
+- [ ] Set `MEZO_RPC_URL=https://testnet-rpc.mezo.org`
+- [ ] Note: May have rate limits and lower reliability
+
+#### Option B: Boar Network (Premium, Recommended)
+- [ ] Get Boar Network API key
+- [ ] Get RPC endpoint: `https://mezo-rpc.boar.network/v1/YOUR_API_KEY`
+- [ ] Get WebSocket endpoint: `wss://mezo-wss.boar.network/v1/YOUR_API_KEY`
+- [ ] Test RPC connectivity
+- [ ] Contact: https://boar.network/
+
+#### Option C: Spectrum Nodes (Enterprise)
 - [ ] Sign up at https://spectrumnodes.com/
 - [ ] Choose plan (Developer for testing, Business for production)
 - [ ] Add Mezo Testnet network
@@ -26,14 +67,16 @@
 
 ## Frontend Deployment (dApp)
 
-### Vercel Deployment
+### Vercel Deployment (Recommended)
+See `VERCEL_DEPLOYMENT.md` for detailed step-by-step instructions.
+
+**Quick Steps:**
 - [ ] Install Vercel CLI: `npm install -g vercel`
 - [ ] Build locally: `cd dapp && npm run build`
 - [ ] Deploy: `vercel --prod`
 - [ ] Configure environment variables in Vercel dashboard
 - [ ] Test deployed URL
 - [ ] Verify wallet connection works
-- [ ] Check Spectrum dashboard for RPC calls
 
 ### Environment Variables to Set
 ```
@@ -48,13 +91,17 @@ VITE_STRIPE_PUBLISHABLE_KEY
 
 ## Backend Deployment (Payment Service)
 
-### Railway Deployment
+### Railway Deployment (Recommended)
+See `VERCEL_DEPLOYMENT.md` for detailed step-by-step instructions.
+
+**Quick Steps:**
 - [ ] Install Railway CLI: `npm install -g @railway/cli`
 - [ ] Initialize: `cd payment-service && railway init`
+- [ ] Add PostgreSQL: `railway add --database postgresql`
 - [ ] Set environment variables
 - [ ] Deploy: `railway up`
+- [ ] Configure Stripe webhooks
 - [ ] Test health endpoint
-- [ ] Verify Stripe webhooks configured
 
 ### Environment Variables to Set
 ```
@@ -63,12 +110,12 @@ PORT=3001
 MEZO_RPC_URL
 MEZO_CHAIN_ID
 MEZO_NETWORK
-SPECTRUM_API_KEY
+SPECTRUM_API_KEY (if using Spectrum)
 MUSD_TOKEN_ADDRESS
 STRIPE_SECRET_KEY
 STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
-DATABASE_URL
+DATABASE_URL (auto-set by Railway)
 JWT_SECRET
 CORS_ORIGIN
 ```
