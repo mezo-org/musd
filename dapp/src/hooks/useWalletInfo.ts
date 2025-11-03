@@ -7,7 +7,7 @@ import { useAccount, useBalance } from "wagmi"
  */
 export const useWalletInfo = () => {
   // Bitcoin wallet info (original wallet)
-  const { address: btcAddress, balance: btcBalance } = useBitcoinAccount()
+  const { btcAddress, btcBalance } = useBitcoinAccount()
 
   // Matsnet smart account info (backing account)
   const { address: matsnetAddress, isConnected, connector } = useAccount()
