@@ -34,7 +34,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     address public feeRecipient;
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
-    uint8 public constant FEE_SPLIT_MAX = 50; // no more than 50% of fees can be sent until the debt is paid
+    uint8 public constant FEE_SPLIT_MAX = 100;
 
     modifier onlyAfterDebtPaid() {
         require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
@@ -114,6 +114,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeRecipientSet(_feeRecipient);
     }
 
+    /// @notice Set the fee split percentage
+    /// @param _feeSplitPercentage The fee split percentage
+    /// @dev The fee split percentage must be between 0 and 100,
+    ///      where 0 means all fees are sent for the protocol loan repayment and
+    ///      100 means all fees are sent to the fee recipient.
     function setFeeSplit(
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
@@ -122,9 +127,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV must set fee recipient before setFeeSplit"
         );
         require(
-            (debtToPay > 0 && _feeSplitPercentage <= FEE_SPLIT_MAX) ||
-                (debtToPay == 0 && _feeSplitPercentage <= 100),
-            "PCV: Fee split must be at most 50 while debt remains."
+            _feeSplitPercentage <= FEE_SPLIT_MAX,
+            "PCV: Fee split must be at most 100"
         );
         feeSplitPercentage = _feeSplitPercentage;
 

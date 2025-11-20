@@ -621,6 +621,32 @@ describe("PCV", () => {
       expect(bob.musd.after - bob.musd.before).to.equal(value - pcvSplit)
     })
 
+    it("sends 100% of fees to the recipient and none for loan repayment when fee split is set to 100%", async () => {
+      const split = 100n
+      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv.connect(council.wallet).setFeeSplit(split)
+
+      await updateWalletSnapshot(contracts, bob, "before")
+
+      const value = to1e18("1000")
+      const debtBefore = await contracts.pcv.debtToPay()
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+
+      await updateWalletSnapshot(contracts, bob, "after")
+
+      // Debt should remain unchanged - no repayment
+      const debtAfter = await contracts.pcv.debtToPay()
+      expect(debtAfter).to.equal(debtBefore)
+      expect(debtAfter).to.equal(bootstrapLoan)
+
+      // All fees go to bob
+      expect(bob.musd.after - bob.musd.before).to.equal(value)
+
+      // PCV balance should be zero (all distributed)
+      expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
+    })
+
     it("sends remaining fees to the StabilityPool if called with a value greater than the remaining protocol bootstrap loan", async () => {
       // pay down all but 5 musd of the debt
       const debtToPay = await contracts.pcv.debtToPay()
@@ -940,11 +966,19 @@ describe("PCV", () => {
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(51n)
     })
 
+    it("sets fee split up to 100% before debt is paid", async () => {
+      await PCVDeployer.setFeeRecipient(bob.address)
+      await PCVDeployer.setFeeSplit(75n)
+      expect(await PCVDeployer.feeSplitPercentage()).to.equal(75n)
+      await PCVDeployer.setFeeSplit(100n)
+      expect(await PCVDeployer.feeSplitPercentage()).to.equal(100n)
+    })
+
     context("Expected Reverts", () => {
-      it("reverts if fee split is > 50% before debt is paid", async () => {
+      it("reverts if fee split is > 100%", async () => {
         await PCVDeployer.setFeeRecipient(bob.address)
-        await expect(PCVDeployer.setFeeSplit(51n)).to.be.revertedWith(
-          "PCV: Fee split must be at most 50 while debt remains.",
+        await expect(PCVDeployer.setFeeSplit(101n)).to.be.revertedWith(
+          "PCV: Fee split must be at most 100",
         )
       })
     })
