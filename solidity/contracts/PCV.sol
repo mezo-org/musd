@@ -37,11 +37,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint8 public feeSplitPercentage; // percentage of fees to be sent to musdSavingsRate
     uint8 public constant FEE_SPLIT_MAX = 100;
 
-    modifier onlyAfterDebtPaid() {
-        require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
-        _;
-    }
-
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
             msg.sender == owner() ||
@@ -181,7 +176,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         external
         override
         onlyOwnerOrCouncilOrTreasury
-        onlyAfterDebtPaid
         onlyWhitelistedRecipient(_recipient)
     {
         require(

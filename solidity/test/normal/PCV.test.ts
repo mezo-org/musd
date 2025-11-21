@@ -552,14 +552,6 @@ describe("PCV", () => {
     })
 
     context("Expected Reverts", () => {
-      it("reverts when debt is not paid", async () => {
-        await expect(
-          contracts.pcv
-            .connect(treasury.wallet)
-            .withdrawMUSD(alice.address, 1n),
-        ).to.be.revertedWith("PCV: debt must be paid")
-      })
-
       it("reverts if recipient is not in whitelist", async () => {
         await debtPaid()
         await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
