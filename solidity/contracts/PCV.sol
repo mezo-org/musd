@@ -160,7 +160,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             depositToStabilityPool(stabilityPoolDeposit);
         }
 
-        // send funds to musdSavingsRate address, if the musdSavingsRate 
+        // send funds to musdSavingsRate address, if the musdSavingsRate
         // hasn't been set then the feeSplitPercentage = 0 and no funds are sent.
         if (address(musdSavingsRate) != address(0) && distributedFees > 0) {
             require(
