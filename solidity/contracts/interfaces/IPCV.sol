@@ -13,6 +13,7 @@ interface IPCV {
 
     event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
     event FeeRecipientSet(address _feeRecipient);
+    event MusdSavingsRateSet(address _musdSavingsRate);
     event FeeSplitSet(uint8 _feeSplitPercentage);
     event MUSDWithdraw(address _recipient, uint256 _amount);
     event PCVDebtPayment(uint256 _paidDebt);
@@ -39,7 +40,7 @@ interface IPCV {
 
     function initializeDebt() external;
 
-    function setFeeRecipient(address _feeRecipient) external;
+    function setMusdSavingsRate(address _musdSavingsRate) external;
 
     function setFeeSplit(uint8 _feeSplitPercentage) external;
 
