@@ -20,7 +20,7 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
-import { PCV } from "../../typechain"
+import { PCV, MUSDSavingsRateMock } from "../../typechain"
 
 describe("PCV", () => {
   let addresses: TestingAddresses
@@ -37,6 +37,7 @@ describe("PCV", () => {
   let delay: bigint
 
   let PCVDeployer: PCV
+  let musdSavingsRateMock: MUSDSavingsRateMock
 
   async function debtPaid() {
     const debtToPay = await contracts.pcv.debtToPay()
@@ -79,6 +80,14 @@ describe("PCV", () => {
       ])
 
     delay = await contracts.pcv.governanceTimeDelay()
+
+    // Deploy MUSDSavingsRateMock for fee recipient testing
+    const MUSDSavingsRateMockFactory = await ethers.getContractFactory(
+      "MUSDSavingsRateMock",
+    )
+    musdSavingsRateMock = await MUSDSavingsRateMockFactory.deploy(
+      addresses.musd,
+    )
   })
 
   describe("initializeDebt()", () => {
@@ -584,64 +593,70 @@ describe("PCV", () => {
     })
 
     it("uses all fees to pay down the debt if feeSplitPercentage is 0, even if the feeRecipient is set and there is an active protocol bootstrap loan", async () => {
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(0n)
 
-      await updateWalletSnapshot(contracts, bob, "before")
+      const balanceBefore = await musdSavingsRateMock.getBalance()
 
       const value = to1e18("1000")
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
 
-      await updateWalletSnapshot(contracts, bob, "after")
+      const balanceAfter = await musdSavingsRateMock.getBalance()
 
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - value)
 
-      expect(bob.musd.after).to.equal(bob.musd.before)
+      expect(balanceAfter).to.equal(balanceBefore)
     })
 
     it("sends the specified percentage to another recipient and uses the rest to pay the active protocol bootstrap loan", async () => {
       const split = 50n
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(split)
 
-      await updateWalletSnapshot(contracts, bob, "before")
+      const balanceBefore = await musdSavingsRateMock.getBalance()
 
       const value = to1e18("1000")
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
 
-      await updateWalletSnapshot(contracts, bob, "after")
+      const balanceAfter = await musdSavingsRateMock.getBalance()
 
       const pcvSplit = (value * (100n - split)) / 100n
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - pcvSplit)
 
-      expect(bob.musd.after - bob.musd.before).to.equal(value - pcvSplit)
+      expect(balanceAfter - balanceBefore).to.equal(value - pcvSplit)
     })
 
     it("sends 100% of fees to the recipient and none for loan repayment when fee split is set to 100%", async () => {
       const split = 100n
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(split)
 
-      await updateWalletSnapshot(contracts, bob, "before")
+      const balanceBefore = await musdSavingsRateMock.getBalance()
 
       const value = to1e18("1000")
       const debtBefore = await contracts.pcv.debtToPay()
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
 
-      await updateWalletSnapshot(contracts, bob, "after")
+      const balanceAfter = await musdSavingsRateMock.getBalance()
 
       // Debt should remain unchanged - no repayment
       const debtAfter = await contracts.pcv.debtToPay()
       expect(debtAfter).to.equal(debtBefore)
       expect(debtAfter).to.equal(bootstrapLoan)
 
-      // All fees go to bob
-      expect(bob.musd.after - bob.musd.before).to.equal(value)
+      // All fees go to savings rate mock
+      expect(balanceAfter - balanceBefore).to.equal(value)
 
       // PCV balance should be zero (all distributed)
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
@@ -655,40 +670,44 @@ describe("PCV", () => {
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
 
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(50n)
-      await updateWalletSnapshot(contracts, bob, "before")
+      const balanceBefore = await musdSavingsRateMock.getBalance()
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
       await contracts.musd.unprotectedMint(addresses.pcv, to1e18("20"))
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(to1e18("20"))
-      await updateWalletSnapshot(contracts, bob, "after")
+      const balanceAfter = await musdSavingsRateMock.getBalance()
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
-      expect(bob.musd.after - bob.musd.before).to.equal(to1e18("10"))
+      expect(balanceAfter - balanceBefore).to.equal(to1e18("10"))
       expect(state.stabilityPool.musd.after).to.equal(
         state.stabilityPool.musd.before + to1e18("5"),
       )
     })
 
     it("rounding errors in fee splitting favor the debt", async () => {
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(1n)
 
-      await updateWalletSnapshot(contracts, bob, "before")
+      const balanceBefore = await musdSavingsRateMock.getBalance()
 
       const value = 1n
       await contracts.musd.unprotectedMint(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
 
-      await updateWalletSnapshot(contracts, bob, "after")
+      const balanceAfter = await musdSavingsRateMock.getBalance()
 
       // With only 1 unit of debt to split, all the fee goes to the debt
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - value)
 
-      // Bob's musd balance should be unchanged as he receives none of the fee
-      expect(bob.musd.after).to.equal(bob.musd.before)
+      // Mock balance should be unchanged as it receives none of the fee
+      expect(balanceAfter).to.equal(balanceBefore)
     })
 
     it("sends all fees to the StabilityPool if the protocol bootstrap loan is repaid and no recipient is set", async () => {
@@ -712,7 +731,9 @@ describe("PCV", () => {
     })
 
     it("sends all fees to the StabilityPool if feeSplitPercentage is 0, even if the feeRecipient is set when the protocol bootstrap loan is repaid", async () => {
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(0n)
 
       // paydown the bootstrap loan
@@ -741,9 +762,11 @@ describe("PCV", () => {
 
       // set recipient and split
       const feeSplit = 20n
-      await contracts.pcv.connect(council.wallet).setFeeRecipient(bob.address)
+      await contracts.pcv
+        .connect(council.wallet)
+        .setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await contracts.pcv.connect(council.wallet).setFeeSplit(feeSplit)
-      await updateWalletSnapshot(contracts, bob, "before")
+      const balanceBefore = await musdSavingsRateMock.getBalance()
 
       // simulate fees
       const protocolFees = to1e18("10")
@@ -753,15 +776,15 @@ describe("PCV", () => {
       // trigger fee distribution
       await contracts.pcv.connect(treasury.wallet).distributeMUSD(protocolFees)
       await updateStabilityPoolSnapshot(contracts, state, "after")
-      await updateWalletSnapshot(contracts, bob, "after")
+      const balanceAfter = await musdSavingsRateMock.getBalance()
 
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
       expect(state.stabilityPool.musd.after).to.equal(
         state.stabilityPool.musd.before +
           (protocolFees * (100n - feeSplit)) / 100n,
       )
-      expect(bob.musd.after).to.equal(
-        bob.musd.before + (protocolFees * feeSplit) / 100n,
+      expect(balanceAfter).to.equal(
+        balanceBefore + (protocolFees * feeSplit) / 100n,
       )
     })
 
@@ -954,20 +977,20 @@ describe("PCV", () => {
 
   describe("setFeeSplit()", () => {
     it("sets fee split if percentage is less than max and there is debt", async () => {
-      await PCVDeployer.setFeeRecipient(bob.address)
+      await PCVDeployer.setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await PCVDeployer.setFeeSplit(2n)
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(2n)
     })
 
     it("sets fee split greater than 50% if the debt is paid", async () => {
       await debtPaid()
-      await PCVDeployer.setFeeRecipient(bob.address)
+      await PCVDeployer.setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await PCVDeployer.setFeeSplit(51n)
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(51n)
     })
 
     it("sets fee split up to 100% before debt is paid", async () => {
-      await PCVDeployer.setFeeRecipient(bob.address)
+      await PCVDeployer.setMusdSavingsRate(await musdSavingsRateMock.getAddress())
       await PCVDeployer.setFeeSplit(75n)
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(75n)
       await PCVDeployer.setFeeSplit(100n)
@@ -976,7 +999,9 @@ describe("PCV", () => {
 
     context("Expected Reverts", () => {
       it("reverts if fee split is > 100%", async () => {
-        await PCVDeployer.setFeeRecipient(bob.address)
+        await PCVDeployer.setMusdSavingsRate(
+          await musdSavingsRateMock.getAddress(),
+        )
         await expect(PCVDeployer.setFeeSplit(101n)).to.be.revertedWith(
           "PCV: Fee split must be at most 100",
         )
@@ -984,12 +1009,12 @@ describe("PCV", () => {
     })
   })
 
-  describe("setFeeRecipient()", () => {
+  describe("setMusdSavingsRate()", () => {
     context("Expected Reverts", () => {
       it("reverts if the fee recipient is the zero address", async () => {
         await expect(
-          PCVDeployer.setFeeRecipient(ZERO_ADDRESS),
-        ).to.be.revertedWith("PCV: Fee recipient cannot be the zero address.")
+          PCVDeployer.setMusdSavingsRate(ZERO_ADDRESS),
+        ).to.be.revertedWith("PCV: Recipient cannot be the zero address.")
       })
     })
   })

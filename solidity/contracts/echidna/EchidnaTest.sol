@@ -319,7 +319,7 @@ contract EchidnaTest {
 
         // Set all of the admin permissions to the test contract
         pcv.initializeDebt();
-        pcv.setFeeRecipient(msg.sender);
+        pcv.setMusdSavingsRate(msg.sender);
         pcv.setFeeSplit(50);
         pcv.startChangingRoles(address(this), address(this));
         pcv.finalizeChangingRoles();
