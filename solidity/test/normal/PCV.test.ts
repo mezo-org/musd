@@ -969,20 +969,26 @@ describe("PCV", () => {
 
   describe("setFeeSplit()", () => {
     it("sets fee split if percentage is less than max and there is debt", async () => {
-      await PCVDeployer.setMusdSavingsRate(await musdSavingsRateMock.getAddress())
+      await PCVDeployer.setMusdSavingsRate(
+        await musdSavingsRateMock.getAddress(),
+      )
       await PCVDeployer.setFeeSplit(2n)
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(2n)
     })
 
     it("sets fee split greater than 50% if the debt is paid", async () => {
       await debtPaid()
-      await PCVDeployer.setMusdSavingsRate(await musdSavingsRateMock.getAddress())
+      await PCVDeployer.setMusdSavingsRate(
+        await musdSavingsRateMock.getAddress(),
+      )
       await PCVDeployer.setFeeSplit(51n)
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(51n)
     })
 
     it("sets fee split up to 100% before debt is paid", async () => {
-      await PCVDeployer.setMusdSavingsRate(await musdSavingsRateMock.getAddress())
+      await PCVDeployer.setMusdSavingsRate(
+        await musdSavingsRateMock.getAddress(),
+      )
       await PCVDeployer.setFeeSplit(75n)
       expect(await PCVDeployer.feeSplitPercentage()).to.equal(75n)
       await PCVDeployer.setFeeSplit(100n)
