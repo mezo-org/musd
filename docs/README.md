@@ -60,7 +60,7 @@ Simple interest is non-compounding. For example, if a user owes a principal of $
 
 ### Part of Ecosystem
 
-The MUSD CDP is a part of the Mezo ecosystem. The interest and fees from MUSD flow into other parts of Mezo.
+The MUSD CDP is a part of the Mezo ecosystem. The interest and fees from MUSD flow into the MUSD Savings Rate vault, which is part of the broader Mezo ecosystem.
 
 ### Protocol Bootstrap Loan
 
@@ -88,7 +88,7 @@ Over time as the protocol accrues interest and fees the bootstrap loan gets repa
 
 #### Distributing fees with an active Protocol Loan
 
-When the protocol is initialized with the fee recipient and an active protocol loan the following occurs:
+When the protocol is initialized with the MUSD Savings Rate vault as the fee recipient and an active protocol loan the following occurs:
 
 ![Active Protocol Loan and Fees](images/feesAndActiveProtocolLoan.png)
 
@@ -96,13 +96,13 @@ Flow of Funds
 
 1. A user transaction triggers an event that results in a fee or interest collection event.
 2. MUSD is minted and sent to the PCV contract.
-3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address.
-4. A portion of the accrued MUSD is sent to the fee recipient.
-5. A portion of the MUSD is burnt to reduce the protocol loan.
+3. A governance action triggers the movement of MUSD from the PCV contract via `distributeMUSD`.
+4. Based on the `feeSplitPercentage`, a portion of the accrued MUSD is sent to the MUSD Savings Rate vault via `receiveProtocolYield`.
+5. The remaining portion of the MUSD is burnt to reduce the protocol loan.
 
 #### Distributing fees when the Protocol Loan has been repaid
 
-When the protocol is initialized with a fee recipient and the protocol loan has been repaid then the following occurs:
+When the protocol is initialized with the MUSD Savings Rate vault as the fee recipient and the protocol loan has been repaid then the following occurs:
 
 ![Repaid Protocol Loan and Fees](images/feesAndRepaidProtocolLoan.png)
 
@@ -110,37 +110,17 @@ Flow of Funds
 
 1. A user transaction triggers an event that results in a fee or interest collection event.
 2. MUSD is minted and sent to the PCV contract.
-3. A governance action triggers the movement of MUSD from the PCV contract to the PCV fee recipient address.
-4. A portion of the accrued MUSD is sent to the fee recipient.
-5. A portion of the MUSD is deposited into the Stability Pool.
+3. A governance action triggers the movement of MUSD from the PCV contract via `distributeMUSD`.
+4. Based on the `feeSplitPercentage`, a portion of the accrued MUSD is sent to the MUSD Savings Rate vault via `receiveProtocolYield`.
+5. The remaining portion of the MUSD is deposited into the Stability Pool.
 
 #### Distribution of MUSD
 
-The PCV contract has the ability to distribute the MUSD that it accrues from interest and fees. The fee split for how to use that MUSD can be set by governance.
+The PCV contract has the ability to distribute the MUSD that it accrues from interest and fees. All fees are directed to the MUSD Savings Rate vault (configured as the `feeRecipient`). The fee split for how to allocate that MUSD between the MUSD Savings Rate vault and protocol loan repayment can be set by governance via `feeSplitPercentage`.
 
-To illustrate how the MUSD is distributed, assume the feeSplitPercentage is set to 60%
+The `feeSplitPercentage` Should be set to 100 (100%) to send all fees to the MUSD Savings Rate vault.
 
-- Protocol Loan
-  - feeRecipient is not set.
-    - 100% of the amount pays down the loan.
-  - feeRecipient is set.
-    - Loan repayment <= outstanding loan.
-      - 60% is used as a repayment of the Protocol loan.
-      - 40% is sent to the feeRecipient.
-    - Loan repayment > outstanding loan.
-      - Protocol loan is repaid.
-      - 40% is sent to the feeRecipient.
-      - Excess loan repayment amount is deposited into the Stability Pool.
-- Protocol Loan has been repaid
-  - feeRecipient is not set.
-    - 100% of the amount is deposited into the Stability Pool.
-  - feeRecipient is set.
-    - 60% is deposited into the Stability Pool.
-    - 40% is sent to the feeRecipient.
-
-Note that the call to distribute MUSD does not require the entire balance of MUSD held by the PCV contract to be distributed. This means that the distributions to the feeRecipient from the PCV contract can be smoothed out.
-
-The feeRecipient address in the PCV contract can be changed via governance.
+The `feeRecipient` address (MUSD Savings Rate vault) and `feeSplitPercentage` in the PCV contract can be changed via governance.
 
 #### Withdrawing MUSD
 
@@ -532,11 +512,11 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 - **Fee Collection**: Borrowing fees and refinancing fees are directed to the PCV contract.
 
-- **Fee Allocation**: Fees collected by the PCV are allocated to two purposes: paying down the bootstrap loan and sending funds to the gauge system.
+- **Fee Allocation**: Fees collected by the PCV are allocated to the MUSD Savings Rate vault.
 
-- **Governable Split**: The allocation of fees between paying down the debt and the gauge system is governable. However, until the bootstrap loan is fully repaid, no more than **50% of the fees** can be sent to the gauge system.
+- **Governable Split**: The allocation of fees to the MUSD Savings Rate vault is governable via `feeSplitPercentage`. The `feeSplitPercentage` determines what percentage of distributed fees goes to the MUSD Savings Rate vault.
 
-- **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, **100% of the fees** collected by the PCV are automatically sent to the gauge system.
+- **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, the `feeSplitPercentage` continues to control the split between the MUSD Savings Rate vault and Stability Pool deposits. Fees can be directed 100% to the MUSD Savings Rate vault by setting `feeSplitPercentage` to 100.
 
 ### EIP-712 Signature Verification
 
