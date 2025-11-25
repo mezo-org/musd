@@ -155,8 +155,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             depositToStabilityPool(stabilityPoolDeposit);
         }
 
-        // send funds to feeRecipient address, if the feeRecipient
-        // hasn't been set then the feeSplitPercentage = 0 and no funds are sent.
         if (feeRecipient != address(0) && distributedFees > 0) {
             require(
                 musd.approve(feeRecipient, distributedFees),
