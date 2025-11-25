@@ -35,7 +35,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     address public feeRecipient; // MUSD savings rate address
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
-    uint8 public constant FEE_SPLIT_MAX = 100;
+    uint8 public constant PERCENT_MAX = 100;
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -119,11 +119,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
         require(
-            address(feeRecipient) != address(0),
+            feeRecipient != address(0),
             "PCV must set fee recipient before setFeeSplit"
         );
         require(
-            _feeSplitPercentage <= FEE_SPLIT_MAX,
+            _feeSplitPercentage <= PERCENT_MAX,
             "PCV: Fee split must be at most 100"
         );
         feeSplitPercentage = _feeSplitPercentage;
@@ -139,7 +139,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: not enough tokens"
         );
 
-        uint256 distributedFees = (_amount * feeSplitPercentage) / 100;
+        uint256 distributedFees = (_amount * feeSplitPercentage) / PERCENT_MAX;
         uint256 protocolLoanRepayment = _amount - distributedFees;
         uint256 stabilityPoolDeposit = 0;
 
@@ -159,7 +159,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         // hasn't been set then the feeSplitPercentage = 0 and no funds are sent.
         if (feeRecipient != address(0) && distributedFees > 0) {
             require(
-                musd.approve(address(feeRecipient), distributedFees),
+                musd.approve(feeRecipient, distributedFees),
                 "PCV: feeRecipient approval failed"
             );
             IMUSDSavingsRate(feeRecipient).receiveProtocolYield(
@@ -167,7 +167,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             );
 
             // slither-disable-next-line reentrancy-events
-            emit PCVDistribution(address(feeRecipient), distributedFees);
+            emit PCVDistribution(feeRecipient, distributedFees);
         }
     }
 
