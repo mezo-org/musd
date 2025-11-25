@@ -78,13 +78,11 @@ Flow of Funds
 
 When the protocol's MUSD is withdrawn from the Stability Pool to the PCV contract it is first used to repay any outstanding protocol loan balance. This is to ensure that the bootstrap loan can not be withdrawn from the protocol.
 
-It is anticipated that repayments on the protocol bootstrap loan will be made on a roughly weekly basis via calls to distributeMUSD in the PCV contract.
+The bootstrap loan repayment is optional and controlled by governance through the `feeSplitPercentage` parameter. When `feeSplitPercentage` is set to 100%, all fees are directed to the MUSD Savings Rate vault. The manager may choose to direct part of the emissions towards the initial MUSD protocol loan at first.
 
 ### Protocol Controlled Value
 
 Protocol Owned Liquidty as the name suggests is owned by the protocol, it is intended to provide utility to the protocol regardless of market conditions and without requiring incentives for the liquidity to stay in place.
-
-Over time as the protocol accrues interest and fees the bootstrap loan gets repaid and the portion of the MUSD in the Stability Pool that is Protocol Owned Liquidity increases.
 
 #### Distributing fees with an active Protocol Loan
 
@@ -98,7 +96,7 @@ Flow of Funds
 2. MUSD is minted and sent to the PCV contract.
 3. A governance action triggers the movement of MUSD from the PCV contract via `distributeMUSD`.
 4. Based on the `feeSplitPercentage`, a portion of the accrued MUSD is sent to the MUSD Savings Rate vault via `receiveProtocolYield`.
-5. The remaining portion of the MUSD is burnt to reduce the protocol loan.
+5. The remaining portion of the MUSD (if any) is burnt to reduce the protocol loan. Note that if `feeSplitPercentage` is set to 100%, no funds are allocated for loan repayment.
 
 #### Distributing fees when the Protocol Loan has been repaid
 
@@ -116,9 +114,9 @@ Flow of Funds
 
 #### Distribution of MUSD
 
-The PCV contract has the ability to distribute the MUSD that it accrues from interest and fees. All fees are directed to the MUSD Savings Rate vault (configured as the `feeRecipient`). The fee split for how to allocate that MUSD between the MUSD Savings Rate vault and protocol loan repayment can be set by governance via `feeSplitPercentage`.
+The PCV contract has the ability to distribute the MUSD that it accrues from interest and fees. All fees are directed to the MUSD Savings Rate vault (configured as the `feeRecipient`). The `feeSplitPercentage` parameter controls how fees are allocated between the MUSD Savings Rate vault and protocol loan repayment. If `feeSplitPercentage` is set to 100%, all fees go to the MUSD Savings Rate vault and no funds are allocated for bootstrap loan repayment, meaning the loan may remain unpaid. If set to less than 100%, the specified percentage goes to the vault and the remainder is used for loan repayment or Stability Pool deposits (once the loan is repaid).
 
-The `feeSplitPercentage` Should be set to 100 (100%) to send all fees to the MUSD Savings Rate vault.
+The `feeSplitPercentage` should be set to 100 (100%) to send all fees to the MUSD Savings Rate vault. This means the bootstrap loan will remain unpaid unless governance chooses to allocate fees toward loan repayment by setting `feeSplitPercentage` below 100% or manager may choose to direct part of the emissions towards the initial MUSD protocol.
 
 The `feeRecipient` address (MUSD Savings Rate vault) and `feeSplitPercentage` in the PCV contract can be changed via governance.
 
@@ -211,7 +209,7 @@ Note that when a redistribution of debt and collateral from a liquidated loan is
 
 #### Liquidations and Protocol Owned Liquidity
 
-The Stability Pool is initially seeded with a [bootstrap loan](#protocol-bootstrap-loan) against the protocol's future fees, over time the MUSD minted as part of this loan is converted into Protocol Owned Liquidity through fees and interest being burnt by the PCV contract.
+The Stability Pool is initially seeded with a [bootstrap loan](#protocol-bootstrap-loan) against the protocol's future fees. The bootstrap loan may be repaid over time if governance allocates a portion of fees toward loan repayment via `feeSplitPercentage`. If `feeSplitPercentage` is set to 100%, all fees flow to the MUSD Savings Rate vault. When fees are allocated to loan repayment (by setting `feeSplitPercentage` below 100%), the MUSD minted as part of this loan is converted into Protocol Owned Liquidity through fees and interest being burnt by the PCV contract.
 
 BTC acquired by the protocol through liquidations may be converted back into MUSD and redeposited into the Stability Pool depending on the maturity and state of the protocol at the time of liquidation.
 
@@ -272,7 +270,7 @@ Users own shares of the pool, and when they exit the pool, they withdraw both th
 
 For example, say that the pool currently has $20000 MUSD. A user deposits $5000 MUSD. They would own 5000 shares out of 25000 shares. Later, the pool burns $3000 MUSD and seizes $3270 worth of BTC and the user decides to exit. The pool still has 25000 shares, but now has $22000 MUSD and $3270 BTC. The user withdraws `5000 / 25000 * $22000 = $4400` MUSD and `5000 / 25000 * $3270 = $654` worth of BTC.
 
-The Stability pool is seeded by a bootstrap loan given to governance. $100m MUSD is minted against future fees, and the `PCV` contract assumes $100m of debt. That $100m MUSD is deposited directly into the Stability Pool. 50% of all [protocol fees](#fees) are burned to incrementally pay off this bootstrap loan.
+The Stability pool is seeded by a bootstrap loan given to governance. $100m MUSD is minted against future fees and/or emissions, and the `PCV` contract assumes $100m of debt. That $100m MUSD is deposited directly into the Stability Pool. The repayment of this bootstrap loan is controlled by governance through the `feeSplitPercentage` parameter. If `feeSplitPercentage` is set to 100%, all fees are directed to the MUSD Savings Rate vault and the bootstrap loan. Governance may choose to allocate fees toward loan repayment by setting `feeSplitPercentage` below 100%.
 
 ### Redemptions
 
@@ -496,7 +494,7 @@ Much of MUSD comes from [Threshold USD](https://github.com/Threshold-USD/dev), b
 
 - **Simple Interest**: Interest is calculated using a simple interest model rather than a compounding one.
 
-- **Interest Payments**: Interest payments are directed to the PCV (Protocol Controlled Value). The allocation of these payments is governed and can be split between an arbitrary recipient and repayment of the bootstrap loan.
+- **Interest Payments**: Interest payments are directed to the PCV (Protocol Controlled Value). The allocation of these payments is governed via `feeSplitPercentage` and can be directed entirely to the MUSD Savings Rate vault (100%) or split between the vault and repayment of the bootstrap loan. If set to 100%, the bootstrap loan is not repaid by fees, however it can be paid by emissions.
 
 For further information, refer to [simpleInterest.md](simpleInterest.md).
 
@@ -516,7 +514,7 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 - **Governable Split**: The allocation of fees to the MUSD Savings Rate vault is governable via `feeSplitPercentage`. The `feeSplitPercentage` determines what percentage of distributed fees goes to the MUSD Savings Rate vault.
 
-- **Post-Debt Repayment**: Once the bootstrap loan is fully repaid, the `feeSplitPercentage` continues to control the split between the MUSD Savings Rate vault and Stability Pool deposits. Fees can be directed 100% to the MUSD Savings Rate vault by setting `feeSplitPercentage` to 100.
+- **Bootstrap Loan Repayment**: The bootstrap loan repayment is optional and controlled by governance via `feeSplitPercentage`. If `feeSplitPercentage` is set to 100%, all fees go to the MUSD Savings Rate vault. If the loan is eventually repaid (through setting `feeSplitPercentage` below 100%), the split then controls allocation between the MUSD Savings Rate vault and Stability Pool deposits.
 
 ### EIP-712 Signature Verification
 
