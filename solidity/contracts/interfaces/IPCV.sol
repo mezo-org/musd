@@ -39,7 +39,7 @@ interface IPCV {
 
     function initializeDebt() external;
 
-    function setFeeRecipient(address _musdSavingsRate) external;
+    function setFeeRecipient(address _feeRecipient) external;
 
     function setFeeSplit(uint8 _feeSplitPercentage) external;
 
