@@ -73,6 +73,14 @@ const config: HardhatUserConfig = {
       accounts: MAINNET_PRIVATE_KEY,
       tags: ["etherscan"],
     },
+    mainnet_fork: {
+      url: MAINNET_RPC_URL,
+      chainId: 31612,
+      forking: {
+        url: MAINNET_RPC_URL,
+        blockNumber: 4872394, // November 25, 2025
+      },
+    },
     matsnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,

@@ -111,6 +111,11 @@ jobs:
       - name: Run tests
         run: pnpm run test --no-compile
 
+      - name: Run upgrade tests
+        env:
+          MEZO_RPC_URL: ${{ secrets.MEZO_RPC_URL }}
+        run: pnpm run test:upgrades --no-compile
+
   solidity-slither:
     needs: [solidity-build]
     if: github.event_name != 'workflow_dispatch'
