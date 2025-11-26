@@ -10,6 +10,7 @@ import "./dependencies/CheckContract.sol";
 import "./dependencies/SendCollateral.sol";
 import "./interfaces/IPCV.sol";
 import "./token/IMUSD.sol";
+import "./interfaces/IMUSDSavingsRate.sol";
 
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
@@ -32,14 +33,9 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
-    address public feeRecipient;
+    address public feeRecipient; // MUSD savings rate address
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
-    uint8 public constant FEE_SPLIT_MAX = 50; // no more than 50% of fees can be sent until the debt is paid
-
-    modifier onlyAfterDebtPaid() {
-        require(isInitialized && debtToPay == 0, "PCV: debt must be paid");
-        _;
-    }
+    uint8 public constant PERCENT_MAX = 100;
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -108,12 +104,17 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     ) external onlyOwnerOrCouncilOrTreasury {
         require(
             _feeRecipient != address(0),
-            "PCV: Fee recipient cannot be the zero address."
+            "PCV: Recipient cannot be the zero address."
         );
         feeRecipient = _feeRecipient;
         emit FeeRecipientSet(_feeRecipient);
     }
 
+    /// @notice Set the fee split percentage
+    /// @param _feeSplitPercentage The fee split percentage
+    /// @dev The fee split percentage must be between 0 and 100,
+    ///      where 0 means all fees are sent for the protocol loan repayment and
+    ///      100 means all fees are sent to the fee recipient.
     function setFeeSplit(
         uint8 _feeSplitPercentage
     ) external onlyOwnerOrCouncilOrTreasury {
@@ -122,9 +123,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV must set fee recipient before setFeeSplit"
         );
         require(
-            (debtToPay > 0 && _feeSplitPercentage <= FEE_SPLIT_MAX) ||
-                (debtToPay == 0 && _feeSplitPercentage <= 100),
-            "PCV: Fee split must be at most 50 while debt remains."
+            _feeSplitPercentage <= PERCENT_MAX,
+            "PCV: Fee split must be at most 100"
         );
         feeSplitPercentage = _feeSplitPercentage;
 
@@ -139,7 +139,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             "PCV: not enough tokens"
         );
 
-        uint256 distributedFees = (_amount * feeSplitPercentage) / 100;
+        uint256 distributedFees = (_amount * feeSplitPercentage) / PERCENT_MAX;
         uint256 protocolLoanRepayment = _amount - distributedFees;
         uint256 stabilityPoolDeposit = 0;
 
@@ -155,11 +155,13 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             depositToStabilityPool(stabilityPoolDeposit);
         }
 
-        // send funds to feeRecipient address, if the feeRecipient hasnt been set then the feeSplitPercentage = 0
         if (feeRecipient != address(0) && distributedFees > 0) {
             require(
-                musd.transfer(feeRecipient, distributedFees),
-                "PCV: sending mUSD failed"
+                musd.approve(feeRecipient, distributedFees),
+                "PCV: feeRecipient approval failed"
+            );
+            IMUSDSavingsRate(feeRecipient).receiveProtocolYield(
+                distributedFees
             );
 
             // slither-disable-next-line reentrancy-events
@@ -174,7 +176,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         external
         override
         onlyOwnerOrCouncilOrTreasury
-        onlyAfterDebtPaid
         onlyWhitelistedRecipient(_recipient)
     {
         require(
