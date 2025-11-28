@@ -3,7 +3,7 @@ import { ethers, upgrades } from "hardhat"
 const describeFn =
   process.env.NODE_ENV === "upgrades-test" ? describe : describe.skip
 
-describeFn("BorrowerOperations - upgrade tests", () => {
+describeFn("BorrowerOperationsSignatures - upgrade tests", () => {
   it("should be able to upgrade the current mainnet version", async () => {
     const BorrowerOperationsSignatures = await ethers.getContractFactory(
       "BorrowerOperationsSignatures",
