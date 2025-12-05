@@ -2,6 +2,6 @@
 
 pragma solidity 0.8.24;
 
-interface IBTCYieldConverter {
+interface IBTCYieldReceiver {
     function receiveProtocolYieldInBTC(uint256 btcAmount) external;
 }

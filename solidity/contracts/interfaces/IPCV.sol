@@ -25,7 +25,7 @@ interface IPCV {
     );
     event RecipientAdded(address _recipient);
     event RecipientRemoved(address _recipient);
-    event BTCYieldConverterSet(address _btcYieldConverter);
+    event BTCYieldReceiverSet(address _btcYieldReceiver);
     event PCVDistributionBTC(address _recipient, uint256 _amount);
 
     // --- Functions ---

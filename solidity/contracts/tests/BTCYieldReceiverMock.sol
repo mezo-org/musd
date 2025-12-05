@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.24;
 
-import "../interfaces/IBTCYieldConverter.sol";
+import "../interfaces/IBTCYieldReceiver.sol";
 
 // slither-disable-start locked-ether
-contract BTCYieldConverterMock is IBTCYieldConverter {
+contract BTCYieldReceiverMock is IBTCYieldReceiver {
     uint256 public totalBTCReceived;
     uint256 public callCount;
     bool public shouldRevert;
@@ -23,7 +23,7 @@ contract BTCYieldConverterMock is IBTCYieldConverter {
     }
 
     function receiveProtocolYieldInBTC(uint256 btcAmount) external override {
-        require(!shouldRevert, "BTCYieldConverterMock: forced revert");
+        require(!shouldRevert, "BTCYieldReceiverMock: forced revert");
         totalBTCReceived += btcAmount;
         callCount += 1;
     }
