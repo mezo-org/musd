@@ -20,11 +20,7 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
-import {
-  PCV,
-  MUSDSavingsRateMock,
-  BTCYieldReceiverMock,
-} from "../../typechain"
+import { PCV, MUSDSavingsRateMock, BTCYieldReceiverMock } from "../../typechain"
 
 describe("PCV", () => {
   let addresses: TestingAddresses
