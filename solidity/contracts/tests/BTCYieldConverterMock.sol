@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 
 import "../interfaces/IBTCYieldConverter.sol";
 
+// slither-disable-start locked-ether
 contract BTCYieldConverterMock is IBTCYieldConverter {
     uint256 public totalBTCReceived;
     uint256 public callCount;
@@ -32,3 +33,4 @@ contract BTCYieldConverterMock is IBTCYieldConverter {
         return address(this).balance;
     }
 }
+// slither-disable-end locked-ether

@@ -20,7 +20,11 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
-import { PCV, MUSDSavingsRateMock, BTCYieldConverterMock } from "../../typechain"
+import {
+  PCV,
+  MUSDSavingsRateMock,
+  BTCYieldConverterMock,
+} from "../../typechain"
 
 describe("PCV", () => {
   let addresses: TestingAddresses
@@ -1161,13 +1165,17 @@ describe("PCV", () => {
       it("reverts when setting zero address", async () => {
         await expect(
           PCVDeployer.setBTCYieldConverter(ZERO_ADDRESS),
-        ).to.be.revertedWith("PCV: BTC yield converter cannot be the zero address.")
+        ).to.be.revertedWith(
+          "PCV: BTC yield converter cannot be the zero address.",
+        )
       })
 
       it("reverts when called by non-authorized user", async () => {
         const converterAddress = await btcYieldConverterMock.getAddress()
         await expect(
-          contracts.pcv.connect(alice.wallet).setBTCYieldConverter(converterAddress),
+          contracts.pcv
+            .connect(alice.wallet)
+            .setBTCYieldConverter(converterAddress),
         ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
       })
 
@@ -1317,9 +1325,8 @@ describe("PCV", () => {
       it("reverts when BTC yield converter is not set", async () => {
         // Deploy a fresh PCV without converter
         const PCVFactory = await ethers.getContractFactory("PCV")
-        const ERC1967ProxyFactory = await ethers.getContractFactory(
-          "ERC1967Proxy",
-        )
+        const ERC1967ProxyFactory =
+          await ethers.getContractFactory("ERC1967Proxy")
         const pcvImplementation = await PCVFactory.deploy()
         const initializeData = pcvImplementation.interface.encodeFunctionData(
           "initialize",
