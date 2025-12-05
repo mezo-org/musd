@@ -25,12 +25,16 @@ interface IPCV {
     );
     event RecipientAdded(address _recipient);
     event RecipientRemoved(address _recipient);
+    event BTCYieldConverterSet(address _btcYieldConverter);
+    event PCVDistributionBTC(address _recipient, uint256 _amount);
 
     // --- Functions ---
 
     function debtToPay() external returns (uint256);
 
     function distributeMUSD(uint256 _musdToBurn) external;
+
+    function distributeBTC() external;
 
     function setAddresses(
         address _borrowerOperations,

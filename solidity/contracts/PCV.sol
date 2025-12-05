@@ -11,6 +11,7 @@ import "./dependencies/SendCollateral.sol";
 import "./interfaces/IPCV.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IMUSDSavingsRate.sol";
+import "./interfaces/IBTCYieldConverter.sol";
 
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
@@ -36,6 +37,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     address public feeRecipient; // MUSD savings rate address
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
     uint8 public constant PERCENT_MAX = 100;
+
+    address public btcYieldConverter; // Tigris BTC to MUSD converter address
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -110,6 +113,17 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeRecipientSet(_feeRecipient);
     }
 
+    function setBTCYieldConverter(
+        address _btcYieldConverter
+    ) external onlyOwnerOrCouncilOrTreasury {
+        require(
+            _btcYieldConverter != address(0),
+            "PCV: BTC yield converter cannot be the zero address."
+        );
+        btcYieldConverter = _btcYieldConverter;
+        emit BTCYieldConverterSet(_btcYieldConverter);
+    }
+
     /// @notice Set the fee split percentage
     /// @param _feeSplitPercentage The fee split percentage
     /// @dev The fee split percentage must be between 0 and 100,
@@ -167,6 +181,23 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             // slither-disable-next-line reentrancy-events
             emit PCVDistribution(feeRecipient, distributedFees);
         }
+    }
+
+    function distributeBTC() external override onlyOwnerOrCouncilOrTreasury {
+        uint256 collateralAmount = address(this).balance;
+
+        require(collateralAmount > 0, "PCV: no collateral to distribute");
+        require(
+            btcYieldConverter != address(0),
+            "PCV: BTC yield converter not set"
+        );
+
+        _sendCollateral(btcYieldConverter, collateralAmount);
+        IBTCYieldConverter(btcYieldConverter).receiveProtocolYieldInBTC(
+            collateralAmount
+        );
+        // slither-disable-next-line reentrancy-events
+        emit PCVDistributionBTC(btcYieldConverter, collateralAmount);
     }
 
     function withdrawMUSD(
