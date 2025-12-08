@@ -787,11 +787,19 @@ describe("PCV", () => {
       )
     })
 
-    context("Expected Reverts", () => {
-      it("reverts when not enough tokens to burn", async () => {
-        await expect(
-          contracts.pcv.connect(council.wallet).distributeMUSD(1n),
-        ).to.be.revertedWith("PCV: not enough tokens")
+    context("Expected Behavior", () => {
+      it("does nothing when not enough tokens to distribute (bot-friendly)", async () => {
+        const musdBalanceBefore = await contracts.musd.balanceOf(addresses.pcv)
+        const debtToPayBefore = await contracts.pcv.debtToPay()
+
+        // Try to distribute 1 token when balance is 0
+        await contracts.pcv.connect(council.wallet).distributeMUSD(1n)
+
+        // Verify nothing changed
+        const musdBalanceAfter = await contracts.musd.balanceOf(addresses.pcv)
+        const debtToPayAfter = await contracts.pcv.debtToPay()
+        expect(musdBalanceAfter).to.equal(musdBalanceBefore)
+        expect(debtToPayAfter).to.equal(debtToPayBefore)
       })
     })
   })
@@ -1311,11 +1319,24 @@ describe("PCV", () => {
       expect(await btcYieldReceiverMock.callCount()).to.equal(2n)
     })
 
-    context("Expected Reverts", () => {
-      it("reverts when no collateral to distribute", async () => {
-        await expect(
-          contracts.pcv.connect(treasury.wallet).distributeBTC(),
-        ).to.be.revertedWith("PCV: no collateral to distribute")
+    context("Expected Behavior", () => {
+      it("does nothing when no collateral to distribute (bot-friendly)", async () => {
+        const pcvBalanceBefore = await ethers.provider.getBalance(addresses.pcv)
+        const converterBalanceBefore = await ethers.provider.getBalance(
+          await btcYieldReceiverMock.getAddress(),
+        )
+
+        // Try to distribute when balance is 0
+        await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+        // Verify nothing changed
+        const pcvBalanceAfter = await ethers.provider.getBalance(addresses.pcv)
+        const converterBalanceAfter = await ethers.provider.getBalance(
+          await btcYieldReceiverMock.getAddress(),
+        )
+        expect(pcvBalanceAfter).to.equal(pcvBalanceBefore)
+        expect(converterBalanceAfter).to.equal(converterBalanceBefore)
+        expect(await btcYieldReceiverMock.callCount()).to.equal(0n)
       })
 
       it("reverts when BTC yield converter is not set", async () => {

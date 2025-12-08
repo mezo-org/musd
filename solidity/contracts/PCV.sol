@@ -148,10 +148,13 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     function distributeMUSD(
         uint256 _amount
     ) external override onlyOwnerOrCouncilOrTreasury {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
+        uint256 musdBalance = musd.balanceOf(address(this));
+        // If there are not enough tokens to distribute, do nothing.
+        // This approach is less descriptive but more bot friendly which in case
+        // of this function is more appropriate.
+        if (musdBalance < _amount) {
+            return;
+        }
 
         uint256 distributedFees = (_amount * feeSplitPercentage) / PERCENT_MAX;
         uint256 protocolLoanRepayment = _amount - distributedFees;
@@ -185,8 +188,13 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     function distributeBTC() external override onlyOwnerOrCouncilOrTreasury {
         uint256 collateralAmount = address(this).balance;
+        // If there are not enough collateral to distribute, do nothing.
+        // This approach is less descriptive but more bot friendly which in case
+        // of this function is more appropriate.
+        if (collateralAmount == 0) {
+            return;
+        }
 
-        require(collateralAmount > 0, "PCV: no collateral to distribute");
         require(
             btcYieldReceiver != address(0),
             "PCV: BTC yield receiver not set"
