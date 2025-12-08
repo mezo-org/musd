@@ -227,7 +227,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit MUSDWithdraw(_recipient, _amount);
     }
 
-    function withdrawCollateral(
+    function withdrawBTC(
         address _recipient,
         uint256 _collateralAmount
     )

@@ -49,7 +49,7 @@ interface IPCV {
 
     function withdrawMUSD(address _recipient, uint256 _musdAmount) external;
 
-    function withdrawCollateral(
+    function withdrawBTC(
         address _recipient,
         uint256 _collateralAmount
     ) external;

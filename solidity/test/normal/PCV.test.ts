@@ -883,7 +883,7 @@ describe("PCV", () => {
     })
   })
 
-  describe("withdrawCollateral()", () => {
+  describe("withdrawBTC()", () => {
     it("withdraws BTC to recipient when there is a protocol loan", async () => {
       const value = to1e18("20")
       await updateWalletSnapshot(contracts, alice, "before")
@@ -894,7 +894,7 @@ describe("PCV", () => {
       })
       await contracts.pcv
         .connect(council.wallet)
-        .withdrawCollateral(alice.address, value)
+        .withdrawBTC(alice.address, value)
       await updateWalletSnapshot(contracts, alice, "after")
       expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
       expect(alice.btc.after - alice.btc.before).to.equal(value)
@@ -911,7 +911,7 @@ describe("PCV", () => {
       })
       await contracts.pcv
         .connect(council.wallet)
-        .withdrawCollateral(alice.address, value)
+        .withdrawBTC(alice.address, value)
       await updateWalletSnapshot(contracts, alice, "after")
       expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
       expect(alice.btc.after - alice.btc.before).to.equal(value)
@@ -927,15 +927,15 @@ describe("PCV", () => {
       const withdrawAmount = to1e18("1")
       // make sure funds cant be withdrawn to bob
       await expect(
-        PCVDeployer.withdrawCollateral(bob.address, withdrawAmount),
+        PCVDeployer.withdrawBTC(bob.address, withdrawAmount),
       ).to.be.revertedWith("PCV: recipient must be in whitelist")
 
       // add bob as the recipient
       await PCVDeployer.addRecipientToWhitelist(addresses.bob)
       await updateWalletSnapshot(contracts, bob, "before")
 
-      // withdraw collatearl
-      await PCVDeployer.withdrawCollateral(bob.address, withdrawAmount)
+      // withdraw collateral
+      await PCVDeployer.withdrawBTC(bob.address, withdrawAmount)
 
       await updateWalletSnapshot(contracts, bob, "after")
 
@@ -953,7 +953,7 @@ describe("PCV", () => {
       })
       const tx = await contracts.pcv
         .connect(council.wallet)
-        .withdrawCollateral(alice.address, value)
+        .withdrawBTC(alice.address, value)
 
       const { recipient, collateralAmount } =
         await getEmittedWithdrawCollateralValues(tx)
@@ -967,16 +967,14 @@ describe("PCV", () => {
         await expect(
           contracts.pcv
             .connect(treasury.wallet)
-            .withdrawCollateral(bob.address, bootstrapLoan),
+            .withdrawBTC(bob.address, bootstrapLoan),
         ).to.be.revertedWith("PCV: recipient must be in whitelist")
       })
 
       it("reverts if not enough collateral", async () => {
         await debtPaid()
         await expect(
-          contracts.pcv
-            .connect(treasury.wallet)
-            .withdrawCollateral(alice.address, 1n),
+          contracts.pcv.connect(treasury.wallet).withdrawBTC(alice.address, 1n),
         ).to.be.revertedWith("Sending BTC failed")
       })
     })
@@ -1082,7 +1080,7 @@ describe("PCV", () => {
       // call to withdraw BTC from PCV to treasury
       await contracts.pcv
         .connect(treasury.wallet)
-        .withdrawCollateral(treasury.address, pcvBalance)
+        .withdrawBTC(treasury.address, pcvBalance)
       pcvBalance = await ethers.provider.getBalance(addresses.pcv)
       expect(pcvBalance).to.equal(0n)
 
