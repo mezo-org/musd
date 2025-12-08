@@ -14,6 +14,8 @@ interface IMUSD is IERC20Metadata, IERC20Permit {
     event MintListAddressRemoved(address _address);
     event BurnListAddressAdded(address _address);
     event BurnListAddressRemoved(address _address);
+    event RCOManagerAddressAdded(address _address);
+
 
     error AddressHasMintRole();
     error AddressHasBurnRole();

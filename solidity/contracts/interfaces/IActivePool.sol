@@ -26,6 +26,7 @@ interface IActivePool is IPool {
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _interestRateManagerAddress,
+        address _reversibleCallOptionManagerAddress,
         address _stabilityPoolAddress,
         address _troveManagerAddress
     ) external;

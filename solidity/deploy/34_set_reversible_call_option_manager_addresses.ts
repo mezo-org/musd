@@ -10,37 +10,32 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await setupDeploymentBoilerplate(hre)
 
   const {
-    borrowerOperations,
-    collSurplusPool,
-    defaultPool,
-    interestRateManager,
-    reversibleCallOptionManager,
-    stabilityPool,
+    activePool,
+    gasPool,
+    musd,
+    priceFeed,
     troveManager,
   } = await fetchAllDeployedContracts(isHardhatNetwork, isFuzzTestingNetwork)
 
   await execute(
-    "ActivePool",
+    "ReversibleCallOptionManager",
     "setAddresses",
-    await borrowerOperations.getAddress(),
-    await collSurplusPool.getAddress(),
-    await defaultPool.getAddress(),
-    await interestRateManager.getAddress(),
-    await stabilityPool.getAddress(),
     await troveManager.getAddress(),
-    await reversibleCallOptionManager.getAddress(),
+    await priceFeed.getAddress(),
+    await activePool.getAddress(),
+    await musd.getAddress(),
+    await gasPool.getAddress(),
   )
 }
 
 export default func
 
-func.tags = ["SetAddresses", "SetActivePoolAddresses"]
+func.tags = ["SetAddresses", "SetReversibleCallOptionManagerAddresses"]
 func.dependencies = [
   "ActivePool",
-  "BorrowerOperations",
-  "CollSurplusPool",
-  "DefaultPool",
+  "GasPool",
+  "MUSD",
+  "PriceFeed",
   "ReversibleCallOptionManager",
-  "StabilityPool",
   "TroveManager",
 ]

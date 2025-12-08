@@ -16,6 +16,7 @@ import {
   MockAggregator,
   PCV,
   PriceFeed,
+  ReversibleCallOptionManager,
   SortedTroves,
   StabilityPool,
   TroveManager,
@@ -129,6 +130,10 @@ export async function fetchAllDeployedContracts(
 
   const pcv: PCV = await getDeployedContract("PCV")
   const priceFeed: PriceFeed = await getDeployedContract("PriceFeed")
+  
+  const reversibleCallOptionManager: ReversibleCallOptionManager = 
+    await getDeployedContract("ReversibleCallOptionManager")
+  
   const sortedTroves: SortedTroves = await getDeployedContract("SortedTroves")
 
   const stabilityPool: StabilityPool =
@@ -153,6 +158,7 @@ export async function fetchAllDeployedContracts(
     musd,
     pcv,
     priceFeed,
+    reversibleCallOptionManager,
     sortedTroves,
     stabilityPool,
     troveManager,
@@ -221,7 +227,7 @@ export async function setupDeploymentBoilerplate(
       ...options,
     })
 
-    if (network.name !== "hardhat") {
+    if (network.name !== "hardhat" && false) {  // Temporarily disabled verification
       await helpers.etherscan.verify(contract)
     }
     return contract
@@ -239,7 +245,7 @@ export async function setupDeploymentBoilerplate(
 
     const [_, contract] = await deployProxy(contractName, options)
 
-    if (network.name !== "hardhat") {
+    if (network.name !== "hardhat" && false) {  // Temporarily disabled verification
       await helpers.etherscan.verify(contract)
     }
     return contract

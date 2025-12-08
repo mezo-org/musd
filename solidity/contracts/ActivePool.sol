@@ -31,6 +31,7 @@ contract ActivePool is
     address public collSurplusPoolAddress;
     address public defaultPoolAddress;
     IInterestRateManager public interestRateManager;
+    address public reversibleCallOptionManagerAddress;
     address public stabilityPoolAddress;
     address public troveManagerAddress;
 
@@ -64,6 +65,7 @@ contract ActivePool is
         address _collSurplusPoolAddress,
         address _defaultPoolAddress,
         address _interestRateManagerAddress,
+        address _reversibleCallOptionManagerAddress,
         address _stabilityPoolAddress,
         address _troveManagerAddress
     ) external onlyOwner {
@@ -71,6 +73,9 @@ contract ActivePool is
         checkContract(_collSurplusPoolAddress);
         checkContract(_defaultPoolAddress);
         checkContract(_interestRateManagerAddress);
+        if (_reversibleCallOptionManagerAddress != address(0)) {
+            checkContract(_reversibleCallOptionManagerAddress);
+        }
         checkContract(_stabilityPoolAddress);
         checkContract(_troveManagerAddress);
 
@@ -79,6 +84,7 @@ contract ActivePool is
         collSurplusPoolAddress = _collSurplusPoolAddress;
         defaultPoolAddress = _defaultPoolAddress;
         interestRateManager = IInterestRateManager(_interestRateManagerAddress);
+        reversibleCallOptionManagerAddress = _reversibleCallOptionManagerAddress;
         stabilityPoolAddress = _stabilityPoolAddress;
         troveManagerAddress = _troveManagerAddress;
         // slither-disable-end missing-zero-check
@@ -107,14 +113,14 @@ contract ActivePool is
         uint256 _principal,
         uint256 _interest
     ) external override {
-        _requireCallerIsBOorTroveMorSP();
+        _requireCallerIsBOorTroveMorSPorReversibleCallOptionManager();
         principal -= _principal;
         interest -= _interest;
         emit ActivePoolDebtUpdated(principal, interest);
     }
 
     function sendCollateral(address _account, uint256 _amount) external {
-        _requireCallerIsBOorTroveMorSP();
+        _requireCallerIsBOorTroveMorSPorReversibleCallOptionManager();
         collateral -= _amount;
         emit ActivePoolCollateralBalanceUpdated(collateral);
         emit CollateralSent(_account, _amount);
@@ -169,6 +175,16 @@ contract ActivePool is
                 msg.sender == troveManagerAddress ||
                 msg.sender == stabilityPoolAddress,
             "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
+        );
+    }
+
+    function _requireCallerIsBOorTroveMorSPorReversibleCallOptionManager() internal view {
+        require(
+            msg.sender == borrowerOperationsAddress ||
+                msg.sender == troveManagerAddress ||
+                msg.sender == stabilityPoolAddress ||
+                msg.sender == reversibleCallOptionManagerAddress,
+            "ActivePool: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool nor ReversibleCallOptionManager"
         );
     }
 }
