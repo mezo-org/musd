@@ -11,7 +11,7 @@ import "./dependencies/SendCollateral.sol";
 import "./interfaces/IPCV.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IMUSDSavingsRate.sol";
-import "./interfaces/IBTCYieldReceiver.sol";
+import "./interfaces/IBTCFeeRecipient.sol";
 
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
@@ -38,7 +38,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
     uint8 public constant PERCENT_MAX = 100;
 
-    address public btcYieldReceiver; // Tigris BTC to MUSD converter address
+    address public btcRecipient; // Tigris BTC to MUSD converter address
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -113,15 +113,15 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeRecipientSet(_feeRecipient);
     }
 
-    function setBTCYieldReceiver(
-        address _btcYieldReceiver
+    function setBTCRecipient(
+        address _btcRecipient
     ) external onlyOwnerOrCouncilOrTreasury {
         require(
-            _btcYieldReceiver != address(0),
-            "PCV: BTC yield receiver cannot be the zero address."
+            _btcRecipient != address(0),
+            "PCV: BTC recipient cannot be the zero address."
         );
-        btcYieldReceiver = _btcYieldReceiver;
-        emit BTCYieldReceiverSet(_btcYieldReceiver);
+        btcRecipient = _btcRecipient;
+        emit BTCRecipientSet(_btcRecipient);
     }
 
     /// @notice Set the fee split percentage
@@ -195,17 +195,14 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
             return;
         }
 
-        require(
-            btcYieldReceiver != address(0),
-            "PCV: BTC yield receiver not set"
-        );
+        require(btcRecipient != address(0), "PCV: BTC recipient not set");
 
-        _sendCollateral(btcYieldReceiver, collateralAmount);
-        IBTCYieldReceiver(btcYieldReceiver).receiveProtocolYieldInBTC(
+        _sendCollateral(btcRecipient, collateralAmount);
+        IBTCFeeRecipient(btcRecipient).receiveProtocolYieldInBTC(
             collateralAmount
         );
         // slither-disable-next-line reentrancy-events
-        emit PCVDistributionBTC(btcYieldReceiver, collateralAmount);
+        emit PCVDistributionBTC(btcRecipient, collateralAmount);
     }
 
     function withdrawMUSD(

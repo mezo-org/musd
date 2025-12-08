@@ -122,7 +122,7 @@ The `feeRecipient` address (MUSD Savings Rate vault) and `feeSplitPercentage` in
 
 #### Distribution of BTC
 
-The PCV contract has the ability to distribute `BTC` that it accrues from redemption actions. The `btcYieldReceiver` address
+The PCV contract has the ability to distribute `BTC` that it accrues from redemption actions. The `btcRecipient` address
 is the address that will receive the BTC and handle it according to its implementation, e.g. convert it to another asset such as
 `MUSD`. Collateral (`BTC`) was not directly used for loan repayment. It can be withdrawn from the PCV contract and distributed in a form of `MUSD` which is used for loan repayment.
 

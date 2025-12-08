@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.24;
 
-/// @title IBTCYieldReceiver
+/// @title IBTCFeeRecipient
 /// @notice Interface for contracts that receive protocol yield in BTC
-interface IBTCYieldReceiver {
+interface IBTCFeeRecipient {
     /// @notice Receives protocol yield in BTC
     /// @param btcAmount The amount of BTC yield being distributed
     /// @dev This function is called by the PCV contract after sending BTC
