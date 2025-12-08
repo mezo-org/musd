@@ -787,6 +787,29 @@ describe("PCV", () => {
       )
     })
 
+    it("can be called by anyone (permissionless)", async () => {
+      const split = 50n
+      await contracts.pcv
+        .connect(council.wallet)
+        .setFeeRecipient(await musdSavingsRateMock.getAddress())
+      await contracts.pcv.connect(council.wallet).setFeeSplit(split)
+
+      const balanceBefore = await musdSavingsRateMock.getBalance()
+
+      const value = to1e18("1000")
+      await contracts.musd.unprotectedMint(addresses.pcv, value)
+      // Call from alice (non-privileged user)
+      await contracts.pcv.connect(alice.wallet).distributeMUSD(value)
+
+      const balanceAfter = await musdSavingsRateMock.getBalance()
+
+      const pcvSplit = (value * (100n - split)) / 100n
+      const debtToPay = await contracts.pcv.debtToPay()
+      expect(debtToPay).to.equal(bootstrapLoan - pcvSplit)
+
+      expect(balanceAfter - balanceBefore).to.equal(value - pcvSplit)
+    })
+
     context("Expected Behavior", () => {
       it("does nothing when not enough tokens to distribute (bot-friendly)", async () => {
         const musdBalanceBefore = await contracts.musd.balanceOf(addresses.pcv)
@@ -1266,6 +1289,17 @@ describe("PCV", () => {
       expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
     })
 
+    it("can be called by anyone (permissionless)", async () => {
+      const btcAmount = to1e18("7")
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      await contracts.pcv.connect(alice.wallet).distributeBTC()
+      expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
+    })
+
     it("distributes all available collateral", async () => {
       const btcAmount1 = to1e18("5")
       const btcAmount2 = to1e18("3")
@@ -1358,18 +1392,6 @@ describe("PCV", () => {
         await expect(
           freshPCV.connect(deployer.wallet).distributeBTC(),
         ).to.be.revertedWith("PCV: BTC recipient not set")
-      })
-
-      it("reverts when called by non-authorized user", async () => {
-        const btcAmount = to1e18("1")
-        await deployer.wallet.sendTransaction({
-          to: addresses.pcv,
-          value: btcAmount,
-        })
-
-        await expect(
-          contracts.pcv.connect(alice.wallet).distributeBTC(),
-        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
       })
 
       it("reverts when converter callback fails", async () => {

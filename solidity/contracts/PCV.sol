@@ -145,9 +145,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeSplitSet(_feeSplitPercentage);
     }
 
-    function distributeMUSD(
-        uint256 _amount
-    ) external override onlyOwnerOrCouncilOrTreasury {
+    /// @notice Distributes MUSD to the fee recipient (MUSD Savings Rate vault)
+    ///         as part of the protocol fees distribution process.
+    /// @dev The amount of MUSD to distribute must be greater than 0.
+    /// @param _amount The amount of MUSD to distribute.
+    function distributeMUSD(uint256 _amount) external override {
         uint256 musdBalance = musd.balanceOf(address(this));
         // If there are not enough tokens to distribute, do nothing.
         // This approach is less descriptive but more bot friendly which in case
@@ -186,7 +188,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         }
     }
 
-    function distributeBTC() external override onlyOwnerOrCouncilOrTreasury {
+    /// @notice Distributes BTC to the BTC recipient as part of the protocol fees
+    ///         distribution process.
+    /// @dev The BTC recipient must be set before calling this function
+    ///      and the amount of BTC to distribute must be greater than 0.
+    function distributeBTC() external override {
         uint256 collateralAmount = address(this).balance;
         // If there are not enough collateral to distribute, do nothing.
         // This approach is less descriptive but more bot friendly which in case
