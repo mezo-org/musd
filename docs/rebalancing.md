@@ -92,7 +92,7 @@ pcv.withdrawFromStabilityPool(0); // This withdraws all collateral gain and 0 MU
 
 Governance withdraws BTC from PCV.
 ```solidity
-pcv.withdrawCollateral(governanceAddress, btcAmount);
+pcv.withdrawBTC(governanceAddress, btcAmount);
 ```
 
 ### Step 4: Swap BTC for MUSD
