@@ -307,9 +307,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit CollateralWithdraw(_recipient, _collateralAmount);
     }
 
-    function depositToStabilityPool(
-        uint256 _amount
-    ) public onlyOwnerOrCouncilOrTreasury {
+    function depositToStabilityPool(uint256 _amount) external {
         musd.safeTransferFrom(msg.sender, address(this), _amount);
         _depositToStabilityPool(_amount);
     }
