@@ -211,19 +211,18 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit RecipientRemoved(_recipient);
     }
 
-    function distributeMUSD(
-        uint256 _amount
-    ) external override onlyOwnerOrCouncilOrTreasury {
+    function distributeMUSD() external override onlyOwnerOrCouncilOrTreasury {
         uint256 musdBalance = musd.balanceOf(address(this));
         // If there are not enough tokens to distribute, do nothing.
         // This approach is less descriptive but more bot friendly which in case
         // of this function is more appropriate.
-        if (musdBalance < _amount) {
+        if (musdBalance == 0) {
             return;
         }
 
-        uint256 distributedFees = (_amount * feeSplitPercentage) / PERCENT_MAX;
-        uint256 protocolLoanRepayment = _amount - distributedFees;
+        uint256 distributedFees = (musdBalance * feeSplitPercentage) /
+            PERCENT_MAX;
+        uint256 protocolLoanRepayment = musdBalance - distributedFees;
         uint256 stabilityPoolDeposit = 0;
 
         // check for excess to deposit into the stability pool

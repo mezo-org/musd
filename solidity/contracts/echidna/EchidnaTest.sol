@@ -830,17 +830,8 @@ contract EchidnaTest {
         pcv.withdrawMUSD(address(this), amount);
     }
 
-    function distributeMUSDExt(uint _amount) external {
-        pcv.distributeMUSD(_amount);
-    }
-
-    function distributeMUSDSafeExt(uint _amount) external {
-        uint256 amount = _amount % musd.balanceOf(address(pcv));
-        pcv.distributeMUSD(amount);
-    }
-
-    function distributeMUSDFullExt() external {
-        pcv.distributeMUSD(musd.balanceOf(address(pcv)));
+    function distributeMUSDExt() external {
+        pcv.distributeMUSD();
     }
 
     function payDebtExt() external {

@@ -32,7 +32,7 @@ interface IPCV {
 
     function debtToPay() external returns (uint256);
 
-    function distributeMUSD(uint256 _musdToBurn) external;
+    function distributeMUSD() external;
 
     function distributeBTC() external;
 

@@ -43,7 +43,7 @@ describe("PCV", () => {
   async function debtPaid() {
     const debtToPay = await contracts.pcv.debtToPay()
     await contracts.musd.unprotectedMint(addresses.pcv, debtToPay)
-    await contracts.pcv.connect(treasury.wallet).distributeMUSD(debtToPay)
+    await contracts.pcv.connect(treasury.wallet).distributeMUSD()
   }
 
   beforeEach(async () => {
@@ -463,6 +463,10 @@ describe("PCV", () => {
       await populateStabilityPoolWithBTC()
       await debtPaid()
 
+      // Add some MUSD to PCV to simulate accumulated fees after debt payment
+      const simulatedFees = to1e18("100")
+      await contracts.musd.unprotectedMint(addresses.pcv, simulatedFees)
+
       // StabilityPool mUSD decreases
       // PCV balance increases
 
@@ -486,6 +490,10 @@ describe("PCV", () => {
     it("withdraws entire balance if requested amount is greater than the balance, mUSD checks with repaid protocol bootstrap loan", async () => {
       await populateStabilityPoolWithBTC()
       await debtPaid()
+
+      // Add some MUSD to PCV to simulate accumulated fees after debt payment
+      const simulatedFees = to1e18("100")
+      await contracts.musd.unprotectedMint(addresses.pcv, simulatedFees)
 
       // StabilityPool mUSD is 0
       // PCV balance increases
@@ -587,7 +595,7 @@ describe("PCV", () => {
     it("uses all fees to pay down the debt if feeRecipient is not set and there is an active protocol bootstrap loan", async () => {
       const value = bootstrapLoan / 3n
       await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
       const debtToPay = await contracts.pcv.debtToPay()
       expect(debtToPay).to.equal(bootstrapLoan - value)
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
@@ -603,7 +611,7 @@ describe("PCV", () => {
 
       const value = to1e18("1000")
       await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       const balanceAfter = await musdSavingsRateMock.getBalance()
 
@@ -613,7 +621,7 @@ describe("PCV", () => {
       expect(balanceAfter).to.equal(balanceBefore)
     })
 
-    it("sends the specified percentage to another recipient and uses the rest to pay the active protocol bootstrap loan", async () => {
+    it("sends the specified percentage to fee recipient and uses the rest to pay the active protocol bootstrap loan", async () => {
       const split = 50n
       await contracts.pcv
         .connect(council.wallet)
@@ -624,7 +632,7 @@ describe("PCV", () => {
 
       const value = to1e18("1000")
       await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       const balanceAfter = await musdSavingsRateMock.getBalance()
 
@@ -647,7 +655,7 @@ describe("PCV", () => {
       const value = to1e18("1000")
       const debtBefore = await contracts.pcv.debtToPay()
       await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       const balanceAfter = await musdSavingsRateMock.getBalance()
 
@@ -663,13 +671,15 @@ describe("PCV", () => {
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
     })
 
-    it("sends remaining fees to the StabilityPool if called with a value greater than the remaining protocol bootstrap loan", async () => {
+    it("sends remaining fees to the StabilityPool", async () => {
       // pay down all but 5 musd of the debt
       const debtToPay = await contracts.pcv.debtToPay()
       const debtToLeaveRemaining = to1e18("5")
       const value = debtToPay - debtToLeaveRemaining
       await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+      // No fee recipient set, will use all MUSD fees to pay back the debt
+      // `debtToLeaveRemaining` of debt is left after this call.
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       await contracts.pcv
         .connect(council.wallet)
@@ -679,7 +689,11 @@ describe("PCV", () => {
       await updateStabilityPoolSnapshot(contracts, state, "before")
 
       await contracts.musd.unprotectedMint(addresses.pcv, to1e18("20"))
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(to1e18("20"))
+      // 20 MUSD as fees generated; 50%, so 10MUSD goes to the fee recipient -
+      // the `musdSavingsRateMock`. The remaining 10 MUSD is split, 5 MUSD to
+      // pay back the `debtToLeaveRemaining` and extra 5 is deposited to the
+      // StabilityPool.
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
       const balanceAfter = await musdSavingsRateMock.getBalance()
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -699,7 +713,7 @@ describe("PCV", () => {
 
       const value = 1n
       await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(value)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       const balanceAfter = await musdSavingsRateMock.getBalance()
 
@@ -714,7 +728,7 @@ describe("PCV", () => {
     it("sends all fees to the StabilityPool if the protocol bootstrap loan is repaid and no recipient is set", async () => {
       // pay down the bootstrap loan
       await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(bootstrapLoan)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       // simulate fees
       const protocolFees = to1e18("10")
@@ -722,7 +736,7 @@ describe("PCV", () => {
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
       // trigger fee distribution
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(protocolFees)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
@@ -739,7 +753,7 @@ describe("PCV", () => {
 
       // paydown the bootstrap loan
       await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(bootstrapLoan)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       // simulate fees
       const protocolFees = to1e18("10")
@@ -747,7 +761,7 @@ describe("PCV", () => {
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
       // trigger fee distribution
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(protocolFees)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
@@ -759,7 +773,7 @@ describe("PCV", () => {
     it("sends the specified percentage to another recipient and deposits the rest in the StabilityPool when the protocol bootstrap loan is repaid", async () => {
       // paydown the bootstrap loan
       await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(bootstrapLoan)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
 
       // set recipient and split
       const feeSplit = 20n
@@ -775,7 +789,7 @@ describe("PCV", () => {
 
       await updateStabilityPoolSnapshot(contracts, state, "before")
       // trigger fee distribution
-      await contracts.pcv.connect(treasury.wallet).distributeMUSD(protocolFees)
+      await contracts.pcv.connect(treasury.wallet).distributeMUSD()
       await updateStabilityPoolSnapshot(contracts, state, "after")
       const balanceAfter = await musdSavingsRateMock.getBalance()
 
@@ -794,8 +808,8 @@ describe("PCV", () => {
         const musdBalanceBefore = await contracts.musd.balanceOf(addresses.pcv)
         const debtToPayBefore = await contracts.pcv.debtToPay()
 
-        // Try to distribute 1 token when balance is 0
-        await contracts.pcv.connect(council.wallet).distributeMUSD(1n)
+        // There is nothing to distribute
+        await contracts.pcv.connect(council.wallet).distributeMUSD()
 
         // Verify nothing changed
         const musdBalanceAfter = await contracts.musd.balanceOf(addresses.pcv)
