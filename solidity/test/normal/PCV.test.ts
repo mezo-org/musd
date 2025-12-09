@@ -217,9 +217,12 @@ describe("PCV", () => {
   })
 
   describe("depositToStabilityPool()", () => {
-    it("deposits additional mUSD to StabilityPool from PCV", async () => {
+    it("deposits additional mUSD to StabilityPool via PCV", async () => {
       const depositAmount = to1e18("20")
-      await contracts.musd.unprotectedMint(addresses.pcv, depositAmount)
+      await contracts.musd.unprotectedMint(deployer.address, depositAmount)
+      await contracts.musd
+        .connect(deployer.wallet)
+        .approve(addresses.pcv, depositAmount)
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
@@ -229,7 +232,7 @@ describe("PCV", () => {
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
-      expect(state.pcv.musd.before).to.equal(depositAmount)
+      expect(state.pcv.musd.before).to.equal(0)
       expect(state.pcv.musd.after).to.equal(0)
       expect(state.stabilityPool.musd.before).to.equal(bootstrapLoan)
       expect(state.stabilityPool.musd.after).to.equal(
@@ -250,12 +253,6 @@ describe("PCV", () => {
         await expect(PCVDeployer.depositToStabilityPool(0n)).to.be.revertedWith(
           "StabilityPool: Amount must be non-zero",
         )
-      })
-
-      it("reverts when not enough mUSD", async () => {
-        await expect(
-          PCVDeployer.depositToStabilityPool(bootstrapLoan + 1n),
-        ).to.be.revertedWith("PCV: not enough tokens")
       })
     })
   })
@@ -467,7 +464,10 @@ describe("PCV", () => {
 
       // simulate the accrual of mUSD StabilityPool deposits from fees
       const accruedFees = to1e18("10,000,000")
-      await contracts.musd.unprotectedMint(addresses.pcv, accruedFees)
+      await contracts.musd.unprotectedMint(deployer.address, accruedFees)
+      await contracts.musd
+        .connect(deployer.wallet)
+        .approve(addresses.pcv, accruedFees)
       await PCVDeployer.depositToStabilityPool(accruedFees)
 
       // StablityPool mUSD decreases
@@ -1091,7 +1091,6 @@ describe("PCV", () => {
       expect(pcvBalance).to.equal(0n)
       let treasuryBalance = await ethers.provider.getBalance(treasury.address)
 
-
       // check state assumptions before
       await updateWalletSnapshot(contracts, treasury, "before")
       await updatePCVSnapshot(contracts, state, "before")
@@ -1117,9 +1116,7 @@ describe("PCV", () => {
 
       await contracts.musd
         .connect(treasury.wallet)
-        .transfer(await contracts.pcv.getAddress(), value)
-
-      // redeposit mUSD to PCV
+        .approve(addresses.pcv, value)
       await contracts.pcv.connect(treasury.wallet).depositToStabilityPool(value)
 
       // check state assumptions after

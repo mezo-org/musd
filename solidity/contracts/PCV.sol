@@ -15,7 +15,7 @@ import "./interfaces/IMUSDSavingsRate.sol";
 import "./interfaces/IBTCFeeRecipient.sol";
 
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IMUSD;
 
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
 
@@ -102,7 +102,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         debtToPay = BOOTSTRAP_LOAN;
         isInitialized = true;
         borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
-        depositToStabilityPool(BOOTSTRAP_LOAN);
+        _depositToStabilityPool(BOOTSTRAP_LOAN);
     }
 
     function setFeeRecipient(
@@ -237,7 +237,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         _repayDebt(protocolLoanRepayment);
 
         if (stabilityPoolDeposit > 0) {
-            depositToStabilityPool(stabilityPoolDeposit);
+            _depositToStabilityPool(stabilityPoolDeposit);
         }
 
         if (feeRecipient != address(0) && distributedFees > 0) {
@@ -310,14 +310,12 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     function depositToStabilityPool(
         uint256 _amount
     ) public onlyOwnerOrCouncilOrTreasury {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-        require(
-            musd.approve(borrowerOperations.stabilityPoolAddress(), _amount),
-            "PCV: Approval failed"
-        );
+        musd.safeTransferFrom(msg.sender, address(this), _amount);
+        _depositToStabilityPool(_amount);
+    }
+
+    function _depositToStabilityPool(uint256 _amount) internal {
+        musd.forceApprove(borrowerOperations.stabilityPoolAddress(), _amount);
 
         IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
             _amount
@@ -350,7 +348,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
         // Send excess MUSD to recipient (after debt repayment)
         if (excessMusd > 0) {
-            IERC20(address(musd)).safeTransfer(_recipient, excessMusd);
+            musd.safeTransfer(_recipient, excessMusd);
         }
 
         // slither-disable-next-line reentrancy-events
