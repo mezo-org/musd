@@ -461,37 +461,11 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
         .withArgs(alice.address)
     })
 
-    it("addRecipientsToWhitelist(): reverts when caller is not owner", async () => {
-      await expect(
-        contracts.pcv
-          .connect(alice.wallet)
-          .addRecipientsToWhitelist([bob.address]),
-      )
-        .to.be.revertedWithCustomError(
-          contracts.pcv,
-          "OwnableUnauthorizedAccount",
-        )
-        .withArgs(alice.address)
-    })
-
     it("removeRecipientFromWhitelist(): reverts when caller is not owner", async () => {
       await expect(
         contracts.pcv
           .connect(alice.wallet)
           .removeRecipientFromWhitelist(alice.address),
-      )
-        .to.be.revertedWithCustomError(
-          contracts.pcv,
-          "OwnableUnauthorizedAccount",
-        )
-        .withArgs(alice.address)
-    })
-
-    it("removeRecipientsFromWhitelist(): reverts when caller is not owner", async () => {
-      await expect(
-        contracts.pcv
-          .connect(alice.wallet)
-          .removeRecipientsFromWhitelist([alice.address]),
       )
         .to.be.revertedWithCustomError(
           contracts.pcv,

@@ -74,11 +74,13 @@ describe("PCV", () => {
 
     await contracts.pcv
       .connect(deployer.wallet)
-      .addRecipientsToWhitelist([
-        alice.address,
-        council.address,
-        treasury.address,
-      ])
+      .addRecipientToWhitelist(alice.address)
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .addRecipientToWhitelist(council.address)
+    await contracts.pcv
+      .connect(deployer.wallet)
+      .addRecipientToWhitelist(treasury.address)
 
     delay = await contracts.pcv.governanceTimeDelay()
 
@@ -804,25 +806,12 @@ describe("PCV", () => {
     })
   })
 
-  describe("addRecipientToWhitelist() / addRecipientsToWhitelist()", () => {
+  describe("addRecipientToWhitelist()", () => {
     it("adds new recipient to the whitelist", async () => {
       await PCVDeployer.addRecipientToWhitelist(bob.address)
       expect(await contracts.pcv.recipientsWhitelist(bob.address)).to.equal(
         true,
       )
-    })
-
-    it("adds new recipients to the whitelist", async () => {
-      await PCVDeployer.addRecipientsToWhitelist([
-        bob.address,
-        deployer.address,
-      ])
-      expect(await contracts.pcv.recipientsWhitelist(bob.address)).to.equal(
-        true,
-      )
-      expect(
-        await contracts.pcv.recipientsWhitelist(deployer.address),
-      ).to.equal(true)
     })
 
     context("Expected Reverts", () => {
@@ -833,34 +822,13 @@ describe("PCV", () => {
           "PCV: Recipient has already been added to whitelist",
         )
       })
-
-      it("reverts when address is already in the whitelist", async () => {
-        await expect(
-          PCVDeployer.addRecipientsToWhitelist([alice.address, bob.address]),
-        ).to.be.revertedWith(
-          "PCV: Recipient has already been added to whitelist",
-        )
-      })
     })
   })
 
-  describe("removeRecipientFromWhitelist() / removeRecipientsFromWhitelist()", () => {
+  describe("removeRecipientFromWhitelist()", () => {
     it("removes recipient from the whitelist", async () => {
       await PCVDeployer.removeRecipientFromWhitelist(alice.address)
       expect(await contracts.pcv.recipientsWhitelist(alice.address)).to.equal(
-        false,
-      )
-    })
-
-    it("removes recipients from the whitelist", async () => {
-      await PCVDeployer.removeRecipientsFromWhitelist([
-        alice.address,
-        council.address,
-      ])
-      expect(await contracts.pcv.recipientsWhitelist(alice.address)).to.equal(
-        false,
-      )
-      expect(await contracts.pcv.recipientsWhitelist(council.address)).to.equal(
         false,
       )
     })
@@ -869,15 +837,6 @@ describe("PCV", () => {
       it("reverts when address is not in the whitelist", async () => {
         await expect(
           PCVDeployer.removeRecipientFromWhitelist(bob.address),
-        ).to.be.revertedWith("PCV: Recipient is not in whitelist")
-      })
-
-      it("reverts when address is not in the whitelist", async () => {
-        await expect(
-          PCVDeployer.removeRecipientsFromWhitelist([
-            alice.address,
-            bob.address,
-          ]),
         ).to.be.revertedWith("PCV: Recipient is not in whitelist")
       })
     })

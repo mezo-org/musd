@@ -145,30 +145,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeSplitSet(_feeSplitPercentage);
     }
 
-    function addRecipientsToWhitelist(
-        address[] calldata _recipients
-    ) external override onlyOwner {
-        require(
-            _recipients.length > 0,
-            "PCV: Recipients array must not be empty"
-        );
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            addRecipientToWhitelist(_recipients[i]);
-        }
-    }
-
-    function removeRecipientsFromWhitelist(
-        address[] calldata _recipients
-    ) external override onlyOwner {
-        require(
-            _recipients.length > 0,
-            "PCV: Recipients array must not be empty"
-        );
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            removeRecipientFromWhitelist(_recipients[i]);
-        }
-    }
-
     function startChangingRoles(
         address _council,
         address _treasury

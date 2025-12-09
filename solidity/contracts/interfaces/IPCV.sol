@@ -56,13 +56,7 @@ interface IPCV {
 
     function addRecipientToWhitelist(address _recipient) external;
 
-    function addRecipientsToWhitelist(address[] calldata _recipients) external;
-
     function removeRecipientFromWhitelist(address _recipient) external;
-
-    function removeRecipientsFromWhitelist(
-        address[] calldata _recipients
-    ) external;
 
     function startChangingRoles(address _council, address _treasury) external;
 
