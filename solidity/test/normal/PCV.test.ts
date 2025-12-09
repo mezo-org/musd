@@ -20,7 +20,7 @@ import {
 } from "../helpers"
 import { to1e18 } from "../utils"
 import { ZERO_ADDRESS } from "../../helpers/constants"
-import { PCV, MUSDSavingsRateMock } from "../../typechain"
+import { PCV, MUSDSavingsRateMock, BTCFeeRecipientMock } from "../../typechain"
 
 describe("PCV", () => {
   let addresses: TestingAddresses
@@ -38,6 +38,7 @@ describe("PCV", () => {
 
   let PCVDeployer: PCV
   let musdSavingsRateMock: MUSDSavingsRateMock
+  let btcRecipientMock: BTCFeeRecipientMock
 
   async function debtPaid() {
     const debtToPay = await contracts.pcv.debtToPay()
@@ -88,6 +89,12 @@ describe("PCV", () => {
     musdSavingsRateMock = await MUSDSavingsRateMockFactory.deploy(
       addresses.musd,
     )
+
+    // Deploy BTCFeeRecipientMock for BTC yield testing
+    const BTCFeeRecipientMockFactory = await ethers.getContractFactory(
+      "BTCFeeRecipientMock",
+    )
+    btcRecipientMock = await BTCFeeRecipientMockFactory.deploy()
   })
 
   describe("initializeDebt()", () => {
@@ -780,11 +787,19 @@ describe("PCV", () => {
       )
     })
 
-    context("Expected Reverts", () => {
-      it("reverts when not enough tokens to burn", async () => {
-        await expect(
-          contracts.pcv.connect(council.wallet).distributeMUSD(1n),
-        ).to.be.revertedWith("PCV: not enough tokens")
+    context("Expected Behavior", () => {
+      it("does nothing when not enough tokens to distribute (bot-friendly)", async () => {
+        const musdBalanceBefore = await contracts.musd.balanceOf(addresses.pcv)
+        const debtToPayBefore = await contracts.pcv.debtToPay()
+
+        // Try to distribute 1 token when balance is 0
+        await contracts.pcv.connect(council.wallet).distributeMUSD(1n)
+
+        // Verify nothing changed
+        const musdBalanceAfter = await contracts.musd.balanceOf(addresses.pcv)
+        const debtToPayAfter = await contracts.pcv.debtToPay()
+        expect(musdBalanceAfter).to.equal(musdBalanceBefore)
+        expect(debtToPayAfter).to.equal(debtToPayBefore)
       })
     })
   })
@@ -868,7 +883,7 @@ describe("PCV", () => {
     })
   })
 
-  describe("withdrawCollateral()", () => {
+  describe("withdrawBTC()", () => {
     it("withdraws BTC to recipient when there is a protocol loan", async () => {
       const value = to1e18("20")
       await updateWalletSnapshot(contracts, alice, "before")
@@ -879,7 +894,7 @@ describe("PCV", () => {
       })
       await contracts.pcv
         .connect(council.wallet)
-        .withdrawCollateral(alice.address, value)
+        .withdrawBTC(alice.address, value)
       await updateWalletSnapshot(contracts, alice, "after")
       expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
       expect(alice.btc.after - alice.btc.before).to.equal(value)
@@ -896,7 +911,7 @@ describe("PCV", () => {
       })
       await contracts.pcv
         .connect(council.wallet)
-        .withdrawCollateral(alice.address, value)
+        .withdrawBTC(alice.address, value)
       await updateWalletSnapshot(contracts, alice, "after")
       expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
       expect(alice.btc.after - alice.btc.before).to.equal(value)
@@ -912,15 +927,15 @@ describe("PCV", () => {
       const withdrawAmount = to1e18("1")
       // make sure funds cant be withdrawn to bob
       await expect(
-        PCVDeployer.withdrawCollateral(bob.address, withdrawAmount),
+        PCVDeployer.withdrawBTC(bob.address, withdrawAmount),
       ).to.be.revertedWith("PCV: recipient must be in whitelist")
 
       // add bob as the recipient
       await PCVDeployer.addRecipientToWhitelist(addresses.bob)
       await updateWalletSnapshot(contracts, bob, "before")
 
-      // withdraw collatearl
-      await PCVDeployer.withdrawCollateral(bob.address, withdrawAmount)
+      // withdraw collateral
+      await PCVDeployer.withdrawBTC(bob.address, withdrawAmount)
 
       await updateWalletSnapshot(contracts, bob, "after")
 
@@ -938,7 +953,7 @@ describe("PCV", () => {
       })
       const tx = await contracts.pcv
         .connect(council.wallet)
-        .withdrawCollateral(alice.address, value)
+        .withdrawBTC(alice.address, value)
 
       const { recipient, collateralAmount } =
         await getEmittedWithdrawCollateralValues(tx)
@@ -952,16 +967,14 @@ describe("PCV", () => {
         await expect(
           contracts.pcv
             .connect(treasury.wallet)
-            .withdrawCollateral(bob.address, bootstrapLoan),
+            .withdrawBTC(bob.address, bootstrapLoan),
         ).to.be.revertedWith("PCV: recipient must be in whitelist")
       })
 
       it("reverts if not enough collateral", async () => {
         await debtPaid()
         await expect(
-          contracts.pcv
-            .connect(treasury.wallet)
-            .withdrawCollateral(alice.address, 1n),
+          contracts.pcv.connect(treasury.wallet).withdrawBTC(alice.address, 1n),
         ).to.be.revertedWith("Sending BTC failed")
       })
     })
@@ -1067,7 +1080,7 @@ describe("PCV", () => {
       // call to withdraw BTC from PCV to treasury
       await contracts.pcv
         .connect(treasury.wallet)
-        .withdrawCollateral(treasury.address, pcvBalance)
+        .withdrawBTC(treasury.address, pcvBalance)
       pcvBalance = await ethers.provider.getBalance(addresses.pcv)
       expect(pcvBalance).to.equal(0n)
 
@@ -1098,6 +1111,280 @@ describe("PCV", () => {
       )
       expect(state.pcv.collateral.after).to.equal(0n)
       expect(state.pcv.musd.after).to.equal(state.pcv.musd.before) // note there are mint fees in here
+    })
+  })
+
+  describe("setBTCRecipient()", () => {
+    it("sets BTC yield converter address", async () => {
+      const converterAddress = await btcRecipientMock.getAddress()
+      await contracts.pcv
+        .connect(council.wallet)
+        .setBTCRecipient(converterAddress)
+      expect(await contracts.pcv.btcRecipient()).to.equal(converterAddress)
+    })
+
+    it("emits BTCRecipientSet event", async () => {
+      const converterAddress = await btcRecipientMock.getAddress()
+      await expect(
+        contracts.pcv.connect(council.wallet).setBTCRecipient(converterAddress),
+      )
+        .to.emit(contracts.pcv, "BTCRecipientSet")
+        .withArgs(converterAddress)
+    })
+
+    it("can be called by owner", async () => {
+      const converterAddress = await btcRecipientMock.getAddress()
+      await PCVDeployer.setBTCRecipient(converterAddress)
+      expect(await contracts.pcv.btcRecipient()).to.equal(converterAddress)
+    })
+
+    it("can be called by treasury", async () => {
+      const converterAddress = await btcRecipientMock.getAddress()
+      await contracts.pcv
+        .connect(treasury.wallet)
+        .setBTCRecipient(converterAddress)
+      expect(await contracts.pcv.btcRecipient()).to.equal(converterAddress)
+    })
+
+    it("allows updating to a new converter address", async () => {
+      const converterAddress = await btcRecipientMock.getAddress()
+      await PCVDeployer.setBTCRecipient(converterAddress)
+
+      // Deploy a second mock
+      const BTCFeeRecipientMockFactory = await ethers.getContractFactory(
+        "BTCFeeRecipientMock",
+      )
+      const secondMock = await BTCFeeRecipientMockFactory.deploy()
+      const secondAddress = await secondMock.getAddress()
+
+      await PCVDeployer.setBTCRecipient(secondAddress)
+      expect(await contracts.pcv.btcRecipient()).to.equal(secondAddress)
+    })
+
+    context("Expected Reverts", () => {
+      it("reverts when setting zero address", async () => {
+        await expect(
+          PCVDeployer.setBTCRecipient(ZERO_ADDRESS),
+        ).to.be.revertedWith("PCV: BTC recipient cannot be the zero address.")
+      })
+
+      it("reverts when called by non-authorized user", async () => {
+        const converterAddress = await btcRecipientMock.getAddress()
+        await expect(
+          contracts.pcv.connect(alice.wallet).setBTCRecipient(converterAddress),
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+      })
+
+      it("allows setting to a non-contract address (no validation)", async () => {
+        // Note: The current implementation does not validate if the address is a contract
+        // This could be a security concern in production
+        await PCVDeployer.setBTCRecipient(alice.address)
+        expect(await contracts.pcv.btcRecipient()).to.equal(alice.address)
+      })
+    })
+  })
+
+  describe("distributeBTC()", () => {
+    beforeEach(async () => {
+      // Set up the BTC yield converter
+      const converterAddress = await btcRecipientMock.getAddress()
+      await PCVDeployer.setBTCRecipient(converterAddress)
+      await btcRecipientMock.reset()
+    })
+
+    it("distributes BTC collateral to yield converter", async () => {
+      const btcAmount = to1e18("10")
+
+      // Send BTC to PCV
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      const converterBalanceBefore = await ethers.provider.getBalance(
+        await btcRecipientMock.getAddress(),
+      )
+
+      await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+      const converterBalanceAfter = await ethers.provider.getBalance(
+        await btcRecipientMock.getAddress(),
+      )
+
+      expect(converterBalanceAfter - converterBalanceBefore).to.equal(btcAmount)
+      expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
+    })
+
+    it("calls receiveProtocolYieldInBTC with correct amount", async () => {
+      const btcAmount = to1e18("5")
+
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      await contracts.pcv.connect(council.wallet).distributeBTC()
+
+      expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
+      expect(await btcRecipientMock.callCount()).to.equal(1n)
+    })
+
+    it("emits PCVDistributionBTC event with correct values", async () => {
+      const btcAmount = to1e18("3")
+
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      const converterAddress = await btcRecipientMock.getAddress()
+
+      await expect(contracts.pcv.connect(treasury.wallet).distributeBTC())
+        .to.emit(contracts.pcv, "PCVDistributionBTC")
+        .withArgs(converterAddress, btcAmount)
+    })
+
+    it("can be called by owner", async () => {
+      const btcAmount = to1e18("1")
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      await PCVDeployer.distributeBTC()
+      expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
+    })
+
+    it("can be called by council", async () => {
+      const btcAmount = to1e18("2")
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      await contracts.pcv.connect(council.wallet).distributeBTC()
+      expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
+    })
+
+    it("distributes all available collateral", async () => {
+      const btcAmount1 = to1e18("5")
+      const btcAmount2 = to1e18("3")
+
+      // Send BTC in two transactions
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount1,
+      })
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount2,
+      })
+
+      await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+      const totalBTC = btcAmount1 + btcAmount2
+      expect(await btcRecipientMock.totalBTCReceived()).to.equal(totalBTC)
+      expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
+    })
+
+    it("can be called multiple times", async () => {
+      const btcAmount1 = to1e18("4")
+      const btcAmount2 = to1e18("6")
+
+      // First distribution
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount1,
+      })
+      await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+      // Second distribution
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount2,
+      })
+      await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+      expect(await btcRecipientMock.totalBTCReceived()).to.equal(
+        btcAmount1 + btcAmount2,
+      )
+      expect(await btcRecipientMock.callCount()).to.equal(2n)
+    })
+
+    context("Expected Behavior", () => {
+      it("does nothing when no collateral to distribute (bot-friendly)", async () => {
+        const pcvBalanceBefore = await ethers.provider.getBalance(addresses.pcv)
+        const converterBalanceBefore = await ethers.provider.getBalance(
+          await btcRecipientMock.getAddress(),
+        )
+
+        // Try to distribute when balance is 0
+        await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+        // Verify nothing changed
+        const pcvBalanceAfter = await ethers.provider.getBalance(addresses.pcv)
+        const converterBalanceAfter = await ethers.provider.getBalance(
+          await btcRecipientMock.getAddress(),
+        )
+        expect(pcvBalanceAfter).to.equal(pcvBalanceBefore)
+        expect(converterBalanceAfter).to.equal(converterBalanceBefore)
+        expect(await btcRecipientMock.callCount()).to.equal(0n)
+      })
+
+      it("reverts when BTC yield converter is not set", async () => {
+        // Deploy a fresh PCV without converter
+        const PCVFactory = await ethers.getContractFactory("PCV")
+        const ERC1967ProxyFactory =
+          await ethers.getContractFactory("ERC1967Proxy")
+        const pcvImplementation = await PCVFactory.deploy()
+        const initializeData = pcvImplementation.interface.encodeFunctionData(
+          "initialize",
+          [delay],
+        )
+        const pcvProxy = await ERC1967ProxyFactory.deploy(
+          await pcvImplementation.getAddress(),
+          initializeData,
+        )
+        const freshPCV = PCVFactory.attach(
+          await pcvProxy.getAddress(),
+        ) as unknown as PCV
+
+        const btcAmount = to1e18("1")
+        await deployer.wallet.sendTransaction({
+          to: await freshPCV.getAddress(),
+          value: btcAmount,
+        })
+
+        await expect(
+          freshPCV.connect(deployer.wallet).distributeBTC(),
+        ).to.be.revertedWith("PCV: BTC recipient not set")
+      })
+
+      it("reverts when called by non-authorized user", async () => {
+        const btcAmount = to1e18("1")
+        await deployer.wallet.sendTransaction({
+          to: addresses.pcv,
+          value: btcAmount,
+        })
+
+        await expect(
+          contracts.pcv.connect(alice.wallet).distributeBTC(),
+        ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+      })
+
+      it("reverts when converter callback fails", async () => {
+        await btcRecipientMock.setShouldRevert(true)
+
+        const btcAmount = to1e18("1")
+        await deployer.wallet.sendTransaction({
+          to: addresses.pcv,
+          value: btcAmount,
+        })
+
+        await expect(
+          contracts.pcv.connect(treasury.wallet).distributeBTC(),
+        ).to.be.revertedWith("BTCFeeRecipientMock: forced revert")
+      })
     })
   })
 })

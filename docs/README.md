@@ -120,6 +120,12 @@ The PCV contract has the ability to distribute the MUSD that it accrues from int
 
 The `feeRecipient` address (MUSD Savings Rate vault) and `feeSplitPercentage` in the PCV contract can be changed via governance.
 
+#### Distribution of BTC
+
+The PCV contract has the ability to distribute `BTC` that it accrues from redemption actions. The `btcRecipient` address
+is the address that will receive the BTC and handle it according to its implementation, e.g. convert it to another asset such as
+`MUSD`. Collateral (`BTC`) was not directly used for loan repayment. It can be withdrawn from the PCV contract and distributed in a form of `MUSD` which is used for loan repayment.
+
 #### Withdrawing MUSD
 
 Withdrawing MUSD from the PCV contract is different to distributing MUSD. The call to withdraw MUSD can only be called after the protocol loan has been repaid. This withdraws MUSD to the contract owner, council or treasury address rather than the fee recipient address.

@@ -11,6 +11,7 @@ import "./dependencies/SendCollateral.sol";
 import "./interfaces/IPCV.sol";
 import "./token/IMUSD.sol";
 import "./interfaces/IMUSDSavingsRate.sol";
+import "./interfaces/IBTCFeeRecipient.sol";
 
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
@@ -36,6 +37,8 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     address public feeRecipient; // MUSD savings rate address
     uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
     uint8 public constant PERCENT_MAX = 100;
+
+    address public btcRecipient; // Tigris BTC to MUSD converter address
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -110,6 +113,17 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeRecipientSet(_feeRecipient);
     }
 
+    function setBTCRecipient(
+        address _btcRecipient
+    ) external onlyOwnerOrCouncilOrTreasury {
+        require(
+            _btcRecipient != address(0),
+            "PCV: BTC recipient cannot be the zero address."
+        );
+        btcRecipient = _btcRecipient;
+        emit BTCRecipientSet(_btcRecipient);
+    }
+
     /// @notice Set the fee split percentage
     /// @param _feeSplitPercentage The fee split percentage
     /// @dev The fee split percentage must be between 0 and 100,
@@ -134,10 +148,13 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     function distributeMUSD(
         uint256 _amount
     ) external override onlyOwnerOrCouncilOrTreasury {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
+        uint256 musdBalance = musd.balanceOf(address(this));
+        // If there are not enough tokens to distribute, do nothing.
+        // This approach is less descriptive but more bot friendly which in case
+        // of this function is more appropriate.
+        if (musdBalance < _amount) {
+            return;
+        }
 
         uint256 distributedFees = (_amount * feeSplitPercentage) / PERCENT_MAX;
         uint256 protocolLoanRepayment = _amount - distributedFees;
@@ -169,6 +186,25 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         }
     }
 
+    function distributeBTC() external override onlyOwnerOrCouncilOrTreasury {
+        uint256 collateralAmount = address(this).balance;
+        // If there are not enough collateral to distribute, do nothing.
+        // This approach is less descriptive but more bot friendly which in case
+        // of this function is more appropriate.
+        if (collateralAmount == 0) {
+            return;
+        }
+
+        require(btcRecipient != address(0), "PCV: BTC recipient not set");
+
+        _sendCollateral(btcRecipient, collateralAmount);
+        IBTCFeeRecipient(btcRecipient).receiveProtocolYieldInBTC(
+            collateralAmount
+        );
+        // slither-disable-next-line reentrancy-events
+        emit PCVDistributionBTC(btcRecipient, collateralAmount);
+    }
+
     function withdrawMUSD(
         address _recipient,
         uint256 _amount
@@ -188,7 +224,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit MUSDWithdraw(_recipient, _amount);
     }
 
-    function withdrawCollateral(
+    function withdrawBTC(
         address _recipient,
         uint256 _collateralAmount
     )

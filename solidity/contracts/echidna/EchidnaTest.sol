@@ -817,7 +817,7 @@ contract EchidnaTest {
     }
 
     function withdrawCollateralExt(uint _amount) external {
-        pcv.withdrawCollateral(msg.sender, _amount);
+        pcv.withdrawBTC(msg.sender, _amount);
     }
 
     function withdrawMUSDExt(uint _amount) external {
