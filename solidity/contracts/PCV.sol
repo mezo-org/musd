@@ -145,6 +145,96 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit FeeSplitSet(_feeSplitPercentage);
     }
 
+    function addRecipientsToWhitelist(
+        address[] calldata _recipients
+    ) external override onlyOwner {
+        require(
+            _recipients.length > 0,
+            "PCV: Recipients array must not be empty"
+        );
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            addRecipientToWhitelist(_recipients[i]);
+        }
+    }
+
+    function removeRecipientsFromWhitelist(
+        address[] calldata _recipients
+    ) external override onlyOwner {
+        require(
+            _recipients.length > 0,
+            "PCV: Recipients array must not be empty"
+        );
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            removeRecipientFromWhitelist(_recipients[i]);
+        }
+    }
+
+    function startChangingRoles(
+        address _council,
+        address _treasury
+    ) external override onlyOwner {
+        require(
+            _council != council || _treasury != treasury,
+            "PCV: these roles already set"
+        );
+
+        // solhint-disable-next-line not-rely-on-time
+        changingRolesInitiated = block.timestamp;
+        if (council == address(0) && treasury == address(0)) {
+            // solhint-disable-next-line not-rely-on-time
+            changingRolesInitiated -= governanceTimeDelay; // skip delay if no roles set
+        }
+        pendingCouncilAddress = _council;
+        pendingTreasuryAddress = _treasury;
+    }
+
+    function cancelChangingRoles() external override onlyOwner {
+        require(changingRolesInitiated != 0, "PCV: Change not initiated");
+
+        changingRolesInitiated = 0;
+        pendingCouncilAddress = address(0);
+        pendingTreasuryAddress = address(0);
+    }
+
+    function finalizeChangingRoles() external override onlyOwner {
+        require(changingRolesInitiated > 0, "PCV: Change not initiated");
+        require(
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp >= changingRolesInitiated + governanceTimeDelay,
+            "PCV: Governance delay has not elapsed"
+        );
+
+        council = pendingCouncilAddress;
+        treasury = pendingTreasuryAddress;
+        emit RolesSet(council, treasury);
+
+        changingRolesInitiated = 0;
+        pendingCouncilAddress = address(0);
+        pendingTreasuryAddress = address(0);
+    }
+
+    function addRecipientToWhitelist(
+        address _recipient
+    ) public override onlyOwner {
+        require(
+            !recipientsWhitelist[_recipient],
+            "PCV: Recipient has already been added to whitelist"
+        );
+        recipientsWhitelist[_recipient] = true;
+        emit RecipientAdded(_recipient);
+    }
+
+    function removeRecipientFromWhitelist(
+        address _recipient
+    ) public override onlyOwner {
+        require(
+            recipientsWhitelist[_recipient],
+            "PCV: Recipient is not in whitelist"
+        );
+        recipientsWhitelist[_recipient] = false;
+        emit RecipientRemoved(_recipient);
+    }
+
     function distributeMUSD(
         uint256 _amount
     ) external override onlyOwnerOrCouncilOrTreasury {
@@ -237,96 +327,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
         // slither-disable-next-line reentrancy-events
         emit CollateralWithdraw(_recipient, _collateralAmount);
-    }
-
-    function addRecipientsToWhitelist(
-        address[] calldata _recipients
-    ) external override onlyOwner {
-        require(
-            _recipients.length > 0,
-            "PCV: Recipients array must not be empty"
-        );
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            addRecipientToWhitelist(_recipients[i]);
-        }
-    }
-
-    function removeRecipientsFromWhitelist(
-        address[] calldata _recipients
-    ) external override onlyOwner {
-        require(
-            _recipients.length > 0,
-            "PCV: Recipients array must not be empty"
-        );
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            removeRecipientFromWhitelist(_recipients[i]);
-        }
-    }
-
-    function startChangingRoles(
-        address _council,
-        address _treasury
-    ) external override onlyOwner {
-        require(
-            _council != council || _treasury != treasury,
-            "PCV: these roles already set"
-        );
-
-        // solhint-disable-next-line not-rely-on-time
-        changingRolesInitiated = block.timestamp;
-        if (council == address(0) && treasury == address(0)) {
-            // solhint-disable-next-line not-rely-on-time
-            changingRolesInitiated -= governanceTimeDelay; // skip delay if no roles set
-        }
-        pendingCouncilAddress = _council;
-        pendingTreasuryAddress = _treasury;
-    }
-
-    function cancelChangingRoles() external override onlyOwner {
-        require(changingRolesInitiated != 0, "PCV: Change not initiated");
-
-        changingRolesInitiated = 0;
-        pendingCouncilAddress = address(0);
-        pendingTreasuryAddress = address(0);
-    }
-
-    function finalizeChangingRoles() external override onlyOwner {
-        require(changingRolesInitiated > 0, "PCV: Change not initiated");
-        require(
-            // solhint-disable-next-line not-rely-on-time
-            block.timestamp >= changingRolesInitiated + governanceTimeDelay,
-            "PCV: Governance delay has not elapsed"
-        );
-
-        council = pendingCouncilAddress;
-        treasury = pendingTreasuryAddress;
-        emit RolesSet(council, treasury);
-
-        changingRolesInitiated = 0;
-        pendingCouncilAddress = address(0);
-        pendingTreasuryAddress = address(0);
-    }
-
-    function addRecipientToWhitelist(
-        address _recipient
-    ) public override onlyOwner {
-        require(
-            !recipientsWhitelist[_recipient],
-            "PCV: Recipient has already been added to whitelist"
-        );
-        recipientsWhitelist[_recipient] = true;
-        emit RecipientAdded(_recipient);
-    }
-
-    function removeRecipientFromWhitelist(
-        address _recipient
-    ) public override onlyOwner {
-        require(
-            recipientsWhitelist[_recipient],
-            "PCV: Recipient is not in whitelist"
-        );
-        recipientsWhitelist[_recipient] = false;
-        emit RecipientRemoved(_recipient);
     }
 
     function depositToStabilityPool(
