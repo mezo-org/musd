@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./BorrowerOperations.sol";
 import "./dependencies/CheckContract.sol";
@@ -14,6 +15,8 @@ import "./interfaces/IMUSDSavingsRate.sol";
 import "./interfaces/IBTCFeeRecipient.sol";
 
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
+    using SafeERC20 for IERC20;
+
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
 
     uint256 public governanceTimeDelay;
@@ -325,8 +328,9 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     }
 
     function withdrawFromStabilityPool(
-        uint256 _amount
-    ) public onlyOwnerOrCouncilOrTreasury {
+        uint256 _amount,
+        address _recipient
+    ) public onlyOwnerOrCouncilOrTreasury onlyWhitelistedRecipient(_recipient) {
         uint256 collateralBefore = address(this).balance;
         uint256 musdBefore = musd.balanceOf(address(this));
 
@@ -336,13 +340,24 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint256 collateralChange = address(this).balance - collateralBefore;
         uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
 
-        _repayDebt(musdChange);
+        uint256 debtRepayment = _repayDebt(musdChange);
+        uint256 excessMusd = musdChange - debtRepayment;
+
+        // Send BTC collateral to recipient
+        if (collateralChange > 0) {
+            _sendCollateral(_recipient, collateralChange);
+        }
+
+        // Send excess MUSD to recipient (after debt repayment)
+        if (excessMusd > 0) {
+            IERC20(address(musd)).safeTransfer(_recipient, excessMusd);
+        }
 
         // slither-disable-next-line reentrancy-events
         emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 
-    function _repayDebt(uint _repayment) internal {
+    function _repayDebt(uint _repayment) internal returns (uint256) {
         if (_repayment > debtToPay) {
             _repayment = debtToPay;
         }
@@ -353,6 +368,9 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
             // slither-disable-next-line reentrancy-events
             emit PCVDebtPayment(_repayment);
+            return _repayment;
         }
+
+        return 0;
     }
 }

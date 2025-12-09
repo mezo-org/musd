@@ -813,7 +813,7 @@ contract EchidnaTest {
     }
 
     function withdrawFromStabilityPoolExt(uint _amount) external {
-        pcv.withdrawFromStabilityPool(_amount);
+        pcv.withdrawFromStabilityPool(_amount, msg.sender);
     }
 
     function withdrawCollateralExt(uint _amount) external {

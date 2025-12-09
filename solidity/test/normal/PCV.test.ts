@@ -46,6 +46,17 @@ describe("PCV", () => {
     await contracts.pcv.connect(treasury.wallet).distributeMUSD()
   }
 
+  interface Balances {
+    musd: bigint
+    btc: bigint
+  }
+
+  async function getBalances(address: string): Promise<Balances> {
+    const musd = await contracts.musd.balanceOf(address)
+    const btc = await ethers.provider.getBalance(address)
+    return { musd, btc }
+  }
+
   beforeEach(async () => {
     ;({
       alice,
@@ -261,13 +272,19 @@ describe("PCV", () => {
       await createLiquidationEvent(contracts, deployer)
     }
 
-    it("emitts PCVWithdrawSP the correct values", async () => {
+    it("emits PCVWithdrawSP the correct values", async () => {
       await populateStabilityPoolWithBTC()
 
       await updatePCVSnapshot(contracts, state, "before")
 
       const amount = to1e18("1,000")
-      const tx = await PCVDeployer.withdrawFromStabilityPool(amount)
+      const recipientBefore = await getBalances(alice.address)
+      const tx = await PCVDeployer.withdrawFromStabilityPool(
+        amount,
+        alice.address,
+      )
+      const recipientAfter = await getBalances(alice.address)
+
       const { musdAmount, collateralAmount } =
         await getEmittedSPtoPCVWithdrawalValues(tx)
 
@@ -275,7 +292,7 @@ describe("PCV", () => {
 
       expect(musdAmount).to.equal(amount)
       expect(collateralAmount).to.equal(
-        state.pcv.collateral.after - state.pcv.collateral.before,
+        recipientAfter.btc - recipientBefore.btc,
       )
     })
 
@@ -284,9 +301,11 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
-      await PCVDeployer.withdrawFromStabilityPool(1n)
+      await PCVDeployer.withdrawFromStabilityPool(1n, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -294,50 +313,61 @@ describe("PCV", () => {
       expect(state.stabilityPool.collateral.after).to.equal(0n)
       expect(state.pcv.collateral.before).to.equal(0n)
       expect(state.pcv.collateral.after).to.equal(0n)
+      expect(recipientAfter.btc - recipientBefore.btc).to.equal(0)
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(0)
     })
 
-    it("withdraws mUSD and BTC to PCV when requested amount is greater than 0 and a liquidation has occurred", async () => {
+    it("withdraws mUSD and BTC to recipient when requested amount is greater than 0 and a liquidation has occurred", async () => {
       await populateStabilityPoolWithBTC()
 
       // StabilityPool BTC decreases to 0
-      // PCV BTC increases
+      // BTC sent to recipient (alice)
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
-      await PCVDeployer.withdrawFromStabilityPool(1n)
+      await PCVDeployer.withdrawFromStabilityPool(1n, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(state.stabilityPool.collateral.before).to.be.greaterThan(0n)
       expect(state.stabilityPool.collateral.after).to.equal(0n)
       expect(state.pcv.collateral.before).to.equal(0n)
-      expect(state.pcv.collateral.after).to.equal(
+      expect(state.pcv.collateral.after).to.equal(0n)
+      expect(recipientAfter.btc - recipientBefore.btc).to.equal(
         state.stabilityPool.collateral.before,
       )
+      // No MUSD withdrawn as the bootstrap loan needs to be repaid first
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(0)
     })
 
-    it("withdraws BTC to PCV when requested amount is 0 and a liquidation has occurred", async () => {
+    it("withdraws BTC to recipient when requested amount is 0 and a liquidation has occurred", async () => {
       await populateStabilityPoolWithBTC()
 
       // StabilityPool BTC decreases to 0
-      // PCV BTC increases
+      // BTC sent to recipient (alice)
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
-      await PCVDeployer.withdrawFromStabilityPool(0n)
+      await PCVDeployer.withdrawFromStabilityPool(0n, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(state.stabilityPool.collateral.before).to.be.greaterThan(0n)
       expect(state.stabilityPool.collateral.after).to.equal(0n)
       expect(state.pcv.collateral.before).to.equal(0n)
-      expect(state.pcv.collateral.after).to.equal(
+      expect(state.pcv.collateral.after).to.equal(0n)
+      expect(recipientAfter.btc - recipientBefore.btc).to.equal(
         state.stabilityPool.collateral.before,
       )
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(0)
     })
 
     it("withdraws requested amount and makes loan repayment, mUSD checks with protocol bootstrap loan restrictions", async () => {
@@ -349,11 +379,13 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
       const debtToPay = await contracts.pcv.debtToPay()
       const amount = to1e18("20,000")
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -366,6 +398,9 @@ describe("PCV", () => {
 
       const protocolLoanChange = debtToPay - (await contracts.pcv.debtToPay())
       expect(protocolLoanChange).to.equal(amount)
+
+      // No MUSD withdrawn as the bootstrap loan needs to be repaid first
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(0)
     })
 
     it("withdraws entire balance and makes loan repayment if requested amount is greater than the balance, mUSD checks with protocol bootstrap loan restrictions", async () => {
@@ -377,12 +412,14 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
       const roundingError = 100000000n // Rounding error that occurs when there is only one depositor into the StabilityPool withdrawing everything after a liquidation has been taken
       const debtToPay = await contracts.pcv.debtToPay()
       const amount = bootstrapLoan * 2n
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -395,6 +432,8 @@ describe("PCV", () => {
       expect(protocolLoanChange).to.equal(
         state.stabilityPool.musd.before - roundingError,
       ) // note this will be slightly less than the bootstrap loan as part of the bootstrap is used in taking the liquidation
+      // No MUSD withdrawn as the bootstrap loan needs to be repaid first
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(0)
     })
 
     it("has no balance changes if the requested amount is zero, mUSD checks with protocol bootstrap loan restrictions", async () => {
@@ -409,7 +448,7 @@ describe("PCV", () => {
 
       const debtToPay = await contracts.pcv.debtToPay()
       const amount = 0n
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
@@ -423,7 +462,7 @@ describe("PCV", () => {
       expect(protocolLoanChange).to.equal(0n)
     })
 
-    it("withdraws requested amount and makes a loan repayment and keeps the surplus, mUSD checks with protocol bootstrap loan restrictions", async () => {
+    it("withdraws requested amount and makes a loan repayment and sends to recipient, mUSD checks with protocol bootstrap loan restrictions", async () => {
       await populateStabilityPoolWithBTC()
 
       // simulate the accrual of mUSD StabilityPool deposits from fees
@@ -437,12 +476,14 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
       const debtToPay = await contracts.pcv.debtToPay()
       const surplus = to1e18("1,000,000")
       const amount = debtToPay + surplus
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -454,7 +495,8 @@ describe("PCV", () => {
         state.stabilityPool.musd.before - amount,
       )
       expect(state.pcv.musd.before).to.be.greaterThan(0n) // loan issuance fees
-      expect(state.pcv.musd.after).to.equal(state.pcv.musd.before + surplus)
+      expect(state.pcv.musd.after).to.equal(state.pcv.musd.before) // keeps the fees generated
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(surplus) // sends only extra collateral withdrawn from stability pool
 
       expect(await contracts.pcv.debtToPay()).to.equal(0n)
     })
@@ -472,10 +514,12 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
       const amount = to1e18("20,000")
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -484,10 +528,11 @@ describe("PCV", () => {
         state.stabilityPool.musd.before - amount,
       )
       expect(state.pcv.musd.before).to.be.greaterThan(0n) // loan issuance fees
-      expect(state.pcv.musd.after).to.equal(state.pcv.musd.before + amount)
+      expect(state.pcv.musd.after).to.equal(state.pcv.musd.before) // keeps the fees generated
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(amount) // sends only extra MUSD withdrawn from stability pool
     })
 
-    it("withdraws entire balance if requested amount is greater than the balance, mUSD checks with repaid protocol bootstrap loan", async () => {
+    it("withdraws only collateral change if requested amount is greater than the balance, mUSD checks with repaid protocol bootstrap loan", async () => {
       await populateStabilityPoolWithBTC()
       await debtPaid()
 
@@ -500,19 +545,22 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
       const roundingError = 100000000n // Rounding error that occurs when there is only one depositor into the StabilityPool withdrawing everything after a liquidation has been taken
       const amount = bootstrapLoan * 2n
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
       expect(state.stabilityPool.musd.before).to.be.greaterThan(0n)
       expect(state.stabilityPool.musd.after).to.equal(roundingError)
       expect(state.pcv.musd.before).to.be.greaterThan(0n) // loan issuance fees
-      expect(state.pcv.musd.after).to.equal(
-        state.pcv.musd.before + state.stabilityPool.musd.before - roundingError,
+      expect(state.pcv.musd.after).to.equal(state.pcv.musd.before) // keeps the fees generated
+      expect(recipientAfter.musd - recipientBefore.musd).to.equal(
+        state.stabilityPool.musd.before - roundingError, // sends only extra MUSD withdrawn from stability pool
       )
     })
 
@@ -525,10 +573,12 @@ describe("PCV", () => {
 
       await updatePCVSnapshot(contracts, state, "before")
       await updateStabilityPoolSnapshot(contracts, state, "before")
+      const recipientBefore = await getBalances(alice.address)
 
       const amount = 0n
-      await PCVDeployer.withdrawFromStabilityPool(amount)
+      await PCVDeployer.withdrawFromStabilityPool(amount, alice.address)
 
+      const recipientAfter = await getBalances(alice.address)
       await updatePCVSnapshot(contracts, state, "after")
       await updateStabilityPoolSnapshot(contracts, state, "after")
 
@@ -536,6 +586,7 @@ describe("PCV", () => {
         state.stabilityPool.musd.before,
       )
       expect(state.pcv.musd.after).to.equal(state.pcv.musd.before)
+      expect(recipientAfter.musd).equal(recipientBefore.musd)
     })
   })
 
@@ -1038,6 +1089,8 @@ describe("PCV", () => {
 
       let pcvBalance = await ethers.provider.getBalance(addresses.pcv)
       expect(pcvBalance).to.equal(0n)
+      let treasuryBalance = await ethers.provider.getBalance(treasury.address)
+
 
       // check state assumptions before
       await updateWalletSnapshot(contracts, treasury, "before")
@@ -1046,18 +1099,13 @@ describe("PCV", () => {
       const liquidatedBTC = state.stabilityPool.collateral.before
 
       // call to withdraw BTC from StabilityPool to PCV
-      await contracts.pcv.connect(treasury.wallet).withdrawFromStabilityPool(0n)
-      pcvBalance = await ethers.provider.getBalance(addresses.pcv)
-      expect(pcvBalance).to.be.equal(liquidatedBTC)
-
-      // call to withdraw BTC from PCV to treasury
       await contracts.pcv
         .connect(treasury.wallet)
-        .withdrawBTC(treasury.address, pcvBalance)
+        .withdrawFromStabilityPool(0n, treasury.address)
       pcvBalance = await ethers.provider.getBalance(addresses.pcv)
       expect(pcvBalance).to.equal(0n)
 
-      const treasuryBalance = await ethers.provider.getBalance(treasury.address)
+      treasuryBalance = await ethers.provider.getBalance(treasury.address)
       expect(treasuryBalance).to.be.greaterThan(treasury.btc.before) // got to account for gas
       expect(treasuryBalance - liquidatedBTC).to.be.lessThan(
         treasury.btc.before,

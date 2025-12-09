@@ -402,7 +402,9 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   describe("PCV", () => {
     it("withdrawFromStabilityPool() reverts when caller is not owner, council or treasury", async () => {
       await expect(
-        contracts.pcv.connect(alice.wallet).withdrawFromStabilityPool(0),
+        contracts.pcv
+          .connect(alice.wallet)
+          .withdrawFromStabilityPool(0, alice.address),
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 

@@ -66,7 +66,10 @@ interface IPCV {
 
     function depositToStabilityPool(uint256 _amount) external;
 
-    function withdrawFromStabilityPool(uint256 _amount) external;
+    function withdrawFromStabilityPool(
+        uint256 _amount,
+        address _recipient
+    ) external;
 
     function musd() external view returns (IMUSD);
 
