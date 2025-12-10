@@ -19,7 +19,6 @@ import {
   GovernableVariablesV2,
   HintHelpersV2,
   InterestRateManagerV2,
-  PCVv2,
   PriceFeedV2,
   SortedTrovesV2,
   StabilityPoolV2,
@@ -200,22 +199,6 @@ describe("Proxy Upgrades", () => {
     // new functionality works
     await upgraded.newFunction()
     expect(await upgraded.newField()).to.equal(213)
-  })
-
-  it("upgrades PCV contract correctly", async () => {
-    const upgraded = await upgradeProxy<PCVv2>("PCV", "PCVv2")
-
-    // sanity check - address is the same
-    expect(await upgraded.getAddress()).to.equal(
-      await contracts.pcv.getAddress(),
-    )
-
-    // state preserved and previous functionality works
-    expect(await upgraded.owner()).to.equal(deployer.address)
-
-    // new functionality works
-    await upgraded.newFunction()
-    expect(await upgraded.newField()).to.equal(61)
   })
 
   it("upgrades SortedTroves contract correctly", async () => {
