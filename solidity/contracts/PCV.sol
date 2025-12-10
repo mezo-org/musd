@@ -273,40 +273,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit PCVDistributionBTC(btcRecipient, collateralAmount);
     }
 
-    function withdrawMUSD(
-        address _recipient,
-        uint256 _amount
-    )
-        external
-        override
-        onlyOwnerOrCouncilOrTreasury
-        onlyWhitelistedRecipient(_recipient)
-    {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-        require(musd.transfer(_recipient, _amount), "PCV: sending mUSD failed");
-
-        // slither-disable-next-line reentrancy-events
-        emit MUSDWithdraw(_recipient, _amount);
-    }
-
-    function withdrawBTC(
-        address _recipient,
-        uint256 _collateralAmount
-    )
-        external
-        override
-        onlyOwnerOrCouncilOrTreasury
-        onlyWhitelistedRecipient(_recipient)
-    {
-        _sendCollateral(_recipient, _collateralAmount);
-
-        // slither-disable-next-line reentrancy-events
-        emit CollateralWithdraw(_recipient, _collateralAmount);
-    }
-
     function depositToStabilityPool(uint256 _amount) external {
         musd.safeTransferFrom(msg.sender, address(this), _amount);
         _depositToStabilityPool(_amount);

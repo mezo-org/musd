@@ -816,20 +816,6 @@ contract EchidnaTest {
         pcv.withdrawFromStabilityPool(_amount, msg.sender);
     }
 
-    function withdrawCollateralExt(uint _amount) external {
-        pcv.withdrawBTC(msg.sender, _amount);
-    }
-
-    function withdrawMUSDExt(uint _amount) external {
-        pcv.withdrawMUSD(msg.sender, _amount);
-    }
-
-    function withdrawMUSDSafeExt(uint _amount) external {
-        uint256 bal = musd.balanceOf(address(pcv));
-        uint256 amount = _amount % bal;
-        pcv.withdrawMUSD(address(this), amount);
-    }
-
     function distributeMUSDExt() external {
         pcv.distributeMUSD();
     }

@@ -47,13 +47,6 @@ interface IPCV {
 
     function setFeeSplit(uint8 _feeSplitPercentage) external;
 
-    function withdrawMUSD(address _recipient, uint256 _musdAmount) external;
-
-    function withdrawBTC(
-        address _recipient,
-        uint256 _collateralAmount
-    ) external;
-
     function addRecipientToWhitelist(address _recipient) external;
 
     function removeRecipientFromWhitelist(address _recipient) external;

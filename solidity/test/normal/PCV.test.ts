@@ -9,7 +9,6 @@ import {
   fastForwardTime,
   getEmittedPCVtoSPDepositValues,
   getEmittedSPtoPCVWithdrawalValues,
-  getEmittedWithdrawCollateralValues,
   getLatestBlockTimestamp,
   openTrove,
   setDefaultFees,
@@ -590,58 +589,6 @@ describe("PCV", () => {
     })
   })
 
-  describe("withdrawMUSD() from PCV", () => {
-    it("withdraws mUSD to recipient when the loan is paid", async () => {
-      await debtPaid()
-      const value = to1e18("20")
-      await contracts.musd.unprotectedMint(addresses.pcv, value)
-      await contracts.pcv
-        .connect(treasury.wallet)
-        .withdrawMUSD(alice.address, value)
-      expect(await contracts.musd.balanceOf(alice.address)).to.equal(value)
-      expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
-    })
-
-    it("withdraws mUSD to recipient after recipient is added to the whitelist when the loan is paid", async () => {
-      await debtPaid()
-      const value = to1e18("20")
-      await contracts.musd.unprotectedMint(addresses.pcv, value)
-
-      await expect(
-        PCVDeployer.withdrawMUSD(bob.address, value),
-      ).to.be.revertedWith("PCV: recipient must be in whitelist")
-
-      // add bob as the recipient
-      await PCVDeployer.addRecipientToWhitelist(addresses.bob)
-
-      await PCVDeployer.withdrawMUSD(alice.address, value)
-      expect(await contracts.musd.balanceOf(alice.address)).to.equal(value)
-      expect(await contracts.musd.balanceOf(addresses.pcv)).to.equal(0n)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts if recipient is not in whitelist", async () => {
-        await debtPaid()
-        await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
-        await expect(
-          contracts.pcv
-            .connect(treasury.wallet)
-            .withdrawMUSD(bob.address, bootstrapLoan),
-        ).to.be.revertedWith("PCV: recipient must be in whitelist")
-      })
-
-      it("reverts if not enough mUSD", async () => {
-        await debtPaid()
-        await contracts.musd.unprotectedMint(addresses.pcv, bootstrapLoan)
-        await expect(
-          contracts.pcv
-            .connect(treasury.wallet)
-            .withdrawMUSD(alice.address, bootstrapLoan + 1n),
-        ).to.be.revertedWith("PCV: not enough tokens")
-      })
-    })
-  })
-
   describe("distributeMUSD()", () => {
     it("uses all fees to pay down the debt if feeRecipient is not set and there is an active protocol bootstrap loan", async () => {
       const value = bootstrapLoan / 3n
@@ -903,103 +850,6 @@ describe("PCV", () => {
         await expect(
           PCVDeployer.removeRecipientFromWhitelist(bob.address),
         ).to.be.revertedWith("PCV: Recipient is not in whitelist")
-      })
-    })
-  })
-
-  describe("withdrawBTC()", () => {
-    it("withdraws BTC to recipient when there is a protocol loan", async () => {
-      const value = to1e18("20")
-      await updateWalletSnapshot(contracts, alice, "before")
-      // Send BTC to PCV
-      await deployer.wallet.sendTransaction({
-        to: addresses.pcv,
-        value,
-      })
-      await contracts.pcv
-        .connect(council.wallet)
-        .withdrawBTC(alice.address, value)
-      await updateWalletSnapshot(contracts, alice, "after")
-      expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
-      expect(alice.btc.after - alice.btc.before).to.equal(value)
-    })
-
-    it("withdraws BTC to recipient when the protocol loan is repaid", async () => {
-      await debtPaid()
-      const value = to1e18("20")
-      await updateWalletSnapshot(contracts, alice, "before")
-      // Send BTC to PCV
-      await deployer.wallet.sendTransaction({
-        to: addresses.pcv,
-        value,
-      })
-      await contracts.pcv
-        .connect(council.wallet)
-        .withdrawBTC(alice.address, value)
-      await updateWalletSnapshot(contracts, alice, "after")
-      expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(0n)
-      expect(alice.btc.after - alice.btc.before).to.equal(value)
-    })
-
-    it("withdraws BTC to recipient after recipient is added to the whitelist", async () => {
-      const value = to1e18("20")
-      // Send BTC to PCV
-      await deployer.wallet.sendTransaction({
-        to: addresses.pcv,
-        value,
-      })
-      const withdrawAmount = to1e18("1")
-      // make sure funds cant be withdrawn to bob
-      await expect(
-        PCVDeployer.withdrawBTC(bob.address, withdrawAmount),
-      ).to.be.revertedWith("PCV: recipient must be in whitelist")
-
-      // add bob as the recipient
-      await PCVDeployer.addRecipientToWhitelist(addresses.bob)
-      await updateWalletSnapshot(contracts, bob, "before")
-
-      // withdraw collateral
-      await PCVDeployer.withdrawBTC(bob.address, withdrawAmount)
-
-      await updateWalletSnapshot(contracts, bob, "after")
-
-      // check he got them
-      expect(bob.btc.after).to.equal(bob.btc.before + withdrawAmount)
-    })
-
-    it("emits correct values on withdrawing collateral from PCV", async () => {
-      const value = to1e18("20")
-      await updateWalletSnapshot(contracts, alice, "before")
-      // Send BTC to PCV
-      await deployer.wallet.sendTransaction({
-        to: addresses.pcv,
-        value,
-      })
-      const tx = await contracts.pcv
-        .connect(council.wallet)
-        .withdrawBTC(alice.address, value)
-
-      const { recipient, collateralAmount } =
-        await getEmittedWithdrawCollateralValues(tx)
-      expect(recipient).to.equal(alice.address)
-      expect(collateralAmount).to.equal(value)
-    })
-
-    context("Expected Reverts", () => {
-      it("reverts if recipient is not in whitelist", async () => {
-        await debtPaid()
-        await expect(
-          contracts.pcv
-            .connect(treasury.wallet)
-            .withdrawBTC(bob.address, bootstrapLoan),
-        ).to.be.revertedWith("PCV: recipient must be in whitelist")
-      })
-
-      it("reverts if not enough collateral", async () => {
-        await debtPaid()
-        await expect(
-          contracts.pcv.connect(treasury.wallet).withdrawBTC(alice.address, 1n),
-        ).to.be.revertedWith("Sending BTC failed")
       })
     })
   })
