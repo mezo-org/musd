@@ -51,7 +51,8 @@ contract PCV is
 
     /// @dev MUSD fee recipient. Must implement IMUSDSavingsRate.
     address public feeRecipient;
-    /// @dev Percentage of fees to be sent to feeRecipient
+    /// @dev Percentage of MUSD fees to be sent to feeRecipient. This split does
+    ///      not apply to BTC fees.
     uint8 public feeSplitPercentage;
     uint8 public constant PERCENT_MAX = 100;
 

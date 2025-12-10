@@ -518,7 +518,7 @@ The **Protocol Controlled Value (PCV)** contract is a key component of the syste
 
 - **Systematic Distribution**: The PCV follows a systematic distribution model where funds are automatically distributed according to governance-set parameters rather than accumulating in the contract. MUSD fees are distributed via `distributeMUSD()` and BTC fees via `distributeBTC()`. The fees are distributed to Tigris to the MUSD Savings Rate vault.
 
-- **Governable Split**: The allocation of MUSD fees is governable via `feeSplitPercentage`. The `feeSplitPercentage` determines what percentage of distributed fees goes to the MUSD Savings Rate vault (fee recipient), with the remainder used for bootstrap loan repayment or Stability Pool deposits.
+- **Governable Split**: The allocation of MUSD fees is governable via `feeSplitPercentage`. The `feeSplitPercentage` determines what percentage of distributed fees goes to the MUSD Savings Rate vault (`feeRecipient`), with the remainder used for bootstrap loan repayment or Stability Pool deposits. BTC fees are not split and 100% of BTC fees go to MUSD Savings Rate vault (`btcRecipient`).
 
 - **Bootstrap Loan Repayment**: The bootstrap loan repayment is controlled by governance via `feeSplitPercentage`. If `feeSplitPercentage` is set to 100%, all fees go to the MUSD Savings Rate vault. If set below 100%, the remainder first pays down the bootstrap loan debt. Once the loan is fully repaid, excess funds are deposited to the Stability Pool.
 
