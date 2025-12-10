@@ -272,10 +272,7 @@ contract PCV is
         }
 
         if (feeRecipient != address(0) && distributedFees > 0) {
-            require(
-                musd.approve(feeRecipient, distributedFees),
-                "PCV: feeRecipient approval failed"
-            );
+            musd.forceApprove(feeRecipient, distributedFees);
             IMUSDSavingsRate(feeRecipient).receiveProtocolYield(
                 distributedFees
             );
