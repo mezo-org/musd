@@ -14,6 +14,12 @@ import "./token/IMUSD.sol";
 import "./interfaces/IMUSDSavingsRate.sol";
 import "./interfaces/IBTCFeeRecipient.sol";
 
+/// @title Protocol Controlled Value
+/// @notice The contract receives all interest and fees from the system and is
+///         in charge of the bootstrap loan deposited to the stability pool.
+///         The fees and interest are used to pay back the bootstrap loan or
+///         deposited to the stability pool, as well as distributed to Tigris
+///         as yield, depending on yield split parameters set by governance.
 contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     using SafeERC20 for IMUSD;
 
@@ -24,7 +30,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     BorrowerOperations public borrowerOperations;
     IMUSD public musd;
 
-    // TODO ideal initialization in constructor/setAddresses
     uint256 public debtToPay;
     bool public isInitialized;
 
@@ -37,11 +42,14 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
-    address public feeRecipient; // MUSD savings rate address
-    uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
+    /// @dev MUSD fee recipient. Must implement IMUSDSavingsRate. 
+    address public feeRecipient;
+    /// @dev Percentage of fees to be sent to feeRecipient
+    uint8 public feeSplitPercentage;
     uint8 public constant PERCENT_MAX = 100;
 
-    address public btcRecipient; // Tigris BTC to MUSD converter address
+    /// @dev BTC redemption fees recipient. Must implement IBTCFeeRecipient.
+    address public btcRecipient;
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -214,10 +222,16 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit RecipientRemoved(_recipient);
     }
 
+    /// @notice Distributes MUSD fees accumulated in this contract. The MUSD
+    ///         comes from the borrowing fee, interest on debt, and refinance
+    ///         fee. The fees are distributed based on the governance yield
+    ///         split parameters. A portion of fees can be used to repay the
+    ///         bootstrap loan or deposit to the stability pool. Another portion
+    ///         of fees can be sent to Tigris as yield.
     function distributeMUSD() external override onlyOwnerOrCouncilOrTreasury {
         uint256 musdBalance = musd.balanceOf(address(this));
         // If there are not enough tokens to distribute, do nothing.
-        // This approach is less descriptive but more bot friendly which in case
+        // This approach is less descriptive but more bot-friendly, which in the case
         // of this function is more appropriate.
         if (musdBalance == 0) {
             return;
@@ -254,10 +268,12 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         }
     }
 
+    /// @notice Distributes accumulated BTC from redemption fees to Tigris as
+    ///         yield.
     function distributeBTC() external override onlyOwnerOrCouncilOrTreasury {
         uint256 collateralAmount = address(this).balance;
-        // If there are not enough collateral to distribute, do nothing.
-        // This approach is less descriptive but more bot friendly which in case
+        // If there is not enough collateral to distribute, do nothing.
+        // This approach is less descriptive but more bot-friendly, which in the case
         // of this function is more appropriate.
         if (collateralAmount == 0) {
             return;
@@ -273,6 +289,10 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit PCVDistributionBTC(btcRecipient, collateralAmount);
     }
 
+    /// @notice Allows anyone to deposit MUSD to the stability pool. Note that
+    ///         the tokens will be deposited as a PCV deposit, so the depositor
+    ///         is donating them to the PCV. Do not call this function unless
+    ///         you want to donate your tokens!
     function depositToStabilityPool(uint256 _amount) external {
         musd.safeTransferFrom(msg.sender, address(this), _amount);
         _depositToStabilityPool(_amount);
@@ -289,6 +309,10 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit PCVDepositSP(msg.sender, _amount);
     }
 
+    /// @notice Withdraws collateral and/or MUSD from the stability pool to the
+    ///         provided recipient address. The recipient address must have been
+    ///         whitelisted beforehand. The function is used for rebalancing the
+    ///         stability pool after liquidations.
     function withdrawFromStabilityPool(
         uint256 _amount,
         address _recipient
