@@ -3,6 +3,7 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -20,7 +21,13 @@ import "./interfaces/IBTCFeeRecipient.sol";
 ///         The fees and interest are used to pay back the bootstrap loan or
 ///         deposited to the stability pool, as well as distributed to Tigris
 ///         as yield, depending on yield split parameters set by governance.
-contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
+contract PCV is
+    CheckContract,
+    IPCV,
+    Ownable2StepUpgradeable,
+    ReentrancyGuardUpgradeable,
+    SendCollateral
+{
     using SafeERC20 for IMUSD;
 
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
@@ -71,6 +78,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     function initialize(uint256 _governanceTimeDelay) external initializer {
         __Ownable_init(msg.sender);
+        __ReentrancyGuard_init();
 
         require(
             _governanceTimeDelay <= 30 weeks,
@@ -228,7 +236,12 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     ///         split parameters. A portion of fees can be used to repay the
     ///         bootstrap loan or deposit to the stability pool. Another portion
     ///         of fees can be sent to Tigris as yield.
-    function distributeMUSD() external override onlyOwnerOrCouncilOrTreasury {
+    function distributeMUSD()
+        external
+        override
+        onlyOwnerOrCouncilOrTreasury
+        nonReentrant
+    {
         uint256 musdBalance = musd.balanceOf(address(this));
         // If there are not enough tokens to distribute, do nothing.
         // This approach is less descriptive but more bot-friendly, which in the case
@@ -270,7 +283,12 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     /// @notice Distributes accumulated BTC from redemption fees to Tigris as
     ///         yield.
-    function distributeBTC() external override onlyOwnerOrCouncilOrTreasury {
+    function distributeBTC()
+        external
+        override
+        onlyOwnerOrCouncilOrTreasury
+        nonReentrant
+    {
         uint256 collateralAmount = address(this).balance;
         // If there is not enough collateral to distribute, do nothing.
         // This approach is less descriptive but more bot-friendly, which in the case
