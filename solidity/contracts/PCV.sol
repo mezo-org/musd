@@ -49,7 +49,7 @@ contract PCV is
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
-    /// @dev MUSD fee recipient. Must implement IMUSDSavingsRate. 
+    /// @dev MUSD fee recipient. Must implement IMUSDSavingsRate.
     address public feeRecipient;
     /// @dev Percentage of fees to be sent to feeRecipient
     uint8 public feeSplitPercentage;
@@ -210,7 +210,7 @@ contract PCV is
 
     function addRecipientToWhitelist(
         address _recipient
-    ) public override onlyOwner {
+    ) external override onlyOwner {
         require(
             !recipientsWhitelist[_recipient],
             "PCV: Recipient has already been added to whitelist"
@@ -221,7 +221,7 @@ contract PCV is
 
     function removeRecipientFromWhitelist(
         address _recipient
-    ) public override onlyOwner {
+    ) external override onlyOwner {
         require(
             recipientsWhitelist[_recipient],
             "PCV: Recipient is not in whitelist"
@@ -316,17 +316,6 @@ contract PCV is
         _depositToStabilityPool(_amount);
     }
 
-    function _depositToStabilityPool(uint256 _amount) internal {
-        musd.forceApprove(borrowerOperations.stabilityPoolAddress(), _amount);
-
-        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
-            _amount
-        );
-
-        // slither-disable-next-line reentrancy-events
-        emit PCVDepositSP(msg.sender, _amount);
-    }
-
     /// @notice Withdraws collateral and/or MUSD from the stability pool to the
     ///         provided recipient address. The recipient address must have been
     ///         whitelisted beforehand. The function is used for rebalancing the
@@ -334,7 +323,11 @@ contract PCV is
     function withdrawFromStabilityPool(
         uint256 _amount,
         address _recipient
-    ) public onlyOwnerOrCouncilOrTreasury onlyWhitelistedRecipient(_recipient) {
+    )
+        external
+        onlyOwnerOrCouncilOrTreasury
+        onlyWhitelistedRecipient(_recipient)
+    {
         uint256 collateralBefore = address(this).balance;
         uint256 musdBefore = musd.balanceOf(address(this));
 
@@ -376,5 +369,16 @@ contract PCV is
         }
 
         return 0;
+    }
+
+    function _depositToStabilityPool(uint256 _amount) internal {
+        musd.forceApprove(borrowerOperations.stabilityPoolAddress(), _amount);
+
+        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
+            _amount
+        );
+
+        // slither-disable-next-line reentrancy-events
+        emit PCVDepositSP(msg.sender, _amount);
     }
 }
