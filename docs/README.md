@@ -514,13 +514,13 @@ For further information, refer to [simpleInterest.md](simpleInterest.md).
 
 The **Protocol Controlled Value (PCV)** contract is a key component of the system, responsible for managing fees collected from borrowing and refinancing. Below is an overview of how the PCV operates:
 
-- **Fee Collection**: Borrowing fees and refinancing fees are directed to the PCV contract.
+- **Fee Collection**: Borrowing fees, refinancing fees, and interest on debt are directed to the PCV contract. Additionally, BTC redemption fees accumulate in the PCV.
 
-- **Fee Allocation**: Fees collected by the PCV are allocated to the MUSD Savings Rate vault.
+- **Systematic Distribution**: The PCV follows a systematic distribution model where funds are automatically distributed according to governance-set parameters rather than accumulating in the contract. MUSD fees are distributed via `distributeMUSD()` and BTC fees via `distributeBTC()`. The fees are distributed to Tigris to the MUSD Savings Rate vault.
 
-- **Governable Split**: The allocation of fees to the MUSD Savings Rate vault is governable via `feeSplitPercentage`. The `feeSplitPercentage` determines what percentage of distributed fees goes to the MUSD Savings Rate vault.
+- **Governable Split**: The allocation of MUSD fees is governable via `feeSplitPercentage`. The `feeSplitPercentage` determines what percentage of distributed fees goes to the MUSD Savings Rate vault (fee recipient), with the remainder used for bootstrap loan repayment or Stability Pool deposits.
 
-- **Bootstrap Loan Repayment**: The bootstrap loan repayment is controlled by governance via `feeSplitPercentage`. If `feeSplitPercentage` is set to 100%, all fees go to the MUSD Savings Rate vault. If the loan is eventually repaid (through setting `feeSplitPercentage` below 100%), the split then controls allocation between the MUSD Savings Rate vault and Stability Pool deposits.
+- **Bootstrap Loan Repayment**: The bootstrap loan repayment is controlled by governance via `feeSplitPercentage`. If `feeSplitPercentage` is set to 100%, all fees go to the MUSD Savings Rate vault. If set below 100%, the remainder first pays down the bootstrap loan debt. Once the loan is fully repaid, excess funds are deposited to the Stability Pool.
 
 ### EIP-712 Signature Verification
 
