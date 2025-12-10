@@ -76,9 +76,13 @@ contract PCV is
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(uint256 _governanceTimeDelay) external initializer {
         __Ownable_init(msg.sender);
-        __ReentrancyGuard_init();
 
         require(
             _governanceTimeDelay <= 30 weeks,
@@ -87,11 +91,11 @@ contract PCV is
         governanceTimeDelay = _governanceTimeDelay;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    function initializeV2() external reinitializer(2) {
+        __ReentrancyGuard_init();
     }
 
+    // solhint-disable-next-line ordering
     receive() external payable {}
 
     function setAddresses(
