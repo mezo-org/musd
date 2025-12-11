@@ -711,19 +711,6 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_borrower",
-          "type": "address"
-        }
-      ],
-      "name": "applyPendingRewards",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "address[]",
           "name": "_troveArray",
           "type": "address[]"
@@ -1794,7 +1781,7 @@
     }
   ],
   "transactionHash": "0x40ea6d038c058f873026005830929482b035e88e3643cc14828c59fed4e1298f",
-  "numDeployments": 2,
-  "implementation": "0x110f0CcC400375d72734aF82b168708593113A34",
+  "numDeployments": 3,
+  "implementation": "0x9aAB567966983e95536FC460C12266FB0Cc10B07",
   "devdoc": "Contract deployed as upgradable proxy"
 }
