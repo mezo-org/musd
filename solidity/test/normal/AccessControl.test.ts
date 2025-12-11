@@ -402,19 +402,9 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
   describe("PCV", () => {
     it("withdrawFromStabilityPool() reverts when caller is not owner, council or treasury", async () => {
       await expect(
-        contracts.pcv.connect(alice.wallet).withdrawFromStabilityPool(0),
-      ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-    })
-
-    it("depositToStabilityPool(): reverts when caller is not owner, council or treasury", async () => {
-      await expect(
-        contracts.pcv.connect(alice.wallet).depositToStabilityPool(0),
-      ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-    })
-
-    it("withdrawMUSD(): reverts when caller is not owner, council or treasury", async () => {
-      await expect(
-        contracts.pcv.connect(alice.wallet).withdrawMUSD(alice.address, 1),
+        contracts.pcv
+          .connect(alice.wallet)
+          .withdrawFromStabilityPool(0, alice.address),
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 
@@ -430,15 +420,9 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 
-    it("withdrawBTC(): reverts when caller is not owner, council or treasury", async () => {
-      await expect(
-        contracts.pcv.connect(alice.wallet).withdrawBTC(alice.address, 1),
-      ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
-    })
-
     it("distributeMUSD(): reverts when caller is not owner, council or treasury", async () => {
       await expect(
-        contracts.pcv.connect(alice.wallet).distributeMUSD(1),
+        contracts.pcv.connect(alice.wallet).distributeMUSD(),
       ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
 
@@ -461,37 +445,11 @@ describe("Access Control: Liquity functions with the caller restricted to Liquit
         .withArgs(alice.address)
     })
 
-    it("addRecipientsToWhitelist(): reverts when caller is not owner", async () => {
-      await expect(
-        contracts.pcv
-          .connect(alice.wallet)
-          .addRecipientsToWhitelist([bob.address]),
-      )
-        .to.be.revertedWithCustomError(
-          contracts.pcv,
-          "OwnableUnauthorizedAccount",
-        )
-        .withArgs(alice.address)
-    })
-
     it("removeRecipientFromWhitelist(): reverts when caller is not owner", async () => {
       await expect(
         contracts.pcv
           .connect(alice.wallet)
           .removeRecipientFromWhitelist(alice.address),
-      )
-        .to.be.revertedWithCustomError(
-          contracts.pcv,
-          "OwnableUnauthorizedAccount",
-        )
-        .withArgs(alice.address)
-    })
-
-    it("removeRecipientsFromWhitelist(): reverts when caller is not owner", async () => {
-      await expect(
-        contracts.pcv
-          .connect(alice.wallet)
-          .removeRecipientsFromWhitelist([alice.address]),
       )
         .to.be.revertedWithCustomError(
           contracts.pcv,
