@@ -4963,6 +4963,265 @@
           ]
         }
       }
+    },
+    "009cd96cc77d72970a651d871b9706cbb27843897e3705383b258ffee9daa836": {
+      "address": "0x64AE6A75df75E8473bd10F76f0052a78f721a34E",
+      "txHash": "0x2583f2f29ea20fda8436fe92bbaabdacd9a939d725ef20e2f37fff86d7e79023",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "governanceTimeDelay",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:35"
+          },
+          {
+            "label": "borrowerOperations",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(BorrowerOperations)9349",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:37"
+          },
+          {
+            "label": "musd",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IMUSD)26053",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:38"
+          },
+          {
+            "label": "debtToPay",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:40"
+          },
+          {
+            "label": "isInitialized",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_bool",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:41"
+          },
+          {
+            "label": "council",
+            "offset": 1,
+            "slot": "4",
+            "type": "t_address",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:43"
+          },
+          {
+            "label": "treasury",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_address",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:44"
+          },
+          {
+            "label": "recipientsWhitelist",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:46"
+          },
+          {
+            "label": "pendingCouncilAddress",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_address",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:48"
+          },
+          {
+            "label": "pendingTreasuryAddress",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_address",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:49"
+          },
+          {
+            "label": "changingRolesInitiated",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:50"
+          },
+          {
+            "label": "feeRecipient",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_address",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:53"
+          },
+          {
+            "label": "feeSplitPercentage",
+            "offset": 20,
+            "slot": "10",
+            "type": "t_uint8",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:56"
+          },
+          {
+            "label": "btcRecipient",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_address",
+            "contract": "PCV",
+            "src": "contracts/PCV.sol:60"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)141_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Ownable2StepStorage)13_storage": {
+            "label": "struct Ownable2StepUpgradeable.Ownable2StepStorage",
+            "members": [
+              {
+                "label": "_pendingOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)74_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)235_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(BorrowerOperations)9349": {
+            "label": "contract BorrowerOperations",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMUSD)26053": {
+            "label": "contract IMUSD",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable2Step": [
+            {
+              "contract": "Ownable2StepUpgradeable",
+              "label": "_pendingOwner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:23",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
     }
   }
 }
