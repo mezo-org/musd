@@ -7,6 +7,33 @@
       "type": "constructor"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AddressEmptyCode",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "AddressInsufficientBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "FailedInnerCall",
+      "type": "error"
+    },
+    {
       "inputs": [],
       "name": "InvalidInitialization",
       "type": "error"
@@ -37,6 +64,35 @@
       ],
       "name": "OwnableUnauthorizedAccount",
       "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "SafeERC20FailedOperation",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_btcRecipient",
+          "type": "address"
+        }
+      ],
+      "name": "BTCRecipientSet",
+      "type": "event"
     },
     {
       "anonymous": false,
@@ -234,6 +290,25 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "PCVDistributionBTC",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": true,
           "internalType": "address",
           "name": "user",
@@ -315,7 +390,7 @@
     },
     {
       "inputs": [],
-      "name": "FEE_SPLIT_MAX",
+      "name": "PERCENT_MAX",
       "outputs": [
         {
           "internalType": "uint8",
@@ -347,24 +422,24 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address[]",
-          "name": "_recipients",
-          "type": "address[]"
-        }
-      ],
-      "name": "addRecipientsToWhitelist",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "borrowerOperations",
       "outputs": [
         {
           "internalType": "contract BorrowerOperations",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "btcRecipient",
+      "outputs": [
+        {
+          "internalType": "address",
           "name": "",
           "type": "address"
         }
@@ -432,13 +507,14 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
+      "inputs": [],
+      "name": "distributeBTC",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "distributeMUSD",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -506,6 +582,13 @@
     {
       "inputs": [],
       "name": "initializeDebt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initializeV2",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -621,19 +704,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address[]",
-          "name": "_recipients",
-          "type": "address[]"
-        }
-      ],
-      "name": "removeRecipientsFromWhitelist",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "renounceOwnership",
       "outputs": [],
@@ -654,6 +724,19 @@
         }
       ],
       "name": "setAddresses",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_btcRecipient",
+          "type": "address"
+        }
+      ],
+      "name": "setBTCRecipient",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -731,48 +814,17 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_recipient",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_collateralAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdrawCollateral",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
           "name": "_amount",
           "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
         }
       ],
       "name": "withdrawFromStabilityPool",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_recipient",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdrawMUSD",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -783,7 +835,7 @@
     }
   ],
   "transactionHash": "0x10238fb2b9440bbb70e6e047e939bba531d3994906decb08c89e511d76e44047",
-  "numDeployments": 1,
-  "implementation": "0xED84dbf67DAaD975faF99E1ad897482A889D134E",
+  "numDeployments": 2,
+  "implementation": "0x6c6571Dd02C0F3ff07e7371C3d6202177D994f6B",
   "devdoc": "Contract deployed as upgradable proxy"
 }
