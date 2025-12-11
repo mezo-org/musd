@@ -813,34 +813,11 @@ contract EchidnaTest {
     }
 
     function withdrawFromStabilityPoolExt(uint _amount) external {
-        pcv.withdrawFromStabilityPool(_amount);
+        pcv.withdrawFromStabilityPool(_amount, msg.sender);
     }
 
-    function withdrawCollateralExt(uint _amount) external {
-        pcv.withdrawBTC(msg.sender, _amount);
-    }
-
-    function withdrawMUSDExt(uint _amount) external {
-        pcv.withdrawMUSD(msg.sender, _amount);
-    }
-
-    function withdrawMUSDSafeExt(uint _amount) external {
-        uint256 bal = musd.balanceOf(address(pcv));
-        uint256 amount = _amount % bal;
-        pcv.withdrawMUSD(address(this), amount);
-    }
-
-    function distributeMUSDExt(uint _amount) external {
-        pcv.distributeMUSD(_amount);
-    }
-
-    function distributeMUSDSafeExt(uint _amount) external {
-        uint256 amount = _amount % musd.balanceOf(address(pcv));
-        pcv.distributeMUSD(amount);
-    }
-
-    function distributeMUSDFullExt() external {
-        pcv.distributeMUSD(musd.balanceOf(address(pcv)));
+    function distributeMUSDExt() external {
+        pcv.distributeMUSD();
     }
 
     function payDebtExt() external {
@@ -866,18 +843,6 @@ contract EchidnaTest {
 
         // slither-disable-next-line unused-return
         actor.transferPrx(address(pcv), musdAmount);
-    }
-
-    function addRecipientsToWhitelistExt(
-        address[] calldata _accounts
-    ) external {
-        pcv.addRecipientsToWhitelist(_accounts);
-    }
-
-    function removeRecipientsFromWhitelistExt(
-        address[] calldata _accounts
-    ) external {
-        pcv.removeRecipientsFromWhitelist(_accounts);
     }
 
     function startChangingRolesExt(

@@ -32,7 +32,7 @@ interface IPCV {
 
     function debtToPay() external returns (uint256);
 
-    function distributeMUSD(uint256 _musdToBurn) external;
+    function distributeMUSD() external;
 
     function distributeBTC() external;
 
@@ -47,22 +47,9 @@ interface IPCV {
 
     function setFeeSplit(uint8 _feeSplitPercentage) external;
 
-    function withdrawMUSD(address _recipient, uint256 _musdAmount) external;
-
-    function withdrawBTC(
-        address _recipient,
-        uint256 _collateralAmount
-    ) external;
-
     function addRecipientToWhitelist(address _recipient) external;
 
-    function addRecipientsToWhitelist(address[] calldata _recipients) external;
-
     function removeRecipientFromWhitelist(address _recipient) external;
-
-    function removeRecipientsFromWhitelist(
-        address[] calldata _recipients
-    ) external;
 
     function startChangingRoles(address _council, address _treasury) external;
 
@@ -72,7 +59,10 @@ interface IPCV {
 
     function depositToStabilityPool(uint256 _amount) external;
 
-    function withdrawFromStabilityPool(uint256 _amount) external;
+    function withdrawFromStabilityPool(
+        uint256 _amount,
+        address _recipient
+    ) external;
 
     function musd() external view returns (IMUSD);
 

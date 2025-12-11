@@ -139,11 +139,11 @@ contract BorrowerOperationsSignatures is
         );
 
     mapping(address => uint256) private nonces;
-    address public activePoolAddress;
     IBorrowerOperations public borrowerOperations;
+    IInterestRateManager public interestRateManager;
+    address public activePoolAddress;
     address public collSurplusPoolAddress;
     address public defaultPoolAddress;
-    IInterestRateManager public interestRateManager;
     address public stabilityPoolAddress;
 
     event ActivePoolAddressChanged(address _activePoolAddress);

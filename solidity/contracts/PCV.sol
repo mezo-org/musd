@@ -3,7 +3,9 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./BorrowerOperations.sol";
 import "./dependencies/CheckContract.sol";
@@ -13,7 +15,21 @@ import "./token/IMUSD.sol";
 import "./interfaces/IMUSDSavingsRate.sol";
 import "./interfaces/IBTCFeeRecipient.sol";
 
-contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
+/// @title Protocol Controlled Value
+/// @notice The contract receives all interest and fees from the system and is
+///         in charge of the bootstrap loan deposited to the stability pool.
+///         The fees and interest are used to pay back the bootstrap loan or
+///         deposited to the stability pool, as well as distributed to Tigris
+///         as yield, depending on yield split parameters set by governance.
+contract PCV is
+    CheckContract,
+    IPCV,
+    Ownable2StepUpgradeable,
+    ReentrancyGuardUpgradeable,
+    SendCollateral
+{
+    using SafeERC20 for IMUSD;
+
     uint256 public constant BOOTSTRAP_LOAN = 1e26; // 100M mUSD
 
     uint256 public governanceTimeDelay;
@@ -21,7 +37,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     BorrowerOperations public borrowerOperations;
     IMUSD public musd;
 
-    // TODO ideal initialization in constructor/setAddresses
     uint256 public debtToPay;
     bool public isInitialized;
 
@@ -34,11 +49,15 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
     address public pendingTreasuryAddress;
     uint256 public changingRolesInitiated;
 
-    address public feeRecipient; // MUSD savings rate address
-    uint8 public feeSplitPercentage; // percentage of fees to be sent to feeRecipient
+    /// @dev MUSD fee recipient. Must implement IMUSDSavingsRate.
+    address public feeRecipient;
+    /// @dev Percentage of MUSD fees to be sent to feeRecipient. This split does
+    ///      not apply to BTC fees.
+    uint8 public feeSplitPercentage;
     uint8 public constant PERCENT_MAX = 100;
 
-    address public btcRecipient; // Tigris BTC to MUSD converter address
+    /// @dev BTC redemption fees recipient. Must implement IBTCFeeRecipient.
+    address public btcRecipient;
 
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
@@ -58,6 +77,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(uint256 _governanceTimeDelay) external initializer {
         __Ownable_init(msg.sender);
 
@@ -68,11 +92,11 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         governanceTimeDelay = _governanceTimeDelay;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    function initializeV2() external reinitializer(2) {
+        __ReentrancyGuard_init();
     }
 
+    // solhint-disable-next-line ordering
     receive() external payable {}
 
     function setAddresses(
@@ -99,7 +123,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         debtToPay = BOOTSTRAP_LOAN;
         isInitialized = true;
         borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
-        depositToStabilityPool(BOOTSTRAP_LOAN);
+        _depositToStabilityPool(BOOTSTRAP_LOAN);
     }
 
     function setFeeRecipient(
@@ -143,130 +167,6 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         feeSplitPercentage = _feeSplitPercentage;
 
         emit FeeSplitSet(_feeSplitPercentage);
-    }
-
-    /// @notice Distributes MUSD to the fee recipient (MUSD Savings Rate vault)
-    ///         as part of the protocol fees distribution process.
-    /// @dev The amount of MUSD to distribute must be greater than 0.
-    /// @param _amount The amount of MUSD to distribute.
-    function distributeMUSD(uint256 _amount) external override {
-        uint256 musdBalance = musd.balanceOf(address(this));
-        // If there are not enough tokens to distribute, do nothing.
-        // This approach is less descriptive but more bot friendly which in case
-        // of this function is more appropriate.
-        if (musdBalance < _amount) {
-            return;
-        }
-
-        uint256 distributedFees = (_amount * feeSplitPercentage) / PERCENT_MAX;
-        uint256 protocolLoanRepayment = _amount - distributedFees;
-        uint256 stabilityPoolDeposit = 0;
-
-        // check for excess to deposit into the stability pool
-        if (protocolLoanRepayment > debtToPay) {
-            stabilityPoolDeposit = protocolLoanRepayment - debtToPay;
-            protocolLoanRepayment = debtToPay;
-        }
-
-        _repayDebt(protocolLoanRepayment);
-
-        if (stabilityPoolDeposit > 0) {
-            depositToStabilityPool(stabilityPoolDeposit);
-        }
-
-        if (feeRecipient != address(0) && distributedFees > 0) {
-            require(
-                musd.approve(feeRecipient, distributedFees),
-                "PCV: feeRecipient approval failed"
-            );
-            IMUSDSavingsRate(feeRecipient).receiveProtocolYield(
-                distributedFees
-            );
-
-            // slither-disable-next-line reentrancy-events
-            emit PCVDistribution(feeRecipient, distributedFees);
-        }
-    }
-
-    /// @notice Distributes BTC to the BTC recipient as part of the protocol fees
-    ///         distribution process.
-    /// @dev The BTC recipient must be set before calling this function
-    ///      and the amount of BTC to distribute must be greater than 0.
-    function distributeBTC() external override {
-        uint256 collateralAmount = address(this).balance;
-        // If there are not enough collateral to distribute, do nothing.
-        // This approach is less descriptive but more bot friendly which in case
-        // of this function is more appropriate.
-        if (collateralAmount == 0) {
-            return;
-        }
-
-        require(btcRecipient != address(0), "PCV: BTC recipient not set");
-
-        _sendCollateral(btcRecipient, collateralAmount);
-        IBTCFeeRecipient(btcRecipient).receiveProtocolYieldInBTC(
-            collateralAmount
-        );
-        // slither-disable-next-line reentrancy-events
-        emit PCVDistributionBTC(btcRecipient, collateralAmount);
-    }
-
-    function withdrawMUSD(
-        address _recipient,
-        uint256 _amount
-    )
-        external
-        override
-        onlyOwnerOrCouncilOrTreasury
-        onlyWhitelistedRecipient(_recipient)
-    {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-        require(musd.transfer(_recipient, _amount), "PCV: sending mUSD failed");
-
-        // slither-disable-next-line reentrancy-events
-        emit MUSDWithdraw(_recipient, _amount);
-    }
-
-    function withdrawBTC(
-        address _recipient,
-        uint256 _collateralAmount
-    )
-        external
-        override
-        onlyOwnerOrCouncilOrTreasury
-        onlyWhitelistedRecipient(_recipient)
-    {
-        _sendCollateral(_recipient, _collateralAmount);
-
-        // slither-disable-next-line reentrancy-events
-        emit CollateralWithdraw(_recipient, _collateralAmount);
-    }
-
-    function addRecipientsToWhitelist(
-        address[] calldata _recipients
-    ) external override onlyOwner {
-        require(
-            _recipients.length > 0,
-            "PCV: Recipients array must not be empty"
-        );
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            addRecipientToWhitelist(_recipients[i]);
-        }
-    }
-
-    function removeRecipientsFromWhitelist(
-        address[] calldata _recipients
-    ) external override onlyOwner {
-        require(
-            _recipients.length > 0,
-            "PCV: Recipients array must not be empty"
-        );
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            removeRecipientFromWhitelist(_recipients[i]);
-        }
     }
 
     function startChangingRoles(
@@ -315,7 +215,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     function addRecipientToWhitelist(
         address _recipient
-    ) public override onlyOwner {
+    ) external override onlyOwner {
         require(
             !recipientsWhitelist[_recipient],
             "PCV: Recipient has already been added to whitelist"
@@ -326,7 +226,7 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
     function removeRecipientFromWhitelist(
         address _recipient
-    ) public override onlyOwner {
+    ) external override onlyOwner {
         require(
             recipientsWhitelist[_recipient],
             "PCV: Recipient is not in whitelist"
@@ -335,29 +235,91 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         emit RecipientRemoved(_recipient);
     }
 
-    function depositToStabilityPool(
-        uint256 _amount
-    ) public onlyOwnerOrCouncilOrTreasury {
-        require(
-            _amount <= musd.balanceOf(address(this)),
-            "PCV: not enough tokens"
-        );
-        require(
-            musd.approve(borrowerOperations.stabilityPoolAddress(), _amount),
-            "PCV: Approval failed"
-        );
+    /// @notice Distributes MUSD fees accumulated in this contract. The MUSD
+    ///         comes from the borrowing fee, interest on debt, and refinance
+    ///         fee. The fees are distributed based on the governance yield
+    ///         split parameters. A portion of fees can be used to repay the
+    ///         bootstrap loan or deposit to the stability pool. Another portion
+    ///         of fees can be sent to Tigris as yield.
+    function distributeMUSD() external override nonReentrant {
+        uint256 musdBalance = musd.balanceOf(address(this));
+        // If there are not enough tokens to distribute, do nothing.
+        // This approach is less descriptive but more bot-friendly, which in the case
+        // of this function is more appropriate.
+        if (musdBalance == 0) {
+            return;
+        }
 
-        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
-            _amount
-        );
+        uint256 distributedFees = (musdBalance * feeSplitPercentage) /
+            PERCENT_MAX;
+        uint256 protocolLoanRepayment = musdBalance - distributedFees;
+        uint256 stabilityPoolDeposit = 0;
 
-        // slither-disable-next-line reentrancy-events
-        emit PCVDepositSP(msg.sender, _amount);
+        // check for excess to deposit into the stability pool
+        if (protocolLoanRepayment > debtToPay) {
+            stabilityPoolDeposit = protocolLoanRepayment - debtToPay;
+            protocolLoanRepayment = debtToPay;
+        }
+
+        _repayDebt(protocolLoanRepayment);
+
+        if (stabilityPoolDeposit > 0) {
+            _depositToStabilityPool(stabilityPoolDeposit);
+        }
+
+        if (feeRecipient != address(0) && distributedFees > 0) {
+            musd.forceApprove(feeRecipient, distributedFees);
+            IMUSDSavingsRate(feeRecipient).receiveProtocolYield(
+                distributedFees
+            );
+
+            // slither-disable-next-line reentrancy-events
+            emit PCVDistribution(feeRecipient, distributedFees);
+        }
     }
 
+    /// @notice Distributes accumulated BTC from redemption fees to Tigris as
+    ///         yield.
+    function distributeBTC() external override nonReentrant {
+        uint256 collateralAmount = address(this).balance;
+        // If there is not enough collateral to distribute, do nothing.
+        // This approach is less descriptive but more bot-friendly, which in the case
+        // of this function is more appropriate.
+        if (collateralAmount == 0) {
+            return;
+        }
+
+        require(btcRecipient != address(0), "PCV: BTC recipient not set");
+
+        _sendCollateral(btcRecipient, collateralAmount);
+        IBTCFeeRecipient(btcRecipient).receiveProtocolYieldInBTC(
+            collateralAmount
+        );
+        // slither-disable-next-line reentrancy-events
+        emit PCVDistributionBTC(btcRecipient, collateralAmount);
+    }
+
+    /// @notice Allows anyone to deposit MUSD to the stability pool. Note that
+    ///         the tokens will be deposited as a PCV deposit, so the depositor
+    ///         is donating them to the PCV. Do not call this function unless
+    ///         you want to donate your tokens!
+    function depositToStabilityPool(uint256 _amount) external {
+        musd.safeTransferFrom(msg.sender, address(this), _amount);
+        _depositToStabilityPool(_amount);
+    }
+
+    /// @notice Withdraws collateral and/or MUSD from the stability pool to the
+    ///         provided recipient address. The recipient address must have been
+    ///         whitelisted beforehand. The function is used for rebalancing the
+    ///         stability pool after liquidations.
     function withdrawFromStabilityPool(
-        uint256 _amount
-    ) public onlyOwnerOrCouncilOrTreasury {
+        uint256 _amount,
+        address _recipient
+    )
+        external
+        onlyOwnerOrCouncilOrTreasury
+        onlyWhitelistedRecipient(_recipient)
+    {
         uint256 collateralBefore = address(this).balance;
         uint256 musdBefore = musd.balanceOf(address(this));
 
@@ -367,13 +329,24 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
         uint256 collateralChange = address(this).balance - collateralBefore;
         uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
 
-        _repayDebt(musdChange);
+        uint256 debtRepayment = _repayDebt(musdChange);
+        uint256 excessMusd = musdChange - debtRepayment;
+
+        // Send BTC collateral to recipient
+        if (collateralChange > 0) {
+            _sendCollateral(_recipient, collateralChange);
+        }
+
+        // Send excess MUSD to recipient (after debt repayment)
+        if (excessMusd > 0) {
+            musd.safeTransfer(_recipient, excessMusd);
+        }
 
         // slither-disable-next-line reentrancy-events
         emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 
-    function _repayDebt(uint _repayment) internal {
+    function _repayDebt(uint _repayment) internal returns (uint256) {
         if (_repayment > debtToPay) {
             _repayment = debtToPay;
         }
@@ -384,6 +357,20 @@ contract PCV is CheckContract, IPCV, Ownable2StepUpgradeable, SendCollateral {
 
             // slither-disable-next-line reentrancy-events
             emit PCVDebtPayment(_repayment);
+            return _repayment;
         }
+
+        return 0;
+    }
+
+    function _depositToStabilityPool(uint256 _amount) internal {
+        musd.forceApprove(borrowerOperations.stabilityPoolAddress(), _amount);
+
+        IStabilityPool(borrowerOperations.stabilityPoolAddress()).provideToSP(
+            _amount
+        );
+
+        // slither-disable-next-line reentrancy-events
+        emit PCVDepositSP(msg.sender, _amount);
     }
 }

@@ -392,19 +392,6 @@ export async function getDebtAndCollFromTroveUpdatedEvents(
   }
 }
 
-export async function getEmittedWithdrawCollateralValues(
-  tx: ContractTransactionResponse,
-) {
-  const [recipient, collateralAmount] = (
-    await getAllEventsByName(tx, PCV_ABI, "CollateralWithdraw")
-  )[0].args
-
-  return {
-    recipient,
-    collateralAmount,
-  }
-}
-
 export async function getEmittedPCVtoSPDepositValues(
   tx: ContractTransactionResponse,
 ) {
