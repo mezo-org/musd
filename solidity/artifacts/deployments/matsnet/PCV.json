@@ -835,7 +835,7 @@
     }
   ],
   "transactionHash": "0x10238fb2b9440bbb70e6e047e939bba531d3994906decb08c89e511d76e44047",
-  "numDeployments": 2,
-  "implementation": "0x6c6571Dd02C0F3ff07e7371C3d6202177D994f6B",
+  "numDeployments": 3,
+  "implementation": "0x7ECb4A0E4462ee9c0c98C5240C6BC9562C545C71",
   "devdoc": "Contract deployed as upgradable proxy"
 }
