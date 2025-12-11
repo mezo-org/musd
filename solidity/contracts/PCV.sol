@@ -241,12 +241,7 @@ contract PCV is
     ///         split parameters. A portion of fees can be used to repay the
     ///         bootstrap loan or deposit to the stability pool. Another portion
     ///         of fees can be sent to Tigris as yield.
-    function distributeMUSD()
-        external
-        override
-        onlyOwnerOrCouncilOrTreasury
-        nonReentrant
-    {
+    function distributeMUSD() external override nonReentrant {
         uint256 musdBalance = musd.balanceOf(address(this));
         // If there are not enough tokens to distribute, do nothing.
         // This approach is less descriptive but more bot-friendly, which in the case
@@ -285,12 +280,7 @@ contract PCV is
 
     /// @notice Distributes accumulated BTC from redemption fees to Tigris as
     ///         yield.
-    function distributeBTC()
-        external
-        override
-        onlyOwnerOrCouncilOrTreasury
-        nonReentrant
-    {
+    function distributeBTC() external override nonReentrant {
         uint256 collateralAmount = address(this).balance;
         // If there is not enough collateral to distribute, do nothing.
         // This approach is less descriptive but more bot-friendly, which in the case
