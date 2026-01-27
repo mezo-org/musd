@@ -27,7 +27,7 @@
     "@keep-network/hardhat-helpers": "^0.7.1",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.3",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
-    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@openzeppelin/hardhat-upgrades": "^3.0.1",
     "@thesis-co/eslint-config": "^0.6.1",
     "@types/mocha": "^10.0.7",
