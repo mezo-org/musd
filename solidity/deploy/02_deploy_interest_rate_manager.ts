@@ -4,7 +4,8 @@ import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
 import { NOOP_NETWORKS } from "../helpers/constants"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getOrDeployProxy, getOrDeploy } = await setupDeploymentBoilerplate(hre)
+  const { getOrDeployProxy, getOrDeploy } =
+    await setupDeploymentBoilerplate(hre)
 
   const networkName = hre.network.name
   const isFuzzTestingNetwork = networkName === "matsnet_fuzz"

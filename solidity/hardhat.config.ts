@@ -41,9 +41,7 @@ const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL
   ? process.env.SEPOLIA_RPC_URL
   : ""
 
-const BASE_RPC_URL = process.env.BASE_RPC_URL
-  ? process.env.BASE_RPC_URL
-  : ""
+const BASE_RPC_URL = process.env.BASE_RPC_URL ? process.env.BASE_RPC_URL : ""
 
 const BASE_PRIVATE_KEY = process.env.BASE_PRIVATE_KEY
   ? [process.env.BASE_PRIVATE_KEY]
