@@ -41,6 +41,22 @@ const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL
   ? process.env.SEPOLIA_RPC_URL
   : ""
 
+const BASE_RPC_URL = process.env.BASE_RPC_URL
+  ? process.env.BASE_RPC_URL
+  : ""
+
+const BASE_PRIVATE_KEY = process.env.BASE_PRIVATE_KEY
+  ? [process.env.BASE_PRIVATE_KEY]
+  : []
+
+const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL
+  ? process.env.BASE_SEPOLIA_RPC_URL
+  : ""
+
+const BASE_SEPOLIA_PRIVATE_KEY = process.env.BASE_SEPOLIA_PRIVATE_KEY
+  ? [process.env.BASE_SEPOLIA_PRIVATE_KEY]
+  : []
+
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
   ? process.env.ETHERSCAN_API_KEY
   : ""
@@ -71,7 +87,6 @@ const config: HardhatUserConfig = {
       url: MAINNET_RPC_URL,
       chainId: 31612,
       accounts: MAINNET_PRIVATE_KEY,
-      tags: ["etherscan"],
     },
     mainnet_fork: {
       url: MAINNET_RPC_URL,
@@ -85,25 +100,31 @@ const config: HardhatUserConfig = {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["etherscan"],
     },
     matsnet_fuzz: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["etherscan"],
     },
     sepolia: {
       url: SEPOLIA_RPC_URL,
       chainId: 11155111,
       accounts: SEPOLIA_PRIVATE_KEY,
-      tags: ["etherscan"],
     },
     ethereum: {
       url: ETHEREUM_RPC_URL,
       accounts: ETHEREUM_PRIVATE_KEY,
       chainId: 1,
-      tags: ["etherscan"],
+    },
+    base: {
+      url: BASE_RPC_URL,
+      accounts: BASE_PRIVATE_KEY,
+      chainId: 8453,
+    },
+    base_sepolia: {
+      url: BASE_SEPOLIA_RPC_URL,
+      accounts: BASE_SEPOLIA_PRIVATE_KEY,
+      chainId: 84532,
     },
     hardhat: {
       initialBaseFeePerGas: 0,
@@ -165,13 +186,9 @@ const config: HardhatUserConfig = {
       ],
     },
   },
+  // For Mezo key is "empty"
   etherscan: {
-    apiKey: {
-      mainnet: "empty",
-      matsnet: "empty",
-      sepolia: ETHERSCAN_API_KEY,
-      ethereum: ETHERSCAN_API_KEY,
-    },
+    apiKey: ETHERSCAN_API_KEY,
     customChains: [
       {
         network: "mainnet",
@@ -203,6 +220,22 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.etherscan.io/api",
           browserURL: "https://etherscan.io",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "base_sepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://sepolia.basescan.org",
         },
       },
     ],
