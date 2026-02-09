@@ -37,9 +37,9 @@ type NetworkConfigWithTags = { tags?: string[] }
 
 // Returns true if the current network has the "noop" tag in hardhat.config.
 export function isNoopNetwork(hre: HardhatRuntimeEnvironment): boolean {
-  const config = hre.config.networks[
-    hre.network.name
-  ] as NetworkConfigWithTags | undefined
+  const config = hre.config.networks[hre.network.name] as
+    | NetworkConfigWithTags
+    | undefined
   return config?.tags?.includes("noop") ?? false
 }
 
