@@ -108,21 +108,25 @@ const config: HardhatUserConfig = {
       url: SEPOLIA_RPC_URL,
       chainId: 11155111,
       accounts: SEPOLIA_PRIVATE_KEY,
+      tags: ["noop"],
     },
     ethereum: {
       url: ETHEREUM_RPC_URL,
       accounts: ETHEREUM_PRIVATE_KEY,
       chainId: 1,
+      tags: ["noop"],
     },
     base: {
       url: BASE_RPC_URL,
       accounts: BASE_PRIVATE_KEY,
       chainId: 8453,
+      tags: ["noop"],
     },
     base_sepolia: {
       url: BASE_SEPOLIA_RPC_URL,
       accounts: BASE_SEPOLIA_PRIVATE_KEY,
       chainId: 84532,
+      tags: ["noop"],
     },
     hardhat: {
       initialBaseFeePerGas: 0,

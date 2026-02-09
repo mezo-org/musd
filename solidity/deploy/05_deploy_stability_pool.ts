@@ -1,14 +1,15 @@
 import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
-import { setupDeploymentBoilerplate } from "../helpers/deploy-helpers"
-import { NOOP_NETWORKS } from "../helpers/constants"
+import {
+  setupDeploymentBoilerplate,
+  isNoopNetwork,
+} from "../helpers/deploy-helpers"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getOrDeployProxy, getOrDeploy } =
     await setupDeploymentBoilerplate(hre)
 
-  const networkName = hre.network.name
-  const shouldDeployNoOp = NOOP_NETWORKS.includes(networkName)
+  const shouldDeployNoOp = isNoopNetwork(hre)
 
   if (shouldDeployNoOp) {
     // Deploy NoOp contract for specified networks
