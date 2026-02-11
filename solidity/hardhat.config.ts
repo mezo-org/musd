@@ -138,7 +138,7 @@ const config: HardhatUserConfig = {
       url: BSC_RPC_URL,
       accounts: BSC_PRIVATE_KEY,
       chainId: 56,
-      tags: ["etherscan"],
+      tags: ["noop"],
     },
     hardhat: {
       initialBaseFeePerGas: 0,
