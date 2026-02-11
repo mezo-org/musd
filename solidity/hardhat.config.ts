@@ -55,6 +55,12 @@ const BASE_SEPOLIA_PRIVATE_KEY = process.env.BASE_SEPOLIA_PRIVATE_KEY
   ? [process.env.BASE_SEPOLIA_PRIVATE_KEY]
   : []
 
+const BSC_PRIVATE_KEY = process.env.BSC_PRIVATE_KEY
+  ? [process.env.BSC_PRIVATE_KEY]
+  : []
+
+const BSC_RPC_URL = process.env.BSC_RPC_URL ? process.env.BSC_RPC_URL : ""
+
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
   ? process.env.ETHERSCAN_API_KEY
   : ""
@@ -128,6 +134,12 @@ const config: HardhatUserConfig = {
       chainId: 84532,
       tags: ["noop"],
     },
+    bsc: {
+      url: BSC_RPC_URL,
+      accounts: BSC_PRIVATE_KEY,
+      chainId: 56,
+      tags: ["etherscan"],
+    },
     hardhat: {
       initialBaseFeePerGas: 0,
       chainId: 31612, // simulate Mezo mainnet chain ID for TokenDeployer tests
@@ -190,7 +202,15 @@ const config: HardhatUserConfig = {
   },
   // For Mezo key is "empty"
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: {
+      mainnet: "empty",
+      matsnet: "empty",
+      sepolia: ETHERSCAN_API_KEY,
+      ethereum: ETHERSCAN_API_KEY,
+      base: ETHERSCAN_API_KEY,
+      base_sepolia: ETHERSCAN_API_KEY,
+      bsc: ETHERSCAN_API_KEY,
+    },
     customChains: [
       {
         network: "mainnet",
@@ -238,6 +258,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-sepolia.basescan.org/api",
           browserURL: "https://sepolia.basescan.org",
+        },
+      },
+      {
+        network: "bsc",
+        chainId: 56,
+        urls: {
+          apiURL: "https://api.bscscan.com/api",
+          browserURL: "https://bscscan.com",
         },
       },
     ],
