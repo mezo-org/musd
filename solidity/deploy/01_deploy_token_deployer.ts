@@ -9,7 +9,7 @@ import { TokenDeployer } from "../typechain"
 import {
   TOKEN_DEPLOYER_INIT_CODE,
   TOKEN_DEPLOYER_SALT,
-} from "./constants/token-deployer"
+} from "../helpers/constants/token-deployer"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { isHardhatNetwork, getValidDeployment, log, deployer } =
