@@ -12,6 +12,7 @@ import { saveDeploymentArtifact } from "../deploy-helpers"
  * @property {string} [contractName] - Optional. Name of the contract to deploy.
  * @property {FactoryOptions} [factoryOpts] - Optional. Custom options for the contract factory.
  * @property {unknown[]} [constructorArgs] - Optional. Arguments for the contract's constructor.
+ * @property {string} [initCode] - Optional. Hardcoded init code for deterministic deployments.
  */
 type Options = {
   from: Signer
@@ -19,6 +20,7 @@ type Options = {
   contractName?: string
   constructorArgs?: unknown[]
   confirmations?: number
+  initCode?: string
 }
 
 /**
@@ -45,13 +47,29 @@ export async function deployWithSingletonFactory<T extends BaseContract>(
     opts?.from,
   )
 
-  const creationCode = contractFactory.bytecode
-  const constructorArgs = opts?.constructorArgs
-    ? contractFactory.interface.encodeDeploy(opts.constructorArgs)
-    : ""
+  // Validate that initCode and constructorArgs are mutually exclusive.
+  // When initCode is provided, it should already include encoded constructor args.
+  if (opts?.initCode && opts?.constructorArgs) {
+    throw new Error(
+      "Cannot specify both 'initCode' and 'constructorArgs'. " +
+        "The 'initCode' should already include the encoded constructor arguments.",
+    )
+  }
 
-  // The initcode is the contract bytecode concatenated with the encoded constructor arguments.
-  const initCode = creationCode + constructorArgs
+  // Use hardcoded initCode if provided (for deterministic cross-chain deployments),
+  // otherwise generate it from the contract factory.
+  let initCode: string
+  if (opts?.initCode) {
+    // initCode is expected to be complete: creation bytecode + encoded constructor args
+    initCode = opts.initCode
+  } else {
+    const creationCode = contractFactory.bytecode
+    const constructorArgs = opts?.constructorArgs
+      ? contractFactory.interface.encodeDeploy(opts.constructorArgs)
+      : ""
+    // The initcode is the contract bytecode concatenated with the encoded constructor arguments.
+    initCode = creationCode + constructorArgs
+  }
 
   // Simulate contract deployment with SingletonFactory.
   const contractAddress = await singletonFactory.deploy.staticCall(
