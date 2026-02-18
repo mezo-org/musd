@@ -15,6 +15,7 @@ mUSD is a decentralized stablecoin protocol for the Mezo network that allows Bit
 **Base Technology**: Fork of Threshold USD (which is itself a Liquity fork)
 
 **Key Enhancements**:
+
 - Fixed-rate borrowing with refinancing capabilities
 - Protocol Controlled Value (PCV) for fee management
 - EIP-712 signature verification for delegation
@@ -30,26 +31,31 @@ mUSD is a decentralized stablecoin protocol for the Mezo network that allows Bit
 #### 1. Custody Flow
 
 **Entry Points**:
+
 - `BorrowerOperations.openTrove` - User deposits BTC, receives MUSD
 - BTC routed to `ActivePool` for custody
 
 **Exit Points**:
+
 - `BorrowerOperations.withdrawColl` - User withdrawal
 - `BorrowerOperations.closeTrove` - Full debt repayment
 - `TroveManager.redeemCollateral` - Redemption against trove
 - `TroveManager.liquidate` - Liquidation event
 
 **Redistribution Paths**:
+
 - Liquidation via `StabilityPool` → BTC transferred to pool
 - Liquidation via redistribution → BTC transferred to `DefaultPool`
 
 #### 2. Price Peg Maintenance
 
 **Price Floor ($1.00)**:
+
 - Mechanism: Redemption arbitrage
 - Process: MUSD trading below $1 → arbitrageurs redeem MUSD for BTC at $1 value → selling pressure on MUSD decreases supply → price recovers
 
 **Example Arbitrage**:
+
 ```
 MUSD = $0.80, BTC = $100k
 1. Buy 1000 MUSD for $800
@@ -59,10 +65,12 @@ MUSD = $0.80, BTC = $100k
 ```
 
 **Price Ceiling ($1.10)**:
+
 - Mechanism: 110% minimum collateralization ratio
 - Process: MUSD trading above $1.10 → arbitrageurs open max-leveraged troves → MUSD supply increases → price falls
 
 **Example Arbitrage**:
+
 ```
 MUSD = $1.20, BTC = $100k
 1. Buy 1 BTC for $100k
@@ -74,12 +82,14 @@ MUSD = $1.20, BTC = $100k
 #### 3. Fee Structure
 
 **Fee Types**:
+
 1. **Borrowing Rate**: 0.1% (governable) - added as debt, minted to governance
 2. **Redemption Rate**: 0.75% (governable) - taken during BTC redemption
 3. **Refinancing Rate**: Charged when updating interest rate
 4. **Interest**: Simple, fixed-rate interest on principal
 
 **Interest Rate Mechanics**:
+
 - Global rate applies to new troves
 - Once set, trove retains its rate until refinanced
 - Changes to global rate don't affect existing troves
@@ -94,6 +104,7 @@ MUSD = $1.20, BTC = $100k
 **Definition**: Individual position bound to one Ethereum address
 
 **Components**:
+
 - Active collateral: BTC amount recorded on trove struct
 - Active principal: MUSD debt excluding interest
 - Active interest: MUSD interest owed
@@ -104,34 +115,41 @@ MUSD = $1.20, BTC = $100k
 ### Collateralization Ratios
 
 **Individual Collateral Ratio (ICR)**:
+
 ```
 ICR = (Entire Collateral in USD at current price) / (Entire Debt)
 ```
 
 **Nominal ICR (NICR)**:
+
 ```
 NICR = (Entire Collateral in BTC * 100e18) / (Entire Debt)
 ```
+
 Note: Used for sorted list positioning, excludes price oracle
 
 **Total Collateralization Ratio (TCR)**:
+
 ```
 TCR = (Entire System Collateral in USD) / (Entire System Debt)
 ```
 
 **Critical Ratios**:
+
 - Minimum CR (MCR): 110% - below this, troves are liquidatable
 - Critical CR (CCR): 150% - when TCR falls below, system enters Recovery Mode
 
 ### System Modes
 
 **Normal Mode** (TCR ≥ 150%):
+
 - Standard operations allowed
 - New troves require ≥110% CR
 - Borrowing fees charged
 - Users can close troves
 
 **Recovery Mode** (TCR &lt; 150%):
+
 - New troves require ≥150% CR
 - No borrowing fees charged
 - Trove closure disallowed
@@ -143,11 +161,13 @@ TCR = (Entire System Collateral in USD) / (Entire System Debt)
 **Purpose**: Seed Stability Pool without requiring external depositors
 
 **Initial State**:
+
 - 100M MUSD minted to PCV contract
 - 100M MUSD deposited into Stability Pool
 - Creates protocol-owned debt
 
 **Repayment**:
+
 - Fees and interest collected by PCV
 - Portion used to burn MUSD (repaying loan)
 - Once repaid, becomes Protocol Owned Liquidity (POL)
@@ -157,6 +177,7 @@ TCR = (Entire System Collateral in USD) / (Entire System Debt)
 **Role**: Fee management and bootstrap loan repayment
 
 **Fee Distribution (with active bootstrap loan)**:
+
 ```
 Fee split configurable by governance (example: 60% to loan, 40% to recipient)
 - If feeRecipient set:
@@ -168,6 +189,7 @@ Fee split configurable by governance (example: 60% to loan, 40% to recipient)
 ```
 
 **Fee Distribution (after loan repaid)**:
+
 ```
 - If feeRecipient set:
   - 60% → Stability Pool
@@ -185,18 +207,21 @@ Fee split configurable by governance (example: 60% to loan, 40% to recipient)
 **Trigger**: Trove ICR falls below 110%
 
 **Execution**:
+
 ```solidity
 TroveManager.liquidate(address _borrower)
 TroveManager.batchLiquidateTroves(address[] _troveArray)
 ```
 
 **Liquidator Rewards**:
+
 - $200 MUSD gas compensation (from trove's gas reserve)
 - 0.5% of liquidated collateral
 
 **Liquidation Methods**:
 
 #### Method 1: Stability Pool Liquidation (Preferred)
+
 ```
 Conditions: Stability Pool has sufficient MUSD
 Process:
@@ -207,6 +232,7 @@ Process:
 ```
 
 #### Method 2: Partial Stability Pool + Redistribution
+
 ```
 Conditions: Stability Pool has insufficient MUSD
 Process:
@@ -217,6 +243,7 @@ Process:
 ```
 
 #### Method 3: Full Redistribution
+
 ```
 Conditions: Stability Pool empty
 Process:
@@ -226,6 +253,7 @@ Process:
 ```
 
 **Impact on Recipients (Redistribution)**:
+
 - Collateralization ratio decreases (but still net positive)
 - Total debt obligation increases
 - More MUSD required to close position in future
@@ -238,6 +266,7 @@ Process:
 **Purpose**: Maintain price floor through arbitrage
 
 **Mechanism**:
+
 ```solidity
 TroveManager.redeemCollateral(
     uint _MUSDAmount,
@@ -250,6 +279,7 @@ TroveManager.redeemCollateral(
 ```
 
 **Process**:
+
 1. Burn MUSD tokens
 2. Receive equivalent BTC value at $1 per MUSD (minus redemption fee)
 3. Target troves in ascending CR order (lowest CR first)
@@ -257,11 +287,13 @@ TroveManager.redeemCollateral(
 5. Extract equivalent BTC collateral
 
 **Prerequisites**:
+
 - TCR must be ≥ MCR
 - Redeemer must have sufficient MUSD balance
 - Redemption amount &gt; 0
 
 **Partial Redemptions**:
+
 - Trove debt reduced proportionally
 - Trove collateral reduced proportionally
 - Trove CR increases (less debt for given collateral)
@@ -269,6 +301,7 @@ TroveManager.redeemCollateral(
 - Must leave trove with ≥ minimum debt (1800 MUSD)
 
 **Full Redemptions**:
+
 - Entire trove debt cancelled
 - Trove closed
 - Surplus collateral sent to `CollSurplusPool`
@@ -276,16 +309,22 @@ TroveManager.redeemCollateral(
 - Gas compensation (200 MUSD) burnt
 
 **Redemption Hints**:
+
 ```typescript
 // Get hints for efficient redemption
 const { firstRedemptionHint, partialRedemptionHintNICR, truncatedAmount } =
-    await hintHelpers.getRedemptionHints(amount, price, maxIterations);
+  await hintHelpers.getRedemptionHints(amount, price, maxIterations)
 
 const { upperPartialRedemptionHint, lowerPartialRedemptionHint } =
-    await sortedTroves.findInsertPosition(partialRedemptionHintNICR, address, address);
+  await sortedTroves.findInsertPosition(
+    partialRedemptionHintNICR,
+    address,
+    address,
+  )
 ```
 
 **Example**:
+
 ```
 Alice: $1000 debt, $1300 collateral (130% CR)
 Bob: $1000 debt, $2000 collateral (200% CR)
@@ -303,6 +342,7 @@ Carol redeems $50:
 **Purpose**: Socialize liquidation losses, provide liquidation liquidity
 
 **Mechanics**:
+
 ```
 Deposits: Users deposit MUSD
 Withdrawals: Users withdraw MUSD + accumulated BTC from liquidations
@@ -310,6 +350,7 @@ Share-based: Proportional ownership of pool assets
 ```
 
 **Liquidation Economics**:
+
 ```
 Example: $10,000 debt trove at 110% CR liquidated
 - Stability Pool burns: $10,000 MUSD
@@ -318,6 +359,7 @@ Example: $10,000 debt trove at 110% CR liquidated
 ```
 
 **Share Calculation**:
+
 ```
 User deposits $5,000 into $20,000 pool → 5000 shares of 25000 total
 After liquidation ($3000 debt, $3270 BTC seized):
@@ -327,6 +369,7 @@ After liquidation ($3000 debt, $3270 BTC seized):
 ```
 
 **Bootstrap Loan Role**:
+
 - PCV seeds pool with 100M MUSD (initially)
 - Acts as permanent liquidity base
 - Grows over time through fee collection
@@ -337,6 +380,7 @@ After liquidation ($3000 debt, $3270 BTC seized):
 **Purpose**: Incentivize liquidations even during high gas prices
 
 **Mechanism**:
+
 ```
 On trove opening:
 - Extra $200 MUSD minted
@@ -353,6 +397,7 @@ On redemption/closure:
 ```
 
 **Example**:
+
 ```
 Alice borrows $2000 MUSD with $3000 BTC collateral:
 - Alice receives: $2000 MUSD
@@ -370,6 +415,7 @@ If Alice closes trove:
 **Trigger**: TCR falls below 150%
 
 **Operational Restrictions**:
+
 - New troves require ≥150% CR (vs 110% in normal mode)
 - No borrowing fees charged
 - Cannot close troves
@@ -390,16 +436,19 @@ If Alice closes trove:
 ### Simple Interest Model
 
 **Characteristics**:
+
 - Non-compounding (linear growth)
 - Based on principal only
 - Time-based calculation using timestamps
 
 **Formula**:
+
 ```
 Interest = Principal × Rate × (TimeElapsed / SecondsInYear)
 ```
 
 **Example**:
+
 ```
 Principal: $10,000
 Rate: 3% APR
@@ -410,6 +459,7 @@ Year 2: $10,000 + $600 = $10,600 (not $10,609 as with compound)
 ### System-Level Interest Tracking
 
 **State Variables**:
+
 ```solidity
 uint256 interestNumerator;        // Aggregated interest rate
 uint256 lastUpdateTimestamp;      // Last interest calculation
@@ -418,6 +468,7 @@ uint256 totalInterest;            // Sum of all accrued interest
 ```
 
 **Update Process**:
+
 ```
 1. Calculate new interest:
    newInterest = interestNumerator * (now - lastUpdate) / SECONDS_IN_YEAR
@@ -426,6 +477,7 @@ uint256 totalInterest;            // Sum of all accrued interest
 ```
 
 **When principal changes**:
+
 ```
 interestNumerator = interestNumerator + (addedPrincipal * troveRate)
 ```
@@ -433,23 +485,26 @@ interestNumerator = interestNumerator + (addedPrincipal * troveRate)
 ### Trove-Level Interest
 
 **Per-Trove State**:
+
 ```solidity
 struct Trove {
-    uint256 principal;              // Original borrowed amount
-    uint256 storedInterest;         // Previously accrued interest
-    uint16 interestRate;            // Fixed rate in basis points
-    uint256 lastInterestUpdateTime; // Last calculation time
-    uint256 maxBorrowingCapacity;   // Max debt at 110% CR
+  uint256 principal; // Original borrowed amount
+  uint256 storedInterest; // Previously accrued interest
+  uint16 interestRate; // Fixed rate in basis points
+  uint256 lastInterestUpdateTime; // Last calculation time
+  uint256 maxBorrowingCapacity; // Max debt at 110% CR
 }
 ```
 
 **Calculating Current Interest**:
+
 ```
 newInterest = principal * rate * (now - lastUpdate) / SECONDS_IN_YEAR
 totalDebt = principal + storedInterest + newInterest
 ```
 
 **On Trove Operations**:
+
 1. Calculate newly accrued interest
 2. Update system total interest
 3. Add new interest to stored interest
@@ -462,11 +517,13 @@ totalDebt = principal + storedInterest + newInterest
 **Purpose**: Allow users to update to new (presumably lower) interest rate
 
 **Process**:
+
 ```solidity
 BorrowerOperations.refinance()
 ```
 
 **Effects**:
+
 1. Calculate all accrued interest
 2. Add interest to stored interest
 3. Update interest rate to current global rate
@@ -484,9 +541,11 @@ BorrowerOperations.refinance()
 ### Core Contracts
 
 #### BorrowerOperations
+
 **Purpose**: Main user interface for trove management
 
 **Key Functions**:
+
 ```solidity
 // Trove lifecycle
 openTrove(uint _debtAmount, address _upperHint, address _lowerHint) payable
@@ -509,14 +568,17 @@ claimCollateral(address _user)
 ```
 
 **Requirements**:
+
 - Upper/lower hints for sorted list insertion
 - Operations must maintain ICR ≥ MCR (or CCR in recovery mode)
 - Some operations require TCR ≥ CCR
 
 #### TroveManager
+
 **Purpose**: Handles liquidations, redemptions, and trove state
 
 **Key Functions**:
+
 ```solidity
 // Liquidations
 liquidate(address _borrower)
@@ -544,9 +606,11 @@ checkRecoveryMode()
 **Note**: Does NOT hold actual BTC/MUSD, only tracks state
 
 #### StabilityPool
+
 **Purpose**: Liquidation absorption and BTC distribution
 
 **Key Functions**:
+
 ```solidity
 provideToSP(uint _amount)  // Deposit MUSD
 withdrawFromSP(uint _amount)  // Withdraw MUSD + BTC gains
@@ -555,9 +619,11 @@ withdrawFromSP(uint _amount)  // Withdraw MUSD + BTC gains
 **Internal**: Handles liquidation offsets, share calculations
 
 #### InterestRateManager
+
 **Purpose**: Interest rate calculations and governance
 
 **Key Functions**:
+
 ```solidity
 proposeInterestRate(uint _rate)
 approveInterestRate()
@@ -567,9 +633,11 @@ getAccruedInterest()
 **Note**: Rate changes don't affect existing troves
 
 #### PCV (Protocol Controlled Value)
+
 **Purpose**: Fee management and bootstrap loan
 
 **Key Functions**:
+
 ```solidity
 distributeMUSD(uint _amount)  // Distribute fees
 depositToStabilityPool(uint _amount)
@@ -581,25 +649,30 @@ withdrawCollateral(address _to, uint _amount)
 **Governance Controls**: Fee split percentage, fee recipient
 
 #### MUSD
+
 **Purpose**: Stablecoin token
 
 **Key Features**:
+
 - ERC20 with EIP-2612 permit
 - Mint list (authorized minters)
 - Burn list (authorized burners)
 - Governance controls for list management
 
 #### SortedTroves
+
 **Purpose**: Maintain ordered list of troves by NICR
 
 **Structure**: Doubly-linked list
 
 **Why**: Enables efficient:
+
 - Liquidation targeting (lowest CR first)
 - Redemption targeting (lowest CR first)
 - Hint-based insertions (O(1) with hints vs O(n) without)
 
 #### BorrowerOperationsSignatures
+
 **Purpose**: Enable delegated trove operations via EIP-712 signatures
 
 **Functions**: All main borrower operations with `WithSignature` suffix
@@ -609,9 +682,11 @@ withdrawCollateral(address _to, uint _amount)
 ### Asset Pools
 
 #### ActivePool
+
 **Purpose**: Hold BTC collateral and track debt for active troves
 
 **Tracks**:
+
 ```solidity
 uint256 collateralBalance  // Total BTC in active troves
 uint256 principal          // Total principal debt
@@ -619,6 +694,7 @@ uint256 interest           // Total accrued interest
 ```
 
 #### DefaultPool
+
 **Purpose**: Track redistributed debt and collateral
 
 **Mechanism**: Per-unit-collateral reward snapshots
@@ -626,11 +702,13 @@ uint256 interest           // Total accrued interest
 **Lazy Application**: Only applied when trove next interacts with system
 
 #### CollSurplusPool
+
 **Purpose**: Hold surplus collateral from full redemptions
 
 **Claim**: Via `BorrowerOperations.claimCollateral()`
 
 #### GasPool
+
 **Purpose**: Hold gas compensation reserves
 
 **Balance**: Sum of all $200 MUSD gas compensation amounts
@@ -638,23 +716,28 @@ uint256 interest           // Total accrued interest
 ### Supporting Contracts
 
 #### PriceFeed
+
 **Purpose**: Provide BTC/USD price data
 
 **Important**: 60-second staleness check (reverts if not updated)
 
 #### HintHelpers
+
 **Purpose**: Calculate hints for sorted list operations
 
 **Functions**:
+
 ```solidity
 getApproxHint(uint _CR, uint _numTrials, uint _randomSeed)
 getRedemptionHints(uint _amount, uint _price, uint _maxIterations)
 ```
 
 #### GovernableVariables
+
 **Purpose**: Manage governance parameters
 
 **Controls**:
+
 - Council/treasury roles (with time delays)
 - Fee exemption list
 - Role transitions
@@ -666,6 +749,7 @@ getRedemptionHints(uint _amount, uint _price, uint _maxIterations)
 ### Test Organization
 
 **Structure**:
+
 ```
 contracts/      - Core contracts
 test/          - Test suites
@@ -674,6 +758,7 @@ scale-testing/ - Load testing framework
 ```
 
 **Test Groups** (per test file):
+
 ```
 1. Expected Reverts
 2. Emitted Events
@@ -687,13 +772,14 @@ scale-testing/ - Load testing framework
 ### Testing Best Practices
 
 **Fixtures**:
+
 ```typescript
 interface Contracts {
-    activePool: ActivePool
-    borrowerOperations: BorrowerOperations
-    musd: MUSD | MUSDTester
-    troveManager: TroveManager | TroveManagerTester
-    // ... other contracts
+  activePool: ActivePool
+  borrowerOperations: BorrowerOperations
+  musd: MUSD | MUSDTester
+  troveManager: TroveManager | TroveManagerTester
+  // ... other contracts
 }
 
 // Load cached test setup
@@ -703,41 +789,44 @@ contracts = testSetup.contracts
 ```
 
 **User State Tracking**:
+
 ```typescript
 interface User {
-    address: string
-    wallet: HardhatEthersSigner
-    btc: { before: bigint, after: bigint }
-    musd: { before: bigint, after: bigint }
-    trove: {
-        collateral: { before: bigint, after: bigint }
-        debt: { before: bigint, after: bigint }
-        status: { before: bigint, after: bigint }
-    }
-    pending: {
-        collateral: { before: bigint, after: bigint }
-        debt: { before: bigint, after: bigint }
-    }
+  address: string
+  wallet: HardhatEthersSigner
+  btc: { before: bigint; after: bigint }
+  musd: { before: bigint; after: bigint }
+  trove: {
+    collateral: { before: bigint; after: bigint }
+    debt: { before: bigint; after: bigint }
+    status: { before: bigint; after: bigint }
+  }
+  pending: {
+    collateral: { before: bigint; after: bigint }
+    debt: { before: bigint; after: bigint }
+  }
 }
 ```
 
 **Helper Functions**:
+
 ```typescript
 interface OpenTroveParams {
-    musdAmount: string | bigint
-    ICR?: string
-    sender: HardhatEthersSigner
-    upperHint?: string
-    lowerHint?: string
+  musdAmount: string | bigint
+  ICR?: string
+  sender: HardhatEthersSigner
+  upperHint?: string
+  lowerHint?: string
 }
 
 await openTrove(contracts, {
-    musdAmount: "10,000",  // Accepts strings with commas
-    sender: alice.wallet
+  musdAmount: "10,000", // Accepts strings with commas
+  sender: alice.wallet,
 })
 ```
 
 **Test Helpers**:
+
 - Accept both bigint and string inputs
 - Strings can include commas for readability
 - Default values reduce boilerplate
@@ -748,6 +837,7 @@ await openTrove(contracts, {
 **Purpose**: Simulate real-world usage with multiple wallets and transactions
 
 **Setup Process**:
+
 ```bash
 # 1. Deploy contracts
 pnpm run deploy --network matsnet_fuzz
@@ -766,6 +856,7 @@ npx hardhat run scripts/scale-testing/scenarios/open-troves.ts --network matsnet
 ```
 
 **Available Scenarios**:
+
 - open-troves - Create initial troves
 - add-collateral - Add BTC to existing troves
 - withdraw-collateral - Remove BTC from troves
@@ -776,6 +867,7 @@ npx hardhat run scripts/scale-testing/scenarios/open-troves.ts --network matsnet
 - liquidate-troves - Trigger liquidations
 
 **State Manager**:
+
 ```typescript
 class StateManager {
     // Query accounts by criteria
@@ -806,6 +898,7 @@ class StateManager {
 **Purpose**: Maintain adequate MUSD liquidity for liquidations while managing BTC exposure
 
 **When to Execute**:
+
 - Monthly as scheduled maintenance
 - When Stability Pool MUSD &lt; 80% of initial deposit
 - When PCV's BTC holdings &gt; 20% of deposit value
@@ -813,17 +906,20 @@ class StateManager {
 **Process**:
 
 1. **Detection** - Check PCV Stability Pool position
+
    ```
    StabilityPool.getCompoundedMUSDDeposit(PCV_ADDRESS)
    StabilityPool.getDepositorCollateralGain(PCV_ADDRESS)
    ```
 
 2. **Withdraw BTC from Stability Pool**
+
    ```solidity
    pcv.withdrawFromStabilityPool(0)  // Withdraws all BTC, 0 MUSD
    ```
 
 3. **Withdraw BTC from PCV**
+
    ```solidity
    pcv.withdrawCollateral(governanceAddress, btcAmount)
    ```
@@ -831,11 +927,13 @@ class StateManager {
 4. **Swap BTC for MUSD** - Execute on DEX
 
 5. **Deposit MUSD to PCV**
+
    ```solidity
    musd.transfer(pcvAddress, musdAmount)
    ```
 
 6. **Deposit to Stability Pool**
+
    ```solidity
    pcv.depositToStabilityPool(musdAmount)
    ```
@@ -843,10 +941,12 @@ class StateManager {
 7. **Verification** - Confirm balances restored
 
 **Expected State After Rebalancing**:
+
 - MUSD balance: ~15M
 - BTC balance: ~0
 
 **Risks**:
+
 - BTC price volatility during swap
 - Slippage on large swaps
 - Execution risk (manual process)
@@ -867,6 +967,7 @@ class StateManager {
 4. **Set Addresses** - Configure new contracts with each other's addresses
 
 5. **Update MUSD System Contracts**
+
    ```solidity
    MUSD.setSystemContracts(
        newTroveManager,
@@ -893,6 +994,7 @@ class StateManager {
 **Solution**: Use hint system for O(1) insertion
 
 **Process**:
+
 ```typescript
 // 1. Calculate expected total debt
 const debtAmount = to1e18(2000)
@@ -901,7 +1003,7 @@ const expectedFee = await borrowerOperations.getBorrowingFee(debtAmount)
 const expectedTotalDebt = debtAmount + expectedFee + gasCompensation
 
 // 2. Calculate nominal ICR (no price)
-const assetAmount = to1e18(10)  // 10 BTC
+const assetAmount = to1e18(10) // 10 BTC
 const nicr = (assetAmount * to1e18(100)) / expectedTotalDebt
 
 // 3. Get approximate hint
@@ -910,25 +1012,22 @@ const numTrials = BigInt(Math.ceil(Math.sqrt(numTroves))) * 15n
 const randomSeed = Math.ceil(Math.random() * 100000)
 
 const { 0: approxHint } = await hintHelpers.getApproxHint(
-    nicr,
-    numTrials,
-    randomSeed
+  nicr,
+  numTrials,
+  randomSeed,
 )
 
 // 4. Get exact hints
 const { 0: upperHint, 1: lowerHint } = await sortedTroves.findInsertPosition(
-    nicr,
-    approxHint,
-    approxHint
+  nicr,
+  approxHint,
+  approxHint,
 )
 
 // 5. Open trove
-await borrowerOperations.openTrove(
-    debtAmount,
-    upperHint,
-    lowerHint,
-    { value: assetAmount }
-)
+await borrowerOperations.openTrove(debtAmount, upperHint, lowerHint, {
+  value: assetAmount,
+})
 ```
 
 ### Redemption with Hints
@@ -936,65 +1035,71 @@ await borrowerOperations.openTrove(
 ```typescript
 // 1. Get redemption hints
 const { firstRedemptionHint, partialRedemptionHintNICR, truncatedAmount } =
-    await hintHelpers.getRedemptionHints(
-        redemptionAmount,
-        currentPrice,
-        maxIterations
-    )
+  await hintHelpers.getRedemptionHints(
+    redemptionAmount,
+    currentPrice,
+    maxIterations,
+  )
 
 // 2. Get insert position hints
 const { upperPartialRedemptionHint, lowerPartialRedemptionHint } =
-    await sortedTroves.findInsertPosition(
-        partialRedemptionHintNICR,
-        redeemerAddress,
-        redeemerAddress
-    )
+  await sortedTroves.findInsertPosition(
+    partialRedemptionHintNICR,
+    redeemerAddress,
+    redeemerAddress,
+  )
 
 // 3. Perform redemption
 if (truncatedAmount > 0) {
-    await troveManager.redeemCollateral(
-        truncatedAmount,
-        firstRedemptionHint,
-        upperPartialRedemptionHint,
-        lowerPartialRedemptionHint,
-        partialRedemptionHintNICR,
-        maxIterations
-    )
+  await troveManager.redeemCollateral(
+    truncatedAmount,
+    firstRedemptionHint,
+    upperPartialRedemptionHint,
+    lowerPartialRedemptionHint,
+    partialRedemptionHintNICR,
+    maxIterations,
+  )
 }
 ```
 
 ### Key API Changes (Recent Updates)
 
 **BorrowerOperations**:
+
 - Removed `_maxFeePercentage` parameter (fees now fixed)
 - Removed `_assetAmount` parameter (uses `msg.value`)
 - `refinance()` now requires hints
 - New fee exemption checks via `GovernableVariables`
 
 **TroveManager**:
+
 - Virtual interest accrual in view functions
 - Interest excluded from NICR calculations
 - Redemption skips troves with ICR &lt; MCR
 - `MIN_NET_DEBT` is now variable `minNetDebt`
 
 **Events**:
+
 - `TroveUpdated` now includes `interestRate` and `lastInterestUpdateTime`
 
 ### Fee Calculation
 
 **Current Fee Structure**:
+
 ```typescript
 // Borrowing fee (fixed)
 const borrowingFee = await borrowerOperations.getBorrowingFee(debtAmount)
 
 // Redemption fee (governance-controlled)
-const redemptionFee = await borrowerOperations.getRedemptionRate(collateralAmount)
+const redemptionFee =
+  await borrowerOperations.getRedemptionRate(collateralAmount)
 
 // Check if account is fee-exempt
 const isFeeExempt = await governableVariables.isAccountFeeExempt(account)
 ```
 
 **Fee Recipients**:
+
 - Borrowing fees → PCV
 - Redemption fees → PCV
 - Interest → PCV (then distributed per governance rules)
@@ -1004,26 +1109,32 @@ const isFeeExempt = await governableVariables.isAccountFeeExempt(account)
 ## Key Differences from Liquity v1
 
 ### Fixed Interest Rates
+
 - Liquity v1: No interest system
 - mUSD: Fixed simple interest per trove, refinanceable
 
 ### Protocol Bootstrap
+
 - Liquity v1: LQTY token incentives for Stability Pool deposits
 - mUSD: Protocol bootstrap loan, no external incentives needed
 
 ### Upgradability
+
 - Liquity v1: Immutable contracts
 - mUSD: Upgradeable (OpenZeppelin proxy pattern), will be hardened later
 
 ### Fee Structure
+
 - Liquity v1: Variable fees based on redemption activity
 - mUSD: Fixed governable fees, simple interest
 
 ### Recovery Mode Liquidations
+
 - Liquity v1: Special liquidation rules in recovery mode
 - mUSD: Unified liquidation process (same in both modes)
 
 ### EIP-712 Signatures
+
 - Liquity v1: Not supported
 - mUSD: Full delegation support via BorrowerOperationsSignatures
 
@@ -1034,22 +1145,26 @@ const isFeeExempt = await governableVariables.isAccountFeeExempt(account)
 ### For Borrowers
 
 **1. Liquidation Risk**
+
 - **Trigger**: ICR falls below 110%
 - **Impact**: Up to 10% capital loss, potential tax implications
 - **Mitigation**: Monitor position, add collateral proactively
 
 **2. Redemption Risk**
+
 - **Trigger**: MUSD trades below $1, arbitrageurs redeem
 - **Target**: Lowest CR troves first
 - **Impact**: Debt cancelled, collateral reduced proportionally, loss of BTC upside exposure, tax implications
 - **Note**: Redemption improves your CR (less debt for collateral)
 
 **3. Redistribution Risk** (when Stability Pool empty)
+
 - **Impact**: Receive additional debt + collateral from liquidated troves
 - **Net Effect**: Positive value ($1.10 BTC per $1 debt) but CR decreases
 - **Consideration**: Requires more MUSD to close position
 
 **4. Bad Debt Risk** (extreme price crashes)
+
 - **Scenario**: Collateral value &lt; debt before liquidation
 - **Probability**: Low due to:
   - Fast block times (quick liquidation)
@@ -1058,6 +1173,7 @@ const isFeeExempt = await governableVariables.isAccountFeeExempt(account)
   - Low friction liquidation (no capital required)
 
 **5. Depeg Risk**
+
 - **Scenario**: MUSD loses peg to $1
 - **Impact**: Borrowed "dollars" worth less than expected
 - **Mitigation**: Redemption mechanism maintains floor, arbitrage maintains ceiling
@@ -1065,11 +1181,13 @@ const isFeeExempt = await governableVariables.isAccountFeeExempt(account)
 ### For Stability Pool Depositors
 
 **1. Impermanent Loss**
+
 - **Mechanism**: MUSD burnt, BTC received at liquidation price
 - **Risk**: BTC price continues falling after liquidation
 - **Upside**: Purchased BTC at ~9% discount
 
 **2. Liquidity Risk**
+
 - **Bootstrap Loan**: Most liquidity initially from protocol
 - **User Deposits**: No direct incentives (unlike Liquity v1)
 
@@ -1106,12 +1224,14 @@ uint256 BOOTSTRAP_LOAN = 100M MUSD   // Initial PCV loan (reduced to 15M post-la
 ### Governance Parameters
 
 **Time Delays**:
+
 - Interest rate changes: 7 days (proposal → approval)
 - Borrowing/redemption rate changes: 7 days
 - Role changes (council/treasury): Time-delayed
 - Contract upgrades: Governance-controlled
 
 **Fee Split** (PCV distribution):
+
 - Configurable by governance
 - Example: 60% to bootstrap loan repayment, 40% to fee recipient
 - After loan repaid: 60% to Stability Pool, 40% to fee recipient
@@ -1125,6 +1245,7 @@ uint256 BOOTSTRAP_LOAN = 100M MUSD   // Initial PCV loan (reduced to 15M post-la
 **Purpose**: Enable loans &lt; 1800 MUSD minimum (e.g., $25 minimum)
 
 **Architecture**:
+
 - Separate Microloans contract
 - Opens main trove in MUSD system
 - Provides sub-loans to users from main trove
@@ -1132,6 +1253,7 @@ uint256 BOOTSTRAP_LOAN = 100M MUSD   // Initial PCV loan (reduced to 15M post-la
 - Interest rate = MUSD base rate + spread
 
 **Key Concepts**:
+
 ```
 Main Trove (opened by Microloans contract):
 - Debt: 1,800+ MUSD
@@ -1145,6 +1267,7 @@ User Microtroves (tracked by Microloans contract):
 ```
 
 **Operations**:
+
 - Users interact with Microloans contract
 - Microloans adjusts main trove accordingly
 - Liquidations pay down main trove debt
@@ -1181,9 +1304,11 @@ TroveManager: 0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0
 ## Changelog Summary
 
 ### v1.0.2 → Current
+
 - TroveUpdated event includes interest rate and last update time
 
 ### v1.0.0 → v1.0.2
+
 - Major contract interface changes
 - GovernableVariables contract introduced
 - Fee exemption system
@@ -1192,6 +1317,7 @@ TroveManager: 0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0
 - Refinance requires hints
 
 ### v0.1.0 → v1.0.0
+
 - Removed max fee percentage parameters
 - Virtual interest accrual in view functions
 - Interest excluded from NICR
@@ -1204,6 +1330,7 @@ TroveManager: 0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0
 ## Quick Reference: Common Operations
 
 ### Opening a Trove
+
 ```solidity
 // Calculate hints first (see Frontend Integration section)
 borrowerOperations.openTrove{value: btcAmount}(
@@ -1214,6 +1341,7 @@ borrowerOperations.openTrove{value: btcAmount}(
 ```
 
 ### Adjusting a Trove
+
 ```solidity
 borrowerOperations.adjustTrove(
     collWithdrawal,    // Amount of BTC to withdraw
@@ -1225,12 +1353,14 @@ borrowerOperations.adjustTrove(
 ```
 
 ### Closing a Trove
+
 ```solidity
 // Must have sufficient MUSD to repay debt (excluding gas compensation)
 borrowerOperations.closeTrove()
 ```
 
 ### Liquidating
+
 ```solidity
 // Single liquidation
 troveManager.liquidate(borrowerAddress)
@@ -1240,6 +1370,7 @@ troveManager.batchLiquidateTroves([address1, address2, ...])
 ```
 
 ### Redeeming
+
 ```solidity
 // Calculate hints first (see Frontend Integration section)
 troveManager.redeemCollateral(
@@ -1253,6 +1384,7 @@ troveManager.redeemCollateral(
 ```
 
 ### Stability Pool
+
 ```solidity
 // Deposit
 stabilityPool.provideToSP(musdAmount)
@@ -1262,6 +1394,7 @@ stabilityPool.withdrawFromSP(musdAmount)
 ```
 
 ### Checking System State
+
 ```solidity
 // Individual trove
 uint icr = troveManager.getCurrentICR(borrower, price)
@@ -1321,6 +1454,7 @@ bool recoveryMode = troveManager.checkRecoveryMode()
 **Last Updated**: 2025-01-19
 
 **Source Documents**:
+
 - docs/README.md - Core architecture and mechanics
 - docs/CHANGELOG.md - Version history and contract changes
 - docs/migration.md - Migration procedures
