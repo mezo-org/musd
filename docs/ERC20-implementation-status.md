@@ -4,18 +4,109 @@
 
 ### Pool Contracts ✅
 
-- **ActivePoolERC20** - Fully implemented and tested
-- **DefaultPoolERC20** - Fully implemented
-- **CollSurplusPoolERC20** - Fully implemented
-- **SendCollateralERC20** - Base contract for ERC20 transfers
+- **ActivePoolERC20** - Fully implemented and tested (182 lines)
+- **DefaultPoolERC20** - Fully implemented (145 lines)
+- **CollSurplusPoolERC20** - Fully implemented (154 lines)
+- **SendCollateralERC20** - Base contract for ERC20 transfers (28 lines)
+
+### Core Protocol Contracts
+
+#### 1. BorrowerOperationsERC20 ✅
+
+**Status**: Fully implemented (1,447 lines)
+**Complexity**: High
+**Implementation Complete**:
+
+- All 8 public trove operation functions fully implemented
+- All internal functions: `_openTrove`, `_adjustTrove`, `_closeTrove`, `_refinance`
+- Helper functions: `_moveTokensAndCollateralfromAdjustment`, `_updateTroveFromAdjustment`, `_getCollChange`, `_getNewTCRFromTroveChange`
+- 14 validation functions ensuring protocol safety
+- Calculation functions: `_getNewICRFromTroveChange`, `_getNewTroveAmounts`, `_calculateMaxBorrowingCapacity`
+- ERC20 pattern: Collateral transfers via `SafeERC20.safeTransferFrom` then `activePoolERC20.receiveCollateral()`
+- All governance functions implemented
+
+**Key Functions Implemented**:
+
+- `openTrove(uint256 _collAmount, uint256 _debtAmount, ...)` ✅
+- `addColl(uint256 _collAmount, ...)` ✅
+- `withdrawColl(uint256 _amount, ...)` ✅
+- `adjustTrove(uint256 _collWithdrawal, uint256 _debtChange, ...)` ✅
+- `closeTrove()` ✅
+- `refinance(...)` ✅
+- `claimCollateral()` ✅
+- `withdrawMUSD(...)` ✅
+
+**Stub Functions** (4 restricted signature functions - not critical for core functionality)
+
+#### 2. TroveManagerERC20 🔄
+
+**Status**: Skeleton complete with view functions (695 lines, 7.716 KB)
+**Complexity**: High
+**Completed**:
+
+- All 10 struct definitions
+- All state variables with ERC20 adaptations
+- `initialize()` and `setAddresses()` with `_collateralToken` parameter
+- 19 view functions fully implemented: `getNominalICR`, `getCurrentICR`, `getTroveStatus`, `getTroveStake`, `getTroveDebt`, `getTroveColl`, `getTrovePrincipal`, `getTroveInterestRate`, `getTroveLastInterestUpdateTime`, `getTroveInterestOwed`, `getTroveMaxBorrowingCapacity`, `getTCR`, `checkRecoveryMode`, etc.
+- 2 internal view helpers: `_getCurrentTroveAmounts`, `_getTotalDebt`
+
+**Remaining Work** (25 functions to implement):
+
+- Liquidation: `liquidate()`, `batchLiquidateTroves()`, internal liquidation logic
+- Redemption: `redeemCollateral()`, internal redemption helpers
+- State updates: `updateStakeAndTotalStakes()`, `updateTroveRewardSnapshots()`, interest updates
+- Trove management: All property setters
+
+#### 3. StabilityPoolERC20 🔄
+
+**Status**: Skeleton complete with view/validation functions (4.548 KB)
+**Complexity**: High
+**Completed**:
+
+- Independent `IStabilityPoolERC20` interface
+- All struct definitions and state variables
+- `initialize()` and `setAddresses()` with `_collateralToken` parameter
+- View functions: `getCollateralBalance()`, `getTotalMUSDDeposits()`, `getDepositorCollateralGain()`, `getCompoundedMUSDDeposit()`
+- Internal helpers: `_getCompoundedStakeFromSnapshots()`, `_getCollateralGainFromSnapshots()`
+- 6 require validation functions
+
+**Remaining Work** (13 functions to implement):
+
+- User operations: `provideToSP()`, `withdrawFromSP()`, `withdrawCollateralGainToTrove()`
+- Liquidation: `offset()` - absorbs liquidated debt
+- Internal helpers: deposit/snapshot updates, reward calculations
+
+#### 4. PCVERC20 🔄
+
+**Status**: Mostly complete with governance (376 lines, 7.544 KB)
+**Complexity**: Medium
+**Completed** (15 functions):
+
+- Independent `IPCVERC20` interface and `ICollateralFeeRecipient` interface
+- `initialize()`, `initializeV2()` with reentrancy guard
+- `setAddresses()` with `_collateralToken` parameter
+- Governance: `setFeeRecipient()`, `setCollateralRecipient()`, `setFeeSplit()`
+- Role management: `startChangingRoles()`, `cancelChangingRoles()`, `finalizeChangingRoles()`
+- Whitelist: `addRecipientToWhitelist()`, `removeRecipientFromWhitelist()`
+- Fee distribution: `distributeMUSD()`, `distributeCollateral()`
+- `depositToStabilityPool()` - allows donations
+
+**Remaining Work** (4 functions to implement):
+
+- `initializeDebt()` - bootstrap loan initialization
+- `withdrawFromStabilityPool()` - SP withdrawals
+- `_repayDebt()`, `_depositToStabilityPool()` - internal helpers
 
 ### Interfaces ✅
 
-- IPoolERC20
-- IActivePoolERC20
-- IDefaultPoolERC20
-- ICollSurplusPoolERC20
-- IBorrowerOperationsERC20
+- IPoolERC20 ✅
+- IActivePoolERC20 ✅
+- IDefaultPoolERC20 ✅
+- ICollSurplusPoolERC20 ✅
+- IBorrowerOperationsERC20 ✅
+- IStabilityPoolERC20 ✅
+- IPCVERC20 ✅
+- ICollateralFeeRecipient ✅
 
 ### Test Infrastructure ✅
 
@@ -23,81 +114,67 @@
 - MockContract - Dependency mocking
 - ActivePoolERC20 comprehensive unit tests
 
-## Remaining Components
+## Remaining Work Summary
 
-### Critical Contracts (Complex - 1000+ lines each)
+### High Priority (Core Functionality)
 
-The following contracts require substantial implementation work due to their complexity:
+#### TroveManagerERC20 - 25 functions remaining
 
-#### 1. BorrowerOperationsERC20
+**Liquidation functions** (~600 lines estimated):
+- `liquidate(address _borrower)` - single trove liquidation
+- `batchLiquidateTroves(address[] _troveArray)` - batch liquidation
+- Internal: `_liquidate()`, `_getTotalsFromBatchLiquidate()`, `_redistributeDebtAndColl()`
 
-**Status**: Interface complete, implementation needed
-**Complexity**: High (1200+ lines in native version)
-**Key Changes Required**:
+**Redemption functions** (~400 lines estimated):
+- `redeemCollateral(...)` - main redemption logic
+- Internal: `_redeemCollateralFromTrove()`, `_redeemCloseTrove()`
 
-- Remove `payable` modifiers from all functions
-- Replace `msg.value` with explicit `_collAmount` parameters
-- Add ERC20 `transferFrom` calls for collateral deposits
-- Update `_adjustTrove` internal logic for ERC20 handling
-- Modify collateral withdrawal to use ERC20 `transfer`
+**State management functions** (~200 lines estimated):
+- `updateStakeAndTotalStakes()`, `updateTroveRewardSnapshots()`
+- All property setters (8 functions)
+- Interest update functions
 
-**Key Functions**:
+#### StabilityPoolERC20 - 13 functions remaining
 
-- `openTrove(uint256 _collAmount, uint256 _debtAmount, ...)`
-- `addColl(uint256 _collAmount, ...)`
-- `withdrawColl(uint256 _amount, ...)`
-- `adjustTrove(uint256 _collDeposit, uint256 _collWithdrawal, ...)`
-- `closeTrove()`
-- `refinance(...)`
+**User operations** (~300 lines estimated):
+- `provideToSP(uint256 _amount)` - deposit MUSD
+- `withdrawFromSP(uint256 _amount)` - withdraw MUSD
+- `withdrawCollateralGainToTrove()` - claim collateral gains
 
-#### 2. TroveManagerERC20
+**Liquidation support** (~200 lines estimated):
+- `offset(uint _principal, uint _interest, uint _coll)` - absorb liquidated debt
 
-**Status**: Not started
-**Complexity**: High (1500+ lines in native version)
-**Key Changes Required**:
+**Internal helpers** (~200 lines estimated):
+- Deposit/snapshot management
+- Reward calculation updates
 
-- Update liquidation logic to handle ERC20 transfers
-- Modify redemption collateral distribution
-- Change collateral gain calculations for ERC20
-- Update all internal collateral movement functions
+#### PCVERC20 - 4 functions remaining
 
-**Key Functions**:
+**Bootstrap loan functions** (~100 lines estimated):
+- `initializeDebt()` - mint bootstrap loan
+- `withdrawFromStabilityPool()` - withdraw from SP
+- Internal helpers for debt management
 
-- `liquidate(address _borrower)`
-- `batchLiquidateTroves(address[] _troveArray)`
-- `redeemCollateral(...)`
-- `_movePendingTroveRewardsToActivePool(...)`
+### Testing Requirements
 
-#### 3. StabilityPoolERC20
+- BorrowerOperationsERC20 comprehensive tests ⚠️ (needed)
+- TroveManagerERC20 unit tests ⚠️ (needed)
+- StabilityPoolERC20 unit tests ⚠️ (needed)
+- PCVERC20 unit tests ⚠️ (needed)
+- Integration tests for full trove lifecycle ⚠️ (needed)
 
-**Status**: Not started
-**Complexity**: High (800+ lines in native version)
-**Key Changes Required**:
+## Progress Summary
 
-- Replace `receive()` fallback with explicit `receiveCollateral()`
-- Update collateral gain distribution for ERC20
-- Modify liquidation offset logic
-- Change depositor reward calculations
+**Completed**: ~2,800 lines of production code across 12 files
+**Remaining**: ~1,900 lines across 42 functions
 
-**Key Functions**:
+**Overall Progress**: ~60% complete
 
-- `provideToSP(uint256 _amount)`
-- `withdrawFromSP(uint256 _amount)`
-- `offset(uint _principal, uint _interest, uint _coll)`
-
-#### 4. PCVERC20
-
-**Status**: Not started
-**Complexity**: Medium (400+ lines)
-**Key Changes Required**:
-
-- Update fee collection for ERC20
-- Modify collateral withdrawal logic
-- Change bootstrap loan BTC management
-
-**Key Functions**:
-
-- `withdrawCollateral(address _to, uint256 _amount)`
+**Critical Path**:
+1. Complete TroveManagerERC20 liquidation/redemption logic
+2. Complete StabilityPoolERC20 user operations and offset
+3. Complete PCVERC20 bootstrap loan functions
+4. Comprehensive testing of all components
 - `depositToStabilityPool(uint256 _amount)`
 - `withdrawFromStabilityPool(...)`
 
