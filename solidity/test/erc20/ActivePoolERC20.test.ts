@@ -26,14 +26,8 @@ describe("ActivePoolERC20", () => {
   const initialBalance = ethers.parseEther("1000000")
 
   beforeEach(async () => {
-    ;[
-      owner,
-      borrowerOps,
-      troveManager,
-      defaultPool,
-      stabilityPool,
-      user,
-    ] = await ethers.getSigners()
+    ;[owner, borrowerOps, troveManager, defaultPool, stabilityPool, user] =
+      await ethers.getSigners()
 
     // Deploy mock ERC20 token
     const MockERC20Factory = await ethers.getContractFactory("MockERC20")
@@ -49,9 +43,8 @@ describe("ActivePoolERC20", () => {
     mockInterestRateManager = await MockContractFactory.deploy()
 
     // Deploy ActivePoolERC20
-    const ActivePoolERC20Factory = await ethers.getContractFactory(
-      "ActivePoolERC20"
-    )
+    const ActivePoolERC20Factory =
+      await ethers.getContractFactory("ActivePoolERC20")
     activePool = (await upgrades.deployProxy(ActivePoolERC20Factory, [], {
       kind: "transparent",
       unsafeSkipStorageCheck: true,
@@ -65,7 +58,7 @@ describe("ActivePoolERC20", () => {
       await mockDefaultPool.getAddress(),
       await mockInterestRateManager.getAddress(),
       await mockStabilityPool.getAddress(),
-      await mockTroveManager.getAddress()
+      await mockTroveManager.getAddress(),
     )
 
     // Mint tokens to user
@@ -75,19 +68,19 @@ describe("ActivePoolERC20", () => {
   describe("initialization", () => {
     it("should set collateral token correctly", async () => {
       expect(await activePool.collateralToken()).to.equal(
-        await mockToken.getAddress()
+        await mockToken.getAddress(),
       )
     })
 
     it("should set borrower operations address correctly", async () => {
       expect(await activePool.borrowerOperationsAddress()).to.equal(
-        await mockBorrowerOps.getAddress()
+        await mockBorrowerOps.getAddress(),
       )
     })
 
     it("should set trove manager address correctly", async () => {
       expect(await activePool.troveManagerAddress()).to.equal(
-        await mockTroveManager.getAddress()
+        await mockTroveManager.getAddress(),
       )
     })
 
@@ -98,16 +91,15 @@ describe("ActivePoolERC20", () => {
     })
 
     it("should reject zero address for collateral token", async () => {
-      const ActivePoolERC20Factory = await ethers.getContractFactory(
-        "ActivePoolERC20"
-      )
+      const ActivePoolERC20Factory =
+        await ethers.getContractFactory("ActivePoolERC20")
       const newActivePool = (await upgrades.deployProxy(
         ActivePoolERC20Factory,
         [],
         {
           kind: "transparent",
           unsafeSkipStorageCheck: true,
-        }
+        },
       )) as unknown as ActivePoolERC20
 
       await expect(
@@ -118,10 +110,10 @@ describe("ActivePoolERC20", () => {
           await mockDefaultPool.getAddress(),
           await mockInterestRateManager.getAddress(),
           await mockStabilityPool.getAddress(),
-          await mockTroveManager.getAddress()
-        )
+          await mockTroveManager.getAddress(),
+        ),
       ).to.be.revertedWith(
-        "ActivePoolERC20: Collateral token cannot be zero address"
+        "ActivePoolERC20: Collateral token cannot be zero address",
       )
     })
   })
@@ -150,18 +142,20 @@ describe("ActivePoolERC20", () => {
         await mockBorrowerOps.getAddress(),
       ])
       const mockBorrowerOpsSigner = await ethers.getSigner(
-        await mockBorrowerOps.getAddress()
+        await mockBorrowerOps.getAddress(),
       )
 
       await expect(
-        activePool.connect(mockBorrowerOpsSigner).receiveCollateral(depositAmount)
+        activePool
+          .connect(mockBorrowerOpsSigner)
+          .receiveCollateral(depositAmount),
       )
         .to.emit(activePool, "ActivePoolCollateralBalanceUpdated")
         .withArgs(depositAmount)
 
       expect(await activePool.getCollateralBalance()).to.equal(depositAmount)
       expect(await mockToken.balanceOf(await activePool.getAddress())).to.equal(
-        depositAmount
+        depositAmount,
       )
 
       await ethers.provider.send("hardhat_stopImpersonatingAccount", [
@@ -190,9 +184,9 @@ describe("ActivePoolERC20", () => {
         .transfer(await activePool.getAddress(), depositAmount)
 
       await expect(
-        activePool.connect(user).receiveCollateral(depositAmount)
+        activePool.connect(user).receiveCollateral(depositAmount),
       ).to.be.revertedWith(
-        "ActivePoolERC20: Caller is neither BorrowerOperations nor Default Pool"
+        "ActivePoolERC20: Caller is neither BorrowerOperations nor Default Pool",
       )
     })
   })
@@ -212,7 +206,9 @@ describe("ActivePoolERC20", () => {
 
     it("should allow borrower operations to send collateral", async () => {
       await expect(
-        activePool.connect(borrowerOps).sendCollateral(user.address, sendAmount)
+        activePool
+          .connect(borrowerOps)
+          .sendCollateral(user.address, sendAmount),
       )
         .to.emit(activePool, "CollateralSent")
         .withArgs(user.address, sendAmount)
@@ -220,18 +216,20 @@ describe("ActivePoolERC20", () => {
         .withArgs(depositAmount - sendAmount)
 
       expect(await activePool.getCollateralBalance()).to.equal(
-        depositAmount - sendAmount
+        depositAmount - sendAmount,
       )
       expect(await mockToken.balanceOf(user.address)).to.equal(
-        initialBalance - depositAmount + sendAmount
+        initialBalance - depositAmount + sendAmount,
       )
     })
 
     it("should allow trove manager to send collateral", async () => {
-      await activePool.connect(troveManager).sendCollateral(user.address, sendAmount)
+      await activePool
+        .connect(troveManager)
+        .sendCollateral(user.address, sendAmount)
 
       expect(await activePool.getCollateralBalance()).to.equal(
-        depositAmount - sendAmount
+        depositAmount - sendAmount,
       )
     })
 
@@ -241,15 +239,15 @@ describe("ActivePoolERC20", () => {
         .sendCollateral(user.address, sendAmount)
 
       expect(await activePool.getCollateralBalance()).to.equal(
-        depositAmount - sendAmount
+        depositAmount - sendAmount,
       )
     })
 
     it("should reject sends from unauthorized addresses", async () => {
       await expect(
-        activePool.connect(user).sendCollateral(user.address, sendAmount)
+        activePool.connect(user).sendCollateral(user.address, sendAmount),
       ).to.be.revertedWith(
-        "ActivePoolERC20: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
+        "ActivePoolERC20: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool",
       )
     })
   })
@@ -261,7 +259,7 @@ describe("ActivePoolERC20", () => {
     describe("increaseDebt", () => {
       it("should allow borrower operations to increase debt", async () => {
         await expect(
-          activePool.connect(borrowerOps).increaseDebt(principal, interest)
+          activePool.connect(borrowerOps).increaseDebt(principal, interest),
         )
           .to.emit(activePool, "ActivePoolDebtUpdated")
           .withArgs(principal, interest)
@@ -280,9 +278,9 @@ describe("ActivePoolERC20", () => {
 
       it("should reject increases from unauthorized addresses", async () => {
         await expect(
-          activePool.connect(user).increaseDebt(principal, interest)
+          activePool.connect(user).increaseDebt(principal, interest),
         ).to.be.revertedWith(
-          "ActivePoolERC20: Caller must be BorrowerOperations, TroveManager, or InterestRateManager"
+          "ActivePoolERC20: Caller must be BorrowerOperations, TroveManager, or InterestRateManager",
         )
       })
     })
@@ -301,10 +299,10 @@ describe("ActivePoolERC20", () => {
           .decreaseDebt(decreaseAmount, decreaseInterest)
 
         expect(await activePool.getPrincipal()).to.equal(
-          principal - decreaseAmount
+          principal - decreaseAmount,
         )
         expect(await activePool.getInterest()).to.equal(
-          interest - decreaseInterest
+          interest - decreaseInterest,
         )
       })
 
@@ -319,9 +317,9 @@ describe("ActivePoolERC20", () => {
 
       it("should reject decreases from unauthorized addresses", async () => {
         await expect(
-          activePool.connect(user).decreaseDebt(principal, interest)
+          activePool.connect(user).decreaseDebt(principal, interest),
         ).to.be.revertedWith(
-          "ActivePoolERC20: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool"
+          "ActivePoolERC20: Caller is neither BorrowerOperations nor TroveManager nor StabilityPool",
         )
       })
     })

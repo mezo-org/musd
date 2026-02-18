@@ -4,7 +4,9 @@ pragma solidity 0.8.24;
 
 interface ICollSurplusPoolERC20 {
     // --- Events ---
-    event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
+    event BorrowerOperationsAddressChanged(
+        address _newBorrowerOperationsAddress
+    );
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event CollBalanceUpdated(address indexed _account, uint256 _newBalance);
