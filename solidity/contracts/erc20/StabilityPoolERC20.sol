@@ -138,7 +138,30 @@ contract StabilityPoolERC20 is
      * - Sends depositor's accumulated gains (collateral) to depositor
      */
     function provideToSP(uint256 _amount) external override {
-        revert("StabilityPoolERC20: not implemented");
+        _requireNonZeroAmount(_amount);
+
+        uint256 initialDeposit = deposits[msg.sender];
+
+        uint256 depositorCollateralGain = getDepositorCollateralGain(
+            msg.sender
+        );
+        uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
+        uint256 mUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+
+        uint256 newDeposit = compoundedMUSDDeposit + _amount;
+
+        _updateDepositAndSnapshots(msg.sender, newDeposit);
+        emit UserDepositChanged(msg.sender, newDeposit);
+
+        emit CollateralGainWithdrawn(
+            msg.sender,
+            depositorCollateralGain,
+            mUSDLoss
+        ); // mUSD Loss required for event log
+
+        _sendMUSDtoStabilityPool(msg.sender, _amount);
+
+        _sendCollateralGainToDepositor(depositorCollateralGain);
     }
 
     /*  withdrawFromSP():
@@ -148,7 +171,37 @@ contract StabilityPoolERC20 is
      * If _amount > userDeposit, the user withdraws all of their compounded deposit.
      */
     function withdrawFromSP(uint256 _amount) external override {
-        revert("StabilityPoolERC20: not implemented");
+        if (_amount != 0) {
+            _requireNoUnderCollateralizedTroves();
+        }
+        uint256 initialDeposit = deposits[msg.sender];
+        _requireUserHasDeposit(initialDeposit);
+
+        uint256 depositorCollateralGain = getDepositorCollateralGain(
+            msg.sender
+        );
+
+        uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
+        uint256 mUSDtoWithdraw = LiquityMath._min(
+            _amount,
+            compoundedMUSDDeposit
+        );
+        uint256 mUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+
+        _sendMUSDToDepositor(msg.sender, mUSDtoWithdraw);
+
+        // Update deposit
+        uint256 newDeposit = compoundedMUSDDeposit - mUSDtoWithdraw;
+        _updateDepositAndSnapshots(msg.sender, newDeposit);
+        emit UserDepositChanged(msg.sender, newDeposit);
+
+        emit CollateralGainWithdrawn(
+            msg.sender,
+            depositorCollateralGain,
+            mUSDLoss
+        ); // mUSD Loss required for event log
+
+        _sendCollateralGainToDepositor(depositorCollateralGain);
     }
 
     /* withdrawCollateralGainToTrove:
@@ -160,7 +213,45 @@ contract StabilityPoolERC20 is
         address _upperHint,
         address _lowerHint
     ) external override {
-        revert("StabilityPoolERC20: not implemented");
+        uint256 initialDeposit = deposits[msg.sender];
+        _requireUserHasDeposit(initialDeposit);
+        _requireUserHasTrove(msg.sender);
+        _requireUserHasCollateralGain(msg.sender);
+
+        uint256 depositorCollateralGain = getDepositorCollateralGain(
+            msg.sender
+        );
+
+        uint256 compoundedMUSDDeposit = getCompoundedMUSDDeposit(msg.sender);
+        uint256 mUSDLoss = initialDeposit - compoundedMUSDDeposit; // Needed only for event log
+
+        _updateDepositAndSnapshots(msg.sender, compoundedMUSDDeposit);
+
+        /* Emit events before transferring collateral gain to Trove.
+              This lets the event log make more sense (i.e. so it appears that first the collateral gain is withdrawn
+             and then it is deposited into the Trove, not the other way around). */
+        emit CollateralGainWithdrawn(
+            msg.sender,
+            depositorCollateralGain,
+            mUSDLoss
+        );
+        emit UserDepositChanged(msg.sender, compoundedMUSDDeposit);
+
+        collateral -= depositorCollateralGain;
+        emit StabilityPoolCollateralBalanceUpdated(collateral);
+        emit CollateralSent(msg.sender, depositorCollateralGain);
+
+        // Transfer collateral to BorrowerOperationsERC20 and have it add to trove
+        IERC20(collateralToken).safeTransfer(
+            address(borrowerOperations),
+            depositorCollateralGain
+        );
+        borrowerOperations.moveCollateralGainToTrove(
+            msg.sender,
+            _collAmount,
+            _upperHint,
+            _lowerHint
+        );
     }
 
     /*
@@ -173,7 +264,28 @@ contract StabilityPoolERC20 is
         uint256 _interestToOffset,
         uint256 _collToAdd
     ) external override {
-        revert("StabilityPoolERC20: not implemented");
+        _requireCallerIsTroveManager();
+        uint256 totalMUSD = totalMUSDDeposits; // cached to save an SLOAD
+        uint256 debtToOffset = _principalToOffset + _interestToOffset;
+        if (totalMUSD == 0 || debtToOffset == 0) {
+            return;
+        }
+
+        (
+            uint256 collateralGainPerUnitStaked,
+            uint256 mUSDLossPerUnitStaked
+        ) = _computeRewardsPerUnitStaked(_collToAdd, debtToOffset, totalMUSD);
+
+        _updateRewardSumAndProduct(
+            collateralGainPerUnitStaked,
+            mUSDLossPerUnitStaked
+        ); // updates S and P
+
+        _moveOffsetCollAndDebt(
+            _collToAdd,
+            _principalToOffset,
+            _interestToOffset
+        );
     }
 
     // --- Getters for public variables. Required by IPool interface ---
@@ -240,7 +352,12 @@ contract StabilityPoolERC20 is
         address _depositor,
         uint256 _withdrawal
     ) internal {
-        revert("StabilityPoolERC20: not implemented");
+        if (_withdrawal == 0) {
+            return;
+        }
+
+        IERC20(address(musd)).safeTransfer(_depositor, _withdrawal);
+        _decreaseMUSD(_withdrawal);
     }
 
     // Transfer the mUSD tokens from the user to the Stability Pool's address,
@@ -249,18 +366,57 @@ contract StabilityPoolERC20 is
         address _address,
         uint256 _amount
     ) internal {
-        revert("StabilityPoolERC20: not implemented");
+        uint256 newTotalMUSDDeposits = totalMUSDDeposits + _amount;
+        totalMUSDDeposits = newTotalMUSDDeposits;
+
+        emit StabilityPoolMUSDBalanceUpdated(newTotalMUSDDeposits);
+
+        IERC20(address(musd)).safeTransferFrom(
+            _address,
+            address(this),
+            _amount
+        );
     }
 
     function _updateDepositAndSnapshots(
         address _depositor,
         uint256 _newValue
     ) internal {
-        revert("StabilityPoolERC20: not implemented");
+        deposits[_depositor] = _newValue;
+
+        if (_newValue == 0) {
+            delete depositSnapshots[_depositor];
+            emit DepositSnapshotUpdated(_depositor, 0, 0);
+            return;
+        }
+        uint128 currentScaleCached = currentScale;
+        uint128 currentEpochCached = currentEpoch;
+        uint256 currentP = P;
+
+        // Get S and G for the current epoch and current scale
+        uint256 currentS = epochToScaleToSum[currentEpochCached][
+            currentScaleCached
+        ];
+
+        // Record new snapshots of the latest running product P, sum S, and sum G, for the depositor
+        depositSnapshots[_depositor].P = currentP;
+        depositSnapshots[_depositor].S = currentS;
+        depositSnapshots[_depositor].scale = currentScaleCached;
+        depositSnapshots[_depositor].epoch = currentEpochCached;
+
+        emit DepositSnapshotUpdated(_depositor, currentP, currentS);
     }
 
     function _sendCollateralGainToDepositor(uint256 _amount) internal {
-        revert("StabilityPoolERC20: not implemented");
+        if (_amount == 0) {
+            return;
+        }
+        uint256 newCollateral = collateral - _amount;
+        collateral = newCollateral;
+        emit StabilityPoolCollateralBalanceUpdated(newCollateral);
+        emit CollateralSent(msg.sender, _amount);
+
+        _sendCollateral(collateralToken, msg.sender, _amount);
     }
 
     function _computeRewardsPerUnitStaked(
@@ -274,7 +430,47 @@ contract StabilityPoolERC20 is
             uint256 mUSDLossPerUnitStaked
         )
     {
-        revert("StabilityPoolERC20: not implemented");
+        /*
+         * Compute the mUSD and collateral rewards. Uses a "feedback" error correction, to keep
+         * the cumulative error in the P and S state variables low:
+         *
+         * 1) Form numerators which compensate for the floor division errors that occurred the last time this
+         * function was called.
+         * 2) Calculate "per-unit-staked" ratios.
+         * 3) Multiply each ratio back by its denominator, to reveal the current floor division error.
+         * 4) Store these errors for use in the next correction when this function is called.
+         * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
+         */
+        uint256 collateralNumerator = _collToAdd *
+            DECIMAL_PRECISION +
+            lastCollateralError_Offset;
+
+        assert(_debtToOffset <= _totalMUSDDeposits);
+        if (_debtToOffset == _totalMUSDDeposits) {
+            mUSDLossPerUnitStaked = DECIMAL_PRECISION; // When the Pool depletes to 0, so does each deposit
+            lastMUSDLossError_Offset = 0;
+        } else {
+            uint256 mUSDLossNumerator = _debtToOffset *
+                DECIMAL_PRECISION -
+                lastMUSDLossError_Offset;
+            /*
+             * Add 1 to make error in quotient positive. We want "slightly too much" mUSD loss,
+             * which ensures the error in any given compoundedMUSDDeposit favors the Stability Pool.
+             */
+            mUSDLossPerUnitStaked = mUSDLossNumerator / _totalMUSDDeposits + 1;
+            lastMUSDLossError_Offset =
+                mUSDLossPerUnitStaked *
+                _totalMUSDDeposits -
+                mUSDLossNumerator;
+        }
+
+        collateralGainPerUnitStaked = collateralNumerator / _totalMUSDDeposits;
+        // slither-disable-next-line divide-before-multiply
+        lastCollateralError_Offset =
+            collateralNumerator -
+            (collateralGainPerUnitStaked * _totalMUSDDeposits);
+
+        return (collateralGainPerUnitStaked, mUSDLossPerUnitStaked);
     }
 
     function _moveOffsetCollAndDebt(
@@ -282,11 +478,23 @@ contract StabilityPoolERC20 is
         uint256 _principalToOffset,
         uint256 _interestToOffset
     ) internal {
-        revert("StabilityPoolERC20: not implemented");
+        IActivePool activePoolCached = activePool;
+
+        uint256 debtToOffset = _principalToOffset + _interestToOffset;
+        // Cancel the liquidated debt with the mUSD in the stability pool
+        activePoolCached.decreaseDebt(_principalToOffset, _interestToOffset);
+        _decreaseMUSD(debtToOffset);
+
+        // Burn the debt that was successfully offset
+        musd.burn(address(this), debtToOffset);
+
+        activePoolCached.sendCollateral(address(this), _collToAdd);
     }
 
     function _decreaseMUSD(uint256 _amount) internal {
-        revert("StabilityPoolERC20: not implemented");
+        uint256 newTotalMUSDDeposits = totalMUSDDeposits - _amount;
+        totalMUSDDeposits = newTotalMUSDDeposits;
+        emit StabilityPoolMUSDBalanceUpdated(newTotalMUSDDeposits);
     }
 
     // Update the Stability Pool reward sum S and product P
@@ -296,11 +504,80 @@ contract StabilityPoolERC20 is
         uint256 _collateralGainPerUnitStaked,
         uint256 _mUSDLossPerUnitStaked
     ) internal {
-        revert("StabilityPoolERC20: not implemented");
+        uint256 currentP = P;
+        uint256 newP;
+
+        assert(_mUSDLossPerUnitStaked <= DECIMAL_PRECISION);
+        /*
+         * The newProductFactor is the factor by which to change all deposits, due to the depletion of Stability Pool mUSD in the liquidation.
+         * We make the product factor 0 if there was a pool-emptying. Otherwise, it is (1 - MUSDLossPerUnitStaked)
+         */
+        uint256 newProductFactor = DECIMAL_PRECISION - _mUSDLossPerUnitStaked;
+
+        uint128 currentScaleCached = currentScale;
+        uint128 currentEpochCached = currentEpoch;
+        uint256 currentS = epochToScaleToSum[currentEpochCached][
+            currentScaleCached
+        ];
+
+        /*
+         * Calculate the new S first, before we update P.
+         * The collateral gain for any given depositor from a liquidation depends on the value of their deposit
+         * (and the value of totalDeposits) prior to the Stability being depleted by the debt in the liquidation.
+         *
+         * Since S corresponds to collateral gain, and P to deposit loss, we update S first.
+         */
+        uint256 marginalCollateralGain = _collateralGainPerUnitStaked *
+            currentP;
+        uint256 newS = currentS + marginalCollateralGain;
+        epochToScaleToSum[currentEpochCached][currentScaleCached] = newS;
+        emit SUpdated(newS, currentEpochCached, currentScaleCached);
+
+        uint256 PBeforeScaleChanges = (currentP * newProductFactor) /
+            DECIMAL_PRECISION;
+
+        if (newProductFactor == 0) {
+            // If the Stability Pool was emptied, increment the epoch, and reset
+            // the scale and product P
+            currentEpoch = currentEpochCached + 1;
+            emit EpochUpdated(currentEpoch);
+            currentScale = 0;
+            emit ScaleUpdated(currentScale);
+            newP = DECIMAL_PRECISION;
+        } else if (PBeforeScaleChanges == 1) {
+            // If multiplying P by the product factor results in exactly one, we
+            // need to increment the scale twice.
+            newP =
+                (currentP * newProductFactor * SCALE_FACTOR * SCALE_FACTOR) /
+                DECIMAL_PRECISION;
+            currentScale = currentScaleCached + 2;
+            emit ScaleUpdated(currentScale);
+        } else if (PBeforeScaleChanges < SCALE_FACTOR) {
+            // If multiplying P by a non-zero product factor would reduce P below
+            // the scale boundary, increment the scale
+            newP =
+                (currentP * newProductFactor * SCALE_FACTOR) /
+                DECIMAL_PRECISION;
+            currentScale = currentScaleCached + 1;
+            emit ScaleUpdated(currentScale);
+        } else {
+            newP = PBeforeScaleChanges;
+        }
+
+        assert(newP > 0);
+        P = newP;
+
+        emit PUpdated(newP);
     }
 
     function _requireNoUnderCollateralizedTroves() internal view {
-        revert("StabilityPoolERC20: not implemented");
+        uint256 price = priceFeed.fetchPrice();
+        address lowestTrove = sortedTroves.getLast();
+        uint256 ICR = troveManager.getCurrentICR(lowestTrove, price);
+        require(
+            ICR >= MCR,
+            "StabilityPoolERC20: Cannot withdraw while there are troves with ICR < MCR"
+        );
     }
 
     // Used to calculcate compounded deposits.
