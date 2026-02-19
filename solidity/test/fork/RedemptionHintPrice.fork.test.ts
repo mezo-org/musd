@@ -31,7 +31,7 @@ const PROBLEM_TROVE = "0x9eef87f4c08d8934cb2a3309df4dec5635338115"
 // These will be recalculated based on current on-chain state
 const FAILING_TX_HINT_NICR = 1622485765316119n
 
-describe("Fork Test: Redemption Hint Price Sensitivity", function () {
+describe("Fork Test: Redemption Hint Price Sensitivity", () => {
   let troveManager: any
   let hintHelpers: any
   let priceFeed: any
@@ -62,13 +62,13 @@ describe("Fork Test: Redemption Hint Price Sensitivity", function () {
     sortedTroves = await ethers.getContractAt("SortedTroves", SORTED_TROVES)
   })
 
-  describe("Verify problem trove state", function () {
-    it("should have the problem trove active", async function () {
+  describe("Verify problem trove state", () => {
+    it("should have the problem trove active", async () => {
       const status = await troveManager.getTroveStatus(PROBLEM_TROVE)
       expect(status).to.equal(1n, "Trove should be active (status=1)")
     })
 
-    it("should log current trove state", async function () {
+    it("should log current trove state", async () => {
       const coll = await troveManager.getTroveColl(PROBLEM_TROVE)
       const principal = await troveManager.getTrovePrincipal(PROBLEM_TROVE)
       const interestOwed =
@@ -91,10 +91,10 @@ describe("Fork Test: Redemption Hint Price Sensitivity", function () {
     })
   })
 
-  describe("Demonstrate price sensitivity in hint generation", function () {
+  describe("Demonstrate price sensitivity in hint generation", () => {
     const REDEMPTION_AMOUNT = ethers.parseEther("10000") // 10,000 mUSD
 
-    it("should show different hints for different prices", async function () {
+    it("should show different hints for different prices", async () => {
       // Get current on-chain price
       const currentPrice = await priceFeed.fetchPrice.staticCall()
       console.log("\n=== Price Sensitivity Test ===")
@@ -176,7 +176,7 @@ describe("Fork Test: Redemption Hint Price Sensitivity", function () {
       )
     })
 
-    it("should verify the NICR hint calculation is price-dependent", async function () {
+    it("should verify the NICR hint calculation is price-dependent", async () => {
       // The root cause: HintHelpers calculates collateral to withdraw using price
       // collateralDrawn = mUSDAmount * DECIMAL_PRECISION / price
       // newColl = coll - collateralDrawn
@@ -254,8 +254,8 @@ describe("Fork Test: Redemption Hint Price Sensitivity", function () {
     })
   })
 
-  describe("Simulate redemption with stale vs fresh hints", function () {
-    it("should demonstrate why stale hints fail validation", async function () {
+  describe("Simulate redemption with stale vs fresh hints", () => {
+    it("should demonstrate why stale hints fail validation", async () => {
       const REDEMPTION_AMOUNT = ethers.parseEther("10000")
       const currentPrice = await priceFeed.fetchPrice.staticCall()
 
@@ -331,8 +331,8 @@ describe("Fork Test: Redemption Hint Price Sensitivity", function () {
     })
   })
 
-  describe("Attempt actual redemption with different hints", function () {
-    it("should show that actual redemption would fail with stale hints", async function () {
+  describe("Attempt actual redemption with different hints", () => {
+    it("should show that actual redemption would fail with stale hints", async () => {
       // This test demonstrates the exact failure mode:
       // 1. Get hints at current price
       // 2. Simulate a price increase (what happens between hint generation and execution)

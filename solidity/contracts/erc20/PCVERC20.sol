@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../dependencies/CheckContract.sol";
 import "./SendCollateralERC20.sol";
+import "./BorrowerOperationsERC20.sol";
 import "../interfaces/erc20/IPCVERC20.sol";
-import "../interfaces/erc20/IBorrowerOperationsERC20.sol";
 import "../interfaces/erc20/IStabilityPoolERC20.sol";
 import "../token/IMUSD.sol";
 import "../interfaces/IMUSDSavingsRate.sol";
@@ -37,7 +37,7 @@ contract PCVERC20 is
     uint256 public governanceTimeDelay;
 
     address public collateralToken;
-    IBorrowerOperationsERC20 public borrowerOperations;
+    BorrowerOperationsERC20 public borrowerOperations;
     IMUSD public musd;
 
     uint256 public debtToPay;
@@ -112,7 +112,7 @@ contract PCVERC20 is
 
         // slither-disable-start missing-zero-check
         collateralToken = _collateralToken;
-        borrowerOperations = IBorrowerOperationsERC20(_borrowerOperations);
+        borrowerOperations = BorrowerOperationsERC20(_borrowerOperations);
         musd = IMUSD(_musdTokenAddress);
         // slither-disable-end missing-zero-check
 
@@ -122,7 +122,12 @@ contract PCVERC20 is
     }
 
     function initializeDebt() external override onlyOwnerOrCouncilOrTreasury {
-        revert("PCVERC20: not implemented");
+        require(!isInitialized, "PCVERC20: already initialized");
+
+        debtToPay = BOOTSTRAP_LOAN;
+        isInitialized = true;
+        borrowerOperations.mintBootstrapLoanFromPCV(BOOTSTRAP_LOAN);
+        _depositToStabilityPool(BOOTSTRAP_LOAN);
     }
 
     function setFeeRecipient(
@@ -329,14 +334,60 @@ contract PCVERC20 is
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        revert("PCVERC20: not implemented");
+        uint256 collateralBefore = IERC20(collateralToken).balanceOf(
+            address(this)
+        );
+        uint256 musdBefore = musd.balanceOf(address(this));
+
+        IStabilityPoolERC20(borrowerOperations.stabilityPoolAddress())
+            .withdrawFromSP(_amount);
+
+        uint256 collateralChange = IERC20(collateralToken).balanceOf(
+            address(this)
+        ) - collateralBefore;
+        uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
+
+        uint256 debtRepayment = _repayDebt(musdChange);
+        uint256 excessMusd = musdChange - debtRepayment;
+
+        // Send ERC20 collateral to recipient
+        if (collateralChange > 0) {
+            _sendCollateral(collateralToken, _recipient, collateralChange);
+        }
+
+        // Send excess MUSD to recipient (after debt repayment)
+        if (excessMusd > 0) {
+            musd.safeTransfer(_recipient, excessMusd);
+        }
+
+        // slither-disable-next-line reentrancy-events
+        emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
     }
 
     function _repayDebt(uint _repayment) internal returns (uint256) {
-        revert("PCVERC20: not implemented");
+        if (_repayment > debtToPay) {
+            _repayment = debtToPay;
+        }
+
+        if (_repayment > 0 && debtToPay > 0) {
+            debtToPay -= _repayment;
+            borrowerOperations.burnDebtFromPCV(_repayment);
+
+            // slither-disable-next-line reentrancy-events
+            emit PCVDebtPayment(_repayment);
+            return _repayment;
+        }
+
+        return 0;
     }
 
     function _depositToStabilityPool(uint256 _amount) internal {
-        revert("PCVERC20: not implemented");
+        musd.forceApprove(borrowerOperations.stabilityPoolAddress(), _amount);
+
+        IStabilityPoolERC20(borrowerOperations.stabilityPoolAddress())
+            .provideToSP(_amount);
+
+        // slither-disable-next-line reentrancy-events
+        emit PCVDepositSP(msg.sender, _amount);
     }
 }
