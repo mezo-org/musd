@@ -324,34 +324,184 @@ contract TroveManagerERC20 is
         uint256 _partialRedemptionHintNICR,
         uint256 _maxIterations
     ) external override {
-        revert("TroveManagerERC20: not implemented");
+        updateSystemInterest();
+        ContractsCache memory contractsCache = ContractsCache(
+            IActivePoolERC20(address(activePool)),
+            IDefaultPoolERC20(address(defaultPool)),
+            musdToken,
+            pcv,
+            sortedTroves,
+            collSurplusPool,
+            gasPoolAddress
+        );
+        // slither-disable-start uninitialized-local
+        RedemptionTotals memory totals;
+        LocalVariables_redeemCollateral memory vars;
+        // slither-disable-end uninitialized-local
+
+        totals.price = priceFeed.fetchPrice();
+        _requireTCRoverMCR(totals.price);
+        _requireAmountGreaterThanZero(_amount);
+        _requireMUSDBalanceCoversRedemption(
+            contractsCache.musdToken,
+            msg.sender,
+            _amount
+        );
+
+        totals.totalDebtAtStart = getEntireSystemDebt();
+        totals.remainingMUSD = _amount;
+        address currentBorrower;
+
+        if (
+            _isValidFirstRedemptionHint(
+                contractsCache.sortedTroves,
+                _firstRedemptionHint,
+                totals.price
+            )
+        ) {
+            currentBorrower = _firstRedemptionHint;
+        } else {
+            currentBorrower = contractsCache.sortedTroves.getLast();
+            // Find the first trove with ICR >= MCR
+            while (
+                currentBorrower != address(0) &&
+                getCurrentICR(currentBorrower, totals.price) < MCR
+            ) {
+                // slither-disable-next-line calls-loop
+                currentBorrower = contractsCache.sortedTroves.getPrev(
+                    currentBorrower
+                );
+            }
+        }
+
+        // Loop through the Troves starting from the one with lowest collateral ratio until _amount of mUSD is exchanged for collateral
+        if (_maxIterations == 0) {
+            _maxIterations = type(uint256).max;
+        }
+
+        vars.minNetDebt = borrowerOperations.minNetDebt();
+        vars.interestRate = interestRateManager.interestRate();
+
+        while (
+            currentBorrower != address(0) &&
+            totals.remainingMUSD > 0 &&
+            _maxIterations > 0
+        ) {
+            _maxIterations--;
+            _updateTroveInterest(currentBorrower);
+
+            // Save the address of the Trove preceding the current one, before potentially modifying the list
+            // slither-disable-next-line calls-loop
+            address nextUserToCheck = contractsCache.sortedTroves.getPrev(
+                currentBorrower
+            );
+
+            // Skip troves with ICR < MCR
+            if (getCurrentICR(currentBorrower, totals.price) < MCR) {
+                currentBorrower = nextUserToCheck;
+                continue;
+            }
+
+            SingleRedemptionValues
+                memory singleRedemption = _redeemCollateralFromTrove(
+                    contractsCache,
+                    currentBorrower,
+                    totals.remainingMUSD,
+                    totals.price,
+                    _upperPartialRedemptionHint,
+                    _lowerPartialRedemptionHint,
+                    _partialRedemptionHintNICR,
+                    vars
+                );
+
+            if (singleRedemption.cancelledPartial) break; // Partial redemption was cancelled (out-of-date hint, or new net debt < minimum), therefore we could not redeem from the last Trove
+
+            totals.totalPrincipalToRedeem += singleRedemption.principal;
+            totals.totalInterestToRedeem += singleRedemption.interest;
+            totals.totalCollateralDrawn += singleRedemption.collateralLot;
+
+            totals.remainingMUSD -=
+                singleRedemption.principal +
+                singleRedemption.interest;
+
+            // Previous write to this value would hit `continue` statement
+            // slither-disable-next-line write-after-write
+            currentBorrower = nextUserToCheck;
+        }
+        require(
+            totals.totalCollateralDrawn > 0,
+            "TroveManager: Unable to redeem any amount"
+        );
+
+        // Calculate the collateral fee
+        totals.collateralFee = borrowerOperations.getRedemptionRate(
+            totals.totalCollateralDrawn
+        );
+
+        totals.collateralToSendToRedeemer =
+            totals.totalCollateralDrawn -
+            totals.collateralFee;
+
+        emit Redemption(
+            _amount,
+            totals.totalPrincipalToRedeem + totals.totalInterestToRedeem,
+            totals.totalCollateralDrawn,
+            totals.collateralFee
+        );
+
+        // Burn the total mUSD that is cancelled with debt, and send the redeemed collateral to msg.sender
+        contractsCache.musdToken.burn(
+            msg.sender,
+            totals.totalPrincipalToRedeem + totals.totalInterestToRedeem
+        );
+
+        // Send the collateral fee to the PCV contract
+        contractsCache.activePool.sendCollateral(
+            address(contractsCache.pcv),
+            totals.collateralFee
+        );
+
+        // Update Active Pool mUSD, and send collateral to account
+        contractsCache.activePool.decreaseDebt(
+            totals.totalPrincipalToRedeem,
+            totals.totalInterestToRedeem
+        );
+        contractsCache.activePool.sendCollateral(
+            msg.sender,
+            totals.collateralToSendToRedeemer
+        );
     }
 
     function updateStakeAndTotalStakes(
         address _borrower
     ) external override returns (uint) {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        return _updateStakeAndTotalStakes(_borrower);
     }
 
     // Update borrower's snapshots of L_Collateral, L_Principal, and L_Interest
     // to reflect the current values
     function updateTroveRewardSnapshots(address _borrower) external override {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        return _updateTroveRewardSnapshots(_borrower);
     }
 
     // Push the owner's address to the Trove owners list, and record the corresponding array index on the Trove struct
     function addTroveOwnerToArray(
         address _borrower
     ) external override returns (uint256 index) {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        return _addTroveOwnerToArray(_borrower);
     }
 
     function closeTrove(address _borrower) external override {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        return _closeTrove(_borrower, Status.closedByOwner);
     }
 
     function removeStake(address _borrower) external override {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        return _removeStake(_borrower);
     }
 
     // --- Trove property setters, called by BorrowerOperations ---
@@ -360,53 +510,72 @@ contract TroveManagerERC20 is
         address _borrower,
         Status _status
     ) external override {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].status = _status;
     }
 
     function increaseTroveColl(
         address _borrower,
         uint256 _collIncrease
     ) external override returns (uint) {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        uint256 newColl = Troves[_borrower].coll + _collIncrease;
+        Troves[_borrower].coll = newColl;
+        return newColl;
     }
 
     function decreaseTroveColl(
         address _borrower,
         uint256 _collDecrease
     ) external override returns (uint) {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        uint256 newColl = Troves[_borrower].coll - _collDecrease;
+        Troves[_borrower].coll = newColl;
+        return newColl;
     }
 
     function setTroveMaxBorrowingCapacity(
         address _borrower,
         uint256 _maxBorrowingCapacity
     ) external override {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].maxBorrowingCapacity = _maxBorrowingCapacity;
     }
 
     function increaseTroveDebt(
         address _borrower,
         uint256 _debtIncrease
     ) external override returns (uint) {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        interestRateManager.addPrincipal(
+            _debtIncrease,
+            Troves[_borrower].interestRate
+        );
+        uint256 newDebt = Troves[_borrower].principal + _debtIncrease;
+        Troves[_borrower].principal = newDebt;
+        return newDebt;
     }
 
     function decreaseTroveDebt(
         address _borrower,
         uint256 _debtDecrease
     ) external override returns (uint256, uint256) {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        _updateTroveDebt(_borrower, _debtDecrease);
+        return (Troves[_borrower].principal, Troves[_borrower].interestOwed);
     }
 
     function setTroveInterestRate(address _borrower, uint16 _rate) external {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].interestRate = _rate;
     }
 
     function setTroveLastInterestUpdateTime(
         address _borrower,
         uint256 _timestamp
     ) external {
-        revert("TroveManagerERC20: not implemented");
+        _requireCallerIsBorrowerOperations();
+        Troves[_borrower].lastInterestUpdateTime = _timestamp;
     }
 
     // --- View functions that read state (implemented) ---
@@ -497,7 +666,8 @@ contract TroveManagerERC20 is
     }
 
     function updateSystemAndTroveInterest(address _borrower) public {
-        revert("TroveManagerERC20: not implemented");
+        updateSystemInterest();
+        _updateTroveInterest(_borrower);
     }
 
     function updateSystemInterest() public {
@@ -1236,6 +1406,292 @@ contract TroveManagerERC20 is
             Troves[_borrower].status == Status.active,
             "TroveManager: Trove does not exist or is closed"
         );
+    }
+
+    function _requireCallerIsBorrowerOperations() internal view {
+        require(
+            msg.sender == address(borrowerOperations),
+            "TroveManager: Caller is not the BorrowerOperations contract"
+        );
+    }
+
+    /**
+     * Updates the debt on the given trove by first paying down interest owed, then the principal.
+     * Note that this does not actually calculate interest owed, it just pays down the debt by the given amount.
+     * Calculation of the interest owed (for system and trove) should be performed before calling this function.
+     */
+    function _updateTroveDebt(address _borrower, uint256 _payment) internal {
+        Trove storage trove = Troves[_borrower];
+
+        // slither-disable-start calls-loop
+        (
+            uint256 principalAdjustment,
+            uint256 interestAdjustment
+        ) = interestRateManager.updateTroveDebt(
+                trove.interestOwed,
+                _payment,
+                trove.interestRate
+            );
+        // slither-disable-end calls-loop
+        trove.principal -= principalAdjustment;
+        trove.interestOwed -= interestAdjustment;
+    }
+
+    // Update borrower's stake based on their latest collateral value
+    function _updateStakeAndTotalStakes(
+        address _borrower
+    ) internal returns (uint) {
+        uint256 newStake = _computeNewStake(Troves[_borrower].coll);
+        uint256 oldStake = Troves[_borrower].stake;
+        Troves[_borrower].stake = newStake;
+
+        // slither-disable-next-line costly-loop
+        totalStakes = totalStakes - oldStake + newStake;
+        emit TotalStakesUpdated(totalStakes);
+
+        return newStake;
+    }
+
+    function _addTroveOwnerToArray(
+        address _borrower
+    ) internal returns (uint128 index) {
+        /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum mUSD
+        debt of liquidation reserve plus minNetDebt. 3e30 mUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
+
+        // Push the Troveowner to the array
+        TroveOwners.push(_borrower);
+
+        // Record the index of the new Troveowner on their Trove struct
+        index = uint128(TroveOwners.length - 1);
+        Troves[_borrower].arrayIndex = index;
+
+        return index;
+    }
+
+    // Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
+    function _computeNewStake(uint256 _coll) internal view returns (uint) {
+        uint256 stake;
+        if (totalCollateralSnapshot == 0) {
+            stake = _coll;
+        } else {
+            /*
+             * The following assert() holds true because:
+             * - The system always contains >= 1 trove
+             * - When we close or liquidate a trove, we redistribute the pending rewards, so if all troves were closed/liquidated,
+             * rewards would've been emptied and totalCollateralSnapshot would be zero too.
+             */
+            assert(totalStakesSnapshot > 0);
+            stake = (_coll * totalStakesSnapshot) / totalCollateralSnapshot;
+        }
+        return stake;
+    }
+
+    // Redeem as much collateral as possible from _borrower's Trove in exchange for mUSD up to _maxMUSDamount
+    function _redeemCollateralFromTrove(
+        ContractsCache memory _contractsCache,
+        address _borrower,
+        uint256 _maxMUSDamount,
+        uint256 _price,
+        address _upperPartialRedemptionHint,
+        address _lowerPartialRedemptionHint,
+        uint256 _partialRedemptionHintNICR,
+        LocalVariables_redeemCollateral memory redeemCollateralVars
+    ) internal returns (SingleRedemptionValues memory singleRedemption) {
+        // slither-disable-next-line uninitialized-local
+        LocalVariables_redeemCollateralFromTrove memory vars;
+        Trove storage trove = Troves[_borrower];
+        // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
+        vars.mUSDLot = LiquityMath._min(
+            _maxMUSDamount,
+            _getTotalDebt(_borrower) - MUSD_GAS_COMPENSATION
+        );
+
+        // Get the collateralLot of equivalent value in USD
+        singleRedemption.collateralLot =
+            (vars.mUSDLot * DECIMAL_PRECISION) /
+            _price;
+
+        // Decrease the debt and collateral of the current Trove according to the mUSD lot and corresponding collateral to send
+        vars.newDebt = _getTotalDebt(_borrower) - vars.mUSDLot;
+        vars.newColl = Troves[_borrower].coll - singleRedemption.collateralLot;
+        vars.newPrincipal = Troves[_borrower].principal;
+
+        // solhint-disable not-rely-on-time
+        vars.interestPayment =
+            trove.interestOwed +
+            InterestRateMath.calculateInterestOwed(
+                trove.principal,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
+                block.timestamp
+            );
+        // solhint-enable not-rely-on-time
+
+        if (vars.mUSDLot > vars.interestPayment) {
+            vars.newPrincipal -= vars.mUSDLot - vars.interestPayment;
+            singleRedemption.interest = vars.interestPayment;
+            singleRedemption.principal = vars.mUSDLot - vars.interestPayment;
+        } else {
+            singleRedemption.interest = vars.mUSDLot;
+        }
+
+        if (vars.newDebt == MUSD_GAS_COMPENSATION) {
+            // No debt left in the Trove (except for the liquidation reserve), therefore the trove gets closed
+            _removeStake(_borrower);
+            _redeemCloseTrove(
+                _contractsCache,
+                _borrower,
+                MUSD_GAS_COMPENSATION,
+                vars.newColl
+            );
+            _closeTrove(_borrower, Status.closedByRedemption);
+            emit TroveUpdated(
+                _borrower,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                uint8(TroveManagerOperation.redeemCollateral)
+            );
+        } else {
+            // calculate 10 minutes worth of interest to account for delay between the hint call and now
+            // solhint-disable not-rely-on-time
+
+            vars.upperBoundNICR = LiquityMath._computeNominalCR(
+                vars.newColl,
+                vars.newPrincipal -
+                    InterestRateMath.calculateInterestOwed(
+                        trove.principal,
+                        redeemCollateralVars.interestRate,
+                        block.timestamp - 600,
+                        block.timestamp
+                    )
+            );
+            // solhint-enable not-rely-on-time
+            vars.newNICR = LiquityMath._computeNominalCR(
+                vars.newColl,
+                vars.newPrincipal
+            );
+
+            /*
+             * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
+             * certainly result in running out of gas.
+             *
+             * If the resultant net debt of the partial is less than the minimum, net debt we bail.
+             */
+            // slither-disable-start calls-loop
+            if (
+                _partialRedemptionHintNICR < vars.newNICR ||
+                _partialRedemptionHintNICR > vars.upperBoundNICR ||
+                _getNetDebt(vars.newDebt) < redeemCollateralVars.minNetDebt
+            ) {
+                singleRedemption.cancelledPartial = true;
+                return singleRedemption;
+            }
+            // slither-disable-end calls-loop
+
+            // slither-disable-next-line calls-loop
+            _contractsCache.sortedTroves.reInsert(
+                _borrower,
+                vars.newNICR,
+                _upperPartialRedemptionHint,
+                _lowerPartialRedemptionHint
+            );
+
+            _updateTroveDebt(_borrower, vars.mUSDLot);
+            trove.coll = vars.newColl;
+            _updateStakeAndTotalStakes(_borrower);
+
+            emit TroveUpdated(
+                _borrower,
+                trove.principal,
+                trove.interestOwed,
+                vars.newColl,
+                trove.stake,
+                trove.interestRate,
+                trove.lastInterestUpdateTime,
+                uint8(TroveManagerOperation.redeemCollateral)
+            );
+        }
+
+        return singleRedemption;
+    }
+
+    /*
+     * Called when a full redemption occurs, and closes the trove.
+     * The redeemer swaps (debt - liquidation reserve) mUSD for (debt - liquidation reserve) worth of collateral, so the mUSD liquidation reserve left corresponds to the remaining debt.
+     * In order to close the trove, the mUSD liquidation reserve is burned, and the corresponding debt is removed from the active pool.
+     * The debt recorded on the trove's struct is zero'd elswhere, in _closeTrove.
+     * Any surplus collateral left in the trove, is sent to the Coll surplus pool, and can be later claimed by the borrower.
+     */
+    function _redeemCloseTrove(
+        ContractsCache memory _contractsCache,
+        address _borrower,
+        uint256 _amount,
+        uint256 _collateral
+    ) internal {
+        // slither-disable-next-line calls-loop
+        interestRateManager.removePrincipal(
+            _amount,
+            Troves[_borrower].interestRate
+        );
+        Troves[_borrower].principal -= _amount;
+        // slither-disable-next-line calls-loop
+        _contractsCache.musdToken.burn(gasPoolAddress, _amount);
+        // Update Active Pool mUSD, and send collateral to account
+        // slither-disable-next-line calls-loop
+        _contractsCache.activePool.decreaseDebt(_amount, 0);
+
+        // send collateral from Active Pool to CollSurplus Pool
+        // slither-disable-next-line calls-loop
+        _contractsCache.collSurplusPool.accountSurplus(_borrower, _collateral);
+        // slither-disable-next-line calls-loop
+        _contractsCache.activePool.sendCollateral(
+            address(_contractsCache.collSurplusPool),
+            _collateral
+        );
+    }
+
+    function _isValidFirstRedemptionHint(
+        ISortedTroves _sortedTroves,
+        address _firstRedemptionHint,
+        uint256 _price
+    ) internal view returns (bool) {
+        if (
+            _firstRedemptionHint == address(0) ||
+            !_sortedTroves.contains(_firstRedemptionHint) ||
+            getCurrentICR(_firstRedemptionHint, _price) < MCR
+        ) {
+            return false;
+        }
+
+        address nextTrove = _sortedTroves.getNext(_firstRedemptionHint);
+        return
+            nextTrove == address(0) || getCurrentICR(nextTrove, _price) < MCR;
+    }
+
+    function _requireTCRoverMCR(uint256 _price) internal view {
+        require(
+            _getTCR(_price) >= MCR,
+            "TroveManager: Cannot redeem when TCR < MCR"
+        );
+    }
+
+    function _requireMUSDBalanceCoversRedemption(
+        IMUSD _musd,
+        address _redeemer,
+        uint256 _amount
+    ) internal view {
+        require(
+            _musd.balanceOf(_redeemer) >= _amount,
+            "TroveManager: Requested redemption amount must be <= user's mUSD token balance"
+        );
+    }
+
+    function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
+        require(_amount > 0, "TroveManager: Amount must be greater than zero");
     }
 }
 // slither-disable-end reentrancy-benign
