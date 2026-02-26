@@ -58,10 +58,7 @@ interface IBorrowerOperationsERC20 {
     event BorrowingFeePaid(address indexed _borrower, uint256 _fee);
     event RefinancingFeePaid(address indexed _borrower, uint256 _fee);
 
-    // --- Functions ---
-
-    /// @notice Returns the collateral token address
-    function collateralToken() external view returns (IERC20);
+    // --- External Functions ---
 
     /// @notice Set all contract addresses
     /// @param addresses Array of 14 addresses in order:
@@ -254,6 +251,11 @@ interface IBorrowerOperationsERC20 {
         address _borrower,
         address _recipient
     ) external;
+
+    // --- External View Functions ---
+
+    /// @notice Returns the collateral token address
+    function collateralToken() external view returns (IERC20);
 
     /// @notice Returns the governable variables contract
     function governableVariables() external view returns (IGovernableVariables);

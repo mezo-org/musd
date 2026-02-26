@@ -19,13 +19,13 @@ interface IPoolERC20 {
 
     // --- Functions ---
 
-    function collateralToken() external view returns (IERC20);
-
     function receiveCollateral(uint256 _amount) external;
 
     function increaseDebt(uint256 _principal, uint256 _interest) external;
 
     function decreaseDebt(uint256 _principal, uint256 _interest) external;
+
+    function collateralToken() external view returns (IERC20);
 
     function getCollateralBalance() external view returns (uint);
 

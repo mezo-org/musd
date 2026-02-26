@@ -34,13 +34,7 @@ interface IPCVERC20 {
     event RecipientRemoved(address _recipient);
     event CollateralReceived(address indexed from, uint256 amount);
 
-    // --- Functions ---
-
-    /// @notice Returns the outstanding bootstrap loan debt
-    function debtToPay() external view returns (uint256);
-
-    /// @notice Returns the collateral token
-    function collateralToken() external view returns (IERC20);
+    // --- External Functions (non-view) ---
 
     /// @notice Distributes MUSD fees accumulated in this contract
     /// @dev The fees are distributed based on governance yield split parameters
@@ -110,6 +104,14 @@ interface IPCVERC20 {
         uint256 _amount,
         address _recipient
     ) external;
+
+    // --- External View Functions ---
+
+    /// @notice Returns the outstanding bootstrap loan debt
+    function debtToPay() external view returns (uint256);
+
+    /// @notice Returns the collateral token
+    function collateralToken() external view returns (IERC20);
 
     /// @notice Returns the MUSD token
     function musd() external view returns (IMUSD);

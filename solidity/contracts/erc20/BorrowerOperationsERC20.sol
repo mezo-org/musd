@@ -595,6 +595,20 @@ contract BorrowerOperationsERC20 is
         return (_debt * borrowingRate) / DECIMAL_PRECISION;
     }
 
+    /// @notice Returns the total system collateral
+    function getEntireSystemColl() public view returns (uint256) {
+        uint256 activeColl = activePool.getCollateralBalance();
+        uint256 liquidatedColl = defaultPool.getCollateralBalance();
+        return activeColl + liquidatedColl;
+    }
+
+    /// @notice Returns the total system debt
+    function getEntireSystemDebt() public view returns (uint256) {
+        uint256 activeDebt = activePool.getDebt();
+        uint256 closedDebt = defaultPool.getDebt();
+        return activeDebt + closedDebt;
+    }
+
     // --- Internal Functions ---
 
     /// @notice Transfer ERC20 collateral from sender to this contract, then to active pool
@@ -1230,20 +1244,6 @@ contract BorrowerOperationsERC20 is
         collSurplusPool.claimColl(_borrower, _recipient);
     }
 
-    // --- View Functions (LiquityBase equivalents) ---
-
-    function getEntireSystemColl() public view returns (uint256) {
-        uint256 activeColl = activePool.getCollateralBalance();
-        uint256 liquidatedColl = defaultPool.getCollateralBalance();
-        return activeColl + liquidatedColl;
-    }
-
-    function getEntireSystemDebt() public view returns (uint256) {
-        uint256 activeDebt = activePool.getDebt();
-        uint256 closedDebt = defaultPool.getDebt();
-        return activeDebt + closedDebt;
-    }
-
     function _getTCR(uint256 _price) internal view returns (uint256) {
         uint256 entireSystemColl = getEntireSystemColl();
         uint256 entireSystemDebt = getEntireSystemDebt();
@@ -1255,15 +1255,7 @@ contract BorrowerOperationsERC20 is
         return TCR < CCR;
     }
 
-    function _getCompositeDebt(uint256 _debt) internal pure returns (uint256) {
-        return _debt + MUSD_GAS_COMPENSATION;
-    }
-
-    function _getNetDebt(uint256 _debt) internal pure returns (uint256) {
-        return _debt - MUSD_GAS_COMPENSATION;
-    }
-
-    // --- Requirement Functions ---
+    // --- Requirement Functions (internal view) ---
 
     function _requireCallerIsBorrowerOperationsSignatures() internal view {
         require(
@@ -1377,6 +1369,16 @@ contract BorrowerOperationsERC20 is
             _netDebt >= minNetDebt,
             "BorrowerOps: Trove's net debt must be greater than minimum"
         );
+    }
+
+    // --- Internal Pure Functions ---
+
+    function _getCompositeDebt(uint256 _debt) internal pure returns (uint256) {
+        return _debt + MUSD_GAS_COMPENSATION;
+    }
+
+    function _getNetDebt(uint256 _debt) internal pure returns (uint256) {
+        return _debt - MUSD_GAS_COMPENSATION;
     }
 
     function _requireValidMUSDRepayment(

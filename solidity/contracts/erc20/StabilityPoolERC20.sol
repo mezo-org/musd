@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../dependencies/CheckContract.sol";
 import "../dependencies/LiquityBaseERC20.sol";
 import "./SendCollateralERC20.sol";
-import "../interfaces/IBorrowerOperations.sol";
+import "../interfaces/erc20/IBorrowerOperationsERC20.sol";
 import "../token/IMUSD.sol";
 import "../interfaces/ISortedTroves.sol";
 import "../interfaces/erc20/IStabilityPoolERC20.sol";
@@ -60,7 +60,7 @@ contract StabilityPoolERC20 is
     /// @notice The ERC20 token used as collateral
     IERC20 public override collateralToken;
 
-    IBorrowerOperations public borrowerOperations;
+    IBorrowerOperationsERC20 public borrowerOperations;
     IMUSD public musd;
     ISortedTroves public sortedTroves;
     ITroveManager public troveManager;
@@ -153,7 +153,7 @@ contract StabilityPoolERC20 is
 
         collateralToken = IERC20(_collateralTokenAddress);
         activePool = IActivePoolERC20(_activePoolAddress);
-        borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
+        borrowerOperations = IBorrowerOperationsERC20(_borrowerOperationsAddress);
         musd = IMUSD(_musdTokenAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
@@ -282,27 +282,16 @@ contract StabilityPoolERC20 is
         emit CollateralSent(msg.sender, depositorCollateralGain);
 
         // For ERC20: Approve BorrowerOperations to transfer collateral, then call moveCollateralGainToTrove
-        // The BorrowerOperations contract will pull the collateral using transferFrom
+        // BorrowerOperationsERC20 will pull the collateral using transferFrom
         collateralToken.safeIncreaseAllowance(
             address(borrowerOperations),
             depositorCollateralGain
         );
 
-        // Note: For ERC20 version, BorrowerOperations.moveCollateralGainToTrove needs to be adapted
-        // to pull ERC20 tokens instead of receiving native value. This is a placeholder that assumes
-        // the ERC20 version of BorrowerOperations will handle this appropriately.
-        // For now, we send the collateral directly to the depositor's trove through a different mechanism
-        // by sending the collateral to the active pool and updating the trove.
-        _sendCollateralERC20(
-            collateralToken,
-            address(activePool),
-            depositorCollateralGain
-        );
-
-        // The BorrowerOperations ERC20 version should have a method to handle this
-        // For compatibility, we're calling the existing interface which may need adaptation
+        // Call the ERC20 version which accepts the collateral amount parameter
         borrowerOperations.moveCollateralGainToTrove(
             msg.sender,
+            depositorCollateralGain,
             _upperHint,
             _lowerHint
         );

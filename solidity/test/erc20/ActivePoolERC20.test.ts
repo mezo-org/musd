@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { ethers, network } from "hardhat"
+import { ethers, network, upgrades } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { to1e18 } from "../utils"
@@ -47,46 +47,55 @@ describe("ActivePoolERC20", () => {
       18,
     )
 
-    // Deploy InterestRateManager (mock or real)
+    // Deploy InterestRateManager via proxy
     const InterestRateManagerFactory =
       await ethers.getContractFactory("InterestRateManager")
-    interestRateManager = await InterestRateManagerFactory.deploy()
-    await interestRateManager.initialize()
+    interestRateManager = (await upgrades.deployProxy(
+      InterestRateManagerFactory,
+      [],
+      { initializer: "initialize" },
+    )) as unknown as InterestRateManager
 
-    // Deploy ActivePoolERC20
+    // Deploy ActivePoolERC20 via proxy
     const ActivePoolFactory =
       await ethers.getContractFactory("ActivePoolERC20")
-    activePool = (await ActivePoolFactory.deploy()) as ActivePoolERC20
-    await activePool.initialize()
+    activePool = (await upgrades.deployProxy(ActivePoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as ActivePoolERC20
 
-    // Deploy other required contracts for address setup
+    // Deploy other required contracts via proxy
     const DefaultPoolFactory =
       await ethers.getContractFactory("DefaultPoolERC20")
-    defaultPool = (await DefaultPoolFactory.deploy()) as DefaultPoolERC20
-    await defaultPool.initialize()
+    defaultPool = (await upgrades.deployProxy(DefaultPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as DefaultPoolERC20
 
     const BorrowerOperationsFactory = await ethers.getContractFactory(
       "BorrowerOperationsERC20",
     )
-    borrowerOperations =
-      (await BorrowerOperationsFactory.deploy()) as BorrowerOperationsERC20
-    await borrowerOperations.initialize()
+    borrowerOperations = (await upgrades.deployProxy(
+      BorrowerOperationsFactory,
+      [],
+      { initializer: "initialize" },
+    )) as unknown as BorrowerOperationsERC20
 
     const StabilityPoolFactory =
       await ethers.getContractFactory("StabilityPoolERC20")
-    stabilityPool = (await StabilityPoolFactory.deploy()) as StabilityPoolERC20
-    await stabilityPool.initialize()
+    stabilityPool = (await upgrades.deployProxy(StabilityPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as StabilityPoolERC20
 
     const TroveManagerFactory =
       await ethers.getContractFactory("TroveManagerERC20")
-    troveManager = (await TroveManagerFactory.deploy()) as TroveManagerERC20
-    await troveManager.initialize()
+    troveManager = (await upgrades.deployProxy(TroveManagerFactory, [], {
+      initializer: "initialize",
+    })) as unknown as TroveManagerERC20
 
     const CollSurplusPoolFactory =
       await ethers.getContractFactory("CollSurplusPoolERC20")
-    collSurplusPool =
-      (await CollSurplusPoolFactory.deploy()) as CollSurplusPoolERC20
-    await collSurplusPool.initialize()
+    collSurplusPool = (await upgrades.deployProxy(CollSurplusPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as CollSurplusPoolERC20
 
     // Set addresses on ActivePool
     await activePool.setAddresses(
@@ -122,11 +131,23 @@ describe("ActivePoolERC20", () => {
       params: [dpAddress],
     })
 
-    // Fund impersonated accounts for gas
-    await deployer.sendTransaction({ to: boAddress, value: to1e18("1") })
-    await deployer.sendTransaction({ to: tmAddress, value: to1e18("1") })
-    await deployer.sendTransaction({ to: spAddress, value: to1e18("1") })
-    await deployer.sendTransaction({ to: dpAddress, value: to1e18("1") })
+    // Fund impersonated accounts for gas using hardhat_setBalance
+    await network.provider.send("hardhat_setBalance", [
+      boAddress,
+      "0xDE0B6B3A7640000", // 1 ETH in hex
+    ])
+    await network.provider.send("hardhat_setBalance", [
+      tmAddress,
+      "0xDE0B6B3A7640000",
+    ])
+    await network.provider.send("hardhat_setBalance", [
+      spAddress,
+      "0xDE0B6B3A7640000",
+    ])
+    await network.provider.send("hardhat_setBalance", [
+      dpAddress,
+      "0xDE0B6B3A7640000",
+    ])
 
     borrowerOperationsSigner = await ethers.getSigner(boAddress)
     troveManagerSigner = await ethers.getSigner(tmAddress)

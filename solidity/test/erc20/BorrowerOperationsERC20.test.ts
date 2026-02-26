@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { ethers, network } from "hardhat"
+import { ethers, network, upgrades } from "hardhat"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { to1e18 } from "../utils"
@@ -7,6 +7,7 @@ import { ZERO_ADDRESS } from "../../helpers/constants"
 import {
   ActivePoolERC20,
   BorrowerOperationsERC20,
+  BorrowerOperationsSignatures,
   CollSurplusPoolERC20,
   DefaultPoolERC20,
   GasPool,
@@ -26,6 +27,7 @@ import {
 describe("BorrowerOperationsERC20", () => {
   let activePool: ActivePoolERC20
   let borrowerOperations: BorrowerOperationsERC20
+  let borrowerOperationsSignatures: BorrowerOperationsSignatures
   let collSurplusPool: CollSurplusPoolERC20
   let collateralToken: MockERC20
   let defaultPool: DefaultPoolERC20
@@ -69,115 +71,154 @@ describe("BorrowerOperationsERC20", () => {
       18,
     )
 
-    // Deploy MockAggregator for price feed
+    // Deploy MockAggregator for price feed (8 decimals like Chainlink)
     const MockAggregatorFactory =
       await ethers.getContractFactory("MockAggregator")
-    mockAggregator = await MockAggregatorFactory.deploy()
+    mockAggregator = await MockAggregatorFactory.deploy(8)
     // Set price to $60,000 (8 decimals for Chainlink)
     await mockAggregator.setPrice(60000n * 10n ** 8n)
 
-    // Deploy core contracts
+    // Deploy core contracts via proxy
     const PriceFeedFactory = await ethers.getContractFactory("PriceFeed")
-    priceFeed = await PriceFeedFactory.deploy()
+    priceFeed = (await upgrades.deployProxy(PriceFeedFactory, [], {
+      initializer: "initialize",
+    })) as unknown as PriceFeed
 
     const SortedTrovesFactory = await ethers.getContractFactory("SortedTroves")
-    sortedTroves = await SortedTrovesFactory.deploy()
+    sortedTroves = (await upgrades.deployProxy(SortedTrovesFactory, [], {
+      initializer: "initialize",
+    })) as unknown as SortedTroves
 
     const GasPoolFactory = await ethers.getContractFactory("GasPool")
-    gasPool = await GasPoolFactory.deploy()
+    gasPool = (await upgrades.deployProxy(GasPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as GasPool
 
     const GovernableVariablesFactory =
       await ethers.getContractFactory("GovernableVariables")
-    governableVariables = await GovernableVariablesFactory.deploy()
-    await governableVariables.initialize()
+    const GOVERNANCE_TIME_DELAY = 7 * 24 * 60 * 60 // 7 days in seconds
+    governableVariables = (await upgrades.deployProxy(
+      GovernableVariablesFactory,
+      [GOVERNANCE_TIME_DELAY],
+      { initializer: "initialize" },
+    )) as unknown as GovernableVariables
 
     const InterestRateManagerFactory =
       await ethers.getContractFactory("InterestRateManager")
-    interestRateManager = await InterestRateManagerFactory.deploy()
-    await interestRateManager.initialize()
+    interestRateManager = (await upgrades.deployProxy(
+      InterestRateManagerFactory,
+      [],
+      { initializer: "initialize" },
+    )) as unknown as InterestRateManager
 
-    // Deploy MUSDTester (testing version of MUSD)
+    // Deploy MUSDTester (testing version of MUSD - not upgradeable)
     const MUSDFactory = await ethers.getContractFactory("MUSDTester")
-    musd = await MUSDFactory.deploy()
-    await musd.initialize()
+    musd = (await MUSDFactory.deploy()) as unknown as MUSDTester
 
-    // Deploy PCV
+    // Deploy PCV (requires governance time delay)
     const PCVFactory = await ethers.getContractFactory("PCV")
-    pcv = await PCVFactory.deploy()
-    await pcv.initialize()
+    pcv = (await upgrades.deployProxy(PCVFactory, [GOVERNANCE_TIME_DELAY], {
+      initializer: "initialize",
+    })) as unknown as PCV
 
-    // Deploy ERC20 pool contracts
+    // Deploy ERC20 pool contracts via proxy
     const ActivePoolFactory =
       await ethers.getContractFactory("ActivePoolERC20")
-    activePool = (await ActivePoolFactory.deploy()) as ActivePoolERC20
-    await activePool.initialize()
+    activePool = (await upgrades.deployProxy(ActivePoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as ActivePoolERC20
 
     const DefaultPoolFactory =
       await ethers.getContractFactory("DefaultPoolERC20")
-    defaultPool = (await DefaultPoolFactory.deploy()) as DefaultPoolERC20
-    await defaultPool.initialize()
+    defaultPool = (await upgrades.deployProxy(DefaultPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as DefaultPoolERC20
 
     const CollSurplusPoolFactory =
       await ethers.getContractFactory("CollSurplusPoolERC20")
-    collSurplusPool =
-      (await CollSurplusPoolFactory.deploy()) as CollSurplusPoolERC20
-    await collSurplusPool.initialize()
+    collSurplusPool = (await upgrades.deployProxy(CollSurplusPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as CollSurplusPoolERC20
 
     const StabilityPoolFactory =
       await ethers.getContractFactory("StabilityPoolERC20")
-    stabilityPool = (await StabilityPoolFactory.deploy()) as StabilityPoolERC20
-    await stabilityPool.initialize()
+    stabilityPool = (await upgrades.deployProxy(StabilityPoolFactory, [], {
+      initializer: "initialize",
+    })) as unknown as StabilityPoolERC20
 
-    // Deploy BorrowerOperationsERC20
+    // Deploy BorrowerOperationsERC20 via proxy
     const BorrowerOperationsFactory = await ethers.getContractFactory(
       "BorrowerOperationsERC20",
     )
-    borrowerOperations =
-      (await BorrowerOperationsFactory.deploy()) as BorrowerOperationsERC20
-    await borrowerOperations.initialize()
+    borrowerOperations = (await upgrades.deployProxy(
+      BorrowerOperationsFactory,
+      [],
+      { initializer: "initialize" },
+    )) as unknown as BorrowerOperationsERC20
 
-    // Deploy TroveManagerERC20
+    // Deploy TroveManagerERC20 via proxy
     const TroveManagerFactory =
       await ethers.getContractFactory("TroveManagerERC20")
-    troveManager = (await TroveManagerFactory.deploy()) as TroveManagerERC20
-    await troveManager.initialize()
+    troveManager = (await upgrades.deployProxy(TroveManagerFactory, [], {
+      initializer: "initialize",
+    })) as unknown as TroveManagerERC20
 
-    // Deploy HintHelpers
+    // Deploy HintHelpers via proxy
     const HintHelpersFactory = await ethers.getContractFactory("HintHelpers")
-    hintHelpers = await HintHelpersFactory.deploy()
+    hintHelpers = (await upgrades.deployProxy(HintHelpersFactory, [], {
+      initializer: "initialize",
+    })) as unknown as HintHelpers
+
+    // Deploy BorrowerOperationsSignatures via proxy
+    const BorrowerOperationsSignaturesFactory = await ethers.getContractFactory(
+      "BorrowerOperationsSignatures",
+    )
+    borrowerOperationsSignatures = (await upgrades.deployProxy(
+      BorrowerOperationsSignaturesFactory,
+      [],
+      { initializer: "initialize" },
+    )) as unknown as BorrowerOperationsSignatures
 
     // --- Set up all contract addresses ---
 
     // PriceFeed
-    await priceFeed.setAddresses(await mockAggregator.getAddress())
+    await priceFeed.setOracle(await mockAggregator.getAddress())
 
-    // SortedTroves
+    // SortedTroves - args: size, borrowerOperationsAddress, troveManagerAddress
     await sortedTroves.setParams(
       1000000n,
-      await troveManager.getAddress(),
       await borrowerOperations.getAddress(),
+      await troveManager.getAddress(),
     )
 
-    // GovernableVariables
-    await governableVariables.setAddresses(await pcv.getAddress())
+    // GovernableVariables - set council and treasury roles
+    await governableVariables.startChangingRoles(council.address, treasury.address)
+    await governableVariables.finalizeChangingRoles()
 
     // InterestRateManager
     await interestRateManager.setAddresses(
       await activePool.getAddress(),
+      await borrowerOperations.getAddress(),
+      await musd.getAddress(),
       await pcv.getAddress(),
       await troveManager.getAddress(),
     )
 
-    // MUSD - add to mint list
-    await musd.addToMintList(await borrowerOperations.getAddress())
-    await musd.addToMintList(await troveManager.getAddress())
+    // Initialize MUSD (MUSDTester is not upgradeable, uses initialize pattern)
+    await musd.initialize(
+      await troveManager.getAddress(),
+      await stabilityPool.getAddress(),
+      await borrowerOperations.getAddress(),
+      await interestRateManager.getAddress(),
+    )
 
-    // PCV
+    // MUSD - initialization already added borrowerOperations and interestRateManager to mint list
+    // We also need to add troveManager to burn list for liquidations, but init already adds it
+
+    // PCV - takes borrowerOperations and musd addresses
     await pcv.setAddresses(
-      await activePool.getAddress(), // Use activePool for now (native)
-      await borrowerOperations.getAddress(), // Use BO for now (native)
+      await borrowerOperations.getAddress(),
       await musd.getAddress(),
-      await stabilityPool.getAddress(), // Use SP for now (native)
     )
     await pcv.startChangingRoles(council.address, treasury.address)
     await pcv.finalizeChangingRoles()
@@ -226,7 +267,7 @@ describe("BorrowerOperationsERC20", () => {
     // [11] sortedTroves, [12] stabilityPool, [13] troveManager
     await borrowerOperations.setAddresses([
       await activePool.getAddress(),
-      deployer.address, // borrowerOperationsSignatures placeholder
+      await borrowerOperationsSignatures.getAddress(),
       await collSurplusPool.getAddress(),
       await collateralToken.getAddress(),
       await defaultPool.getAddress(),
@@ -259,8 +300,19 @@ describe("BorrowerOperationsERC20", () => {
 
     // HintHelpers
     await hintHelpers.setAddresses(
+      await borrowerOperations.getAddress(),
       await sortedTroves.getAddress(),
       await troveManager.getAddress(),
+    )
+
+    // BorrowerOperationsSignatures
+    await borrowerOperationsSignatures.setAddresses(
+      await activePool.getAddress(),
+      await borrowerOperations.getAddress(),
+      await collSurplusPool.getAddress(),
+      await defaultPool.getAddress(),
+      await interestRateManager.getAddress(),
+      await stabilityPool.getAddress(),
     )
 
     // Set default fees via governance
@@ -754,11 +806,13 @@ describe("BorrowerOperationsERC20", () => {
     })
 
     it("reverts if withdrawal would make ICR < MCR", async () => {
-      // Try to withdraw too much
+      // Alice has 5 BTC collateral ($300,000 at $60k/BTC) and ~$10,200 debt (10k + gas comp)
+      // To make ICR < MCR (110%), debt must be > $300,000 / 1.1 = $272,727
+      // So withdrawing $265,000 should push debt to ~$275,200 and ICR to ~109%
       await expect(
         borrowerOperations
           .connect(alice)
-          .withdrawMUSD(to1e18("200000"), ZERO_ADDRESS, ZERO_ADDRESS),
+          .withdrawMUSD(to1e18("265000"), ZERO_ADDRESS, ZERO_ADDRESS),
       ).to.be.revertedWith(
         "BorrowerOps: An operation that would result in ICR < MCR is not permitted",
       )

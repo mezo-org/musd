@@ -19,8 +19,6 @@ interface ICollSurplusPoolERC20 {
 
     // --- Functions ---
 
-    function collateralToken() external view returns (IERC20);
-
     function setAddresses(
         address _collateralTokenAddress,
         address _activePoolAddress,
@@ -33,6 +31,8 @@ interface ICollSurplusPoolERC20 {
     function accountSurplus(address _account, uint256 _amount) external;
 
     function claimColl(address _account, address _recipient) external;
+
+    function collateralToken() external view returns (IERC20);
 
     function getCollateralBalance() external view returns (uint);
 

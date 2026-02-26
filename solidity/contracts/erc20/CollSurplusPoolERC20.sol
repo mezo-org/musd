@@ -113,10 +113,7 @@ contract CollSurplusPoolERC20 is
      * @param _account The address of the trove owner claiming their surplus
      * @param _recipient The address to receive the collateral
      */
-    function claimColl(
-        address _account,
-        address _recipient
-    ) external override {
+    function claimColl(address _account, address _recipient) external override {
         _requireCallerIsBorrowerOperations();
         uint256 claimableColl = balances[_account];
         require(

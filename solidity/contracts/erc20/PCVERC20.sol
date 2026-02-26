@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../dependencies/CheckContract.sol";
 import "./SendCollateralERC20.sol";
+import "../interfaces/erc20/IBorrowerOperationsPCV.sol";
 import "../interfaces/erc20/IPCVERC20.sol";
 import "../interfaces/IStabilityPool.sol";
 import "../interfaces/IMUSDSavingsRate.sol";
@@ -43,7 +44,7 @@ contract PCVERC20 is
     uint256 public governanceTimeDelay;
 
     /// @dev Interface to BorrowerOperationsERC20 for bootstrap loan and debt management
-    IBorrowerOperationsERC20 public borrowerOperations;
+    IBorrowerOperationsPCV public borrowerOperations;
     IMUSD public override musd;
     IERC20 public override collateralToken;
     address public stabilityPoolAddress;
@@ -131,7 +132,7 @@ contract PCVERC20 is
         checkContract(_stabilityPoolAddress);
 
         // slither-disable-start missing-zero-check
-        borrowerOperations = IBorrowerOperationsERC20(_borrowerOperations);
+        borrowerOperations = IBorrowerOperationsPCV(_borrowerOperations);
         musd = IMUSD(_musdTokenAddress);
         collateralToken = IERC20(_collateralTokenAddress);
         stabilityPoolAddress = _stabilityPoolAddress;
@@ -426,19 +427,4 @@ contract PCVERC20 is
         // slither-disable-next-line reentrancy-events
         emit PCVDepositSP(msg.sender, _amount);
     }
-}
-
-/// @notice Minimal interface for BorrowerOperationsERC20 functions used by PCVERC20
-/// @dev This is a subset of the full BorrowerOperationsERC20 interface
-interface IBorrowerOperationsERC20 {
-    /// @notice Mints the bootstrap loan to PCV
-    /// @param _musdToMint Amount of MUSD to mint
-    function mintBootstrapLoanFromPCV(uint256 _musdToMint) external;
-
-    /// @notice Burns debt from PCV (for loan repayment)
-    /// @param _musdToBurn Amount of MUSD to burn
-    function burnDebtFromPCV(uint256 _musdToBurn) external;
-
-    /// @notice Returns the stability pool address
-    function stabilityPoolAddress() external view returns (address);
 }

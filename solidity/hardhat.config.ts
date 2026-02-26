@@ -285,6 +285,7 @@ const config: HardhatUserConfig = {
       "EchidnaTest",
       "BorrowerOperationsV2",
       "BorrowerOperationsFuzzTester",
+      "BorrowerOperationsERC20",
     ],
   },
   gasReporter: {
