@@ -25,3 +25,6 @@ tmp/
 
 # Scale testing
 **/password.txt
+
+# Git worktrees
+.worktrees/
