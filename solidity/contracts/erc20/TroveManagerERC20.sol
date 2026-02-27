@@ -306,16 +306,6 @@ contract TroveManagerERC20 is
         return _removeStake(_borrower);
     }
 
-    function updateSystemAndTroveInterest(address _borrower) public override {
-        updateSystemInterest();
-        _updateTroveInterest(_borrower);
-    }
-
-    function updateSystemInterest() public override {
-        // slither-disable-next-line calls-loop
-        interestRateManager.updateSystemInterest();
-    }
-
     // --- Liquidation functions (stubbed for now) ---
 
     function liquidate(address _borrower) external override {
@@ -326,35 +316,7 @@ contract TroveManagerERC20 is
         batchLiquidateTroves(borrowers);
     }
 
-    function batchLiquidateTroves(
-        address[] memory _troveArray
-    ) public override {
-        require(
-            _troveArray.length != 0,
-            "TroveManager: Calldata address array must not be empty"
-        );
-
-        // TODO: Implement full liquidation logic for ERC20 collateral
-        // For now, this is a stub that will be expanded later
-        revert("TroveManager: Liquidation not yet implemented for ERC20");
-    }
-
-    // --- Redemption functions (stubbed for now) ---
-
-    function redeemCollateral(
-        uint256 /* _amount */,
-        address /* _firstRedemptionHint */,
-        address /* _upperPartialRedemptionHint */,
-        address /* _lowerPartialRedemptionHint */,
-        uint256 /* _partialRedemptionHintNICR */,
-        uint256 /* _maxIterations */
-    ) external pure override {
-        // TODO: Implement full redemption logic for ERC20 collateral
-        // For now, this is a stub that will be expanded later
-        revert("TroveManager: Redemption not yet implemented for ERC20");
-    }
-
-    // --- Getters ---
+    // --- Getters (external view) ---
 
     function getTroveOwnersCount() external view override returns (uint256) {
         return TroveOwners.length;
@@ -442,6 +404,48 @@ contract TroveManagerERC20 is
     ) external view override returns (bool) {
         return _checkRecoveryMode(_price);
     }
+
+    // --- External pure functions ---
+
+    function redeemCollateral(
+        uint256 /* _amount */,
+        address /* _firstRedemptionHint */,
+        address /* _upperPartialRedemptionHint */,
+        address /* _lowerPartialRedemptionHint */,
+        uint256 /* _partialRedemptionHintNICR */,
+        uint256 /* _maxIterations */
+    ) external pure override {
+        // TODO: Implement full redemption logic for ERC20 collateral
+        // For now, this is a stub that will be expanded later
+        revert("TroveManager: Redemption not yet implemented for ERC20");
+    }
+
+    // --- Public functions (non-view) ---
+
+    function updateSystemAndTroveInterest(address _borrower) public override {
+        updateSystemInterest();
+        _updateTroveInterest(_borrower);
+    }
+
+    function updateSystemInterest() public override {
+        // slither-disable-next-line calls-loop
+        interestRateManager.updateSystemInterest();
+    }
+
+    function batchLiquidateTroves(
+        address[] memory _troveArray
+    ) public override {
+        require(
+            _troveArray.length != 0,
+            "TroveManager: Calldata address array must not be empty"
+        );
+
+        // TODO: Implement full liquidation logic for ERC20 collateral
+        // For now, this is a stub that will be expanded later
+        revert("TroveManager: Liquidation not yet implemented for ERC20");
+    }
+
+    // --- Public view functions ---
 
     function getCurrentICR(
         address _borrower,
@@ -551,7 +555,7 @@ contract TroveManagerERC20 is
         pendingInterest = (stake * interestPerUnitStaked) / DECIMAL_PRECISION;
     }
 
-    // --- Helper functions ---
+    // --- Helper functions (public view) ---
 
     function getEntireSystemColl()
         public
@@ -778,12 +782,6 @@ contract TroveManagerERC20 is
         return TCR < CCR;
     }
 
-    function _getCollGasCompensation(
-        uint256 _entireColl
-    ) internal pure returns (uint256) {
-        return _entireColl / PERCENT_DIVISOR;
-    }
-
     function _getCurrentTroveAmounts(
         address _borrower
     ) internal view returns (uint256 currentCollateral, uint256 currentDebt) {
@@ -826,7 +824,7 @@ contract TroveManagerERC20 is
         return stake;
     }
 
-    // --- Access control functions ---
+    // --- Access control functions (internal view) ---
 
     function _requireCallerIsBorrowerOperations() internal view {
         require(
@@ -850,6 +848,14 @@ contract TroveManagerERC20 is
             TroveOwnersArrayLength > 1 && sortedTroves.getSize() > 1,
             "TroveManager: Only one trove in the system"
         );
+    }
+
+    // --- Internal pure functions ---
+
+    function _getCollGasCompensation(
+        uint256 _entireColl
+    ) internal pure returns (uint256) {
+        return _entireColl / PERCENT_DIVISOR;
     }
 }
 // slither-disable-end reentrancy-benign

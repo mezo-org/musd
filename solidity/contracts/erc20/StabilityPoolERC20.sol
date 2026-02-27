@@ -598,6 +598,22 @@ contract StabilityPoolERC20 is
         emit PUpdated(newP);
     }
 
+    function _sendCollateral(address _recipient, uint256 _amount) internal {
+        if (_amount == 0) return;
+        bool success = collateralToken.transfer(_recipient, _amount);
+        if (!success) revert CollateralTransferFailed();
+    }
+
+    function _pullCollateral(address _from, uint256 _amount) internal {
+        if (_amount == 0) return;
+        bool success = collateralToken.transferFrom(
+            _from,
+            address(this),
+            _amount
+        );
+        if (!success) revert CollateralTransferFailed();
+    }
+
     function _requireNoUnderCollateralizedTroves() internal view {
         uint256 price = priceFeed.fetchPrice();
         address lowestTrove = sortedTroves.getLast();
@@ -680,22 +696,6 @@ contract StabilityPoolERC20 is
             DECIMAL_PRECISION;
 
         return collateralGain;
-    }
-
-    function _sendCollateral(address _recipient, uint256 _amount) internal {
-        if (_amount == 0) return;
-        bool success = collateralToken.transfer(_recipient, _amount);
-        if (!success) revert CollateralTransferFailed();
-    }
-
-    function _pullCollateral(address _from, uint256 _amount) internal {
-        if (_amount == 0) return;
-        bool success = collateralToken.transferFrom(
-            _from,
-            address(this),
-            _amount
-        );
-        if (!success) revert CollateralTransferFailed();
     }
 
     function _requireCallerIsActivePool() internal view {

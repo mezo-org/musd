@@ -37,16 +37,8 @@ contract MockInterestRateManager {
         _accruedInterest = amount;
     }
 
-    function getAccruedInterest() external view returns (uint256) {
-        return _accruedInterest;
-    }
-
     function setInterestRate(uint16 rate) external {
         _interestRate = rate;
-    }
-
-    function interestRate() external view returns (uint16) {
-        return _interestRate;
     }
 
     function addPrincipal(
@@ -65,6 +57,14 @@ contract MockInterestRateManager {
 
     function updateSystemInterest() external {
         // No-op for mock
+    }
+
+    function getAccruedInterest() external view returns (uint256) {
+        return _accruedInterest;
+    }
+
+    function interestRate() external view returns (uint16) {
+        return _interestRate;
     }
 
     function updateTroveDebt(
@@ -153,5 +153,40 @@ contract MockTroveManager {
 
     function getTroveStatus(address borrower) external view returns (uint8) {
         return _status[borrower];
+    }
+}
+
+/**
+ * @title MockGovernableVariables
+ * @notice Mock implementation of IGovernableVariables for testing
+ */
+contract MockGovernableVariables {
+    mapping(address => bool) private _feeExemptAccounts;
+
+    // Receive function to accept ETH for gas funding during impersonation
+    receive() external payable {}
+
+    function setAccountFeeExempt(address account, bool exempt) external {
+        _feeExemptAccounts[account] = exempt;
+    }
+
+    function addFeeExemptAccount(address _account) external {
+        _feeExemptAccounts[_account] = true;
+    }
+
+    function removeFeeExemptAccount(address _account) external {
+        _feeExemptAccounts[_account] = false;
+    }
+
+    function isAccountFeeExempt(address account) external view returns (bool) {
+        return _feeExemptAccounts[account];
+    }
+
+    function council() external pure returns (address) {
+        return address(0);
+    }
+
+    function treasury() external pure returns (address) {
+        return address(0);
     }
 }
