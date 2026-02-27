@@ -38,9 +38,7 @@ describe("ActivePoolERC20", () => {
   let interestRateManagerSigner: HardhatEthersSigner
 
   beforeEach(async () => {
-    const signers = await ethers.getSigners()
-    deployer = signers[0]
-    alice = signers[1]
+    ;[deployer, alice] = await ethers.getSigners()
 
     // Deploy MockERC20
     const MockERC20Factory = await ethers.getContractFactory("MockERC20")
@@ -114,7 +112,9 @@ describe("ActivePoolERC20", () => {
     troveManagerSigner = await ethers.getSigner(troveManagerAddress)
     stabilityPoolSigner = await ethers.getSigner(stabilityPoolAddress)
     defaultPoolSigner = await ethers.getSigner(defaultPoolAddress)
-    interestRateManagerSigner = await ethers.getSigner(interestRateManagerAddress)
+    interestRateManagerSigner = await ethers.getSigner(
+      interestRateManagerAddress,
+    )
 
     // Fund impersonated accounts for gas
     await deployer.sendTransaction({
@@ -234,14 +234,18 @@ describe("ActivePoolERC20", () => {
     })
 
     it("should pull tokens from caller", async () => {
-      await activePool.connect(borrowerOperationsSigner).receiveCollateral(amount)
+      await activePool
+        .connect(borrowerOperationsSigner)
+        .receiveCollateral(amount)
       expect(await token.balanceOf(await activePool.getAddress())).to.equal(
         amount,
       )
     })
 
     it("should update collateral balance", async () => {
-      await activePool.connect(borrowerOperationsSigner).receiveCollateral(amount)
+      await activePool
+        .connect(borrowerOperationsSigner)
+        .receiveCollateral(amount)
       expect(await activePool.getCollateralBalance()).to.equal(amount)
     })
 
@@ -276,7 +280,9 @@ describe("ActivePoolERC20", () => {
       await token
         .connect(defaultPoolSigner)
         .approve(await activePool.getAddress(), amount)
-      await expect(activePool.connect(defaultPoolSigner).receiveCollateral(amount))
+      await expect(
+        activePool.connect(defaultPoolSigner).receiveCollateral(amount),
+      )
         .to.emit(activePool, "CollateralReceived")
         .withArgs(defaultPoolAddress, amount)
     })
@@ -291,7 +297,9 @@ describe("ActivePoolERC20", () => {
       await token
         .connect(borrowerOperationsSigner)
         .approve(await activePool.getAddress(), amount)
-      await activePool.connect(borrowerOperationsSigner).receiveCollateral(amount)
+      await activePool
+        .connect(borrowerOperationsSigner)
+        .receiveCollateral(amount)
     })
 
     it("should transfer tokens to recipient", async () => {
@@ -338,7 +346,9 @@ describe("ActivePoolERC20", () => {
 
     it("should allow TroveManager to call", async () => {
       await expect(
-        activePool.connect(troveManagerSigner).sendCollateral(alice.address, amount),
+        activePool
+          .connect(troveManagerSigner)
+          .sendCollateral(alice.address, amount),
       )
         .to.emit(activePool, "CollateralSent")
         .withArgs(alice.address, amount)
@@ -346,7 +356,9 @@ describe("ActivePoolERC20", () => {
 
     it("should allow StabilityPool to call", async () => {
       await expect(
-        activePool.connect(stabilityPoolSigner).sendCollateral(alice.address, amount),
+        activePool
+          .connect(stabilityPoolSigner)
+          .sendCollateral(alice.address, amount),
       )
         .to.emit(activePool, "CollateralSent")
         .withArgs(alice.address, amount)
@@ -396,7 +408,9 @@ describe("ActivePoolERC20", () => {
       const interest = ethers.parseEther("50")
 
       await expect(
-        activePool.connect(troveManagerSigner).increaseDebt(principal, interest),
+        activePool
+          .connect(troveManagerSigner)
+          .increaseDebt(principal, interest),
       ).to.emit(activePool, "ActivePoolDebtUpdated")
     })
 
@@ -486,7 +500,9 @@ describe("ActivePoolERC20", () => {
       await mockInterestRateManager.setAccruedInterest(accruedInterest)
 
       // getInterest should return stored interest + accrued interest
-      expect(await activePool.getInterest()).to.equal(storedInterest + accruedInterest)
+      expect(await activePool.getInterest()).to.equal(
+        storedInterest + accruedInterest,
+      )
     })
 
     it("should include accrued interest in getDebt", async () => {
@@ -503,7 +519,9 @@ describe("ActivePoolERC20", () => {
       await mockInterestRateManager.setAccruedInterest(accruedInterest)
 
       // getDebt should include principal + stored interest + accrued interest
-      expect(await activePool.getDebt()).to.equal(principal + storedInterest + accruedInterest)
+      expect(await activePool.getDebt()).to.equal(
+        principal + storedInterest + accruedInterest,
+      )
     })
   })
 })

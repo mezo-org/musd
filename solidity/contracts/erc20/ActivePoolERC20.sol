@@ -16,7 +16,11 @@ import "../interfaces/erc20/IActivePoolERC20.sol";
  * When a trove is liquidated, its collateral and debt are transferred from the Active Pool
  * to either the Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  */
-contract ActivePoolERC20 is CheckContract, IActivePoolERC20, OwnableUpgradeable {
+contract ActivePoolERC20 is
+    CheckContract,
+    IActivePoolERC20,
+    OwnableUpgradeable
+{
     address public borrowerOperationsAddress;
     address public collSurplusPoolAddress;
     address public defaultPoolAddress;
