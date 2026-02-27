@@ -43,18 +43,6 @@ interface IPCVERC20 {
     // --- External Functions ---
 
     /**
-     * @notice Distributes accumulated MUSD fees
-     * @dev Distributes based on feeSplitPercentage and debtToPay
-     */
-    function distributeMUSD() external;
-
-    /**
-     * @notice Distributes accumulated ERC20 collateral from redemption fees
-     * @dev Sends collateral to the configured collateralRecipient
-     */
-    function distributeCollateral() external;
-
-    /**
      * @notice Sets the addresses of other protocol contracts
      * @param _borrowerOperations Address of BorrowerOperations contract
      * @param _musdTokenAddress Address of MUSD token contract
@@ -140,6 +128,18 @@ interface IPCVERC20 {
         uint256 _amount,
         address _recipient
     ) external;
+
+    /**
+     * @notice Distributes accumulated MUSD fees
+     * @dev Distributes based on feeSplitPercentage and debtToPay
+     */
+    function distributeMUSD() external;
+
+    /**
+     * @notice Distributes accumulated ERC20 collateral from redemption fees
+     * @dev Sends collateral to the configured collateralRecipient
+     */
+    function distributeCollateral() external;
 
     // --- View Functions ---
 
