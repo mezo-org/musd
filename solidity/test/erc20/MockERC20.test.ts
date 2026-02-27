@@ -1,15 +1,14 @@
 import { expect } from "chai"
 import { ethers } from "hardhat"
-import { MockERC20 } from "../../typechain"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
+import { MockERC20 } from "../../typechain"
 
 describe("MockERC20", () => {
   let token: MockERC20
-  let deployer: HardhatEthersSigner
   let alice: HardhatEthersSigner
 
   beforeEach(async () => {
-    ;[deployer, alice] = await ethers.getSigners()
+    ;[, alice] = await ethers.getSigners()
     const MockERC20Factory = await ethers.getContractFactory("MockERC20")
     token = await MockERC20Factory.deploy()
   })

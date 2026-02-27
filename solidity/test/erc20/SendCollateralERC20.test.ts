@@ -1,22 +1,23 @@
 import { expect } from "chai"
 import { ethers } from "hardhat"
-import { MockERC20, SendCollateralERC20Tester } from "../../typechain"
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers"
+import { MockERC20, SendCollateralERC20Tester } from "../../typechain"
 
 describe("SendCollateralERC20", () => {
   let token: MockERC20
   let sender: SendCollateralERC20Tester
-  let deployer: HardhatEthersSigner
   let alice: HardhatEthersSigner
   let bob: HardhatEthersSigner
 
   beforeEach(async () => {
-    ;[deployer, alice, bob] = await ethers.getSigners()
+    ;[, alice, bob] = await ethers.getSigners()
 
     const MockERC20Factory = await ethers.getContractFactory("MockERC20")
     token = await MockERC20Factory.deploy()
 
-    const SenderFactory = await ethers.getContractFactory("SendCollateralERC20Tester")
+    const SenderFactory = await ethers.getContractFactory(
+      "SendCollateralERC20Tester",
+    )
     sender = await SenderFactory.deploy(await token.getAddress())
 
     await token.mint(alice.address, ethers.parseEther("1000"))
@@ -26,7 +27,9 @@ describe("SendCollateralERC20", () => {
     it("should transfer tokens to recipient", async () => {
       await token.mint(await sender.getAddress(), ethers.parseEther("100"))
       await sender.sendCollateralPublic(bob.address, ethers.parseEther("50"))
-      expect(await token.balanceOf(bob.address)).to.equal(ethers.parseEther("50"))
+      expect(await token.balanceOf(bob.address)).to.equal(
+        ethers.parseEther("50"),
+      )
     })
 
     it("should handle zero amount gracefully", async () => {
@@ -37,15 +40,21 @@ describe("SendCollateralERC20", () => {
 
   describe("_pullCollateral", () => {
     it("should pull tokens from sender", async () => {
-      await token.connect(alice).approve(await sender.getAddress(), ethers.parseEther("100"))
+      await token
+        .connect(alice)
+        .approve(await sender.getAddress(), ethers.parseEther("100"))
       await sender.pullCollateralPublic(alice.address, ethers.parseEther("50"))
-      expect(await token.balanceOf(await sender.getAddress())).to.equal(ethers.parseEther("50"))
-      expect(await token.balanceOf(alice.address)).to.equal(ethers.parseEther("950"))
+      expect(await token.balanceOf(await sender.getAddress())).to.equal(
+        ethers.parseEther("50"),
+      )
+      expect(await token.balanceOf(alice.address)).to.equal(
+        ethers.parseEther("950"),
+      )
     })
 
     it("should revert without approval", async () => {
       await expect(
-        sender.pullCollateralPublic(alice.address, ethers.parseEther("50"))
+        sender.pullCollateralPublic(alice.address, ethers.parseEther("50")),
       ).to.be.reverted
     })
 

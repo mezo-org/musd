@@ -26,7 +26,11 @@ abstract contract SendCollateralERC20 {
 
     function _pullCollateral(address _from, uint256 _amount) internal {
         if (_amount == 0) return;
-        bool success = collateralToken.transferFrom(_from, address(this), _amount);
+        bool success = collateralToken.transferFrom(
+            _from,
+            address(this),
+            _amount
+        );
         if (!success) revert CollateralTransferFailed();
     }
 }

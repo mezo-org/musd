@@ -24,6 +24,8 @@ interface IPoolERC20 {
 
     function decreaseDebt(uint256 _principal, uint256 _interest) external;
 
+    function receiveCollateral(uint256 _amount) external;
+
     function getCollateralBalance() external view returns (uint256);
 
     function getDebt() external view returns (uint256);
@@ -31,6 +33,4 @@ interface IPoolERC20 {
     function getPrincipal() external view returns (uint256);
 
     function getInterest() external view returns (uint256);
-
-    function receiveCollateral(uint256 _amount) external;
 }
