@@ -28,6 +28,7 @@ contract MockContract {
  */
 contract MockInterestRateManager {
     uint256 private _accruedInterest;
+    uint16 private _interestRate;
 
     // Receive function to accept ETH for gas funding during impersonation
     receive() external payable {}
@@ -38,6 +39,51 @@ contract MockInterestRateManager {
 
     function getAccruedInterest() external view returns (uint256) {
         return _accruedInterest;
+    }
+
+    function setInterestRate(uint16 rate) external {
+        _interestRate = rate;
+    }
+
+    function interestRate() external view returns (uint16) {
+        return _interestRate;
+    }
+
+    function addPrincipal(
+        uint256 /* _principal */,
+        uint16 /* _rate */
+    ) external {
+        // No-op for mock
+    }
+
+    function removePrincipal(
+        uint256 /* _principal */,
+        uint16 /* _rate */
+    ) external {
+        // No-op for mock
+    }
+
+    function updateSystemInterest() external {
+        // No-op for mock
+    }
+
+    function updateTroveDebt(
+        uint256 _interestOwed,
+        uint256 _payment,
+        uint16 /* _rate */
+    )
+        external
+        pure
+        returns (uint256 principalAdjustment, uint256 interestAdjustment)
+    {
+        // Simple mock: first pay interest, then principal
+        if (_payment >= _interestOwed) {
+            interestAdjustment = _interestOwed;
+            principalAdjustment = _payment - _interestOwed;
+        } else {
+            interestAdjustment = _payment;
+            principalAdjustment = 0;
+        }
     }
 }
 
