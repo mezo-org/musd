@@ -144,7 +144,7 @@ describe.only("Demo", () => {
   it("adjustTrove()", async () => {
     await updateTroveSnapshot(contracts, bob, "before")
 
-    // Parameters for a withdrawal of 50 mUSD
+    // Parameters for a debt increase of 50 mUSD
     const collWithdrawal = 0
     const debtChange = to1e18("50")
     const isDebtIncrease = true
@@ -178,7 +178,7 @@ describe.only("Demo", () => {
   })
 
   it("adjustTrove in Recovery Mode", async () => {
-    // Parameters for a withdrawal of 50 mUSD
+    // Parameters for a debt increase of 50 mUSD
     const collWithdrawal = 0
     const debtChange = to1e18("50")
     const isDebtIncrease = true

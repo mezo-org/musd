@@ -96,7 +96,10 @@ size: 16:9
 - **Interest Rate**: 1% fixed
 - **Refinancing Rate**: 20% of the borrowing rate
 
-**Bootstrap Loan & Distribution:**
+---
+
+# Bootstrap Loan & Fee Distribution
+
 - Stability Pool initially populated with bootstrap loan against future fees
 - MUSD fees (borrowing, interest, refinancing) → PCV → split between bootstrap loan repayment and fee recipient
 - BTC fees (redemptions) → PCV → distributed to BTC yield recipient
