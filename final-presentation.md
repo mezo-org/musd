@@ -98,8 +98,9 @@ size: 16:9
 
 **Bootstrap Loan & Distribution:**
 - Stability Pool initially populated with bootstrap loan against future fees
-- Fees → PCV → split between bootstrap loan repayment and fee recipients
-- Once bootstrap loan paid, 100% fees go to recipients
+- MUSD fees (borrowing, interest, refinancing) → PCV → split between bootstrap loan repayment and fee recipient
+- BTC fees (redemptions) → PCV → distributed to BTC yield recipient
+- Fee split percentage is set by governance (0-100%)
 
 ---
 
