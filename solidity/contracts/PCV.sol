@@ -59,6 +59,13 @@ contract PCV is
     /// @dev BTC redemption fees recipient. Must implement IBTCFeeRecipient.
     address public btcRecipient;
 
+    /// @dev Tracks BTC received from StabilityPool liquidation gains.
+    ///      This BTC is not distributed by distributeBTC().
+    uint256 public stabilityPoolBTC;
+
+    /// @dev Authorized address that can call distributeBTC().
+    address public distributor;
+
     modifier onlyOwnerOrCouncilOrTreasury() {
         require(
             msg.sender == owner() ||
@@ -97,7 +104,14 @@ contract PCV is
     }
 
     // solhint-disable-next-line ordering
-    receive() external payable {}
+    receive() external payable {
+        if (
+            address(borrowerOperations) != address(0) &&
+            msg.sender == borrowerOperations.stabilityPoolAddress()
+        ) {
+            stabilityPoolBTC += msg.value;
+        }
+    }
 
     function setAddresses(
         address _borrowerOperations,
@@ -146,6 +160,18 @@ contract PCV is
         );
         btcRecipient = _btcRecipient;
         emit BTCRecipientSet(_btcRecipient);
+    }
+
+    /// @notice Sets the distributor address that can call distributeBTC().
+    /// @param _distributor The address of the distributor bot. Can be set to
+    ///        address(0) to disable the bot role; governance can still call
+    ///        distributeBTC() directly.
+    function setDistributor(
+        address _distributor
+    ) external onlyOwnerOrCouncilOrTreasury {
+        // slither-disable-next-line missing-zero-check
+        distributor = _distributor;
+        emit DistributorSet(_distributor);
     }
 
     /// @notice Set the fee split percentage
@@ -279,9 +305,19 @@ contract PCV is
     }
 
     /// @notice Distributes accumulated BTC from redemption fees to Tigris as
-    ///         yield.
+    ///         yield. Only callable by the distributor bot, owner, council, or
+    ///         treasury. BTC from StabilityPool liquidation gains (tracked by
+    ///         stabilityPoolBTC) is excluded from distribution.
     function distributeBTC() external override nonReentrant {
-        uint256 collateralAmount = address(this).balance;
+        require(
+            msg.sender == distributor ||
+                msg.sender == owner() ||
+                msg.sender == council ||
+                msg.sender == treasury,
+            "PCV: caller not authorized"
+        );
+
+        uint256 collateralAmount = address(this).balance - stabilityPoolBTC;
         // If there is not enough collateral to distribute, do nothing.
         // This approach is less descriptive but more bot-friendly, which in the case
         // of this function is more appropriate.
@@ -297,6 +333,31 @@ contract PCV is
         );
         // slither-disable-next-line reentrancy-events
         emit PCVDistributionBTC(btcRecipient, collateralAmount);
+    }
+
+    /// @notice Withdraws BTC that was claimed from the StabilityPool and is
+    ///         being held in this contract, tracked by stabilityPoolBTC. This
+    ///         is distinct from withdrawFromStabilityPool(), which pulls MUSD
+    ///         and BTC gains out of the StabilityPool contract itself (reducing
+    ///         PCV's deposit position). This function sends BTC that has
+    ///         already been claimed and is sitting in PCV's balance.
+    /// @param _amount The amount of stability BTC to withdraw
+    /// @param _recipient The whitelisted recipient address
+    function withdrawStabilityBTC(
+        uint256 _amount,
+        address _recipient
+    )
+        external
+        onlyOwnerOrCouncilOrTreasury
+        onlyWhitelistedRecipient(_recipient)
+    {
+        require(
+            _amount <= stabilityPoolBTC,
+            "PCV: amount exceeds stability BTC"
+        );
+        emit StabilityBTCWithdrawn(_recipient, _amount);
+        stabilityPoolBTC -= _amount;
+        _sendCollateral(_recipient, _amount);
     }
 
     /// @notice Allows anyone to deposit MUSD to the stability pool. Note that
@@ -332,8 +393,13 @@ contract PCV is
         uint256 debtRepayment = _repayDebt(musdChange);
         uint256 excessMusd = musdChange - debtRepayment;
 
-        // Send BTC collateral to recipient
+        // Send BTC collateral to recipient. The BTC arrived via receive()
+        // which incremented stabilityPoolBTC, so decrement it here.
         if (collateralChange > 0) {
+            // Stability Pool is a trusted contract and we need to call
+            // withdrawFromSP first to compute collateralChange.
+            // slither-disable-next-line reentrancy-benign
+            stabilityPoolBTC -= collateralChange;
             _sendCollateral(_recipient, collateralChange);
         }
 

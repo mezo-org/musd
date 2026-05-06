@@ -587,6 +587,60 @@ describe("PCV", () => {
       expect(state.pcv.musd.after).to.equal(state.pcv.musd.before)
       expect(recipientAfter.musd).equal(recipientBefore.musd)
     })
+
+    it("decrements stabilityPoolBTC when withdrawing collateral", async () => {
+      // Create a liquidation so StabilityPool has BTC gains for PCV
+      const whaleMusd = "300,000"
+      await openTrove(contracts, {
+        musdAmount: whaleMusd,
+        ICR: "200",
+        sender: whale.wallet,
+      })
+      await createLiquidationEvent(contracts, deployer)
+
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(0n)
+
+      // Withdraw directly - BTC gains arrive via receive() and are forwarded
+      // to recipient. stabilityPoolBTC should net to 0 (incremented in
+      // receive, decremented in withdrawFromStabilityPool).
+      const recipientBefore = await ethers.provider.getBalance(alice.address)
+      await contracts.pcv
+        .connect(treasury.wallet)
+        .withdrawFromStabilityPool(0n, alice.address)
+      const recipientAfter = await ethers.provider.getBalance(alice.address)
+
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(0n)
+      expect(recipientAfter).to.be.greaterThan(recipientBefore)
+    })
+
+    it("preserves stabilityPoolBTC from prior claims not yet withdrawn", async () => {
+      // Create a liquidation
+      const whaleMusd = "300,000"
+      await openTrove(contracts, {
+        musdAmount: whaleMusd,
+        ICR: "200",
+        sender: whale.wallet,
+      })
+      await createLiquidationEvent(contracts, deployer)
+
+      // Trigger BTC gain claim via deposit (this claims all current gains)
+      await contracts.musd.unprotectedMint(deployer.address, 1n)
+      await contracts.musd.connect(deployer.wallet).approve(addresses.pcv, 1n)
+      await PCVDeployer.depositToStabilityPool(1n)
+
+      const stabilityBTCAfterClaim = await contracts.pcv.stabilityPoolBTC()
+      expect(stabilityBTCAfterClaim).to.be.greaterThan(0n)
+
+      // Now withdraw from SP - no new gains to claim (already claimed above),
+      // so collateralChange is 0 and stabilityPoolBTC stays the same.
+      await contracts.pcv
+        .connect(treasury.wallet)
+        .withdrawFromStabilityPool(0n, alice.address)
+
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(
+        stabilityBTCAfterClaim,
+      )
+    })
   })
 
   describe("distributeMUSD()", () => {
@@ -1157,7 +1211,9 @@ describe("PCV", () => {
       expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
     })
 
-    it("can be called by anyone (permissionless)", async () => {
+    it("can be called by distributor", async () => {
+      await PCVDeployer.setDistributor(alice.address)
+
       const btcAmount = to1e18("7")
       await deployer.wallet.sendTransaction({
         to: addresses.pcv,
@@ -1166,6 +1222,18 @@ describe("PCV", () => {
 
       await contracts.pcv.connect(alice.wallet).distributeBTC()
       expect(await btcRecipientMock.totalBTCReceived()).to.equal(btcAmount)
+    })
+
+    it("reverts when called by unauthorized user", async () => {
+      const btcAmount = to1e18("7")
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      await expect(
+        contracts.pcv.connect(alice.wallet).distributeBTC(),
+      ).to.be.revertedWith("PCV: caller not authorized")
     })
 
     it("distributes all available collateral", async () => {
@@ -1275,6 +1343,238 @@ describe("PCV", () => {
           contracts.pcv.connect(treasury.wallet).distributeBTC(),
         ).to.be.revertedWith("BTCFeeRecipientMock: forced revert")
       })
+
+      it("does not distribute stability BTC", async () => {
+        // Create a liquidation so StabilityPool has BTC gains for PCV
+        const whaleMusd = "300,000"
+        await openTrove(contracts, {
+          musdAmount: whaleMusd,
+          ICR: "200",
+          sender: whale.wallet,
+        })
+        await createLiquidationEvent(contracts, deployer)
+
+        // Trigger BTC gain claim by depositing 1 wei MUSD to StabilityPool
+        await contracts.musd.unprotectedMint(deployer.address, 1n)
+        await contracts.musd.connect(deployer.wallet).approve(addresses.pcv, 1n)
+        await PCVDeployer.depositToStabilityPool(1n)
+
+        const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+        expect(stabilityBTC).to.be.greaterThan(0n)
+
+        // Also send some redemption fee BTC directly
+        const redemptionBTC = to1e18("1")
+        await deployer.wallet.sendTransaction({
+          to: addresses.pcv,
+          value: redemptionBTC,
+        })
+
+        const pcvBalanceBefore = await ethers.provider.getBalance(addresses.pcv)
+        expect(pcvBalanceBefore).to.equal(stabilityBTC + redemptionBTC)
+
+        // Distribute should only send the redemption BTC
+        await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+        const pcvBalanceAfter = await ethers.provider.getBalance(addresses.pcv)
+        expect(pcvBalanceAfter).to.equal(stabilityBTC)
+        expect(await btcRecipientMock.totalBTCReceived()).to.equal(
+          redemptionBTC,
+        )
+      })
+
+      it("does nothing when only stability BTC exists", async () => {
+        // Create a liquidation so StabilityPool has BTC gains for PCV
+        const whaleMusd = "300,000"
+        await openTrove(contracts, {
+          musdAmount: whaleMusd,
+          ICR: "200",
+          sender: whale.wallet,
+        })
+        await createLiquidationEvent(contracts, deployer)
+
+        // Trigger BTC gain claim
+        await contracts.musd.unprotectedMint(deployer.address, 1n)
+        await contracts.musd.connect(deployer.wallet).approve(addresses.pcv, 1n)
+        await PCVDeployer.depositToStabilityPool(1n)
+
+        const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+        expect(stabilityBTC).to.be.greaterThan(0n)
+
+        // No redemption fee BTC - only stability BTC
+        await contracts.pcv.connect(treasury.wallet).distributeBTC()
+
+        // Nothing should have been distributed
+        expect(await btcRecipientMock.totalBTCReceived()).to.equal(0n)
+        expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(
+          stabilityBTC,
+        )
+      })
+    })
+  })
+
+  describe("receive()", () => {
+    it("increments stabilityPoolBTC when BTC comes from StabilityPool", async () => {
+      // Create a liquidation so StabilityPool has BTC gains for PCV
+      const whaleMusd = "300,000"
+      await openTrove(contracts, {
+        musdAmount: whaleMusd,
+        ICR: "200",
+        sender: whale.wallet,
+      })
+      await createLiquidationEvent(contracts, deployer)
+
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(0n)
+
+      // Trigger BTC gain claim by depositing to StabilityPool
+      await contracts.musd.unprotectedMint(deployer.address, 1n)
+      await contracts.musd.connect(deployer.wallet).approve(addresses.pcv, 1n)
+      await PCVDeployer.depositToStabilityPool(1n)
+
+      const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+      expect(stabilityBTC).to.be.greaterThan(0n)
+    })
+
+    it("does not increment stabilityPoolBTC when BTC comes from other addresses", async () => {
+      const btcAmount = to1e18("5")
+      await deployer.wallet.sendTransaction({
+        to: addresses.pcv,
+        value: btcAmount,
+      })
+
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(0n)
+      expect(await ethers.provider.getBalance(addresses.pcv)).to.equal(
+        btcAmount,
+      )
+    })
+  })
+
+  describe("withdrawStabilityBTC()", () => {
+    async function setupStabilityBTC() {
+      // Create a liquidation so StabilityPool has BTC gains for PCV
+      const whaleMusd = "300,000"
+      await openTrove(contracts, {
+        musdAmount: whaleMusd,
+        ICR: "200",
+        sender: whale.wallet,
+      })
+      await createLiquidationEvent(contracts, deployer)
+
+      // Trigger BTC gain claim
+      await contracts.musd.unprotectedMint(deployer.address, 1n)
+      await contracts.musd.connect(deployer.wallet).approve(addresses.pcv, 1n)
+      await PCVDeployer.depositToStabilityPool(1n)
+    }
+
+    it("sends escrowed stability BTC to whitelisted recipient", async () => {
+      await setupStabilityBTC()
+
+      const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+      expect(stabilityBTC).to.be.greaterThan(0n)
+
+      const recipientBefore = await ethers.provider.getBalance(alice.address)
+      await contracts.pcv
+        .connect(treasury.wallet)
+        .withdrawStabilityBTC(stabilityBTC, alice.address)
+      const recipientAfter = await ethers.provider.getBalance(alice.address)
+
+      expect(recipientAfter - recipientBefore).to.equal(stabilityBTC)
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(0n)
+    })
+
+    it("emits StabilityBTCWithdrawn event", async () => {
+      await setupStabilityBTC()
+
+      const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+
+      await expect(
+        contracts.pcv
+          .connect(treasury.wallet)
+          .withdrawStabilityBTC(stabilityBTC, alice.address),
+      )
+        .to.emit(contracts.pcv, "StabilityBTCWithdrawn")
+        .withArgs(alice.address, stabilityBTC)
+    })
+
+    it("allows partial withdrawal", async () => {
+      await setupStabilityBTC()
+
+      const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+      const halfAmount = stabilityBTC / 2n
+
+      await contracts.pcv
+        .connect(treasury.wallet)
+        .withdrawStabilityBTC(halfAmount, alice.address)
+
+      expect(await contracts.pcv.stabilityPoolBTC()).to.equal(
+        stabilityBTC - halfAmount,
+      )
+    })
+
+    it("reverts when amount exceeds stabilityPoolBTC", async () => {
+      await setupStabilityBTC()
+
+      const stabilityBTC = await contracts.pcv.stabilityPoolBTC()
+
+      await expect(
+        contracts.pcv
+          .connect(treasury.wallet)
+          .withdrawStabilityBTC(stabilityBTC + 1n, alice.address),
+      ).to.be.revertedWith("PCV: amount exceeds stability BTC")
+    })
+
+    it("reverts for non-governance caller", async () => {
+      await setupStabilityBTC()
+
+      await expect(
+        contracts.pcv
+          .connect(alice.wallet)
+          .withdrawStabilityBTC(1n, alice.address),
+      ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
+    })
+
+    it("reverts for non-whitelisted recipient", async () => {
+      await setupStabilityBTC()
+
+      await expect(
+        contracts.pcv
+          .connect(treasury.wallet)
+          .withdrawStabilityBTC(1n, bob.address),
+      ).to.be.revertedWith("PCV: recipient must be in whitelist")
+    })
+  })
+
+  describe("setDistributor()", () => {
+    it("sets distributor address", async () => {
+      await PCVDeployer.setDistributor(alice.address)
+      expect(await contracts.pcv.distributor()).to.equal(alice.address)
+    })
+
+    it("emits DistributorSet event", async () => {
+      await expect(PCVDeployer.setDistributor(alice.address))
+        .to.emit(contracts.pcv, "DistributorSet")
+        .withArgs(alice.address)
+    })
+
+    it("can be set to zero address (disabling bot role)", async () => {
+      await PCVDeployer.setDistributor(alice.address)
+      await PCVDeployer.setDistributor(ZERO_ADDRESS)
+      expect(await contracts.pcv.distributor()).to.equal(ZERO_ADDRESS)
+    })
+
+    it("can be called by council", async () => {
+      await contracts.pcv.connect(council.wallet).setDistributor(alice.address)
+      expect(await contracts.pcv.distributor()).to.equal(alice.address)
+    })
+
+    it("can be called by treasury", async () => {
+      await contracts.pcv.connect(treasury.wallet).setDistributor(alice.address)
+      expect(await contracts.pcv.distributor()).to.equal(alice.address)
+    })
+
+    it("reverts for non-governance caller", async () => {
+      await expect(
+        contracts.pcv.connect(alice.wallet).setDistributor(bob.address),
+      ).to.be.revertedWith("PCV: caller must be owner or council or treasury")
     })
   })
 })

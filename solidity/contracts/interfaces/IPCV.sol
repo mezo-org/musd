@@ -27,6 +27,8 @@ interface IPCV {
     event RecipientRemoved(address _recipient);
     event BTCRecipientSet(address _btcRecipient);
     event PCVDistributionBTC(address _recipient, uint256 _amount);
+    event StabilityBTCWithdrawn(address _recipient, uint256 _amount);
+    event DistributorSet(address _distributor);
 
     // --- Functions ---
 
@@ -63,6 +65,14 @@ interface IPCV {
         uint256 _amount,
         address _recipient
     ) external;
+
+    function withdrawStabilityBTC(uint256 _amount, address _recipient) external;
+
+    function setDistributor(address _distributor) external;
+
+    function stabilityPoolBTC() external view returns (uint256);
+
+    function distributor() external view returns (address);
 
     function musd() external view returns (IMUSD);
 
