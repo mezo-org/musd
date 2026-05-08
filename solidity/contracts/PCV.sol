@@ -396,9 +396,8 @@ contract PCV is
         // Send BTC collateral to recipient. The BTC arrived via receive()
         // which incremented stabilityPoolBTC, so decrement it here.
         if (btcClaimed > 0) {
-            // Stability Pool is a trusted contract and we need to call
-            // withdrawFromSP first to compute btcClaimed.
-            // slither-disable-next-line reentrancy-benign
+            // Stability Pool and BorrowerOperations are trusted contracts.
+            // slither-disable-next-line reentrancy-benign,reentrancy-no-eth
             stabilityPoolBTC -= btcClaimed;
             _sendCollateral(_recipient, btcClaimed);
         }
