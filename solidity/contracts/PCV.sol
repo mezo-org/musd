@@ -381,13 +381,13 @@ contract PCV is
         onlyOwnerOrCouncilOrTreasury
         onlyWhitelistedRecipient(_recipient)
     {
-        uint256 collateralBefore = address(this).balance;
+        uint256 btcBefore = stabilityPoolBTC;
         uint256 musdBefore = musd.balanceOf(address(this));
 
         IStabilityPool(borrowerOperations.stabilityPoolAddress())
             .withdrawFromSP(_amount);
 
-        uint256 collateralChange = address(this).balance - collateralBefore;
+        uint256 btcClaimed = stabilityPoolBTC - btcBefore;
         uint256 musdChange = musd.balanceOf(address(this)) - musdBefore;
 
         uint256 debtRepayment = _repayDebt(musdChange);
@@ -395,12 +395,12 @@ contract PCV is
 
         // Send BTC collateral to recipient. The BTC arrived via receive()
         // which incremented stabilityPoolBTC, so decrement it here.
-        if (collateralChange > 0) {
+        if (btcClaimed > 0) {
             // Stability Pool is a trusted contract and we need to call
-            // withdrawFromSP first to compute collateralChange.
+            // withdrawFromSP first to compute btcClaimed.
             // slither-disable-next-line reentrancy-benign
-            stabilityPoolBTC -= collateralChange;
-            _sendCollateral(_recipient, collateralChange);
+            stabilityPoolBTC -= btcClaimed;
+            _sendCollateral(_recipient, btcClaimed);
         }
 
         // Send excess MUSD to recipient (after debt repayment)
@@ -409,7 +409,7 @@ contract PCV is
         }
 
         // slither-disable-next-line reentrancy-events
-        emit PCVWithdrawSP(msg.sender, musdChange, collateralChange);
+        emit PCVWithdrawSP(msg.sender, musdChange, btcClaimed);
     }
 
     function _repayDebt(uint _repayment) internal returns (uint256) {
