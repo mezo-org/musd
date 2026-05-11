@@ -45,9 +45,17 @@ If the recipient address is not already whitelisted, governance must first add i
 pcv.addRecipientToWhitelist(recipientAddress);
 ```
 
-### Step 3: Withdraw BTC from Stability Pool to Recipient
+### Step 3: Withdraw BTC to Recipient
 
-Governance calls PCV to withdraw funds directly to a whitelisted recipient. The BTC collateral gain and any excess MUSD (after debt repayment) will be sent directly to the recipient.
+Governance calls PCV to withdraw BTC to a whitelisted recipient. There are two paths:
+
+**Option A – Withdraw directly from StabilityPool:** Use `withdrawFromStabilityPool()`
+to claim BTC collateral gains from the StabilityPool and send them directly to
+the recipient in a single call.
+
+**Option B – Withdraw BTC already held by PCV:** If BTC was previously claimed
+from the StabilityPool and is being held in PCV (tracked by `stabilityPoolBTC`),
+use `withdrawStabilityBTC()` to send it to a whitelisted recipient.
 
 ### Step 4: Swap BTC for MUSD
 
@@ -93,12 +101,22 @@ If the recipient address is not already whitelisted:
 pcv.addRecipientToWhitelist(recipientAddress);
 ```
 
-### Step 3: Withdraw BTC from Stability Pool to Recipient
+### Step 3: Withdraw BTC to Recipient
 
-Governance calls PCV to withdraw funds directly to the whitelisted recipient:
+Governance calls PCV to withdraw BTC to the whitelisted recipient. There are two options:
+
+**Option A – Withdraw directly from StabilityPool:**
 ```solidity
 // Withdraw BTC collateral gain to recipient (0 means withdraw only collateral, no MUSD)
 pcv.withdrawFromStabilityPool(0, recipientAddress);
+```
+
+**Option B – Withdraw BTC already held by PCV:**
+
+If BTC was previously claimed from the StabilityPool and is sitting in PCV
+(tracked by `stabilityPoolBTC`):
+```solidity
+pcv.withdrawStabilityBTC(amount, recipientAddress);
 ```
 
 ### Step 4: Swap BTC for MUSD

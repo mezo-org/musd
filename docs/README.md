@@ -122,9 +122,13 @@ The `feeRecipient` address (MUSD Savings Rate vault) and `feeSplitPercentage` in
 
 #### Distribution of BTC
 
-The PCV contract has the ability to distribute `BTC` that it accrues from redemption actions. The `btcRecipient` address
-is the address that will receive the BTC and handle it according to its implementation, e.g. convert it to another asset such as
-`MUSD`. Collateral (`BTC`) was not directly used for loan repayment. It can be withdrawn from the PCV contract and distributed in a form of `MUSD` which is used for loan repayment.
+The PCV contract distributes BTC that it accrues from redemption fees via `distributeBTC()`. The `btcRecipient` address is the address that will receive the BTC and handle it according to its implementation, e.g. convert it to another asset such as `MUSD`.
+
+The PCV separates BTC from two sources:
+- **Redemption fee BTC**: Sent to the PCV by TroveManager when redemptions occur. This BTC is distributed to `btcRecipient` via `distributeBTC()`.
+- **Stability Pool BTC**: BTC received from the StabilityPool as liquidation gains (tracked by `stabilityPoolBTC`). This BTC is **not** distributed by `distributeBTC()` and must instead be withdrawn explicitly via `withdrawStabilityBTC()` or `withdrawFromStabilityPool()`.
+
+A `distributor` role can be set by governance to authorize a bot to call `distributeBTC()`, in addition to the owner, council, and treasury.
 
 #### Withdrawing MUSD
 
