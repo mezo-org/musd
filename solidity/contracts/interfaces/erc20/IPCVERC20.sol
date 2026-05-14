@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity 0.8.24;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../token/IMUSD.sol";
+
+interface IPCVERC20 {
+    // --- Events --
+    event BorrowerOperationsAddressSet(address _borrowerOperationsAddress);
+    event MUSDTokenAddressSet(address _musdTokenAddress);
+    event CollateralTokenAddressSet(address _collateralTokenAddress);
+    event RolesSet(address _council, address _treasury);
+
+    event CollateralWithdraw(address _recipient, uint256 _collateralAmount);
+    event FeeRecipientSet(address _feeRecipient);
+    event FeeSplitSet(uint8 _feeSplitPercentage);
+    event MUSDWithdraw(address _recipient, uint256 _amount);
+    event PCVDebtPayment(uint256 _paidDebt);
+    event PCVDepositSP(address indexed user, uint256 musdAmount);
+    event PCVDistribution(address _recipient, uint256 _amount);
+    event PCVWithdrawSP(
+        address indexed user,
+        uint256 musdAmount,
+        uint256 collateralAmount
+    );
+    event RecipientAdded(address _recipient);
+    event RecipientRemoved(address _recipient);
+    event CollateralRecipientSet(address _collateralRecipient);
+    event PCVDistributionCollateral(address _recipient, uint256 _amount);
+
+    // --- Functions ---
+
+    function debtToPay() external returns (uint256);
+
+    function distributeMUSD() external;
+
+    function distributeCollateral() external;
+
+    function setAddresses(
+        address _collateralToken,
+        address _borrowerOperations,
+        address _musdTokenAddress
+    ) external;
+
+    function initializeDebt() external;
+
+    function setFeeRecipient(address _feeRecipient) external;
+
+    function setFeeSplit(uint8 _feeSplitPercentage) external;
+
+    function addRecipientToWhitelist(address _recipient) external;
+
+    function removeRecipientFromWhitelist(address _recipient) external;
+
+    function startChangingRoles(address _council, address _treasury) external;
+
+    function cancelChangingRoles() external;
+
+    function finalizeChangingRoles() external;
+
+    function depositToStabilityPool(uint256 _amount) external;
+
+    function withdrawFromStabilityPool(
+        uint256 _amount,
+        address _recipient
+    ) external;
+
+    function musd() external view returns (IMUSD);
+
+    function council() external view returns (address);
+
+    function treasury() external view returns (address);
+
+    function collateralToken() external view returns (address);
+}
