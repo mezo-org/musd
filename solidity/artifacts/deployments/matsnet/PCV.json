@@ -132,6 +132,19 @@
         {
           "indexed": false,
           "internalType": "address",
+          "name": "_distributor",
+          "type": "address"
+        }
+      ],
+      "name": "DistributorSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
           "name": "_feeRecipient",
           "type": "address"
         }
@@ -376,6 +389,25 @@
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "StabilityBTCWithdrawn",
+      "type": "event"
+    },
+    {
       "inputs": [],
       "name": "BOOTSTRAP_LOAN",
       "outputs": [
@@ -518,6 +550,19 @@
       "name": "distributeMUSD",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "distributor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -745,6 +790,19 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "_distributor",
+          "type": "address"
+        }
+      ],
+      "name": "setDistributor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "_feeRecipient",
           "type": "address"
         }
@@ -765,6 +823,19 @@
       "name": "setFeeSplit",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stabilityPoolBTC",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -830,12 +901,30 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawStabilityBTC",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "stateMutability": "payable",
       "type": "receive"
     }
   ],
   "transactionHash": "0x10238fb2b9440bbb70e6e047e939bba531d3994906decb08c89e511d76e44047",
-  "numDeployments": 3,
-  "implementation": "0x7ECb4A0E4462ee9c0c98C5240C6BC9562C545C71",
+  "numDeployments": 4,
+  "implementation": "0xe641AB3c04140f3e3BefCF60F8eed8AD6e31C300",
   "devdoc": "Contract deployed as upgradable proxy"
 }
