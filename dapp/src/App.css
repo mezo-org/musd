@@ -1,0 +1,147 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-header {
+  margin-bottom: 2rem;
+}
+
+.App-header h1 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.App-header p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+/* Wallet Info Section */
+.wallet-info {
+  margin: 2rem 0;
+}
+
+.wallet-details {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wallet-card {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 250px;
+  text-align: left;
+}
+
+.wallet-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: #495057;
+}
+
+.wallet-card .address {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #6c757d;
+  word-break: break-all;
+  margin: 0.25rem 0;
+}
+
+.wallet-card .balance {
+  font-weight: bold;
+  color: #28a745;
+  margin: 0.25rem 0;
+}
+
+/* MUSD Section */
+.musd-section {
+  margin: 2rem 0;
+}
+
+.musd-balance {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  display: inline-block;
+  min-width: 300px;
+}
+
+.musd-balance h3 {
+  margin: 0 0 1rem 0;
+  color: #1976d2;
+}
+
+.musd-balance .balance {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1976d2;
+  margin: 0.5rem 0;
+}
+
+.musd-balance .address {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0.5rem 0;
+}
+
+.musd-balance button {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.musd-balance button:hover {
+  background: #1565c0;
+}
+
+/* Actions */
+.actions {
+  margin: 1rem 0;
+}
+
+/* Connect Prompt */
+.connect-prompt {
+  margin: 3rem 0;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.connect-prompt h2 {
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.connect-prompt p {
+  color: #6c757d;
+  margin: 0.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wallet-details {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wallet-card {
+    width: 100%;
+    max-width: 400px;
+  }
+}

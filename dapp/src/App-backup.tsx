@@ -48,6 +48,7 @@ function App() {
                   amount="100"
                   onSuccess={() => {
                     console.log("MUSD purchase completed!")
+                    // Refresh balance or show success message
                   }}
                 />
               </div>

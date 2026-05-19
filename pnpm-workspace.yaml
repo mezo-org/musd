@@ -2,3 +2,4 @@ packages:
   - dapp/
   - solidity/
   - solidity/artifacts
+  - payment-service/
