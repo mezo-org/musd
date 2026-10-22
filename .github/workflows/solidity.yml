@@ -7,10 +7,12 @@ on:
     paths:
       - "solidity/**"
       - ".github/workflows/solidity.yml"
+      - ".nvmrc"
   pull_request:
     paths:
       - "solidity/**"
       - ".github/workflows/solidity.yml"
+      - ".nvmrc"
   workflow_dispatch:
     inputs:
       environment:

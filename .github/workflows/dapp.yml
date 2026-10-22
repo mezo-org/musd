@@ -7,10 +7,12 @@ on:
     paths:
       - "dapp/**"
       - ".github/workflows/dapp.yml"
+      - ".nvmrc"
   pull_request:
     paths:
       - "dapp/**"
       - ".github/workflows/dapp.yml"
+      - ".nvmrc"
 
 defaults:
   run:
