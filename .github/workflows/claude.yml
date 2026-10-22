@@ -30,10 +30,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup Bun
+        id: setup-bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.x"
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
+          # The action's own Bun accepts certificates forged with the compromised eMudhra intermediates.
+          path_to_bun_executable: ${{ steps.setup-bun.outputs.bun-path }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
           # This is an optional setting that allows Claude to read CI results on PRs
