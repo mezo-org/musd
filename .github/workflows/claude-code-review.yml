@@ -61,12 +61,19 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          
+
+          # Post the review as a comment, the way @beta's direct_prompt did.
+          # Without this, v1 runs a `prompt` in automation mode and posts nothing.
+          track_progress: true
+
           # Custom prompt for DeFi/smart contract review
-          direct_prompt: |
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
             You are an experienced, professional smart contract auditor.
             Please review this MUSD protocol pull request with focus on:
             
@@ -97,7 +104,8 @@ jobs:
             blocks for implementation suggestions to keep the review focused.
 
           # Allow Claude to run basic linting and compilation checks
-          allowed_tools: "Bash(cd solidity && pnpm format),Bash(cd solidity && pnpm build)"
+          claude_args: |
+            --allowedTools "Bash(cd solidity && pnpm format),Bash(cd solidity && pnpm build)"
           
           # Use sticky comments for cleaner PR experience
           use_sticky_comment: true
