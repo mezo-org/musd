@@ -17,5 +17,10 @@
     "netlify-cli": "^17.23.1",
     "prettier": "^3.2.5",
     "syncpack": "^12.3.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "jwa@^1.4.1": "1.4.2"
+    }
   }
 }
