@@ -39,6 +39,7 @@ jobs:
         with:
           cache: "pnpm"
           node-version-file: ".nvmrc"
+          check-latest: true
 
       - name: Install dependencies
         run: pnpm install --prefer-offline --frozen-lockfile
@@ -71,6 +72,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
+          node-version-file: ".nvmrc"
+          check-latest: true
           cache: "pnpm"
 
       - name: Install dependencies
@@ -97,6 +100,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
+          node-version-file: ".nvmrc"
+          check-latest: true
           cache: "pnpm"
 
       - name: Install dependencies
@@ -129,6 +134,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
+          node-version-file: ".nvmrc"
+          check-latest: true
           cache: "pnpm"
 
       - name: Install dependencies
@@ -165,6 +172,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
+          node-version-file: ".nvmrc"
+          check-latest: true
           cache: "pnpm"
 
       - name: Install dependencies
@@ -192,6 +201,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
+          node-version-file: ".nvmrc"
+          check-latest: true
           cache: "pnpm"
 
       - name: Install dependencies
