@@ -8,11 +8,15 @@ on:
       - "dapp/**"
       - ".github/workflows/dapp.yml"
       - ".nvmrc"
+      - "package.json"
+      - "pnpm-lock.yaml"
   pull_request:
     paths:
       - "dapp/**"
       - ".github/workflows/dapp.yml"
       - ".nvmrc"
+      - "package.json"
+      - "pnpm-lock.yaml"
 
 defaults:
   run:

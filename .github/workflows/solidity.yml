@@ -8,11 +8,15 @@ on:
       - "solidity/**"
       - ".github/workflows/solidity.yml"
       - ".nvmrc"
+      - "package.json"
+      - "pnpm-lock.yaml"
   pull_request:
     paths:
       - "solidity/**"
       - ".github/workflows/solidity.yml"
       - ".nvmrc"
+      - "package.json"
+      - "pnpm-lock.yaml"
   workflow_dispatch:
     inputs:
       environment:
