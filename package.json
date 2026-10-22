@@ -14,7 +14,6 @@
   "devDependencies": {
     "@thesis/prettier-config": "github:thesis/prettier-config",
     "@types/node": "^20.12.7",
-    "netlify-cli": "^17.23.1",
     "prettier": "^3.2.5",
     "syncpack": "^12.3.2"
   }
