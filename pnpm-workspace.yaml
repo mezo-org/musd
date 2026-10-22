@@ -9,3 +9,10 @@ packages:
 publicHoistPattern:
   - "*eslint*"
   - "*prettier*"
+
+# pnpm 11 fails the install when a dependency has a build script that isn't
+# listed here. The values match web's list for the same packages.
+allowBuilds:
+  esbuild: true
+  keccak: true
+  secp256k1: true
