@@ -2,3 +2,17 @@ packages:
   - dapp/
   - solidity/
   - solidity/artifacts
+
+# The root .prettierrc.js loads prettier-plugin-solidity, which only solidity/
+# depends on. pnpm 10 stopped hoisting eslint and prettier packages to the root
+# node_modules, so the dapp couldn't find the plugin. This keeps pnpm 8's default.
+publicHoistPattern:
+  - "*eslint*"
+  - "*prettier*"
+
+# pnpm 11 fails the install when a dependency has a build script that isn't
+# listed here. The values match web's list for the same packages.
+allowBuilds:
+  esbuild: true
+  keccak: true
+  secp256k1: true
